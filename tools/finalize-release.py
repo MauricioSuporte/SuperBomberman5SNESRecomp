@@ -5,8 +5,10 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import os
 import pathlib
 import re
+import tomllib
 import zipfile
 
 
@@ -16,6 +18,8 @@ def main() -> None:
     parser.add_argument('--build-dir', type=pathlib.Path, required=True)
     parser.add_argument('--analyzer', type=pathlib.Path, required=True)
     parser.add_argument('--toolchain', type=pathlib.Path, required=True)
+    parser.add_argument('--cargo-home', type=pathlib.Path,
+                        default=pathlib.Path(os.environ.get('CARGO_HOME', str(pathlib.Path.home() / '.cargo'))))
     args = parser.parse_args()
     cache = (args.build_dir / 'CMakeCache.txt').read_text(encoding='utf-8')
     if not re.search(r'^SNESRECOMP_SETUP_HOST:BOOL=ON$', cache, re.M):
@@ -25,6 +29,24 @@ def main() -> None:
     for p in (args.analyzer, args.toolchain / 'bin/libunwind.dll', args.toolchain / 'LICENSE.TXT'):
         if not p.is_file():
             raise SystemExit(f'Missing release dependency: {p}')
+    lock = tomllib.loads((pathlib.Path(__file__).resolve().parents[1] / 'snesrecomp/recompiler-rs/Cargo.lock').read_text())
+    crate_notices = []
+    found_crates = set()
+    for package in lock['package']:
+        if 'source' not in package:
+            continue
+        crate_id = package['name'] + '-' + package['version']
+        candidates = list((args.cargo_home / 'registry/src').glob('*/' + crate_id))
+        if not candidates:
+            continue  # Optional locked features need not have been compiled.
+        files = list(candidates[0].glob('LICENSE*')) + list(candidates[0].glob('COPYING*'))
+        if not files:
+            raise SystemExit(f'License notice missing for {crate_id}')
+        crate_notices.extend((crate_id, p) for p in files if p.is_file())
+        found_crates.add(package['name'])
+    required = {'serde_json', 'serde_core', 'memchr', 'itoa', 'zmij'}
+    if not required.issubset(found_crates):
+        raise SystemExit('Cargo license notices missing: ' + ', '.join(sorted(required - found_crates)))
     temp = args.zip.with_suffix('.auditing.zip')
     with zipfile.ZipFile(args.zip) as src, zipfile.ZipFile(temp, 'w', zipfile.ZIP_DEFLATED) as out:
         roots = {i.filename.split('/')[0] for i in src.infolist()}
@@ -40,11 +62,14 @@ def main() -> None:
         out.write(args.analyzer, analyzer_dir + 'snesrecomp-analyze.exe')
         out.write(args.toolchain / 'bin/libunwind.dll', analyzer_dir + 'libunwind.dll')
         out.write(args.toolchain / 'LICENSE.TXT', root + '/licenses/LLVM-LICENSE.txt')
+        for crate_id, notice in crate_notices:
+            out.write(notice, root + '/licenses/cargo/' + crate_id + '/' + notice.name)
         manifest = {
             'format': 1, 'kind': 'setup-host', 'platform': 'windows-x64',
             'frame_implementation': 'LLE', 'contains_game_code': False,
             'analyzer_sha256': hashlib.sha256(args.analyzer.read_bytes()).hexdigest(),
             'toolchain_embedded': False,
+            'cargo_license_notices': sorted(found_crates),
             'game_code_generation': 'local, from the player-supplied ROM',
         }
         out.writestr(root + '/PACKAGE_MANIFEST.json', json.dumps(manifest, indent=2) + '\n')

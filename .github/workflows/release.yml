@@ -72,7 +72,7 @@ jobs:
         run: |
           source "${TOOLCHAIN_DIR}/env.sh"
           ./build-ci/SuperBomberman5SNESRecomp.exe --help
-          python -c 'import os,pathlib,subprocess,zipfile; v=os.environ["RELEASE_VERSION"]; p=pathlib.Path(".bootstrap/package-smoke"); zipfile.ZipFile(f"dist/superbomberman5-{v}-windows-x64.zip").extractall(p); exe=next(p.rglob("snesrecomp-analyze.exe")); subprocess.run([str(exe.resolve()),"--help"],check=True)'
+          python -c 'import os,pathlib,subprocess,sys,zipfile; v=os.environ["RELEASE_VERSION"]; p=pathlib.Path(".bootstrap/package-smoke"); zipfile.ZipFile(f"dist/superbomberman5-{v}-windows-x64.zip").extractall(p); exe=next(p.rglob("snesrecomp-analyze.exe")); subprocess.run([sys.executable,"tools/smoke-analyzer.py","--analyzer",str(exe.resolve())],check=True)'
       - uses: actions/upload-artifact@v4
         with:
           name: superbomberman5-windows-x64
