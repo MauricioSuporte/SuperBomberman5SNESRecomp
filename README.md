@@ -3,7 +3,7 @@
 A native recompilation of **Super Bomberman 5** (JPN), built on
 [snesrecomp](https://github.com/RetroPortingToolKit/snesrecomp).
 
-_Add a short description here._
+Projeto de port nativo para PC, inicialmente focado no comportamento original e multiplayer local.
 
 
 
@@ -39,7 +39,7 @@ revision fails immediately instead of producing subtly wrong output.
 
 ```sh
 git submodule update --init --recursive
-bash tools/regen.sh --rom /path/to/Super Bomberman 5 (USA).sfc
+bash tools/regen.sh --rom "Super Bomberman 5 (USA).sfc"
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j
 ```
@@ -57,7 +57,7 @@ both from ever being committed.
 
 ```sh
 ./build/SuperBomberman5SNESRecomp                     # launcher picks the ROM
-./build/SuperBomberman5SNESRecomp /path/to/Super Bomberman 5 (USA).sfc # or name it and skip the launcher
+./build/SuperBomberman5SNESRecomp "Super Bomberman 5 (USA).sfc" # or name it and skip the launcher
 ```
 
 With no ROM on the command line the build opens the recomp-ui launcher: a ROM

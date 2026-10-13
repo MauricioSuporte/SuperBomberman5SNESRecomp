@@ -25,3 +25,8 @@
 /input.ini
 
 .DS_Store
+
+# Local bootstrap checkout and tools
+/.bootstrap/
+/.tools/
+
