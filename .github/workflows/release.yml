@@ -65,7 +65,8 @@ jobs:
             --zip "dist/superbomberman5-${RELEASE_VERSION}-windows-x64.zip" \
             --build-dir build-ci \
             --analyzer snesrecomp/recompiler-rs/target/release/snesrecomp-analyze.exe \
-            --toolchain "${TOOLCHAIN_DIR}"
+            --toolchain "${TOOLCHAIN_DIR}" \
+            --rust-sysroot "$(rustup run 1.97.1-x86_64-pc-windows-gnullvm rustc --print sysroot)"
           python tools/audit-publication.py --zip "dist/superbomberman5-${RELEASE_VERSION}-windows-x64.zip"
           python tools/release-notes.py > dist/notes.md
       - name: Smoke test setup host and packaged analyzer

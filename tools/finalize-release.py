@@ -20,6 +20,7 @@ def main() -> None:
     parser.add_argument('--toolchain', type=pathlib.Path, required=True)
     parser.add_argument('--cargo-home', type=pathlib.Path,
                         default=pathlib.Path(os.environ.get('CARGO_HOME', str(pathlib.Path.home() / '.cargo'))))
+    parser.add_argument('--rust-sysroot', type=pathlib.Path, required=True)
     args = parser.parse_args()
     cache = (args.build_dir / 'CMakeCache.txt').read_text(encoding='utf-8')
     if not re.search(r'^SNESRECOMP_SETUP_HOST:BOOL=ON$', cache, re.M):
@@ -47,6 +48,9 @@ def main() -> None:
     required = {'serde_json', 'serde_core', 'memchr', 'itoa', 'zmij'}
     if not required.issubset(found_crates):
         raise SystemExit('Cargo license notices missing: ' + ', '.join(sorted(required - found_crates)))
+    rust_docs = args.rust_sysroot / 'share/doc/rust'
+    if not (rust_docs / 'COPYRIGHT-library.html').is_file() or not (rust_docs / 'licenses').is_dir():
+        raise SystemExit('Rust standard-library copyright/license notices missing.')
     temp = args.zip.with_suffix('.auditing.zip')
     with zipfile.ZipFile(args.zip) as src, zipfile.ZipFile(temp, 'w', zipfile.ZIP_DEFLATED) as out:
         roots = {i.filename.split('/')[0] for i in src.infolist()}
@@ -64,6 +68,10 @@ def main() -> None:
         out.write(args.toolchain / 'LICENSE.TXT', root + '/licenses/LLVM-LICENSE.txt')
         for crate_id, notice in crate_notices:
             out.write(notice, root + '/licenses/cargo/' + crate_id + '/' + notice.name)
+        out.write(rust_docs / 'COPYRIGHT-library.html', root + '/licenses/rust/COPYRIGHT-library.html')
+        for notice in (rust_docs / 'licenses').rglob('*'):
+            if notice.is_file():
+                out.write(notice, root + '/licenses/rust/licenses/' + notice.relative_to(rust_docs / 'licenses').as_posix())
         manifest = {
             'format': 1, 'kind': 'setup-host', 'platform': 'windows-x64',
             'frame_implementation': 'LLE', 'contains_game_code': False,

@@ -23,7 +23,7 @@ Do not package the development `build-lle/` executable: it includes locally gene
 The official packager is `scripts/package_release.sh`; its output is completed and audited by:
 
 ```powershell
-python tools/finalize-release.py --zip dist/superbomberman5-0.1.0-windows-x64.zip --build-dir build-ci --analyzer snesrecomp/recompiler-rs/target/release/snesrecomp-analyze.exe --toolchain C:/path/to/toolchain --cargo-home C:/path/to/cargo
+python tools/finalize-release.py --zip dist/superbomberman5-0.1.0-windows-x64.zip --build-dir build-ci --analyzer snesrecomp/recompiler-rs/target/release/snesrecomp-analyze.exe --toolchain C:/path/to/toolchain --cargo-home C:/path/to/cargo --rust-sysroot C:/path/to/rust-toolchain
 python tools/audit-publication.py --zip dist/superbomberman5-0.1.0-windows-x64.zip
 ```
 

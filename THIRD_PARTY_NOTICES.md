@@ -7,6 +7,7 @@ The game-side project was scaffolded from SNESRecomp. Existing Matthew Stanley c
 | SNESRecomp | https://github.com/RetroPortingToolKit/snesrecomp | `snesrecomp/LICENSE` and component notices in that submodule |
 | recomp-ui | https://github.com/RetroPortingToolKit/recomp-ui | `recomp-ui/LICENSE` and bundled third-party notices |
 | Native analyzer | SNESRecomp `recompiler-rs` | `snesrecomp/LICENSE`; actual Cargo dependency license texts are bundled under `licenses/cargo/` in the release |
+| Rust standard library linked into the analyzer | https://github.com/rust-lang/rust | `licenses/rust/COPYRIGHT-library.html` and its referenced license texts in the release |
 | LLVM libunwind DLL, if bundled | RetroPorting Toolchains / llvm-mingw | `licenses/LLVM-LICENSE.txt` in the Windows release; source: https://github.com/llvm/llvm-project |
 | Portable build tools, downloaded separately | https://github.com/RetroPortingToolKit/RetroPorting-Toolchains | Notices and licenses supplied with the official toolchain archive |
 
