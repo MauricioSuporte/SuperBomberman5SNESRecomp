@@ -4,7 +4,7 @@ Pacote `superbomberman5.ptbr`, versão `0.1.0`, feature `menus_ptbr`, plugin nat
 
 ## Como testar
 
-Compile o código atual, que prepara a versão 0.2.0 (`./tools/build-windows.ps1`), e abra `play.cmd`. No launcher, entre em **Mods**, encontre **Português brasileiro — menus (prévia)**, ative **Menus em português brasileiro** e selecione Play. Desative a feature para voltar aos textos originais. A release antiga do jogo **v0.1.0 não inclui este plugin**; instalar o pacote nela não adiciona código nativo.
+Use a release v0.2.0 e conclua Generate & rebuild com sua ROM. Para compilar este checkout, use `./tools/build-windows.ps1` e abra `play.cmd`. No launcher, entre em **Mods**, encontre **Português brasileiro — menus (prévia)**, ative **Menus em português brasileiro** e selecione Play. Desative a feature para voltar aos textos originais. A release antiga do jogo **v0.1.0 não inclui este plugin**; instalar o pacote nela não adiciona código nativo.
 
 Para gerar o arquivo instalável, sem ler a ROM:
 

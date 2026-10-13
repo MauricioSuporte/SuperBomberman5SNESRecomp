@@ -2,7 +2,7 @@
 
 Public repository: `MauricioSuporte/SuperBomberman5SNESRecomp`. The initial release is **v0.1.0**, marked as a prerelease. Windows x64 is the qualified platform; Linux/macOS are not release targets yet.
 
-Current source VERSION is **0.2.0**, preparing the PT-BR menu mod; no v0.2.0 tag/release has been published yet. Do not replace v0.1.0 assets to add the new plugin. Publish a separate version when requested and validated.
+Current VERSION is **0.2.0**, the Windows prerelease with the optional PT-BR menu mod v0.1.0. Its setup pack includes the mod; a separate data-only `.snesmod` is also provided. Preserve the older v0.1.0 tag and assets.
 
 Generate notes with `python tools/release-notes.py --output .bootstrap/notes.md`; read that file as UTF-8 and send UTF-8 JSON bytes through the API. Avoid Windows console pipelines that may replace accented characters. Verify the returned body equals the authored text and contains no U+FFFD. Use `--version 0.1.0` when repairing the already published release.
 
@@ -27,8 +27,8 @@ Do not package the development `build-lle/` executable: it includes locally gene
 The official packager is `scripts/package_release.sh`; its output is completed and audited by:
 
 ```powershell
-python tools/finalize-release.py --zip dist/superbomberman5-0.1.0-windows-x64.zip --build-dir build-ci --analyzer snesrecomp/recompiler-rs/target/release/snesrecomp-analyze.exe --toolchain C:/path/to/toolchain --cargo-home C:/path/to/cargo --rust-sysroot C:/path/to/rust-toolchain
-python tools/audit-publication.py --zip dist/superbomberman5-0.1.0-windows-x64.zip
+python tools/finalize-release.py --zip dist/superbomberman5-0.2.0-windows-x64.zip --build-dir build-ci --analyzer snesrecomp/recompiler-rs/target/release/snesrecomp-analyze.exe --toolchain C:/path/to/toolchain --cargo-home C:/path/to/cargo --rust-sysroot C:/path/to/rust-toolchain
+python tools/audit-publication.py --zip dist/superbomberman5-0.2.0-windows-x64.zip
 ```
 
 Use the exact package version in the filename. The finalizer creates `dist/SHA256SUMS`. Preserve `SOURCE_REVISIONS`, `PACKAGE_MANIFEST.json` and licenses in the archive.

@@ -56,13 +56,13 @@ Um smoke test adicional de 180 frames abriu a janela SDL real do Windows e o dis
 
 O corpo da release v0.1.0 apresentou caracteres de substituição ao passar pela saída do console do Windows. Foi corrigido via API com bytes UTF-8 explícitos, comparando o texto remoto com o original e verificando a ausência de U+FFFD. `tools/release-notes.py --output <arquivo>` agora grava UTF-8 diretamente; `--version 0.1.0` permite corrigir notas históricas sem mudar a versão do código.
 
-O código atual prepara a versão **0.2.0**, ainda sem nova release/tag pública, com o primeiro mod `superbomberman5.ptbr` v0.1.0. São sete rótulos de título e modo normal, fonte própria com Ç/Õ, feature desligada por padrão, ativação na aba Mods e `.snesmod` somente de dados. A antiga release v0.1.0 não tem o plugin nativo.
+O código atual prepara a versão **0.2.0**, com o primeiro mod `superbomberman5.ptbr` v0.1.0. São sete rótulos de título e modo normal, fonte própria com Ç/Õ, feature desligada por padrão, ativação na aba Mods e `.snesmod` somente de dados. A antiga release v0.1.0 não tem o plugin nativo.
 
 Capturas locais mostram os rótulos traduzidos. O teste nativo de restauração verificou desenho alterado durante o frame, guarda de superfície, restauração integral da VRAM e caminho desativado. Uma rota com o mod ativo terminou em 3628 frames e entrou na primeira fase, sem erros de dispatch/BRK. Fonte e código autorais são públicos; ROM, tiles extraídos e capturas ficam locais. Escopo e instruções: `docs/TRANSLATION_PTBR.md`.
 
 ## Ampliação e correções da tradução PT-BR
 
-A prévia de menus agora tem 62 rótulos de background e um cabeçalho de sprites: título, 1/2 jogadores, modo normal, arquivos, opções/senha/teste de som, tipos de batalha, participantes, personagens, regras e cabeçalho de fases. Inclui acentos, algarismos, sombra, traços mais espessos no título e cabeçalhos azuis. Permanece uma prévia do host 0.2.0; a release/tag 0.1.0 não foi substituída.
+A prévia de menus agora tem 62 rótulos de background e um cabeçalho de sprites: título, 1/2 jogadores, modo normal, arquivos, opções/senha/teste de som, tipos de batalha, participantes, personagens, regras e cabeçalho de fases. Inclui acentos, algarismos, sombra, traços mais espessos no título e cabeçalhos azuis. Incluída como prévia no host 0.2.0; a release/tag 0.1.0 não foi substituída.
 
 O corte de JOGO NORMAL ocorria porque a nova fonte ocupava a janela HDMA usada pelo jogo para ocultar Start. O título respeita agora a margem superior do original; o aviso ocupa suas duas linhas de tiles. Capturas consecutivas de 1215 a 1551 verificaram Start aceso/apagado, sem cortar JOGO NORMAL. A paleta de textos longos agora vem do início do rótulo, inclusive sobre espaços antigos; slots de tiles são estáveis por tela, separados dos gráficos em uso.
 
@@ -83,3 +83,7 @@ Uma tentativa de promover reset e NMI a AOT descobriu 69 variantes elegíveis, m
 3. Comparar frames, WRAM, interrupções e áudio com uma referência independente (bsnes/Snes9x/Mesen).
 4. Validar fases, bombas, colisões, bosses, saves e multiplayer local, incluindo entradas de P3–P5 no host desktop.
 5. Validar configurações e fluxo completo do launcher, empacotamento e workflow antes da publicação no GitHub.
+
+## Release v0.2.0
+
+Pré-release Windows x64 com o mod PT-BR v0.1.0 incluído no catálogo Mods, mais arquivo `.snesmod` separado. Publicação usa um checkout limpo e setup host LLE, sem código gerado/ROM. SHA256SUMS cobre o ZIP e o mod. A versão 0.1.0 permanece preservada. Tradução e precisão do jogo continuam parciais.

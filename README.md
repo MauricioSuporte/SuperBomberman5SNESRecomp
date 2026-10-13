@@ -17,7 +17,7 @@ An unofficial, noncommercial **Super Bomberman 5** PC port prototype built with 
 | Windows video and audio devices | Initialization and callbacks tested; audio accuracy not independently compared |
 | Static CPU recompilation | Small AOT coverage; reset/NMI and most game logic remain interpreted |
 | Five-player multitap | Port 2 configured; P2–P5 and battle mode not validated |
-| PT-BR mod (current source build) | Optional title, files, options and battle setup/rules translation preview; not included in the old v0.1.0 release |
+| PT-BR mod (v0.2.0) | Optional title, files, options and battle setup/rules translation preview; included in the v0.2.0 setup pack |
 | Netplay / widescreen enhancements | Not implemented for this title |
 | Linux / macOS | Framework build paths exist; this release is Windows only |
 
@@ -47,7 +47,7 @@ The developer's local filename is `Super Bomberman 5 (USA).sfc`, but its header 
 
 ### Mods — Brazilian Portuguese preview
 
-The current source build includes **Português brasileiro — menus (prévia)** in **Mods**. Enable **Menus em português brasileiro** and select Play. It translates mapped title, player/file selection, options, sound test and battle setup/rules labels with authored glyphs and Portuguese accents, without modifying the ROM. Disable it to restore original presentation. This is a partial menu translation; unmapped screens, dialogue/endings and gameplay messages remain original. Title blinking is preserved without clipping the normal-game label. The published host v0.1.0 predates the plugin and cannot run this mod. See [PT-BR implementation and testing](docs/TRANSLATION_PTBR.md).
+The v0.2.0 release includes **Português brasileiro — menus (prévia)** in **Mods**. Enable **Menus em português brasileiro** and select Play. It translates mapped title, player/file selection, options, sound test and battle setup/rules labels with authored glyphs and Portuguese accents, without modifying the ROM. Disable it to restore original presentation. This is a partial menu translation; unmapped screens, dialogue/endings and gameplay messages remain original. Title blinking is preserved without clipping the normal-game label. The published host v0.1.0 predates the plugin and cannot run this mod. See [PT-BR implementation and testing](docs/TRANSLATION_PTBR.md).
 
 Build a data-only installable archive with `python tools/generate-ptbr.py --mod-out dist/superbomberman5-ptbr-menus-0.1.0.snesmod`. The trusted plugin must already be linked into the host; the package cannot install native code.
 
@@ -125,7 +125,7 @@ Requer Windows 10 ou superior, x64, e alguns GB livres. **Nenhuma ROM, código g
 
 ### Mods — tradução PT-BR (prévia)
 
-No executável compilado a partir do código atual, abra **Mods → Português brasileiro — menus (prévia)**, ative **Menus em português brasileiro** e clique em Play. Há traduções para título, seleção de jogadores/arquivos, cabeçalhos, opções, teste de som, menus/regras de batalha e cabeçalho de fases, com acentos numa fonte própria. O aviso de Start pisca sem cortar JOGO NORMAL. É uma tradução parcial; telas não mapeadas e mensagens de fases/finais ainda permanecem originais. Desative para retornar à apresentação original. **A release antiga v0.1.0 não contém o plugin**. Veja [TRANSLATION_PTBR.md](docs/TRANSLATION_PTBR.md) para instruções, escopo e criação do `.snesmod`.
+Na versão v0.2.0, depois de Generate & rebuild, abra **Mods → Português brasileiro — menus (prévia)**, ative **Menus em português brasileiro** e clique em Play. Há traduções para título, seleção de jogadores/arquivos, cabeçalhos, opções, teste de som, menus/regras de batalha e cabeçalho de fases, com acentos numa fonte própria. O aviso de Start pisca sem cortar JOGO NORMAL. É uma tradução parcial; telas não mapeadas e mensagens de fases/finais ainda permanecem originais. Desative para retornar à apresentação original. **A release antiga v0.1.0 não contém o plugin**. Veja [TRANSLATION_PTBR.md](docs/TRANSLATION_PTBR.md) para instruções, escopo e criação do `.snesmod`.
 
 ### Controles e início de partida
 
