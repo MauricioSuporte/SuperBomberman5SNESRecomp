@@ -1,0 +1,21 @@
+# Progressive symbol map for Super Bomberman 5.
+#
+# Each [[func]] names an address the analyzer should treat as a function.
+# Set emit = true to promote one into ahead-of-time codegen; leave it false
+# to keep it interpreted. tools/regen.sh syncs labels and tier choices into
+# each recomp/bankNN.cfg; only emit=true adds a func/funcs.h declaration.
+# Do not hand-edit the generated blocks in the bank configs.
+
+[[func]]
+name = "I_RESET"
+addr = "f348"
+bank = 0
+emit = false
+note = "Emulation RESET vector ($FFFC)"
+
+[[func]]
+name = "I_NMI"
+addr = "f3ba"
+bank = 0
+emit = false
+note = "Native NMI vector ($FFEA)"
