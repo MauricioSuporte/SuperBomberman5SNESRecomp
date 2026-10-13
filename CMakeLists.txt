@@ -34,6 +34,10 @@ endif()
 # Must precede the include: runner.cmake reads it to add the loader sources.
 set(SNESRECOMP_ENABLE_MODS ON CACHE BOOL
     "Mod package loader + trusted plugins (required for every title)" FORCE)
+# The first Bomberman release is qualified against LLE composition. Keep the
+# launcher's first-run rebuild on that same path unless explicitly overridden.
+set(SNESRECOMP_FRAME_IMPL "LLE" CACHE STRING
+    "Frame compositor validated for this game (LLE; HLE is experimental)")
 include(${SNESRECOMP_ROOT}/runner/runner.cmake)
 
 add_executable(SuperBomberman5SNESRecomp
