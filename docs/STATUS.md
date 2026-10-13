@@ -60,6 +60,16 @@ O código atual prepara a versão **0.2.0**, ainda sem nova release/tag pública
 
 Capturas locais mostram os rótulos traduzidos. O teste nativo de restauração verificou desenho alterado durante o frame, guarda de superfície, restauração integral da VRAM e caminho desativado. Uma rota com o mod ativo terminou em 3628 frames e entrou na primeira fase, sem erros de dispatch/BRK. Fonte e código autorais são públicos; ROM, tiles extraídos e capturas ficam locais. Escopo e instruções: `docs/TRANSLATION_PTBR.md`.
 
+## Ampliação e correções da tradução PT-BR
+
+A prévia de menus agora tem 62 rótulos de background e um cabeçalho de sprites: título, 1/2 jogadores, modo normal, arquivos, opções/senha/teste de som, tipos de batalha, participantes, personagens, regras e cabeçalho de fases. Inclui acentos, algarismos, sombra, traços mais espessos no título e cabeçalhos azuis. Permanece uma prévia do host 0.2.0; a release/tag 0.1.0 não foi substituída.
+
+O corte de JOGO NORMAL ocorria porque a nova fonte ocupava a janela HDMA usada pelo jogo para ocultar Start. O título respeita agora a margem superior do original; o aviso ocupa suas duas linhas de tiles. Capturas consecutivas de 1215 a 1551 verificaram Start aceso/apagado, sem cortar JOGO NORMAL. A paleta de textos longos agora vem do início do rótulo, inclusive sobre espaços antigos; slots de tiles são estáveis por tela, separados dos gráficos em uso.
+
+Telas de jogadores e regras reutilizam IDs de tiles com conteúdos diferentes. Guardas de contexto distinguem as telas e são avaliadas antes de desenhar qualquer rótulo. O teste nativo cobre restauração integral da VRAM, ativação/desativação, alinhamento, slots, paletas, contexto compartilhado e cabeçalho de sprites sem alterar OAM. O build Windows LLE e os testes de publicação/UTF-8 passaram. Capturas e rotas de navegação ficam exclusivamente em `.bootstrap/ptbr-*/`; configurações do usuário foram preservadas, com testes do mod em cópias isoladas.
+
+Nomes e descrições das arenas, confirmações de arquivos e telas não verificadas de equipes/Bombermania ainda podem permanecer originais. Navegação em preparação de batalha não qualifica a precisão de partidas nem P2–P5. Escopo detalhado: `docs/TRANSLATION_PTBR.md`.
+
 ## Cobertura nativa e limitação atual
 
 A configuração conservadora gera cinco variantes AOT elegíveis e quatro variantes LLE, em nove variantes exatas. A maior parte da lógica do jogo ainda executa no interpretador. Isso é uma primeira integração compilada, não uma recompilação nativa completa do jogo.

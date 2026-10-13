@@ -9,9 +9,13 @@
 #include <string.h>
 
 typedef struct {
-    unsigned layer, row, column, width, height, guard0, guard1, ink;
+    unsigned layer, row, column, width, height, guard0, guard1, ink, tile, style, context_row, context_column, context_tile;
     const char *text;
 } PtbrLabel;
+typedef struct {
+    unsigned slot, count, x, y, guard;
+    const char *text;
+} PtbrObjectLabel;
 #include "ptbr_labels.h"
 
 /* Five-column, seven-row uppercase alphabet authored for this overlay. */
@@ -28,7 +32,7 @@ static const uint8_t kFont[26][7] = {
 };
 static bool s_enabled;
 typedef struct { uint16_t address, original; } SavedWord;
-static SavedWord s_saved[4096];
+static SavedWord s_saved[8192];
 static unsigned s_saved_count;
 
 static void reset_ptbr(void) { s_enabled = false; s_saved_count = 0; }
@@ -44,28 +48,76 @@ static unsigned next_character(const unsigned char **at) {
     return c;
 }
 
-static void render_text(uint8_t pixels[16][136], const PtbrLabel *label) {
-    memset(pixels, 0, 16*136);
+static const uint8_t kDigits[10][7] = {
+ {14,17,19,21,25,17,14},{4,12,4,4,4,4,14},{14,17,1,2,4,8,31},
+ {30,1,1,14,1,1,30},{2,6,10,18,31,2,2},{31,16,16,30,1,1,30},
+ {14,16,16,30,17,17,14},{31,1,2,4,8,8,8},{14,17,17,14,17,17,14},
+ {14,17,17,15,1,1,14}
+};
+
+/* Own glyphs with the original menu's proportions, weight, shadow and palette.
+ * Banners use a wider face and a blue bevel. No extracted pixels are stored. */
+static void render_text(uint8_t pixels[32][224], const PtbrLabel *label) {
+    unsigned width = label->width*8;
+    memset(pixels, 0, 32*224);
     const unsigned char *at = (const unsigned char *)label->text;
-    unsigned x = 0, scale = label->height == 16 ? 2 : 1;
+    unsigned count=0;
+    while(*at) { next_character(&at); ++count; }
+    unsigned stride=label->style==1?8:7;
+    if(label->style==2 || label->style==4) {
+        stride=width/count;
+        if(stride>11) stride=11;
+        if(label->style==2)
+            for(unsigned y=0;y<16;++y) for(unsigned x=0;x<width;++x) pixels[y][x]=y<8?11:10;
+    }
+    if(label->style==3) {
+        stride=18;
+        for(unsigned y=24;y<label->height;++y) for(unsigned b=0;b<width;++b) pixels[y][b]=12;
+    }
+    unsigned glyph_width=label->style==0?5:stride-2;
+    unsigned x=(label->style>=2 || (label->style==1 && label->ink==3))?(width-count*stride)/2:0;
+    at=(const unsigned char *)label->text;
     while (*at) {
         unsigned c = next_character(&at), accent = 0;
         if (c == 0xC7) { c = 'C'; accent = 2; }
         else if (c == 0xD5) { c = 'O'; accent = 1; }
         else if (c == 0xC3) { c = 'A'; accent = 1; }
+        else if (c == 0xC1) { c = 'A'; accent = 3; }
         else if (c == 0xC9) { c = 'E'; accent = 3; }
-        unsigned top = accent == 1 || accent == 3 ? 1 : 0;
-        if (c >= 'A' && c <= 'Z') {
-            for (unsigned y = 0; y < 7; ++y)
-                for (unsigned b = 0; b < 5; ++b)
-                    if (kFont[c-'A'][y] & (1u << (4-b)))
-                        for (unsigned s = 0; s < scale; ++s)
-                            pixels[(y+top)*scale+s][x+b] = 1;
-            if (accent == 1) { pixels[0][x+1]=1; pixels[0][x+3]=1; pixels[1 % scale][x+2]=1; }
-            if (accent == 2) { pixels[label->height-1][x+2]=1; }
-            if (accent == 3) { pixels[0][x+3]=1; }
+        else if (c == 0xCD) { c = 'I'; accent = 3; }
+        else if (c == 0xD3) { c = 'O'; accent = 3; }
+        else if (c == 0xDA) { c = 'U'; accent = 3; }
+        else if (c == 0xC2) { c = 'A'; accent = 4; }
+        else if (c == 0xCA) { c = 'E'; accent = 4; }
+        else if (c == 0xD4) { c = 'O'; accent = 4; }
+        const uint8_t *glyph=c>='A'&&c<='Z'?kFont[c-'A']:c>='0'&&c<='9'?kDigits[c-'0']:NULL;
+        unsigned top=label->style==1?4:accent && accent!=2?2:0, height=(label->height==32?28:14)-top;
+        uint8_t mask[32][20]={{0}};
+        if(glyph) {
+            bool bold=label->style==1 || label->style==2 || label->style==4;
+            unsigned raster_width=glyph_width-(bold?1:0);
+            for(unsigned y=0;y<height;++y) for(unsigned b=0;b<raster_width;++b)
+                if(glyph[y*7/height] & (1u<<(4-b*5/raster_width))) {
+                    mask[y+top][b]=1;
+                    if(bold) mask[y+top][b+1]=1;
+                }
+            if(accent==1) { mask[0][1]=1;mask[0][3]=1;mask[1][2]=1; }
+            if(accent==2) { mask[14][2]=1;mask[15][1]=1; }
+            if(accent==3) { mask[0][3]=1;mask[1][2]=1; }
+            if(accent==4) { mask[0][2]=1;mask[1][1]=1;mask[1][3]=1; }
+            for(unsigned y=0;y<label->height-1;++y) for(unsigned b=0;b<glyph_width;++b)
+                if(mask[y][b] && x+b+1<width) {
+                    pixels[y+1][x+b+1]=1;
+                    if(label->style==1 || label->style==2 || label->style==4) {
+                        if(y) pixels[y-1][x+b]=1;
+                        if(x+b) pixels[y][x+b-1]=1;
+                        pixels[y][x+b+1]=1;
+                    }
+                }
+            for(unsigned y=0;y<label->height;++y) for(unsigned b=0;b<glyph_width;++b)
+                if(mask[y][b] && x+b<width) pixels[y][x+b]=label->style==2?(y<7?7:3):label->style==4?(y<7?6:3):label->ink;
         }
-        x += 6;
+        x+=stride;
     }
 }
 
@@ -75,33 +127,84 @@ static void save_write(Ppu *ppu, unsigned address, uint16_t value) {
     ppu->vram[address] = value;
 }
 
-static void apply_labels(Ppu *ppu) {
-    unsigned next_tile[3] = {0x180,0,0x140};
-    if ((ppu->bgmode & 7) != 1) return;
-    for (size_t n = 0; n < sizeof(kLabels)/sizeof(kLabels[0]); ++n) {
-        const PtbrLabel *label = &kLabels[n];
-        unsigned map = PPU_bgTilemapAdr(ppu,label->layer), base = PPU_bgTileAdr(ppu,label->layer);
-        if (map != (label->layer == 0 ? 0x3000u : 0x4000u)) continue;
-        unsigned start = map + label->row*32 + label->column;
-        if ((ppu->vram[start] & 0x3FF) != label->guard0 ||
-            (ppu->vram[start+1] & 0x3FF) != label->guard1) continue;
-        uint8_t pixels[16][136];
-        render_text(pixels,label);
-        unsigned rows=label->height/8, bpp=label->layer==0?4:2;
-        for (unsigned ty=0; ty<rows; ++ty) for (unsigned tx=0; tx<label->width; ++tx) {
-            unsigned tile=next_tile[label->layer]++;
-            unsigned map_addr=start+ty*32+tx;
-            uint16_t attributes=ppu->vram[map_addr] & 0xFC00;
-            save_write(ppu,map_addr,(uint16_t)(attributes|tile));
-            for (unsigned y=0; y<8; ++y) {
-                uint8_t bits=0;
-                for (unsigned x=0;x<8;++x) if(pixels[ty*8+y][tx*8+x]) bits|=(uint8_t)(1u<<(7-x));
-                /* Preserve the title's white/yellow roles and normal-menu green. */
-                save_write(ppu,base+tile*(bpp*4)+y,bpp==2?(uint16_t)(((label->ink&1)?bits:0)|((label->ink&2)?bits<<8:0)):0);
-                if(bpp==4) save_write(ppu,base+tile*16+y+8,bits);
+/* Stage selection's blue heading is a strip of 16x16 OBJ tiles. Its
+ * tiles are unique to this strip, so replace their pixels in place only
+ * during rendering, preserving OAM, priority and the original palette. */
+static void apply_object_labels(Ppu *ppu) {
+    if(PPU_objSize(ppu)!=0 || PPU_bgTilemapAdr(ppu,0)!=0x3000u || ppu->vram[0x30C9]!=0x3092) return;
+    for(size_t n=0;n<sizeof(kObjectLabels)/sizeof(kObjectLabels[0]);++n) {
+        const PtbrObjectLabel *label=&kObjectLabels[n];
+        bool matched=true;
+        for(unsigned i=0;i<label->count;++i) {
+            unsigned slot=label->slot+i, word=ppu->oam[slot*2+1];
+            unsigned tile=((label->guard>>4)+(i/8)*2)*16+((label->guard+i*2)&15);
+            if(ppu->oam[slot*2] != (label->y*256+label->x+i*16) ||
+               word!=(0x2000u|tile) ||
+               ((ppu->highOam[slot/4]>>((slot%4)*2))&3)!=2) { matched=false;break; }
+        }
+        if(!matched || label->count*64 > sizeof(s_saved)/sizeof(s_saved[0])-s_saved_count) continue;
+        PtbrLabel face={.width=label->count*2,.height=16,.style=4,.text=label->text};
+        uint8_t pixels[32][224]; render_text(pixels,&face);
+        for(unsigned i=0;i<label->count;++i) {
+            unsigned tile=ppu->oam[(label->slot+i)*2+1]&255;
+            for(unsigned ty=0;ty<2;++ty) for(unsigned tx=0;tx<2;++tx) for(unsigned y=0;y<8;++y) {
+                uint16_t planes[2]={0,0};
+                for(unsigned x=0;x<8;++x) {
+                    unsigned color=pixels[ty*8+y][i*16+tx*8+x];
+                    for(unsigned plane=0;plane<4;++plane)
+                        if(color&(1u<<plane)) planes[plane/2]|=(uint16_t)(1u<<((7-x)+(plane%2)*8));
+                }
+                unsigned address=PPU_objTileAdr1(ppu)+(tile+ty*16+tx)*16+y;
+                save_write(ppu,address,planes[0]);save_write(ppu,address+8,planes[1]);
             }
         }
     }
+}
+
+static void apply_labels(Ppu *ppu) {
+    if ((ppu->bgmode & 7) != 1) return;
+    enum { count=sizeof(kLabels)/sizeof(kLabels[0]) };
+    bool matched[count];
+    uint16_t palette[count];
+    /* Decide from the guest surface before any replacement changes context
+     * tiles. A banner and all of its rows may share the same screen guard. */
+    for (size_t n=0;n<count;++n) {
+        const PtbrLabel *label=&kLabels[n];
+        unsigned map=PPU_bgTilemapAdr(ppu,label->layer);
+        unsigned start=map+label->row*32+label->column;
+        matched[n]=map==(0x3000u+label->layer*0x800u) &&
+            (ppu->vram[start]&0x3FF)==label->guard0 &&
+            (ppu->vram[start+1]&0x3FF)==label->guard1 &&
+            (!label->context_tile || (ppu->vram[map+label->context_row*32+label->context_column]&0x3FF)==label->context_tile);
+        palette[n]=matched[n]?(ppu->vram[start]&0x3C00):0;
+    }
+    for (size_t n=0;n<count;++n) {
+        if(!matched[n]) continue;
+        const PtbrLabel *label=&kLabels[n];
+        unsigned map=PPU_bgTilemapAdr(ppu,label->layer), base=PPU_bgTileAdr(ppu,label->layer);
+        unsigned start=map+label->row*32+label->column;
+        uint8_t pixels[32][224];
+        render_text(pixels,label);
+        unsigned rows=label->height/8, bpp=label->layer!=2?4:2;
+        if(rows*label->width*(1+bpp*4) > sizeof(s_saved)/sizeof(s_saved[0])-s_saved_count) continue;
+        uint16_t attributes=palette[n];
+        for (unsigned ty=0; ty<rows; ++ty) for (unsigned tx=0; tx<label->width; ++tx) {
+            unsigned tile=label->tile+ty*label->width+tx;
+            unsigned map_addr=start+ty*32+tx;
+            save_write(ppu,map_addr,(uint16_t)(attributes|tile));
+            for (unsigned y=0; y<8; ++y) {
+                uint16_t planes[2]={0,0};
+                for (unsigned x=0;x<8;++x) {
+                    unsigned color=pixels[ty*8+y][tx*8+x], bit=7-x;
+                    for(unsigned plane=0;plane<bpp;++plane)
+                        if(color & (1u<<plane)) planes[plane/2]|=(uint16_t)(1u<<(bit+(plane%2)*8));
+                }
+                save_write(ppu,base+tile*(bpp*4)+y,planes[0]);
+                if(bpp==4) save_write(ppu,base+tile*16+y+8,planes[1]);
+            }
+        }
+    }
+    apply_object_labels(ppu);
     if(s_saved_count) ++ppu->vramWriteCount;
 }
 
