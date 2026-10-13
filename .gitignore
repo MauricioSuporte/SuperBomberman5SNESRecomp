@@ -54,6 +54,7 @@ funcs.h
 *.lib
 *.pdb
 *.zip
+*.snesmod
 *.7z
 *.rar
 *.tar

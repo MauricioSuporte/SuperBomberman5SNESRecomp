@@ -17,6 +17,7 @@ An unofficial, noncommercial **Super Bomberman 5** PC port prototype built with 
 | Windows video and audio devices | Initialization and callbacks tested; audio accuracy not independently compared |
 | Static CPU recompilation | Small AOT coverage; reset/NMI and most game logic remain interpreted |
 | Five-player multitap | Port 2 configured; P2–P5 and battle mode not validated |
+| PT-BR mod (current source build) | Optional title/normal-menu translation preview; not included in the old v0.1.0 release |
 | Netplay / widescreen enhancements | Not implemented for this title |
 | Linux / macOS | Framework build paths exist; this release is Windows only |
 
@@ -43,6 +44,12 @@ The developer's local filename is `Super Bomberman 5 (USA).sfc`, but its header 
 | SHA-256 | `5251e6491872dc51879b630a34d76a92e29ea0c39026c4f8773c1fe006d047c4` |
 
 [rom_identity.txt](rom_identity.txt) is authoritative. No ROM download links are provided.
+
+### Mods — Brazilian Portuguese preview
+
+The current source build includes **Português brasileiro — menus (prévia)** in **Mods**. Enable **Menus em português brasileiro** and select Play. It translates seven mapped labels with authored glyphs, including Ç/Õ, without modifying the ROM. Disable it to restore original presentation. This is a partial menu translation; banners, other menus, dialogue/endings and gameplay messages are still pending. The published host v0.1.0 predates the plugin and cannot run this mod. See [PT-BR implementation and testing](docs/TRANSLATION_PTBR.md).
+
+Build a data-only installable archive with `python tools/generate-ptbr.py --mod-out dist/superbomberman5-ptbr-menus-0.1.0.snesmod`. The trusted plugin must already be linked into the host; the package cannot install native code.
 
 ### Controls and starting a game
 
@@ -115,6 +122,10 @@ Protótipo não oficial e não comercial de port de **Super Bomberman 5** para P
 5. Nas próximas execuções, abra o jogo em `build/` e ajuste os controles no launcher.
 
 Requer Windows 10 ou superior, x64, e alguns GB livres. **Nenhuma ROM, código gerado da ROM ou recurso extraído acompanha o download.** O arquivo de desenvolvimento tem “USA” no nome, porém o cabeçalho indica **JPN**. Confira os hashes em [Supported ROM](#supported-rom); o nome do arquivo não garante compatibilidade.
+
+### Mods — tradução PT-BR (prévia)
+
+No executável compilado a partir do código atual, abra **Mods → Português brasileiro — menus (prévia)**, ative **Menus em português brasileiro** e clique em Play. Sete rótulos de título/modo normal estão traduzidos, com cedilha e til numa fonte própria. É uma tradução parcial; banners, demais menus e mensagens do jogo ainda não foram mapeados. Desative para retornar à apresentação original. **A release antiga v0.1.0 não contém o plugin**. Veja [TRANSLATION_PTBR.md](docs/TRANSLATION_PTBR.md) para instruções, escopo e criação do `.snesmod`.
 
 ### Controles e início de partida
 

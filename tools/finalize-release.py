@@ -81,8 +81,9 @@ def main() -> None:
             'game_code_generation': 'local, from the player-supplied ROM',
         }
         out.writestr(root + '/PACKAGE_MANIFEST.json', json.dumps(manifest, indent=2) + '\n')
+        version = (pathlib.Path(__file__).resolve().parents[1] / 'VERSION').read_text().strip()
         out.writestr(root + '/LEIA-ME.txt',
-            'Super Bomberman 5 0.1.0 — protótipo Windows x64\n\n'
+            f'Super Bomberman 5 {version} — protótipo Windows x64\n\n'
             'Este pacote não contém a ROM nem código gerado a partir dela.\n'
             '1. Extraia todo o ZIP para uma pasta gravável.\n'
             '2. Abra SuperBomberman5SNESRecomp.exe.\n'

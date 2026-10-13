@@ -52,6 +52,14 @@ A rota final `validation/first-stage.input` chegou à primeira fase da Zone 1 e 
 
 Um smoke test adicional de 180 frames abriu a janela SDL real do Windows e o dispositivo de áudio real, com callbacks de áudio e saída normal. O launcher ImGui/SDL3 também abriu e encerrou normalmente pelo mecanismo de smoke test de 60 frames. Isso comprova inicialização dos dispositivos, não fidelidade ou qualidade sonora auditiva.
 
+## Correção de encoding e primeiro mod PT-BR
+
+O corpo da release v0.1.0 apresentou caracteres de substituição ao passar pela saída do console do Windows. Foi corrigido via API com bytes UTF-8 explícitos, comparando o texto remoto com o original e verificando a ausência de U+FFFD. `tools/release-notes.py --output <arquivo>` agora grava UTF-8 diretamente; `--version 0.1.0` permite corrigir notas históricas sem mudar a versão do código.
+
+O código atual prepara a versão **0.2.0**, ainda sem nova release/tag pública, com o primeiro mod `superbomberman5.ptbr` v0.1.0. São sete rótulos de título e modo normal, fonte própria com Ç/Õ, feature desligada por padrão, ativação na aba Mods e `.snesmod` somente de dados. A antiga release v0.1.0 não tem o plugin nativo.
+
+Capturas locais mostram os rótulos traduzidos. O teste nativo de restauração verificou desenho alterado durante o frame, guarda de superfície, restauração integral da VRAM e caminho desativado. Uma rota com o mod ativo terminou em 3628 frames e entrou na primeira fase, sem erros de dispatch/BRK. Fonte e código autorais são públicos; ROM, tiles extraídos e capturas ficam locais. Escopo e instruções: `docs/TRANSLATION_PTBR.md`.
+
 ## Cobertura nativa e limitação atual
 
 A configuração conservadora gera cinco variantes AOT elegíveis e quatro variantes LLE, em nove variantes exatas. A maior parte da lógica do jogo ainda executa no interpretador. Isso é uma primeira integração compilada, não uma recompilação nativa completa do jogo.

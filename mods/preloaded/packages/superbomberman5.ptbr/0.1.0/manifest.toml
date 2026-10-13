@@ -1,0 +1,25 @@
+format_version = 1
+id = "superbomberman5.ptbr"
+version = "0.1.0"
+name = "Português brasileiro — menus (prévia)"
+author = "MauricioSuporte"
+description = "Traduz menus de título e modo normal. Prévia parcial; requer um executável com o plugin PT-BR. A release do jogo v0.1.0 não contém esse plugin."
+license = "PolyForm-Noncommercial-1.0.0"
+resolver = "declarative"
+save_compatibility = "shared"
+
+[[target]]
+game_id = "superbomberman5-jpn"
+rom_sha256 = "5251e6491872dc51879b630a34d76a92e29ea0c39026c4f8773c1fe006d047c4"
+
+[[feature]]
+id = "menus_ptbr"
+name = "Menus em português brasileiro"
+description = "Ative para traduzir os rótulos mapeados. Outros textos permanecem originais."
+group = "Tradução"
+default_enabled = false
+presentation_only = true
+
+[[plugin]]
+feature = "menus_ptbr"
+id = "superbomberman5.ptbr.menus"

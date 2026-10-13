@@ -1,8 +1,15 @@
 """Generate initial prototype release notes; keep output outside tracked source."""
 from pathlib import Path
+import argparse
+import sys
 
-version = (Path(__file__).resolve().parents[1] / 'VERSION').read_text().strip()
-print(f'''# Super Bomberman 5 v{version} — Windows prototype
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--output', type=Path)
+parser.add_argument('--version', help='Version for correcting an existing release without changing VERSION.')
+args = parser.parse_args()
+
+version = args.version or (Path(__file__).resolve().parents[1] / 'VERSION').read_text().strip()
+notes = f'''# Super Bomberman 5 v{version} — Windows prototype
 
 Unofficial noncommercial prototype. **Partial recompilation:** most game logic still uses SNESRecomp's interpreter. The opening, title, menus, Zone 1 map and first-stage entry were verified locally over a scripted 3,628-frame route. Windows display/audio initialization and launcher smoke tests passed. Full-game accuracy, audio fidelity, battle mode and P2–P5 are not qualified; netplay and widescreen enhancements are not implemented.
 
@@ -21,4 +28,12 @@ Protótipo não oficial e não comercial para Windows x64. **Recompilação parc
 Extraia todo o ZIP, abra SuperBomberman5SNESRecomp.exe na raiz, permita baixar as ferramentas oficiais, selecione sua própria ROM e use Generate & rebuild. O analisador já está incluído; o usuário da release não precisa instalar Rust. A primeira instalação exige internet, Windows 10+ x64 e alguns GB livres.
 
 O pacote contém **instalador e fontes, não o jogo**. Não inclui ROM, fontes/executável derivados da ROM, sprites, música, saves ou capturas. O jogo é gerado e compilado localmente em build/. Confira SHA256SUMS, os hashes acima e as limitações em docs/STATUS.md.
-''')
+'''
+if tuple(int(n) for n in version.split('.')) >= (0,2,0):
+    notes += '''\n## PT-BR menu mod / Mod de menus em português\n\nThe optional PT-BR preview translates seven mapped title/normal-mode labels with authored glyphs. Enable it in Mods. It is not a full-game translation; banners, other menus and gameplay/ending messages remain original. Presentation-only, disabled by default; see docs/TRANSLATION_PTBR.md.\n\nA prévia PT-BR traduz sete rótulos de título/modo normal com uma fonte própria. Ative em Mods. Não é tradução completa: banners, demais menus e mensagens permanecem originais. Mod de apresentação, desabilitado por padrão; veja docs/TRANSLATION_PTBR.md.\n'''
+if args.output:
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(notes, encoding='utf-8', newline='\n')
+else:
+    sys.stdout.reconfigure(encoding='utf-8')
+    print(notes, end='')

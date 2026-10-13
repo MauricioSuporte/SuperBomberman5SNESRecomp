@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "language": "pt-BR",
+  "scope": "title and normal-mode menus, preview",
+  "labels": [
+    {"id":"press_start","source":"PUSH START BUTTON","text":"PRESSIONE START","layer":2,"row":17,"column":8,"width":17,"height":8,"guard":[267,268]},
+    {"id":"normal_game","source":"NORMAL GAME","text":"JOGO NORMAL","layer":2,"row":18,"column":11,"width":12,"height":16,"guard":[277,278]},
+    {"id":"battle_game","source":"BATTLE GAME","text":"BATALHA","layer":2,"row":20,"column":11,"width":12,"height":16,"guard":[279,281]},
+    {"id":"options","source":"OPTIONS","text":"OPÇÕES","layer":2,"row":22,"column":11,"width":12,"height":16,"guard":[278,279]},
+    {"id":"new_game","source":"New Game","text":"NOVO JOGO","layer":0,"row":10,"column":12,"width":7,"height":16,"guard":[314,315]},
+    {"id":"continue","source":"Continue","text":"CONTINUAR","layer":0,"row":13,"column":12,"width":7,"height":16,"guard":[328,329]},
+    {"id":"erase_file","source":"Erase File","text":"APAGAR","layer":0,"row":16,"column":12,"width":8,"height":16,"guard":[342,343]}
+  ]
+}

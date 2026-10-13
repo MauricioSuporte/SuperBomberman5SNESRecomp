@@ -28,6 +28,8 @@ Record concrete evidence, unresolved failures, workarounds and next engineering 
 
 Release notes belong in GitHub Releases; prepare transient notes under ignored output directories. Preserve existing licenses and notices. Do not add commercial game art, screenshots or extracted assets just to resemble another README. Treat source/build/packaging success and runtime accuracy as separate claims.
 
+Generate release notes with `tools/release-notes.py --output <path>` instead of a Windows console pipeline. Read the file explicitly as UTF-8, send UTF-8 JSON bytes to the API, then verify the remote body equals the source and contains no U+FFFD. Use `--version` for a historical release; do not change its assets or tag to repair text. For the PT-BR mod, read docs/TRANSLATION_PTBR.md and distinguish package version from host version: the v0.1.0 host predates the plugin. Translation metadata and authored glyph code are permitted source; extracted glyphs and screenshots stay local.
+
 ## Exclude game data and local material
 
 Review `.gitignore`, tracked files and history using `python tools/audit-publication.py --history`. Ignore files are not removed from existing commits automatically. Never publish ROMs, generated game C, game executables containing ROM-derived compiled code, extracted graphics/audio, raw memory captures, saves, save states, ROM paths, private diagnostics or secrets. Analysis configuration, symbol metadata and hashes are allowed; raw execution captures stay local.

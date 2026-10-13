@@ -2,6 +2,10 @@
 
 Public repository: `MauricioSuporte/SuperBomberman5SNESRecomp`. The initial release is **v0.1.0**, marked as a prerelease. Windows x64 is the qualified platform; Linux/macOS are not release targets yet.
 
+Current source VERSION is **0.2.0**, preparing the PT-BR menu mod; no v0.2.0 tag/release has been published yet. Do not replace v0.1.0 assets to add the new plugin. Publish a separate version when requested and validated.
+
+Generate notes with `python tools/release-notes.py --output .bootstrap/notes.md`; read that file as UTF-8 and send UTF-8 JSON bytes through the API. Avoid Windows console pipelines that may replace accented characters. Verify the returned body equals the authored text and contains no U+FFFD. Use `--version 0.1.0` when repairing the already published release.
+
 ## Before committing
 
 Keep `README.md` English/Portuguese sections, `docs/STATUS.md`, build instructions, VERSION and dependency pins consistent with the actual change. Run:

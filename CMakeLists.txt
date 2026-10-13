@@ -45,8 +45,25 @@ add_executable(SuperBomberman5SNESRecomp
     src/main.c
     src/host_contract.c
     src/game_rtl.c
+    src/ptbr_mod.c
     src/gen_stubs.c
 )
+
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+set(PTBR_HEADER "${CMAKE_CURRENT_BINARY_DIR}/translation/ptbr_labels.h")
+add_custom_command(OUTPUT "${PTBR_HEADER}"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/generate-ptbr.py" --header "${PTBR_HEADER}"
+    DEPENDS tools/generate-ptbr.py translations/ptbr/labels.json
+    VERBATIM)
+target_sources(SuperBomberman5SNESRecomp PRIVATE "${PTBR_HEADER}")
+target_include_directories(SuperBomberman5SNESRecomp PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/translation")
+include(CTest)
+if(BUILD_TESTING)
+    add_executable(ptbr_render_tests tests/ptbr_render_tests.c "${PTBR_HEADER}")
+    target_include_directories(ptbr_render_tests PRIVATE
+        "${SNESRECOMP_ROOT}/runner/src" "${CMAKE_CURRENT_BINARY_DIR}/translation")
+    add_test(NAME ptbr_render_restore COMMAND ptbr_render_tests)
+endif()
 
 # ROM identity. rom_identity.txt is the one place the digests live: the build
 # turns it into snesrecomp_rom_identity.h (SNESRECOMP_ROM_EXPECTED_SHA256 and

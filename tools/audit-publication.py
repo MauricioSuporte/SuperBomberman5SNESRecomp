@@ -17,7 +17,7 @@ LOCAL_DIRS = {'.bootstrap', '.tools', '.cache', 'roms', 'extracted', 'captures',
               'logs', 'dist'}
 MEDIA = {'.png', '.bmp', '.jpg', '.jpeg', '.gif', '.tga', '.wav', '.mp3', '.ogg',
          '.flac', '.mp4', '.webm'}
-BINARIES = {'.exe', '.dll', '.obj', '.o', '.a', '.lib', '.pdb', '.zip', '.7z',
+BINARIES = {'.exe', '.dll', '.obj', '.o', '.a', '.lib', '.pdb', '.zip', '.snesmod', '.7z',
             '.rar', '.tar', '.gz'}
 
 

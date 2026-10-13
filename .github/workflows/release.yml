@@ -6,7 +6,7 @@ on:
       version:
         description: 'Version matching VERSION (without v)'
         type: string
-        default: '0.1.0'
+        default: '0.2.0'
       publish_release:
         description: 'Publish the audited Windows setup pack'
         type: boolean
@@ -57,6 +57,7 @@ jobs:
             -DSNESRECOMP_SETUP_HOST=ON -DSNESRECOMP_FRAME_IMPL=LLE \
             -DSNESRECOMP_BUILD_VERSION="${RELEASE_VERSION}"
           cmake --build build-ci --parallel 4
+          ./build-ci/ptbr_render_tests.exe
       - name: Package and audit Windows setup release
         run: |
           source "${TOOLCHAIN_DIR}/env.sh"
@@ -68,7 +69,7 @@ jobs:
             --toolchain "${TOOLCHAIN_DIR}" \
             --rust-sysroot "$(rustup run 1.97.1-x86_64-pc-windows-gnullvm rustc --print sysroot)"
           python tools/audit-publication.py --zip "dist/superbomberman5-${RELEASE_VERSION}-windows-x64.zip"
-          python tools/release-notes.py > dist/notes.md
+          python tools/release-notes.py --output dist/notes.md
       - name: Smoke test setup host and packaged analyzer
         run: |
           source "${TOOLCHAIN_DIR}/env.sh"

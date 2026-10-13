@@ -36,6 +36,7 @@
 
 #include "beam_frame_driver.h"
 #include "common_rtl.h"
+#include "ptbr_mod.h"
 
 static void GameInitialize(void)
 {
@@ -52,7 +53,7 @@ void GameRunOneFrame(void)
 
 void GameDrawPpuFrame(void)
 {
-    snes_beam_frame_driver_draw_ppu_frame();
+    PtbrDrawPpuFrame();
 }
 
 void GameSessionReset(void)
