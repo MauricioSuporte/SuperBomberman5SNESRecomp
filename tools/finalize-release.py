@@ -1,0 +1,77 @@
+"""Complete the official Windows setup pack with the ROM-independent analyzer."""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import importlib.util
+import json
+import pathlib
+import re
+import zipfile
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--zip', type=pathlib.Path, required=True)
+    parser.add_argument('--build-dir', type=pathlib.Path, required=True)
+    parser.add_argument('--analyzer', type=pathlib.Path, required=True)
+    parser.add_argument('--toolchain', type=pathlib.Path, required=True)
+    args = parser.parse_args()
+    cache = (args.build_dir / 'CMakeCache.txt').read_text(encoding='utf-8')
+    if not re.search(r'^SNESRECOMP_SETUP_HOST:BOOL=ON$', cache, re.M):
+        raise SystemExit('Refusing to release a game build: setup host must be ON.')
+    if 'SNESRECOMP_FRAME_IMPL:STRING=LLE' not in cache:
+        raise SystemExit('The first release requires the validated LLE frame path.')
+    for p in (args.analyzer, args.toolchain / 'bin/libunwind.dll', args.toolchain / 'LICENSE.TXT'):
+        if not p.is_file():
+            raise SystemExit(f'Missing release dependency: {p}')
+    temp = args.zip.with_suffix('.auditing.zip')
+    with zipfile.ZipFile(args.zip) as src, zipfile.ZipFile(temp, 'w', zipfile.ZIP_DEFLATED) as out:
+        roots = {i.filename.split('/')[0] for i in src.infolist()}
+        if len(roots) != 1:
+            raise SystemExit('Expected a single package directory.')
+        root = roots.pop()
+        for item in src.infolist():
+            # These upstream assets are not needed to generate or run the game.
+            if '/docs/assets/games/' in item.filename or '/test_data/' in item.filename:
+                continue
+            out.writestr(item, src.read(item))
+        analyzer_dir = root + '/snesrecomp/recompiler-rs/target/release/'
+        out.write(args.analyzer, analyzer_dir + 'snesrecomp-analyze.exe')
+        out.write(args.toolchain / 'bin/libunwind.dll', analyzer_dir + 'libunwind.dll')
+        out.write(args.toolchain / 'LICENSE.TXT', root + '/licenses/LLVM-LICENSE.txt')
+        manifest = {
+            'format': 1, 'kind': 'setup-host', 'platform': 'windows-x64',
+            'frame_implementation': 'LLE', 'contains_game_code': False,
+            'analyzer_sha256': hashlib.sha256(args.analyzer.read_bytes()).hexdigest(),
+            'toolchain_embedded': False,
+            'game_code_generation': 'local, from the player-supplied ROM',
+        }
+        out.writestr(root + '/PACKAGE_MANIFEST.json', json.dumps(manifest, indent=2) + '\n')
+        out.writestr(root + '/LEIA-ME.txt',
+            'Super Bomberman 5 0.1.0 — protótipo Windows x64\n\n'
+            'Este pacote não contém a ROM nem código gerado a partir dela.\n'
+            '1. Extraia todo o ZIP para uma pasta gravável.\n'
+            '2. Abra SuperBomberman5SNESRecomp.exe.\n'
+            '3. Permita baixar as ferramentas oficiais e selecione sua própria ROM.\n'
+            '4. Use Generate & rebuild para gerar, compilar e iniciar o jogo localmente.\n'
+            'O analisador nativo está incluído; Rust não é necessário para usar este pacote.\n'
+            'Internet é necessária para obter as ferramentas na primeira instalação.\n'
+            'Recompilação parcial: a maior parte da lógica ainda usa o interpretador.\n'
+            'Multiplayer e jogo completo ainda não foram validados.\n'
+            'Consulte README.md, docs/STATUS.md e THIRD_PARTY_NOTICES.md.\n')
+    spec = importlib.util.spec_from_file_location('audit', pathlib.Path(__file__).with_name('audit-publication.py'))
+    audit = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(audit)
+    errors = audit.audit_zip(temp)
+    if errors:
+        temp.unlink()
+        raise SystemExit('\n'.join(errors))
+    temp.replace(args.zip)
+    digest = hashlib.sha256(args.zip.read_bytes()).hexdigest()
+    (args.zip.parent / 'SHA256SUMS').write_text(f'{digest}  {args.zip.name}\n', encoding='utf-8')
+    print(f'Audited setup pack: {args.zip} SHA256={digest}')
+
+
+if __name__ == '__main__':
+    main()

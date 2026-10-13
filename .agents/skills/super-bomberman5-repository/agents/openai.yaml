@@ -1,0 +1,4 @@
+interface:
+  display_name: "Super Bomberman 5 Repository"
+  short_description: "Maintain Git, documentation and ROM-free releases"
+  default_prompt: "Use $super-bomberman5-repository to maintain versions, bilingual docs and ROM-free releases of this project."

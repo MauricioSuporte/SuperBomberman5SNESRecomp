@@ -1,120 +1,133 @@
-# Super Bomberman 5 Recomp
+# Super Bomberman 5 Recompiled
 
-A native recompilation of **Super Bomberman 5** (JPN), built on
-[snesrecomp](https://github.com/RetroPortingToolKit/snesrecomp).
+An unofficial, noncommercial **Super Bomberman 5** PC port prototype built with [SNESRecomp](https://github.com/RetroPortingToolKit/snesrecomp) and [recomp-ui](https://github.com/RetroPortingToolKit/recomp-ui). It follows the separate-game-repository architecture used by [Mega Man X Recompiled](https://github.com/mstan/MegaManXSNESRecomp).
 
-Projeto de port nativo para PC, inicialmente focado no comportamento original e multiplayer local.
+[Download / Baixar](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases) · [English](#english) · [Português](#português) · [Technical status](docs/STATUS.md) · [Contributing](CONTRIBUTING.md)
 
+> **Early prototype, partial recompilation.** Most game logic currently uses the framework's interpreter. First-stage entry has been verified locally; full-game accuracy and multiplayer have not been established. Supply your own legally obtained ROM. No ROM or extracted game assets are included.
 
+## English
 
-> **You must legally own a copy of the game.** No ROM data is distributed with
-> this project, in the repository or in any release. The recompiled C is
-> generated locally from your own copy and is never committed.
+### Features and current validation
 
-## Status
-
-Protótipo compilado no Windows em 2026-10-13. Abertura, título, menus, mapa
-da Zone 1 e entrada na primeira fase foram verificados por capturas locais. A maior parte da execução
-ainda usa o interpretador do framework; a recompilação completa e a validação
-do jogo inteiro estão pendentes. Veja [o estado técnico](docs/STATUS.md).
-
-No Windows, use [as instruções de build](docs/BUILD_WINDOWS.md). Depois de
-compilar, `play.cmd` abre o launcher.
-
-## ROM identity
-
-| | |
+| Feature | Status |
 |---|---|
-| File | `Super Bomberman 5 (USA).sfc` |
-| Publisher | — |
-| Developer | — |
-| Year | — |
-| Mapping | hirom |
-| Region | JPN (Japan) |
-| Coprocessor | none |
+| Windows x64 executable and launcher | Release build and launcher smoke test passed locally |
+| Opening, title, normal-mode menus, Zone 1 map and first-stage entry | Verified with captures; scripted route completed 3,628 frames |
+| Windows video and audio devices | Initialization and callbacks tested; audio accuracy not independently compared |
+| Static CPU recompilation | Small AOT coverage; reset/NMI and most game logic remain interpreted |
+| Five-player multitap | Port 2 configured; P2–P5 and battle mode not validated |
+| Netplay / widescreen enhancements | Not implemented for this title |
+| Linux / macOS | Framework build paths exist; this release is Windows only |
+
+### Quick start — Windows setup release
+
+1. Download the Windows x64 ZIP from [Releases](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases). Extract the **entire archive** into a writable folder.
+2. Open `SuperBomberman5SNESRecomp.exe` at the package root. This is a setup program; the package contains no recompiled game code.
+3. Let the launcher obtain the official portable build tools, then select your own ROM matching the hashes below. Internet is needed for the first tool download.
+4. Select **Generate & rebuild**. The native analyzer is included; installing Rust is unnecessary for release users. Game code is generated and compiled locally.
+5. Run the resulting game under `build/`; configure controls in the launcher.
+
+Requires Windows 10 or newer, x64. Leave several GB free for extraction, tools and build output. Open the root executable to start release setup; the repository's developer `play.cmd` is for local source builds.
+
+### Supported ROM
+
+The developer's local filename is `Super Bomberman 5 (USA).sfc`, but its header reports **JPN**. Compatibility is determined by hashes, not filenames. A valid internal checksum alone does not establish original-dump provenance. Other revisions and translations have not been qualified.
+
+| Identity | Value |
+|---|---|
+| Header title | `Hu SUPER BOMBERMAN 5` |
+| Mapping | Fast HiROM; no special coprocessor detected |
+| ROM / SRAM | 4 MiB / 8 KiB |
 | CRC32 | `c25ab56a` |
 | SHA-256 | `5251e6491872dc51879b630a34d76a92e29ea0c39026c4f8773c1fe006d047c4` |
 
-`tools/regen.sh` refuses to run against anything else, so a mismatched
-revision fails immediately instead of producing subtly wrong output.
+[rom_identity.txt](rom_identity.txt) is authoritative. No ROM download links are provided.
 
-## Build
+### Controls and starting a game
 
-```sh
-git submodule update --init --recursive
-bash tools/regen.sh --rom "Super Bomberman 5 (USA).sfc"
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build -j
-```
-
-The ROM does not have to live in the repository — keeping it on your own
-drive is the better habit, and `SNESRECOMP_ROM` sets the path once for a
-shell. Without either, `tools/regen.sh` finds `Super Bomberman 5 (USA).sfc` at the repo root,
-then the path the setup wizard recorded in `rom.cfg`; `.gitignore` blocks
-both from ever being committed.
-
-`tools/regen.sh` verifies the ROM, generates `src/gen/*.c`, and re-syncs
-`recomp/funcs.h`. Re-run it whenever you change anything under `recomp/`.
-
-## Run
-
-```sh
-./build/SuperBomberman5SNESRecomp                     # launcher picks the ROM
-./build/SuperBomberman5SNESRecomp "Super Bomberman 5 (USA).sfc" # or name it and skip the launcher
-```
-
-With no ROM on the command line the build opens the recomp-ui launcher: a ROM
-picker with a verification badge, plus display / audio / input settings. Your
-choice is cached in `rom.cfg` beside the executable, so the next launch opens
-on it and "Skip launcher on boot" makes it immediate. If the launcher is not
-built in (`--no-recomp-ui`), the host falls back to a native file picker.
-
-Either way the ROM is checked against the digests above before anything boots
-— a dump that could not have produced this build is refused at the door rather
-than mis-executing ten frames in.
-
-## Layout
-
-| Path | What lives there |
+| Keyboard | SNES input |
 |---|---|
-| `recomp/` | Analysis input: `bank*.cfg`, `symbols.toml`, generated `funcs.h` |
-| `rom_identity.txt` | ROM digests — read by the build, `tools/regen.sh` and CI |
-| `src/` | Host code you own: `main.c`, `game_rtl.c` |
-| `src/gen/` | Generated C. Never committed — regenerate locally |
-| `snesrecomp/` | Framework submodule (owns `lib/recomp-net`, `lib/retcomm-rbengine`) |
-| `tools/` | `regen.sh` — the ROM → C pipeline |
-| `scripts/` | `package_release.sh` — player-facing zip |
-| `framework_pins.txt` | Exact framework commits this project was scaffolded against |
+| Arrow keys | Direction |
+| Enter | Start |
+| X / Z | A / B |
+| S / A | X / Y |
+| C / V | L / R |
+| Right Shift | Select |
 
-## Porting from here
+Press Enter in the opening/title sequence. Choose **Normal Game → 1 Player Game → New Game → File 1**, confirming with A (keyboard X). On the Zone 1 map, use Start (Enter) to enter the stage. Controls can be changed in the launcher. Five-player configuration is preparatory, not a claim of tested multiplayer.
 
-The scaffold stops where the game-specific work starts. In rough order:
+### Building from source
 
-1. **Make it boot.** `src/game_rtl.c` holds the frame driver. It starts on
-   the framework's beam-aligned driver (`snesrecomp/runner/src/beam_frame_driver.h`):
-   one frame per PPU field, interrupts taken where the beam latches them,
-   the field rasterized from the raster journal. A title whose main loop it
-   does not fit replaces those calls with its own driver.
-2. **Name things.** Add entries to `recomp/symbols.toml` as you identify
-   routines, then re-run `tools/regen.sh`. Set `emit = true` to promote one
-   into ahead-of-time analysis; leave it false to keep it interpreted.
-   Regen synchronizes the marked blocks in each bank cfg, creating missing
-   configs. Only proven variants become AOT code. See `recomp/README.md`.
-3. **Resolve dispatch misses.** After every run, deal with unresolved
-   indirect targets before anything else — they are the reason a port
-   diverges, and they are cheap to fix early.
-4. **Never synthesise a result** to get past uncovered code, and never edit
-   `src/gen/` by hand. Fix the config or the framework and regenerate.
+Install Git for Windows and Python 3.11+, then:
 
-## Multiplayer
+```powershell
+git clone --recurse-submodules https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp.git
+cd SuperBomberman5SNESRecomp
+./tools/setup-windows.ps1
+./tools/build-windows.ps1 -Regenerate -Rom 'C:/roms/your-game.sfc'
+./tools/build-windows.ps1 -Run -Rom 'C:/roms/your-game.sfc'
+```
 
-Up to 5 players through a Super Multitap (port2). Seats
-beyond the second are driven with `RtlSetPadState` — see
-`snesrecomp/docs/MULTITAP.md`.
+With the developer ROM under its default filename at the repository root, `play.cmd` opens the launcher after a successful build. Tools are installed under ignored `.tools/`; the global PATH is unchanged. See [Windows build instructions](docs/BUILD_WINDOWS.md).
 
-## License
+The validated build uses `SNESRECOMP_FRAME_IMPL=LLE`. HLE composition has not been qualified for this title. Regenerate after changing `recomp/`; never hand-edit or commit `src/gen/`.
 
-This project's own source is under the license in `LICENSE`. The framework
-carries its own terms — see `snesrecomp/LICENSE` and
-`snesrecomp/THIRD_PARTY_ATTRIBUTION.md`. Neither covers the game data, which
-is not distributed here.
+### What recompilation means here
+
+SNESRecomp translates analyzable 65816 CPU routines into C and links them with a SNES hardware runtime. Unresolved paths use an interpreter; PPU, APU/SPC700, DMA and cartridge hardware remain modeled. This is a hybrid port, not recovered original game source. AOT coverage is currently small. Promoting reset/NMI causes continuation/dispatch failures, so those paths remain interpreted pending a validated fix.
+
+### Reporting problems
+
+[Open an issue](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/issues) with the project version, Windows version, ROM hash, settings, stage and steps to reproduce. Inspect local reports for personal paths or memory data before attaching. Do not upload the ROM, extracted assets, audio dumps or save states to public issues. Known limitations are in [STATUS.md](docs/STATUS.md).
+
+### Repository layout
+
+| Path | Purpose |
+|---|---|
+| `src/` | Game integration and desktop host descriptor |
+| `recomp/` | Analysis configuration and symbol metadata |
+| `src/gen/` | Locally generated ROM-derived C; ignored |
+| `snesrecomp/`, `recomp-ui/` | Framework and launcher pinned as submodules |
+| `rom_identity.txt`, `VERSION`, `framework_pins.txt` | ROM identity, version and dependency commits |
+| `tools/`, `scripts/` | Build, publication audit and setup packaging |
+| `docs/` | Build, validation evidence, limitations and publication workflow |
+| `.agents/skills/super-bomberman5-repository/` | Reusable Git/documentation/release skill |
+
+### Credits and license
+
+Thanks to Matthew Stanley and RetroPorting ToolKit contributors for SNESRecomp and recomp-ui, and to Mega Man X Recompiled for the architecture reference. Project software uses [PolyForm Noncommercial 1.0.0](LICENSE). Dependency notices are preserved; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). This license does not cover Super Bomberman 5 ROM or game content. The project is not affiliated with or endorsed by the game's rights holders.
+
+## Português
+
+### Sobre o projeto
+
+Protótipo não oficial e não comercial de port de **Super Bomberman 5** para PC, usando SNESRecomp e o launcher recomp-ui, com a estrutura de repositório por jogo utilizada pelo Mega Man X Recompiled.
+
+**A recompilação ainda é parcial:** a maior parte da lógica usa o interpretador. Abertura, título, menus, mapa da Zone 1 e entrada na primeira fase foram verificados numa rota de 3.628 frames. Isso não comprova o jogo completo, precisão de som, colisões ou multiplayer. O multitap para cinco jogadores está configurado, mas não foi validado. Não há netplay nem melhorias de widescreen neste jogo.
+
+### Como instalar e jogar
+
+1. Baixe o ZIP Windows x64 em [Releases](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases) e extraia **todo o conteúdo** para uma pasta gravável.
+2. Abra `SuperBomberman5SNESRecomp.exe` na raiz do pacote. Esse é o instalador, sem código recompilado do jogo.
+3. Permita baixar as ferramentas oficiais e selecione sua própria ROM. A primeira instalação requer internet para obter as ferramentas.
+4. Clique em **Generate & rebuild** para gerar, compilar e iniciar o jogo localmente. O analisador já está incluído; usuários da release não precisam instalar Rust.
+5. Nas próximas execuções, abra o jogo em `build/` e ajuste os controles no launcher.
+
+Requer Windows 10 ou superior, x64, e alguns GB livres. **Nenhuma ROM, código gerado da ROM ou recurso extraído acompanha o download.** O arquivo de desenvolvimento tem “USA” no nome, porém o cabeçalho indica **JPN**. Confira os hashes em [Supported ROM](#supported-rom); o nome do arquivo não garante compatibilidade.
+
+### Controles e início de partida
+
+**Setas** para direção, **Enter** para Start, **X/Z** para A/B e **Shift direito** para Select. Pressione Enter na abertura/título, escolha **Normal Game → 1 Player Game → New Game → File 1**, confirme com **X** e pressione **Enter** no mapa da Zone 1 para entrar na fase. Remapeie os controles no launcher se desejar.
+
+### Compilar, contribuir e publicar
+
+Instale Git for Windows e Python 3.11+, clone com `--recurse-submodules` e execute os comandos de [Building from source](#building-from-source). Os scripts preparam ferramentas em `.tools/`, sem alterar o PATH global. Depois de compilar, `play.cmd` abre o launcher com a ROM local padrão. Consulte [BUILD_WINDOWS.md](docs/BUILD_WINDOWS.md) e [CONTRIBUTING.md](CONTRIBUTING.md).
+
+A build validada usa composição LLE. Reset/NMI permanecem interpretados devido a falhas de continuidade na tentativa AOT. Precisamos ampliar a cobertura nativa e comparar o comportamento com uma referência independente.
+
+[Abra uma issue](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/issues) informando versão, Windows, hash da ROM e reprodução. Não publique ROM, sprites/músicas extraídos, dumps ou save states. Confira dados pessoais nos relatórios antes de anexá-los.
+
+O estado e as observações ficam em [STATUS.md](docs/STATUS.md); o fluxo de versões e releases está em [PUBLISHING.md](docs/PUBLISHING.md). A skill de manutenção fica em `.agents/skills/super-bomberman5-repository/`. ROM, fontes gerados, builds e capturas ficam fora do Git. Releases contêm instalador e fontes sem dados do jogo.
+
+O software usa [PolyForm Noncommercial 1.0.0](LICENSE), preservando as licenças das dependências. Veja [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). A licença não concede direitos sobre a ROM ou conteúdo de Super Bomberman 5. O projeto não tem vínculo ou endosso dos titulares do jogo.

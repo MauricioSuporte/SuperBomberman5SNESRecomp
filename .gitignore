@@ -7,6 +7,58 @@
 *.smc
 *.srm
 
+# Other cartridge/audio dumps and extracted game resources (case independent).
+*.[sS][fF][cC]
+*.[sS][mM][cC]
+*.[fF][iI][gG]
+*.[sS][wW][cC]
+*.[rR][oO][mM]
+*.[bB][iI][nN]
+*.[sS][pP][cC]
+*.[bB][rR][rR]
+*.[pP][cC][mM]
+*.[sS][rR][mM]
+*.sav
+*.state
+*.savestate
+*.wram
+*.vram
+*.cgram
+*.oam
+/roms/
+/extracted/
+/captures/
+/screenshots/
+/audio-dumps/
+/assets/extracted/
+/launcher_assets/img/boxart.*
+
+# Renamed compiler output and analysis profiles still derive from the ROM.
+**/gen/
+bank*_v2.c
+dispatch_v2.c
+module_v2.c
+unresolved_stubs_v2.c
+program_manifest.json
+.snesrecomp-cache.json
+funcs.h
+/profiles/
+/coverage/
+
+# Binaries and archives are release artifacts, not repository source.
+*.exe
+*.dll
+*.obj
+*.o
+*.a
+*.lib
+*.pdb
+*.zip
+*.7z
+*.rar
+*.tar
+*.gz
+
 # Build trees and packaged output
 /build/
 /build-*/
@@ -36,4 +88,14 @@
 /crash_minidump_*.dmp
 /logs/
 /mods/preloaded/state.toml
+
+# Secrets and machine-local caches
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.cache/
+__pycache__/
+*.pyc
 
