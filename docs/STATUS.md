@@ -1,4 +1,4 @@
-# Super Bomberman 5: estado inicial
+# Super Bomberman 5: estado do protótipo
 
 Base criada pelo scaffolder oficial do SNESRecomp em 2026-10-13.
 
@@ -14,7 +14,11 @@ Base criada pelo scaffolder oficial do SNESRecomp em 2026-10-13.
 
 ## Base disponível
 
-Repositório Git local com SNESRecomp e recomp-ui como submódulos fixados em commits, CMake, configuração inicial de análise, launcher, scripts de geração e empacotamento e workflow oficial. Cinco assentos com multitap na porta 2 estão configurados; multiplayer ainda não foi validado. Netplay está desabilitado.
+Repositório Git local com SNESRecomp e recomp-ui como submódulos fixados em commits, CMake, configuração inicial de análise, launcher, scripts de geração e empacotamento e workflow oficial. A inicialização do jogo ativa o multitap na porta 2 para cinco assentos; multiplayer ainda não foi validado. Netplay está desabilitado.
+
+Ferramentas locais preparadas em `.tools/`: RetroPorting Toolchains v1.0.14 (CMake, Ninja, Clang e SDL3) e Rust 1.97.1 Windows GNU LLVM. Scripts reproduzíveis: `tools/setup-windows.ps1` e `tools/build-windows.ps1`. Instruções em `BUILD_WINDOWS.md`.
+
+Fontes locais gerados com sucesso e executável Release compilado em `build-lle/SuperBomberman5SNESRecomp.exe`, com SDL3 estático e composição de frames LLE. `play.cmd` abre o launcher.
 
 A ROM, fontes gerados, ferramentas locais e builds são ignorados pelo Git. Nenhum repositório remoto deste jogo foi criado e nada foi publicado.
 
@@ -22,12 +26,24 @@ A ROM, fontes gerados, ferramentas locais e builds são ignorados pelo Git. Nenh
 
 Probe de cabeçalho e checksum, verificação de CRC32/SHA-256 pelo CLI e conferência dos submódulos após mover o scaffold para a pasta de trabalho.
 
+Teste de 600 frames sem entrada e testes de navegação com entradas roteirizadas. Capturas locais mostram a abertura animada, tela de título, menus de modo normal, seleção de arquivo e mapa da Zone 1. A rota de 3025 frames até o mapa terminou com código zero, sem mensagens `interp_cap`, `unresolved-abandon` ou BRK. Evidências brutas estão em `.bootstrap/validation/`, ignoradas pelo Git. As primeiras capturas usam SDL vídeo/áudio dummy: não comprovam a qualidade sonora.
+
+O script de setup também foi executado novamente para verificar o reaproveitamento das ferramentas, e o script de build foi validado pelo parser do PowerShell e executado na geração e compilação.
+
+A rota final `validation/first-stage.input` chegou à primeira fase da Zone 1 e terminou após 3628 frames com código zero. As capturas mostram cenário, jogador e cronômetro avançando. Sem mensagens `interp_cap`, `unresolved-abandon`, BRK, erro ou fatal nessa execução. Não há comparação independente de colisões, bombas ou precisão de timing ainda.
+
+Um smoke test adicional de 180 frames abriu a janela SDL real do Windows e o dispositivo de áudio real, com callbacks de áudio e saída normal. O launcher ImGui/SDL3 também abriu e encerrou normalmente pelo mecanismo de smoke test de 60 frames. Isso comprova inicialização dos dispositivos, não fidelidade ou qualidade sonora auditiva.
+
+## Cobertura nativa e limitação atual
+
+A configuração conservadora gera cinco variantes AOT elegíveis e quatro variantes LLE, em nove variantes exatas. A maior parte da lógica do jogo ainda executa no interpretador. Isso é uma primeira integração compilada, não uma recompilação nativa completa do jogo.
+
+Uma tentativa de promover reset e NMI a AOT descobriu 69 variantes elegíveis, mas falhou no teste: limite de interpretação em `$C02346`/`$C00607`, abandono de dispatch no frame 56 e BRK posteriores. Essa promoção foi retirada. `recomp/symbols.toml` mantém reset e NMI com `emit = false` até corrigir e validar a continuidade do código compilado/interpretado.
+
 ## Próximas etapas
 
-1. Disponibilizar CMake, Ninja, compilador C/C++, Rust/Cargo e SDL3 compatível. Git e Python 3.12 já estão acessíveis. Os demais não foram encontrados no PATH durante a preparação.
-2. Executar `bash tools/regen.sh` no Git Bash para gerar os fontes locais a partir da ROM verificada. O analisador atual exige seu backend nativo.
-3. Configurar e compilar com CMake.
-4. Validar e ajustar `src/game_rtl.c`: reset, frames, NMI/IRQ e execução híbrida.
-5. Comparar abertura, menus, áudio, partida e multiplayer com uma referência independente; ampliar a análise em `recomp/` conforme os resultados.
-
-Não há executável compilado, geração de C concluída ou inicialização do jogo comprovada nesta etapa. O scaffold é o ponto de partida do port.
+1. Corrigir e validar a continuidade AOT/LLE antes de promover as rotinas de reset/NMI novamente.
+2. Ampliar a cobertura com rotinas curtas comprovadas e perfis de execução vinculados ao hash desta ROM.
+3. Comparar frames, WRAM, interrupções e áudio com uma referência independente (bsnes/Snes9x/Mesen).
+4. Validar fases, bombas, colisões, bosses, saves e multiplayer local, incluindo entradas de P3–P5 no host desktop.
+5. Validar configurações e fluxo completo do launcher, empacotamento e workflow antes da publicação no GitHub.

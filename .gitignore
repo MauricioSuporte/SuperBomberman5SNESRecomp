@@ -30,3 +30,10 @@
 /.bootstrap/
 /.tools/
 
+# Local runtime reports and user mod preferences
+/last_run_report.json
+/crash_report_*.json
+/crash_minidump_*.dmp
+/logs/
+/mods/preloaded/state.toml
+

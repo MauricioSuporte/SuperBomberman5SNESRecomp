@@ -35,6 +35,15 @@
 #include "game_rtl.h"
 
 #include "beam_frame_driver.h"
+#include "common_rtl.h"
+
+static void GameInitialize(void)
+{
+    /* Standard five-player layout: P1 on port 1, four seats on port 2. */
+    RtlSetMultitap(0, 0);
+    RtlSetMultitap(1, 1);
+    snes_beam_frame_driver_reset();
+}
 
 void GameRunOneFrame(void)
 {
@@ -57,7 +66,7 @@ void GameSessionReset(void)
 
 const RtlGameInfo kGameInfo = {
     .title = "superbomberman5",
-    .initialize = NULL,
+    .initialize = &GameInitialize,
     .run_frame = &GameRunOneFrame,
     .draw_ppu_frame = &GameDrawPpuFrame,
     .save_name_prefix = "save",

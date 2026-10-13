@@ -13,10 +13,13 @@ Projeto de port nativo para PC, inicialmente focado no comportamento original e 
 
 ## Status
 
-Scaffolded on 2026-10-13 — **not yet a working port.** The layout, build,
-regeneration pipeline, CI, and packaging are wired up; the game does not run
-until the host work in `src/game_rtl.c` is done. See
-[Porting from here](#porting-from-here).
+Protótipo compilado no Windows em 2026-10-13. Abertura, título, menus, mapa
+da Zone 1 e entrada na primeira fase foram verificados por capturas locais. A maior parte da execução
+ainda usa o interpretador do framework; a recompilação completa e a validação
+do jogo inteiro estão pendentes. Veja [o estado técnico](docs/STATUS.md).
+
+No Windows, use [as instruções de build](docs/BUILD_WINDOWS.md). Depois de
+compilar, `play.cmd` abre o launcher.
 
 ## ROM identity
 

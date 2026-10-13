@@ -1,0 +1,24 @@
+# Deterministic first-stage route, starting with empty local SRAM.
+# Use only in an isolated build/save folder: File 1 is created by this route.
+turbo on
+wait 900
+press start 2
+wait 180
+press start 2
+wait 180
+press start 2
+wait 180
+press start 2
+wait 180
+press a 2
+wait 90
+press a 2
+wait 180
+press a 2
+wait 900
+press start 2
+wait 600
+press right 30
+press b 2
+wait 180
+quit

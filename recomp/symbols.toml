@@ -11,11 +11,11 @@ name = "I_RESET"
 addr = "f348"
 bank = 0
 emit = false
-note = "Emulation RESET vector ($FFFC)"
+note = "RESET vector ($FFFC); keep the non-returning boot path on the interpreter until AOT continuation is validated."
 
 [[func]]
 name = "I_NMI"
 addr = "f3ba"
 bank = 0
 emit = false
-note = "Native NMI vector ($FFEA)"
+note = "Native NMI vector ($FFEA); interrupt continuation must be validated before AOT promotion."
