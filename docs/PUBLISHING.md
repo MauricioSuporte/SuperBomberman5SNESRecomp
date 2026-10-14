@@ -37,7 +37,7 @@ Use the exact package version in the filename. The finalizer embeds `FILE_SHA256
 
 The **Release** workflow is manual, Windows only and pins the portable toolchain to v1.0.14. It checks source/history, builds the setup host and native analyzer, packages/audits the ZIP, and uploads an artifact. Set `publish_release` to true to publish only after successful checks. The version input must match VERSION. Releases default to prerelease; changing that status requires broader runtime validation.
 
-For local publication, complete the same checks, test extraction and local Generate → rebuild, commit, push, then create the version tag at that commit and upload the audited ZIP and SHA256SUMS. Verify the remote tag target and uploaded asset digest. Do not move a public tag or overwrite published assets without an explicit replacement decision.
+For local publication, complete the same checks, test extraction and local Generate → rebuild, commit, push, then create the version tag at that commit and upload the audited ZIP (SHA256SUMS stays in the local/CI verification artifact). Verify the remote tag target and uploaded asset digest. Do not move a public tag or overwrite published assets without an explicit replacement decision.
 
 Release notes belong on GitHub Releases, not tracked `RELEASE_NOTES*.md` files. `tools/release-notes.py` generates bilingual prototype notes to an ignored temporary path. Update that generator when the release scope changes. Do not blindly repeat prototype limitations in future releases after they are resolved.
 

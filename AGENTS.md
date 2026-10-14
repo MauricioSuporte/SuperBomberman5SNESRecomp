@@ -192,8 +192,6 @@ When you identify a new address, document it here (and optionally name it in
 
 Timer research: `$0E1C/$0E1D/$0E1E` hold frames/seconds/minutes. Seconds >=60 skip countdown at `$C5:046B`; native 99/9 gives the dash HUD at `$C5:0C00`. Verified by JPN disassembly and Zone 1-1 forced expiration tests.
 
-Timer research: `$0E1C/$0E1D/$0E1E` hold frames/seconds/minutes. Seconds >=60 skip countdown at `$C5:046B`; native 99/9 gives the dash HUD at `$C5:0C00`. Verified by JPN disassembly and Zone 1-1 forced expiration tests.
-
 ## 7. Workflow for a change
 
 1. Read `docs/STATUS.md`, the relevant `docs/*.md`, and `git status`.

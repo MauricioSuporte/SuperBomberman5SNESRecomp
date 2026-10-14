@@ -14,14 +14,28 @@ Initial Windows/LLE Zone 1-1 evidence: native dash HUD inspected; 1P/2P
 forced 0:01 expiration remains unlimited after 780 frames; disabled control
 retains countdown and timeout. A two-player route combines PT-BR, characters
 and colors. Full campaign, real bosses, rewind and physical controls remain
-unqualified. Release package verification is recorded below after completion.
+unqualified. The clean pinned-source setup pack passed publication audit. Its extracted
+analyzer passed a synthetic-ROM test without Rust/toolchain PATH; the extracted
+source generated five AOT units from the verified local ROM and rebuilt on
+Windows/LLE. The root launcher logged GUI startup and delegation to the local
+rebuilt host. Four native tests, six Python tests and dependency pin checks
+passed. Extracted-package routes passed 1P (4,198 frames), 2P with PT-BR,
+characters/colors (5,964 frames), plus a disabled-timeout control (3,598 frames).
+No interp_cap, unresolved-abandon, architectural BRK, dispatch_abandon or fatal
+was found. Code generation/rebuild was exercised by the shipped CLI pipeline;
+the full interactive wizard was not exercised in this verification.
 
 Escopo: tempo infinito opcional no Normal, junto dos três mods anteriores,
 sem publicar as alterações locais de cinco jogadores/controles. O relógio usa
 os valores nativos 99/9 e HUD `-:--`; não altera ROM em disco, SRAM ou flags de
 boss. Evidência inicial Windows/LLE na Zone 1-1 confirma HUD, ausência de
 expiração após forçar 0:01 e contagem/morte normais com o mod desligado.
-Combinação com PT-BR/personagens/cores em dois jogadores testada. Campanha
+Pacote limpo auditado; analisador extraído funcionou sem Rust/PATH do toolchain,
+e as fontes extraídas geraram o código da ROM local e recompilaram no Windows.
+Launcher registrou abertura da GUI e encaminhamento ao jogo recompilado.
+Rotas do pacote passaram em 1P/2P e no controle com mod desligado, com logs
+limpos. A geração usou o pipeline CLI incluído, sem percorrer todo o assistente
+interativo. Combinação com PT-BR/personagens/cores em dois jogadores testada. Campanha
 completa, bosses reais, rewind e controles físicos ainda não qualificados.
 
 

@@ -1,7 +1,6 @@
-"""Exercise the native campaign with a supplied, locally built host and ROM.
+"""Verify native infinite time and disabled expiration using a local host/ROM.
 
-Captures stay under ignored .bootstrap/. Use --fixture only with a host built
-with SB5_COOP_INPUT_FIXTURE=ON; the default host never reads its mailboxes.
+All captures stay under ignored .bootstrap/. No five-player fixture required.
 """
 from __future__ import annotations
 import argparse
@@ -16,21 +15,16 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--exe', type=Path, required=True)
 parser.add_argument('--rom', type=Path, required=True)
 parser.add_argument('--out', type=Path, default=ROOT / '.bootstrap/infinite-time-validation')
-parser.add_argument('--fixture', action='store_true')
 parser.add_argument('--new-renderer', action='store_true', help='Exercise the optimized renderer used by play.cmd.')
-parser.add_argument('--cases', choices=['counts', 'five', 'lifecycle', 'all'], default='all')
 args = parser.parse_args()
 exe, rom, out = args.exe.resolve(), args.rom.resolve(), args.out.resolve()
 assert exe.is_file() and rom.is_file()
 
 
 def press(seat: int, button: str, wait: int = 40) -> str:
-    if seat <= 2:
-        return f'press {"" if seat == 1 else "p2:"}{button} 2\nwait {wait}\n'
-    assert args.fixture, 'Extra-pad injection requires the opt-in test fixture.'
-    bits = {'a': 0x100, 'r': 0x800, 'right': 0x80, 'left': 0x40, 'start': 8}[button]
-    address = 0x1ffe0 + (seat - 3) * 2
-    return f'poke {address:#x} {bits.to_bytes(2, "little").hex()}\nwait 3\npoke {address:#x} 0000\nwait {wait}\n'
+    assert seat in [1, 2]
+    return f'press {"" if seat == 1 else "p2:"}{button} 2\nwait {wait}\n'
+
 
 
 def enter(players: int, skins: bool = False) -> str:
@@ -47,11 +41,6 @@ def enter(players: int, skins: bool = False) -> str:
             route += press(seat, 'a', 180) + f'dump confirm{seat}\n'
         route += 'wait 1200\n'
     return route + 'press start 2\nwait 800\ndump stage\n'
-
-
-def death(seat: int) -> str:
-    assert args.fixture
-    return f'poke 0x1ffe7 {1 << (seat - 1):02x}\nwait 20\n'
 
 
 def run(name: str, route: str, skins: bool = False, ptbr: bool = False) -> Path:
@@ -83,28 +72,13 @@ def run(name: str, route: str, skins: bool = False, ptbr: bool = False) -> Path:
                                 stdout=log, stderr=log, timeout=300)
     assert result.returncode == 0, (name, result.returncode)
     log = (folder / 'run.log').read_text(errors='replace').lower()
-    for failure in ['unknown button', 'architectural brk', 'watchdog tripped', 'dispatch_abandon']:
+    for failure in ['unknown button', 'architectural brk', 'watchdog tripped', 'dispatch_abandon', 'interp_cap', 'unresolved-abandon', 'fatal']:
         assert failure not in log, (name, failure)
     return folder
 
 
 def ram(folder: Path, tag: str) -> bytes:
     return (folder / f'{tag}.wram.bin').read_bytes()
-
-
-def alive(data: bytes, seat: int) -> bool:
-    return not (data[0x17fa + seat - 1] & 0x80 or data[0x15a2 + seat - 1] & 0x80)
-
-
-def stage(data: bytes, players: int) -> None:
-    assert data[0x1031] == 13 and data[0x1d23] == players + 2
-    assert all(alive(data, seat) == (seat <= players) for seat in range(1, 6))
-    cells = [data[0x16aa + seat - 1] for seat in range(1, players + 1)]
-    assert len(set(cells)) == players
-    for cell in cells[2:]:
-        assert not (data[0x1052 + cell] & 0xe0 or data[0x1152 + cell] & 0xc0)
-        assert any(not (data[0x1052 + neighbor] & 0xe0) for neighbor in [cell - 1, cell + 1, cell - 16, cell + 16])
-
 
 
 for players in [1,2]:
@@ -114,8 +88,15 @@ for players in [1,2]:
     folder=run(f'infinite-{players}',route,skins=players==2,ptbr=players!=1)
     for tag in ['stage','after-limit','later']:
         data=ram(folder,tag)
+        assert data[0x1031] == 13 and not (data[0x1d1a] & 1), (players, tag)
         assert data[0xe1d:0xe1f]==bytes([99,9]),(players,tag,data[0xe1d:0xe1f])
         assert not (data[0x1d1e]&0x22),(players,tag)
+    initial = ram(folder, 'stage')
+    assert all(not (initial[0x15a2+i] & 0x80) for i in range(players))
+    if players == 2:
+        assert initial[0x16c2:0x16c4] == bytes([0, 2])
+        source = rom.read_bytes()
+        assert list(initial[0x16da:0x16dc]) == [source[0xbb4e] + 1, source[0xbb50] + 2]
     print(f'{players} players: native unlimited timer survives forced expiration.',flush=True)
 unlimited=False
 folder=run('timer-disabled',enter(1)+'poke 0xe1c 00\npoke 0xe1d 0100\nwait 180\ndump expired\n')

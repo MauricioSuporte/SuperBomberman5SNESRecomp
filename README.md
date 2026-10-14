@@ -147,7 +147,7 @@ O **pacote Windows v0.4.3** inclui os quatro mods abaixo, todos na versão de mo
 | **Normal Game — infinite time** / **Gameplay** | Ative **Unlimited time in Normal Game** para usar o cronômetro nativo `-:--` sem morte por tempo. Desativado por padrão. Requer host v0.4.3 ou superior. [Detalhes e validação](docs/INFINITE_TIME.md). |
 | **Character selection — color controls** / **Gameplay** | Ative **Choose character colors with L and R** para escolher branco, preto, vermelho, azul, verde e amarelo nos nove personagens. R avança, L retorna e A confirma. Funciona no Battle e no Normal com o mod de seleção de personagens ativo. Teclado padrão: C/V; controle: LB/RB (L1/R1). Requer host v0.4.0 ou superior. [Controles e validação](docs/SELECTION_COLORS.md). |
 
-As categorias do launcher ficam em inglês, incluindo **Translation**. O nome e as descrições do mod PT-BR continuam em português brasileiro. Os três podem ser ativados juntos. Campanha e multiplayer completos ainda não foram qualificados.
+As categorias do launcher ficam em inglês, incluindo **Translation**. O nome e as descrições do mod PT-BR continuam em português brasileiro. Os quatro podem ser ativados juntos. Campanha e multiplayer completos ainda não foram qualificados.
 
 A v0.4.1 também incorpora o ícone fornecido em dez tamanhos, de 16 a 256 pixels, preservando o desenho inteiro e a transparência para escalas de exibição do Windows.
 
