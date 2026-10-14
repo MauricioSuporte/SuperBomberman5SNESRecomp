@@ -6,3 +6,5 @@
 *.md text eol=lf
 *.cmd text eol=crlf
 *.ps1 text eol=crlf
+
+scripts/AppRun text eol=lf

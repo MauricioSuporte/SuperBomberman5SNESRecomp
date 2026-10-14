@@ -75,7 +75,6 @@ def main():
     parser.add_argument('--rust-sysroot', type=Path, required=True)
     parser.add_argument('--appimagetool', type=Path, required=True)
     parser.add_argument('--runtime', type=Path, required=True)
-    parser.add_argument('--runtime', type=Path, required=True)
     args = parser.parse_args()
     cache = (args.build_dir/'CMakeCache.txt').read_text()
     if 'SNESRECOMP_SETUP_HOST:BOOL=ON' not in cache or 'SNESRECOMP_FRAME_IMPL:STRING=LLE' not in cache:
