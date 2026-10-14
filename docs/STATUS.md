@@ -1,3 +1,9 @@
+## Linux AppImage packaging — 2026-10-14
+
+v0.4.4 adds an experimental ROM-independent Linux x86_64 setup AppImage alongside the Windows ZIP, retaining v0.4.3 gameplay. AppRun copies setup into a versioned writable XDG data directory and reuses the generated build on repeat launch. Clean pinned submodules are used; local uncommitted co-op changes are excluded. Package validation is in progress; no Linux gameplay or desktop-device qualification is claimed yet.
+
+A v0.4.4 acrescenta AppImage Linux experimental ao ZIP Windows, mantendo as funções da v0.4.3. O setup é copiado para uma pasta XDG gravável e reutiliza o build local. Submódulos fixados limpos; mudanças locais do cooperativo não incluídas. Validação dos pacotes em andamento; gameplay e dispositivos Linux ainda não qualificados.
+
 # Super Bomberman 5: estado do protótipo
 
 ## v0.4.3 infinite time / Tempo infinito — 2026-10-14

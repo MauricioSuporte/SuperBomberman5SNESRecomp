@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+APPDIR="${APPDIR:-$(cd "$(dirname "$0")" && pwd)}"
+VERSION="$(cat "$APPDIR/setup/VERSION")"
+DATA_ROOT="${XDG_DATA_HOME:-$HOME/.local/share}/superbomberman5"
+mkdir -p "$DATA_ROOT"
+# Serialize first extraction and never replace the player's generated files.
+exec 9>"$DATA_ROOT/.setup.lock"
+flock 9
+DEST="$DATA_ROOT/$VERSION"
+if [[ ! -f "$DEST/.appimage-ready" ]]; then
+  if [[ -e "$DEST" ]]; then
+    echo "Incomplete setup at $DEST; move it aside before retrying." >&2
+    exit 1
+  fi
+  TEMP="$(mktemp -d "$DATA_ROOT/.setup-XXXXXX")"
+  trap 'rm -rf -- "$TEMP"' EXIT
+  cp -a "$APPDIR/setup/." "$TEMP/"
+  chmod -R u+w "$TEMP"
+  touch "$TEMP/.appimage-ready"
+  mv "$TEMP" "$DEST"
+  trap - EXIT
+fi
+flock -u 9
+export LD_LIBRARY_PATH="$DEST${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+cd "$DEST"
+HOST="$DEST/SuperBomberman5SNESRecomp"
+if [[ -x "$DEST/build/SuperBomberman5SNESRecomp" ]]; then
+  HOST="$DEST/build/SuperBomberman5SNESRecomp"
+fi
+exec "$HOST" "$@"

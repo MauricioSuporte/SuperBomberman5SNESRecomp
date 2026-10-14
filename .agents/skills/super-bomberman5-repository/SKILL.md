@@ -42,6 +42,18 @@ Read docs/PUBLISHING.md for current commands. Release a clean-source **setup hos
 
 Test the extracted package: its root setup host and launcher open; the packaged analyzer runs with its bundled DLL; ROM selection/code generation/rebuild produces a local playable executable. Keep the generated C and resulting game build local. New packaging logic warrants meaningful tests with synthetic forbidden files; do not treat a green filename audit as a guarantee about copyright ownership or every binary's contents.
 
-When authorized, create or reuse the public game repository, push reviewed commits and the verified tag, then publish a prerelease with the audited Windows ZIP, SHA256SUMS, bilingual release notes, precise platform coverage and known limitations. Verify the remote default branch, tag target, release state, uploaded asset sizes/digests and workflow result. Do not advertise Linux/macOS packages until built and checked. On an API/auth failure, inspect state before retrying to avoid duplicate repositories, tags or releases; stop after repeated identical failures and report the remaining step.
+When authorized, create or reuse the public game repository, push reviewed commits and the verified tag, then publish a prerelease with the audited Windows ZIP, Linux AppImage, SHA256SUMS, bilingual release notes, precise platform coverage and known limitations. Verify the remote default branch, tag target, release state, uploaded asset sizes/digests and workflow result. Do not advertise Linux/macOS packages until built and checked. On an API/auth failure, inspect state before retrying to avoid duplicate repositories, tags or releases; stop after repeated identical failures and report the remaining step.
 
 End with links to the repository/release, version, installed skill and material limitations or outstanding work. Never say publication completed unless GitHub confirms it.
+
+
+## Every release updates the README
+
+Before publishing any new release, update README.md in both English and Portuguese with useful information for that version: current downloads and platform formats, installation or upgrade steps, included features/mods, required host versions and concrete validation limits. Review the full README for obsolete version/platform claims, keep still-valid instructions, and use precise release links. Do not publish a new version with an outdated README or replace useful instructions with release-note boilerplate. Update docs/PUBLISHING.md and the release-notes generator to match the final artifacts.
+
+
+## Linux AppImage and Windows ZIP
+
+Publish both the audited Linux x86_64 AppImage and Windows x64 setup ZIP for each release once both builds and package checks pass. AppImage is Linux-only; never rename a Windows executable or ZIP to .AppImage. Preserve the ROM-independent setup-host requirement on both platforms. Use tools/package-appimage.py after the framework Linux setup packager: it includes the native analyzer and licenses, removes upstream game screenshots/test fixtures, audits the payload and wraps it in scripts/AppRun. AppRun installs a versioned writable copy under ${XDG_DATA_HOME:-$HOME/.local/share}/superbomberman5/<version> so Generate & rebuild can run without writing to the AppImage mount. Subsequent launches use the locally rebuilt game when present. Never overwrite the player's generated files.
+
+Build and test on the target OS, check extracted package contents and analyzer, and exercise first and repeat launches plus local ROM generation/rebuild. Record actual runtime coverage and untested distributions in docs/STATUS.md; an AppImage build does not establish full-game Linux support. The Release workflow builds both platforms before publication; pin and verify downloaded packaging tools and publish SHA256SUMS for both artifacts. Preserve public tags/assets.

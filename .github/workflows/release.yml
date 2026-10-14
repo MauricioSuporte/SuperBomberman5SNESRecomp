@@ -6,9 +6,9 @@ on:
       version:
         description: 'Version matching VERSION (without v)'
         type: string
-        default: '0.4.3'
+        default: '0.4.4'
       publish_release:
-        description: 'Publish the audited Windows setup pack'
+        description: 'Publish audited Linux AppImage and Windows ZIP'
         type: boolean
         default: false
 
@@ -86,23 +86,97 @@ jobs:
             dist/SHA256SUMS
           if-no-files-found: error
           compression-level: 0
-      - name: Check tag before publication
-        if: inputs.publish_release
+
+  linux:
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        shell: bash
+    env:
+      RELEASE_VERSION: ${{ inputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - name: Validate source and pins
+        run: |
+          test "$(cat VERSION)" = "$RELEASE_VERSION"
+          python3 tools/audit-publication.py --history
+          python3 -m unittest discover -s tests -v
+          bash snesrecomp/tools/ci/record_pins.sh --check framework_pins.txt
+      - name: Fetch portable Linux tools
+        run: bash snesrecomp/tools/ci/fetch_toolchain.sh --artifact linux-x64 --tag v1.0.14
+      - name: Build setup host and analyzer
+        run: |
+          source "${TOOLCHAIN_DIR}/env.sh"
+          rustup toolchain install 1.97.1 --profile minimal
+          export RUSTUP_TOOLCHAIN=1.97.1
+          python3 snesrecomp/tools/build_native_analyzer.py
+          cmake -S . -B build-ci -G Ninja -DCMAKE_BUILD_TYPE=Release -DSNESRECOMP_SETUP_HOST=ON -DSNESRECOMP_FRAME_IMPL=LLE -DCMAKE_BUILD_RPATH='$ORIGIN' -DSNESRECOMP_BUILD_VERSION="$RELEASE_VERSION"
+          cmake --build build-ci --parallel 4
+          ctest --test-dir build-ci --output-on-failure
+      - name: Package and audit AppImage
+        run: |
+          source "${TOOLCHAIN_DIR}/env.sh"
+          bash scripts/package_release.sh build-ci linux-x64 --no-embed-toolchain
+          curl -fL https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage -o "$RUNNER_TEMP/appimagetool"
+          echo '95cbe7cce9717fce90c484e34052ee7c7f1d7635b33c12525b4776826a7d29b6  '"$RUNNER_TEMP/appimagetool" | sha256sum -c -
+          chmod +x "$RUNNER_TEMP/appimagetool"
+          python3 tools/package-appimage.py --zip "dist/superbomberman5-${RELEASE_VERSION}-linux-x64.zip" --build-dir build-ci --analyzer snesrecomp/recompiler-rs/target/release/snesrecomp-analyze --rust-sysroot "$(rustup run 1.97.1 rustc --print sysroot)" --appimagetool "$RUNNER_TEMP/appimagetool"
+      - name: Smoke test AppImage and writable setup
+        run: |
+          image="$PWD/dist/superbomberman5-${RELEASE_VERSION}-linux-x86_64.AppImage"
+          XDG_DATA_HOME="$RUNNER_TEMP/sb5-smoke" "$image" --appimage-extract-and-run --help
+          XDG_DATA_HOME="$RUNNER_TEMP/sb5-smoke" "$image" --appimage-extract-and-run --help
+          python3 tools/smoke-analyzer.py --analyzer "$RUNNER_TEMP/sb5-smoke/superbomberman5/$RELEASE_VERSION/snesrecomp/recompiler-rs/target/release/snesrecomp-analyze"
+          python3 tools/release-notes.py --output dist/notes.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: superbomberman5-linux-x64
+          path: |
+            dist/*.AppImage
+            dist/superbomberman5-*-linux-x64.zip
+          if-no-files-found: error
+          compression-level: 0
+
+  publish:
+    needs: [windows, linux]
+    if: inputs.publish_release
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: superbomberman5-*
+          path: dist
+          merge-multiple: true
+      - name: Verify tag and prepare notes
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
         run: |
           if git rev-parse --verify "refs/tags/v${RELEASE_VERSION}" >/dev/null 2>&1; then
-            test "$(git rev-list -n 1 "v${RELEASE_VERSION}")" = "$GITHUB_SHA" || { echo 'Tag points at another commit; refusing replacement.'; exit 1; }
+            test "$(git rev-list -n 1 "v${RELEASE_VERSION}")" = "$GITHUB_SHA" || exit 1
           fi
+          python3 tools/release-notes.py --output dist/notes.md
+          cd dist
+          sha256sum *.AppImage *-windows-x64.zip > SHA256SUMS
       - name: Publish prerelease
-        if: inputs.publish_release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ inputs.version }}
           target_commitish: ${{ github.sha }}
-          name: Super Bomberman 5 v${{ inputs.version }} — Windows prototype
+          name: Super Bomberman 5 v${{ inputs.version }} — Linux AppImage + Windows ZIP
           body_path: dist/notes.md
           prerelease: true
           make_latest: false
           fail_on_unmatched_files: true
           overwrite_files: false
           files: |
-            dist/superbomberman5-*-windows-x64.zip
+            dist/*.AppImage
+            dist/*-windows-x64.zip
+            dist/SHA256SUMS

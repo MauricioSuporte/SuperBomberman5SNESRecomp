@@ -21,7 +21,7 @@ An unofficial, noncommercial **Super Bomberman 5** PC port prototype built with 
 | Normal Game character selection (v0.3.0) | Optional Battle picker after file confirmation; second/ninth characters verified in Zone 1-1 |
 | Character selection colors (v0.4.0) | Six palettes with L/R for all nine characters; Normal and Battle stage routes verified |
 | Netplay / widescreen enhancements | Not implemented for this title |
-| Linux / macOS | Framework build paths exist; this release is Windows only |
+| Linux / macOS | Experimental Linux x86_64 AppImage; macOS package unavailable |
 
 ### Quick start — Windows setup release
 
@@ -32,6 +32,12 @@ An unofficial, noncommercial **Super Bomberman 5** PC port prototype built with 
 5. Run the resulting game under `build/`; configure controls in the launcher.
 
 Requires Windows 10 or newer, x64. Leave several GB free for extraction, tools and build output. Open the root executable to start release setup; the repository's developer `play.cmd` is for local source builds.
+
+### Linux AppImage — new in v0.4.4
+
+Download **superbomberman5-0.4.4-linux-x86_64.AppImage** from [v0.4.4](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.4.4), make it executable (`chmod +x superbomberman5-0.4.4-linux-x86_64.AppImage`) and run it. The AppImage copies its ROM-free setup into `${XDG_DATA_HOME:-~/.local/share}/superbomberman5/0.4.4` on first launch. Select your own supported ROM and use **Generate & rebuild**; subsequent launches open the locally rebuilt game. Rust is not required. Internet is needed for the first portable tool download. Linux x86_64, glibc 2.35+ (Ubuntu 22.04 baseline), desktop graphics/audio libraries and several GB free are required. If FUSE is unavailable, run with `--appimage-extract-and-run`. Keep the writable version folder to retain local builds and settings; ROM and generated game data are never part of the download. Linux distribution and full-campaign coverage remain limited; see [validation](docs/STATUS.md).
+
+Windows users continue to download the **superbomberman5-0.4.4-windows-x64.zip** setup pack. Both formats include the same four optional mods, disabled by default. Check the release's **SHA256SUMS** before use.
 
 ### Supported ROM
 
@@ -49,7 +55,7 @@ The developer's local filename is `Super Bomberman 5 (USA).sfc`, but its header 
 
 ### Included mods
 
-The **v0.4.3 Windows setup pack** includes all four mods below, each at mod version **0.1.0** and disabled by default. Complete **Generate & rebuild**, open **Mods**, enable the desired features and select Play. The release has one Windows ZIP containing the executable, launcher resources, analyzer, source and all four preinstalled mods; no separate mod download or import is needed. `FILE_SHA256SUMS` inside the ZIP covers its packaged files. They require the corresponding native plugins in the host; importing a package cannot update an older executable.
+The **v0.4.4 setup packs** includes all four mods below, each at mod version **0.1.0** and disabled by default. Complete **Generate & rebuild**, open **Mods**, enable the desired features and select Play. Each setup package contains the executable, launcher resources, analyzer, source and all four preinstalled mods; no separate mod download or import is needed. `FILE_SHA256SUMS` inside each setup payload covers its packaged files. They require the corresponding native plugins in the host; importing a package cannot update an older executable.
 
 | Mod / category | Feature and use |
 |---|---|
@@ -136,9 +142,13 @@ Protótipo não oficial e não comercial de port de **Super Bomberman 5** para P
 
 Requer Windows 10 ou superior, x64, e alguns GB livres. **Nenhuma ROM, código gerado da ROM ou recurso extraído acompanha o download.** O arquivo de desenvolvimento tem “USA” no nome, porém o cabeçalho indica **JPN**. Confira os hashes em [Supported ROM](#supported-rom); o nome do arquivo não garante compatibilidade.
 
+### AppImage Linux — novidade da v0.4.4
+
+Baixe **superbomberman5-0.4.4-linux-x86_64.AppImage** na [v0.4.4](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.4.4), dê permissão de execução e execute. Sem FUSE, use --appimage-extract-and-run. O setup é copiado para a pasta XDG de dados da versão (padrão ~/.local/share/superbomberman5/0.4.4), onde você fornece sua ROM e usa **Generate & rebuild**. Nas próximas aberturas, o AppImage usa o jogo gerado localmente. Requer Linux x86_64 com glibc 2.35+, bibliotecas de vídeo/áudio do desktop, internet para as primeiras ferramentas e alguns GB livres. Rust não é necessário. Preserve a pasta gravável para manter builds e configurações. Confira SHA256SUMS na release. Compatibilidade ampla e campanha completa continuam não qualificadas.
+
 ### Mods incluídos
 
-O **pacote Windows v0.4.3** inclui os quatro mods abaixo, todos na versão de mod **0.1.0** e desabilitados por padrão. Conclua **Generate & rebuild**, abra **Mods**, ative as funções desejadas e selecione Play. A release tem um único ZIP Windows com executável, recursos do launcher, analisador, fontes e os quatro mods pré-instalados; não é necessário baixar nem importar mods separados. O arquivo `FILE_SHA256SUMS` dentro do ZIP cobre os arquivos do pacote. Eles contêm apenas dados e dependem dos plugins nativos do host; importar um pacote não atualiza um executável antigo.
+Os **pacotes Windows e Linux v0.4.4** inclui os quatro mods abaixo, todos na versão de mod **0.1.0** e desabilitados por padrão. Conclua **Generate & rebuild**, abra **Mods**, ative as funções desejadas e selecione Play. Cada pacote inclui executável, recursos do launcher, analisador, fontes e os quatro mods pré-instalados; não é necessário baixar nem importar mods separados. O arquivo `FILE_SHA256SUMS` dentro do setup cobre os arquivos do pacote. Eles contêm apenas dados e dependem dos plugins nativos do host; importar um pacote não atualiza um executável antigo.
 
 | Mod / categoria | Função e uso |
 |---|---|

@@ -1,3 +1,13 @@
+# v0.4.4 distribution / Distribuição v0.4.4
+
+Each new release must update README.md in English and Portuguese with useful current download, installation, feature and validation information before publication.
+
+The Release workflow now builds a Windows x64 setup ZIP and an experimental Linux x86_64 AppImage. Both use clean sources, SNESRECOMP_SETUP_HOST=ON and LLE; no ROM-derived code is shipped. Publication depends on both jobs passing. The Linux packager wraps the audited setup ZIP with scripts/AppRun, which copies setup into a versioned writable XDG data directory before generation. It bundles the Linux native analyzer and Cargo/Rust notices, excludes upstream screenshots/fixtures, and preserves file checksums. appimagetool is checked against a pinned SHA-256; changes require deliberate pin updates. Test first/repeat AppImage launches, the packaged analyzer and local ROM generation/rebuild, and record precise coverage in STATUS.md. SHA256SUMS is uploaded alongside the AppImage and Windows ZIP. Preserve existing public tags/assets.
+
+Toda nova release exige README.md atualizado nas duas línguas. A workflow gera ZIP Windows e AppImage Linux experimental, com setup sem ROM e LLE. Publicação depende dos dois jobs. O AppImage copia o setup para a pasta XDG gravável da versão; inclui analisador/licenças e exclui capturas/fixtures upstream. Valide primeira abertura, reabertura, analisador e geração/rebuild local; registre a cobertura no STATUS.md. Publique SHA256SUMS junto aos dois pacotes. Preserve tags e assets existentes.
+
+The following describes the earlier Windows-only publication process and remains relevant to the Windows finalizer.
+
 # Versions and publication / Versões e publicação
 
 Public repository: `MauricioSuporte/SuperBomberman5SNESRecomp`. The initial release is **v0.1.0**, marked as a prerelease. Windows x64 is the qualified platform; Linux/macOS are not release targets yet.

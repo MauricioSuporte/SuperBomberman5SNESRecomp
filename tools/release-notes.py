@@ -91,6 +91,27 @@ Rotas Windows/LLE na Zone 1-1 verificam tempo ilimitado, tentativa de forçar 0:
 Pacote sem ROM ou executável derivado dela: contém instalador, analisador, fontes, recursos do launcher e licenças. FILE_SHA256SUMS verifica o conteúdo; GitHub mostra o digest do ZIP.
 '''
 
+if tuple(int(n) for n in version.split('.')) >= (0,4,4):
+    notes = f'''# Super Bomberman 5 v{version} — Linux AppImage + Windows ZIP
+
+## English
+
+New: experimental Linux x86_64 AppImage alongside the Windows x64 ZIP. Both are ROM-independent setup packs with the native analyzer, sources, notices and four optional mods (PT-BR menus, Normal character selection, L/R colors and infinite Normal timer), all disabled by default. No ROM, generated game code, playable ROM-derived binary, extracted game assets or saves are distributed.
+
+Windows: extract the entire ZIP and open SuperBomberman5SNESRecomp.exe. Linux: make the AppImage executable and run it; without FUSE, use --appimage-extract-and-run. First launch copies setup into $XDG_DATA_HOME/superbomberman5/{version} (default ~/.local/share). Provide your supported ROM and use Generate & rebuild. Later AppImage launches use the locally rebuilt game. Requires internet for the first portable tools download, several GB free, Windows 10+ x64 or Linux x86_64 with glibc 2.35+ and desktop graphics/audio libraries. Rust is unnecessary. SHA256SUMS covers both downloads.
+
+Partial recompilation with LLE: most game logic remains interpreted. Full campaign, full multiplayer and broad Linux distribution compatibility remain unqualified. See README.md and docs/STATUS.md for concrete package/runtime checks. This release retains the v0.4.3 feature set; local uncommitted co-op work is not included.
+
+Supported ROM: JPN header, CRC32 c25ab56a, SHA-256 5251e6491872dc51879b630a34d76a92e29ea0c39026c4f8773c1fe006d047c4.
+
+## Português
+
+Novidade: AppImage Linux x86_64 experimental junto ao ZIP Windows x64. Ambos incluem setup sem ROM, analisador nativo, fontes, licenças e quatro mods opcionais: menus PT-BR, personagens no Normal, cores com L/R e tempo infinito. Todos desligados por padrão. Não distribuímos ROM, código gerado, executável jogável derivado da ROM, recursos extraídos ou saves.
+
+Windows: extraia todo o ZIP e abra SuperBomberman5SNESRecomp.exe. Linux: dê permissão de execução ao AppImage e execute; sem FUSE, use --appimage-extract-and-run. Na primeira abertura, o setup é copiado para $XDG_DATA_HOME/superbomberman5/{version} (padrão ~/.local/share). Forneça sua ROM compatível e use Generate & rebuild. Nas próximas aberturas, o AppImage usa o jogo recompilado localmente. Requer internet no primeiro download de ferramentas, alguns GB livres, Windows 10+ x64 ou Linux x86_64 com glibc 2.35+ e bibliotecas de vídeo/áudio do desktop. Rust não é necessário. SHA256SUMS cobre os dois downloads.
+
+Recompilação parcial com LLE; a maior parte da lógica permanece interpretada. Campanha completa, multiplayer completo e compatibilidade ampla de distribuições Linux continuam não qualificados. README.md e docs/STATUS.md registram as verificações concretas. Mantém as funcionalidades da v0.4.3; alterações locais ainda não commitadas do cooperativo não estão incluídas.
+'''
 if args.output:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(notes, encoding='utf-8', newline='\n')
