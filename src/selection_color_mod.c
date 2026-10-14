@@ -8,7 +8,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-static bool enabled, live;
+static bool enabled, live, pending;
 static uint8_t colors[5];
 static uint16_t previous[5];
 static uint32_t picker_pc(void) {
@@ -21,7 +21,7 @@ static bool picker(void) {
          (live && pc>=0xc6a300 && pc<0xc6a800 && g_ram[0x1032]==5));
 }
 void SelectionColorReset(void) {
-    live=false;memset(colors,0,sizeof(colors));memset(previous,0,sizeof(previous));
+    live=pending=false;memset(colors,0,sizeof(colors));memset(previous,0,sizeof(previous));
 }
 static void reset_plugin(void) { SelectionColorReset();enabled=false; }
 static void activate(void) { enabled=true; }
@@ -72,6 +72,9 @@ static void apply_color(unsigned player) {
 }
 void SelectionColorBeforeFrame(void) {
     if(!enabled) return;
+    /* Final picker cleanup can restore stock CPU colors after the last A.
+     * Keep the choices until the native stage initializer consumes them. */
+    if(pending) for(unsigned i=0;i<5;++i) g_ram[0x6264+i]=colors[i];
     uint16_t pressed[5];
     for(unsigned slot=0;slot<5;++slot) {
         uint16_t pad=RtlGetPadState(slot);
@@ -91,9 +94,23 @@ void SelectionColorBeforeFrame(void) {
 }
 void SelectionColorAfterFrame(void) {
     if(!enabled) return;
-    if(!picker()) { live=false;return; }
+    if(!picker()) {
+        if(live && g_ram[0x103a]>0 && g_ram[0x103a]<=5 && g_ram[0x1038]>=g_ram[0x103a]) pending=true;
+        live=false;
+        if(pending) {
+            bool consumed=true;
+            for(unsigned i=0;i<5;++i) {
+                g_ram[0x6264+i]=colors[i];
+                unsigned character=g_ram[0x625f+i];
+                if(character<1 || character>9 || g_ram[0x16c2+i]!=character-1 ||
+                   g_ram[0x16da+i]!=g_rom[0xbb4e + character-1]+colors[i]) consumed=false;
+            }
+            if(consumed) pending=false;
+        }
+        return;
+    }
     if(!live && picker_pc()==0xc68e68) {
-        live=true;memset(colors,0,sizeof(colors));
+        live=true;pending=false;memset(colors,0,sizeof(colors));
     }
     if(live) for(unsigned i=0;i<5;++i) apply_color(i);
 }
@@ -201,7 +218,7 @@ void SelectionColorDrawPpuFrame(void) {
     PtbrDrawPpuFrameObserved(enabled?cursor_overlay:NULL,NULL);
 }
 void SelectionColorSave(SaveLoadInfo *sli) {
-    uint32_t magic=0x314c4353;uint8_t flag=live?1:0;
+    uint32_t magic=0x314c4353;uint8_t flag=(live?1:0)|(pending?2:0);
     sli->func(sli,&magic,sizeof(magic));sli->func(sli,&flag,1);
     sli->func(sli,colors,sizeof(colors));sli->func(sli,previous,sizeof(previous));
 }
@@ -211,7 +228,7 @@ void SelectionColorLoad(SaveLoadInfo *sli,uint32_t version) {
     uint32_t magic=0;uint8_t flag=0;
     sli->func(sli,&magic,sizeof(magic));sli->func(sli,&flag,1);
     sli->func(sli,colors,sizeof(colors));sli->func(sli,previous,sizeof(previous));
-    if(magic!=0x314c4353 || flag>1) { RtlStateStreamFail(sli);return; }
+    if(magic!=0x314c4353 || flag>3) { RtlStateStreamFail(sli);return; }
     for(unsigned i=0;i<5;++i) if(colors[i]>=6) { RtlStateStreamFail(sli);return; }
-    live=flag!=0;
+    live=(flag&1)!=0;pending=(flag&2)!=0;
 }

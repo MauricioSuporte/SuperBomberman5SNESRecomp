@@ -20,6 +20,15 @@ e `$62AB` associa cada controle ao cursor atual: humanos usam seus controles e,
 ao confirmar, passam a escolher CPUs pendentes. L/R acompanha essas tabelas
 e preserva os confirmados; Normal de dois jogadores aguarda contador 2.
 
+Na saída do seletor, a limpeza original pode restaurar cores padrão dos CPUs.
+O mod preserva as escolhas até o inicializador nativo consumir os offsets e
+derivar as paletas das fases; snapshots incluem essa transição. Rota de 7.360
+frames com dois humanos e três CPUs validou entrada independente, transferência
+de controle e as cinco paletas confirmadas na fase do Battle. A confirmação
+de dois jogadores no Normal tem teste nativo isolado, mas a rota local de
+Normal para dois jogadores chegou ao mapa sem abrir o seletor. A interceptação
+desse fluxo e a campanha cooperativa continuam pendentes de validação/correção.
+
 v0.4.0 inclui o mod de cores na seleção: L/R percorrem branco, preto, vermelho, azul,
 verde e amarelo nos nove personagens. Cursor com L + R acima e jogador abaixo.
 Testes nativos passaram para paletas, entradas, confirmação, snapshots e

@@ -120,6 +120,18 @@ int main(void) {
     press(0,0x800);CHECK(colors[2]==1 && colors[3]==1 && colors[0]==0);
     g_ram[0x62b8]=0xff;g_ram[0x62ab]=4;g_ram[0x62b9]=1;
     press(0,0x800);CHECK(colors[4]==1 && colors[3]==1 && colors[2]==1);
+    /* Final cleanup may reset CPU colors before the stage derives palettes. */
+    g_ram[0x1038]=g_ram[0x103a]=5;set_pc(0xc68ef0);
+    memset(g_ram+0x6264,4,5);SelectionColorAfterFrame();
+    CHECK(pending && !live && !memcmp(g_ram+0x6264,colors,5));
+    Stream committed={.base={.func=transfer}};SelectionColorSave(&committed.base);
+    SelectionColorReset();committed.reading=true;committed.at=0;SelectionColorLoad(&committed.base,10);CHECK(pending && !live);
+    memset(g_ram+0x6264,3,5);SelectionColorBeforeFrame();CHECK(!memcmp(g_ram+0x6264,colors,5));
+    for(unsigned i=0;i<5;++i) {
+        g_ram[0x16c2+i]=g_ram[0x625f+i]-1;
+        g_ram[0x16da+i]=rom[0xbb4e + g_ram[0x16c2+i]]+colors[i];
+    }
+    SelectionColorAfterFrame();CHECK(!pending);
     fixture();activation();SelectionColorAfterFrame();
     Ppu *ppu=calloc(1,sizeof(Ppu));CHECK(ppu);ppu->obsel=3;
     for(unsigned s=0;s<128;++s) ppu->oam[s*2]=0xe000;
