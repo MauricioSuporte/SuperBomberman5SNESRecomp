@@ -54,7 +54,10 @@ Battle choices at `$7E:625F` are one based. Normal's character fields at `$16C2`
 are zero based and initialized before the file menu. Confirmation applies this
 conversion and the original palette table at ROM `$80:BB4E`, before native
 stage routines load graphics. Two-player confirmation waits until the native
-confirmed-seat count reaches two; broader cooperative gameplay requires runtime validation.
+confirmed-seat count reaches two. Confirmation is gated on picker readiness
+because initialization temporarily reuses that counter. Local one- and two-player
+routes verified stage characters and palettes; broader cooperative gameplay
+requires runtime validation.
 
 The title's snapshot extension includes execution position, selection state and
 the suspended snapshot, with a bounded allocation. Tests cover disabled mode,

@@ -61,6 +61,8 @@ Local runtime routes verified the six-color preview with PT-BR enabled and
 the second character in green in actual Normal and Battle stages. Five-seat
 input routing is covered by native tests; a two-human/three-CPU Battle route
 verified separate controller inputs, CPU handoff and all five chosen stage palettes.
+One- and two-player Normal routes also verified picker opening, confirmation
+and chosen palettes in Zone 1-1.
 Five-seat
 cursor rendering is covered with synthetic font data; full multiplayer
 gameplay remains unvalidated. No ROM graphics or palette bytes are packaged.

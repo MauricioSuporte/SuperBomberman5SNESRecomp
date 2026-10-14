@@ -50,6 +50,9 @@ int main(void) {
     file_ready(1);NormalCharacterFrame();CHECK(!picking);
     activation();NormalCharacterFrame();CHECK(picking && players==1);
     CHECK(g_ram[0x1031]==4 && g_ram[0x626a]==2);
+    g_ram[0x1038]=5;set_picker_pc(0xc68b10);NormalCharacterFrame();
+    CHECK(picking && !picker_ready); /* Temporary initialization counter. */
+    g_ram[0x1038]=0;set_picker_pc(0xc689cf);
     /* Save/load inside the picker retains the suspended campaign. */
     Stream *s=calloc(1,sizeof(Stream));CHECK(s);
     s->base.func=transfer;NormalCharacterSave(&s->base);

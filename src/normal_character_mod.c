@@ -10,7 +10,7 @@
 #include <string.h>
 
 enum { SNAP_CAP = 1024*1024, RESUME_CAP = 384*1024 };
-static bool enabled, picking, chosen, loaded;
+static bool enabled, picking, picker_ready, chosen, loaded;
 static bool internal_snapshot;
 static unsigned players;
 static uint8_t *resume;
@@ -26,7 +26,7 @@ static void set_picker_pc(uint32_t pc) {
 }
 void NormalCharacterReset(void) {
     free(resume);resume=NULL;resume_size=0;
-    picking=chosen=loaded=false;players=1;previous_pad=0;
+    picking=picker_ready=chosen=loaded=false;players=1;previous_pad=0;
 }
 static void reset_plugin(void) { NormalCharacterReset();enabled=false; }
 static void activate(void) { enabled=true; }
@@ -78,9 +78,11 @@ void NormalCharacterFrame(void) {
     uint16_t pad=RtlGetPadState(0);
     previous_pad=pad;
     if (picking) {
+        /* Initialization reuses $1038 before the picker starts accepting A. */
+        if(pc==0xc68e68) picker_ready=true;
         /* The last human's confirmation can advance the native script in
          * this same field. $1038 counts confirmed seats in selection order. */
-        if (g_ram[0x1038]>=players) finish_picker(false);
+        if (picker_ready && g_ram[0x1038]>=players) finish_picker(false);
         return;
     }
     if (g_ram[0x1031]!=3) { chosen=false;return; }
