@@ -110,6 +110,8 @@ SNESRecomp translates analyzable 65816 CPU routines into C and links them with a
 | `tools/`, `scripts/` | Build, publication audit and setup packaging |
 | `docs/` | Build, validation evidence, limitations and publication workflow |
 | `.agents/skills/super-bomberman5-repository/` | Reusable Git/documentation/release skill |
+| `.agents/skills/super-bomberman5-mod-development/` | Skill for researching, implementing, testing and documenting native mods |
+| `AGENTS.md`, `CLAUDE.md` | Guidance for AI agents: rules, architecture, RAM map, workflows |
 
 ### Credits and license
 
@@ -159,6 +161,6 @@ A build validada usa composição LLE. Reset/NMI permanecem interpretados devido
 
 [Abra uma issue](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/issues) informando versão, Windows, hash da ROM e reprodução. Não publique ROM, sprites/músicas extraídos, dumps ou save states. Confira dados pessoais nos relatórios antes de anexá-los.
 
-O estado e as observações ficam em [STATUS.md](docs/STATUS.md); o fluxo de versões e releases está em [PUBLISHING.md](docs/PUBLISHING.md). A skill de manutenção fica em `.agents/skills/super-bomberman5-repository/`. ROM, fontes gerados, builds e capturas ficam fora do Git. Releases contêm instalador e fontes sem dados do jogo.
+O estado e as observações ficam em [STATUS.md](docs/STATUS.md); o fluxo de versões e releases está em [PUBLISHING.md](docs/PUBLISHING.md). A skill de manutenção fica em `.agents/skills/super-bomberman5-repository/` e a de desenvolvimento de mods em `.agents/skills/super-bomberman5-mod-development/`; orientações para agentes de IA estão em `AGENTS.md`. ROM, fontes gerados, builds e capturas ficam fora do Git. Releases contêm instalador e fontes sem dados do jogo.
 
 O software usa [PolyForm Noncommercial 1.0.0](LICENSE), preservando as licenças das dependências. Veja [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). A licença não concede direitos sobre a ROM ou conteúdo de Super Bomberman 5. O projeto não tem vínculo ou endosso dos titulares do jogo.

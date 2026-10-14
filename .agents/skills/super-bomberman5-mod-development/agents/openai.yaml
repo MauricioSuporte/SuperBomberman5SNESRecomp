@@ -1,0 +1,4 @@
+interface:
+  display_name: "Super Bomberman 5 Mod Development"
+  short_description: "Research, implement, test and document native mods"
+  default_prompt: "Use $super-bomberman5-mod-development to add or fix a native feature or mod in this project."
