@@ -1,5 +1,87 @@
 # Super Bomberman 5: estado do protótipo
 
+## v0.5.0 five-player Normal Game demo / Demo com cinco jogadores — 2026-10-14
+
+Release scope: the optional **Normal Game — five players** mod (package 0.1.0,
+host v0.5.0+) joins the four existing mods in the Windows ZIP and Linux
+AppImage. The launcher's PLAYER 1–5 tabs and seat 3–5 input come from the
+framework forks (`MauricioSuporte/snesrecomp`, `MauricioSuporte/recomp-ui`,
+branch `superbomberman5`) based on upstream `e54427b`/`41c88ff`. The README
+gains the maintainer-requested showcase (`docs/images/five-player-showcase.png`:
+five-player title menu, Zone 1-1 and Zone 1-A with distinct characters/colors,
+five-player Battle Mode), captured from this project's Linux LLE build.
+
+Evidence before tagging (Linux LLE, JPN ROM, local): native tests for all five
+mods, Python publication tests, fixture runtime suite with both renderers, the
+co-op scenarios in the sections below and the showcase routes. The Windows
+package/build evidence comes from the Release workflow; Windows playtesting of
+the final changes was done by the maintainer. Known open issue: Back (B) in the
+Normal character picker can leave a black screen (pre-existing).
+
+Escopo: mod opcional de cinco jogadores no Normal Game incluído nos pacotes
+Windows e Linux, abas PLAYER 1–5 no launcher (forks dos frameworks) e imagem de
+apresentação no README. Problema conhecido: voltar com B na seleção de
+personagens do Normal pode deixar a tela preta.
+
+## Five-player menu confirmation / Confirmação no menu de cinco jogadores — 2026-10-14
+
+The overlay moved the title cursor only for its idle tile, so the confirmation
+bounce (tiles `$1EA-$1EE`) jumped to the stock 2P row, and the fade (mode 3)
+showed the stock two rows. The bounce now keeps its offset on the chosen row
+and the five rows stay through the fade; menu input remains mode 2 only.
+Evidence (Linux LLE): frame captures of 1P/EN, 3P/PT-BR and 5P/PT-BR
+confirmations; native/overlay tests; fixture suite with both renderers.
+
+O cursor faz a animação de confirmação ao lado da opção escolhida e as cinco
+opções ficam na tela até o fade-out.
+
+## P3-P5 enemy contact and spawns in smaller arenas / Dano por inimigos e spawns em arenas menores — 2026-10-14
+
+Enemy contact used per-player distance arrays with two entries (`$1FF4-$1FFF`,
+loops `CPY #$02` at `$C3:47FB` and four other routines), so P3-P5 never took
+contact damage. Co-op moves them to five-entry arrays at `$1FC0-$1FDD` and
+fills seats 3-5 via `$C3:FF70`. Spawns ran before `$C5:3D3F` built the stage
+map, so P3/P4 appeared outside smaller arenas; seats are re-checked at
+`$C5:3D5D`. Evidence (Linux LLE): an enemy pinned on P3 sets status `$41` then
+`$C1` like P1; P1 control unchanged; Zone 2-4 (`$1F`) now places P3/P4 at
+(5,11)/(9,11), `$6A` P3 at (3,9), `$6B` P3/P4 at (2,9)/(12,9); unit tests,
+fixture suite, P3-P5 exit warp and boss continues pass with no BRK. Enemies
+still choose P1/P2 as chase targets. Windows build and physical play pending.
+
+Inimigos agora causam dano a P3-P5 ao encostar, e P3-P5 não nascem mais fora
+de arenas menores (ZONE2-4, ZONE3-D, ZONE3-E). Os inimigos continuam
+escolhendo P1/P2 para perseguir, como no original.
+
+## Five-player stage exits, boss stages, menu and Continue picker / Saídas, chefes, menu e seleção no Continue — 2026-10-14
+
+Exit warps tested only P1/P2: script op `$12` (`$C2:0C67`) loops `CPX #$02`
+at `$C2:0C9F`; the same bound sits at `$C5:6195/$C5:61C6` (floor gimmicks),
+`$C1:6BA1` (cell hold) and `$C0:373F` (point damage). All follow the roster.
+Boss stages `$67-$6E` create rival bombers in actor slots 2/3, which replaced
+P3 and pushed P5 to slot 5; five-entry bomber tables (`$0FEA/$0FEF`) then sent
+`$C4:06C7` into data and the game froze. Rivals now take the slots after the
+players (trampoline `$C2:4340` for `$C2:16B8/$C2:16EE`, 110 literal operands in
+`$C5:2600-$C5:39FF`), boss rosters are `min(players, 5 - rivals)` and benched
+seats keep character/items. The player menu uses native colors (heading color
+3, rows color 2), follows the W34SEL blink and passes Up/Down to the guest for
+its cursor sound. Continue -> File (`$C7:0BEA/$C7:0E2B`) opens the picker.
+
+Evidence (Linux LLE, JPN ROM): five native tests and the fixture runtime
+suite passed; P3-P5 warps from Zone 1-1 to 1-5 with every seat's bombs/fire
+kept; Continue picker applied five characters; Continue into `ZONE1 - A`
+(5P: four fight, rival in slot 4) and `$6A` (three fight, two rivals) ran
+without the freeze, 2P/3P stock comparisons unchanged. Not qualified: boss
+defeat and choreography, full campaign, Windows build, physical controls.
+Picker Back (B) leaves a black screen in headless runs for New Game and
+Continue, also with the previous version; unresolved.
+
+Portais agora funcionam para P3-P5 e os itens de todos seguem para a fase
+seguinte. Nas fases de chefe Bomber o rival fica depois dos jogadores; com
+cinco slots, lutam até quatro (três na fase com dois rivais) e os demais
+voltam na fase seguinte com personagem e itens. Menu com opções brancas,
+PUSH START piscando e som do cursor. Continue -> File abre a seleção de
+personagens. Voltar com B na seleção ainda deixa a tela preta nos testes.
+
 ## v0.4.4 Linux AppImage + Windows ZIP — 2026-10-14
 
 Experimental Linux x86_64 ROM-independent setup AppImage added alongside the Windows x64 ZIP, retaining v0.4.3's four optional mods. Clean published framework pins are unchanged; local uncommitted co-op/control changes are excluded. AppRun copies setup to a versioned writable XDG data directory, preserves existing files and selects the locally generated build on repeat launch. Runtime/tool hashes and licenses are included; upstream game screenshots/fixtures are removed and both payloads audited.
@@ -49,6 +131,124 @@ limpos. A geração usou o pipeline CLI incluído, sem percorrer todo o assisten
 interativo. Combinação com PT-BR/personagens/cores em dois jogadores testada. Campanha
 completa, bosses reais, rewind e controles físicos ainda não qualificados.
 
+## Launcher and local controls for five players / Launcher e controles para cinco jogadores — 2026-10-14
+
+The launcher showed only PLAYER 1/2 and the desktop host routed local input
+only to seats 1–2, so P3–P5 could not be played outside the test fixture. At
+the maintainer's request the pinned submodules were changed locally (pending
+upstream): recomp-ui's SNES profile ceiling is now 8 seats (the title's
+`num_players = 5` decides), keybinds.ini gains `[player3]`..`[player8]`, and
+snesrecomp's desktop host reads `SourceP3`.., `EnableGamepad3`.. and
+`[GamepadMap] ControlsP3`.., seats extra gamepads and pushes seats 3–5 through
+`RtlSetPadState` each frame. Seats 3.. start with no device; two-player
+titles keep their config.ini unchanged.
+
+Evidence (Linux build, same sources): recomp-ui's 41 tests pass, with new
+checks for five SNES controller cards and per-seat `ControlsP5`; snesrecomp
+config round-trip and keybinds tests pass with new seat 3–5 cases; a virtual
+gamepad set to P3 reached seat 3 as Start (`RtlGetPadState(2)=0008`) while
+P1 stayed idle. Not built on Windows yet; physical controllers and the
+interactive launcher page were not exercised here.
+
+O launcher mostrava só PLAYER 1/2 e o host só lia controles locais para dois
+jogadores. Com autorização do mantenedor, os submódulos foram alterados
+localmente (falta enviar upstream): o launcher do SNES aceita até 8 jogadores
+(o jogo declara 5), keybinds.ini ganhou `[player3]`.., e o host lê
+`SourceP3`.., `EnableGamepad3`.. e `ControlsP3`.., enviando P3–P5 ao multitap.
+Testes do recomp-ui e do snesrecomp passaram em build Linux; um gamepad
+virtual em P3 chegou ao assento 3. Falta validar no Windows e com controles
+físicos.
+
+## Five-player HUD, animation and rejoin / HUD, animação e retorno com cinco jogadores — 2026-10-14
+
+Interactive five-player play showed four regressions: the HUD frame and icons
+were missing, characters did not animate, Start appeared not to revive a dead
+player, and P3 drew as a cut sprite. Causes, verified on the JPN image with
+scripted LLE runs: the adapter replaced the stock HUD selector `$C5:066C` with
+`RTS`; five resident players filled the five campaign sprite pages, so the
+stock allocator `$C5:6AF5` refused every animation change and a rejoined
+player was created without graphics (the shared life was still spent); P3
+requested OBJ palette slot 3, which Zone 1-1 enemies own. The HUD selector now
+runs again with the mask restored at `$C5:060E`; an authored allocator at
+`$C5:7100` refills the requester's own page when no page is free; seats 3–5
+use palette slots 7, 6 and 5.
+
+Evidence (Linux build of the same sources, LLE, scripted routes): Zone 1-1
+with five players shows the full HUD; P1 OAM tiles cycle while walking; P3
+draws with its own palette; a real bomb death of P1 followed by Start spends a
+life and P1 reappears and walks (also with `NewRenderer=1`, characters, colors
+and PT-BR enabled); real bomb deaths of P2/P3 rejoin through the fixture. The
+four native tests and `tests/normal_coop_runtime.py --fixture` (counts 1–5,
+five skins/rejoins/Continue, three-player lifecycle) pass. Not yet run on the
+Windows toolchain; bosses, mounts and later zones remain unqualified, and
+mount/item palettes may fall back to another palette with five players.
+
+A sessão com cinco jogadores mostrou HUD sem moldura/ícones, personagens sem
+animação, Start sem reviver (a vida era gasta, mas o jogador voltava sem
+gráficos) e P3 cortado. O seletor de HUD original voltou a rodar; um alocador
+próprio reaproveita a página de sprites do jogador quando não há página livre;
+P3–P5 usam as paletas 7, 6 e 5. Rotas roteirizadas na Zone 1-1 confirmam HUD,
+animação, retorno com Start e paleta de P3; os testes nativos e de execução
+passaram em build Linux. Falta validar no Windows, em bosses, montarias e
+zonas seguintes.
+
+## Normal menu recognition / Identificação do menu Normal — 2026-10-14
+
+An interactive launcher session reproduced the original two-row menu while
+the co-op feature was enabled. Local diagnostics recorded title mode with
+`$2000` retaining `$C7:1B3B` from attract mode, instead of the fast scripted
+route's `$C6:F717`. The feature now recognizes both native BG3 player rows
+before overlays are applied and caches that context for the frame. Unit
+checks cover stale return history and rejection of unrelated text. The local
+executable is rebuilt; the accurate menu compositor remains scoped to this
+screen. This does not qualify the rest of the campaign or physical controllers.
+
+Post-fix Windows/LLE scripted runs with `NewRenderer=1` passed counts 1–5,
+initial lives 3–7 and safe Zone 1-1 spawns; PT-BR was enabled for counts 2 and
+4. Both player-menu languages were visually inspected. Four native tests,
+six Python tests, publication history audit and whitespace checks passed.
+
+A abertura interativa pelo launcher reproduziu as duas opções originais com
+o mod ativado. O diagnóstico local registrou o modo de título com `$2000`
+conservando `$C7:1B3B` da demonstração, em vez de `$C6:F717` da rota rápida de
+teste. O mod agora reconhece as duas linhas originais em BG3 antes das
+substituições visuais e mantém esse contexto durante o quadro. Testes nativos
+cobrem o retorno antigo e rejeitam textos de outras telas. O executável local
+foi recompilado. Campanha completa e controles físicos continuam não qualificados.
+
+Após a correção, execuções Windows/LLE com `NewRenderer=1` passaram para 1–5
+jogadores, vidas iniciais 3–7 e spawns seguros na Zone 1-1, com PT-BR nos casos
+de dois e quatro jogadores. Os menus nos dois idiomas foram inspecionados.
+Passaram os quatro testes nativos, seis testes Python, auditoria e verificação
+de espaços em branco.
+
+## Source Normal co-op / Cooperativo Normal — 2026-10-14
+
+Current source adds the optional, default-disabled `superbomberman5.normal-coop`
+v0.1.0. The 1–5 player menu works in English/PT-BR; initial shared lives are
+3–7. Additional actors use safe-floor searches and boss offsets. The native
+living check, Start rejoin and participating roster cover five seats. Normal
+character/color selection waits for every chosen seat and preserves choices
+through Continue. Dead Start is withheld from the stock pause task until
+release. Mount backup slots are separated from P3/P4; NPC capacity is fourteen.
+
+Source build and focused state/collision/rendering/selection tests pass.
+Scripted Windows/LLE checks cover 1–5 players in Zone 1-1 and P3 as the sole
+survivor, P1 rejoin without pause, Game Over and Continue. Extra-pad scenarios
+exercise five independent character/color choices, each Start rejoin and
+last-life arbitration through the real multitap path in an opt-in fixture.
+The fixture is excluded from the normal build. Full campaign, real bosses,
+mount/item combinations, dense NPC stages, endings, populated battery saves
+and five physical controllers remain unqualified. No release was published.
+See [NORMAL_COOP.md](NORMAL_COOP.md) for scope and reproducible checks.
+
+Os fontes incluem o mod opcional para 1–5 jogadores no Normal, com menu
+PT-BR, vidas iniciais 3–7, spawns seguros, retorno com Start e seleção de skins
+e cores para todos. Os testes roteirizados abrangem a primeira fase, P3 como
+único sobrevivente, retorno sem pausa e Continue. Há testes específicos das
+posições de boss e de restauração de snapshots. Campanha completa, bosses reais,
+montarias/itens, alta ocupação de NPCs e controles físicos ainda precisam de
+validação. A build normal não inclui as caixas de entrada da fixture de teste.
 
 Base criada pelo scaffolder oficial do SNESRecomp em 2026-10-13.
 

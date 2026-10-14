@@ -1,6 +1,7 @@
 /* Native Battle character picker, temporarily entered from Normal's file
  * confirmation. All graphics come from the player's verified cartridge. */
 #include "normal_character_mod.h"
+#include "normal_coop_mod.h"
 #include "common_rtl.h"
 #include "common_cpu_infra.h"
 #include "mod_runtime.h"
@@ -12,6 +13,7 @@
 enum { SNAP_CAP = 1024*1024, RESUME_CAP = 384*1024 };
 static bool enabled, picking, picker_ready, chosen, loaded;
 static bool internal_snapshot;
+static bool from_continue;   /* picker opened from Continue -> File */
 static unsigned players;
 static uint8_t *resume;
 static uint32_t resume_size;
@@ -26,7 +28,7 @@ static void set_picker_pc(uint32_t pc) {
 }
 void NormalCharacterReset(void) {
     free(resume);resume=NULL;resume_size=0;
-    picking=picker_ready=chosen=loaded=false;players=1;previous_pad=0;
+    picking=picker_ready=chosen=loaded=from_continue=false;players=1;previous_pad=0;
 }
 static void reset_plugin(void) { NormalCharacterReset();enabled=false; }
 static void activate(void) { enabled=true; }
@@ -36,8 +38,9 @@ SNES_MOD_CONSTRUCTOR(register_normal_characters) {
 }
 
 static void finish_picker(bool cancel) {
-    uint8_t choices[2]={g_ram[0x625f],g_ram[0x6260]};
-    uint8_t palettes[2]={g_ram[0x6264],g_ram[0x6265]};
+    uint8_t choices[5],palettes[5];
+    memcpy(choices,g_ram+0x625f,sizeof(choices));
+    memcpy(palettes,g_ram+0x6264,sizeof(palettes));
     unsigned count=players;
     /* Detach before loading: the save extension replaces its own buffer. */
     uint8_t *snapshot=resume;uint32_t size=resume_size;
@@ -46,10 +49,21 @@ static void finish_picker(bool cancel) {
     free(snapshot);
     picking=false;
     if (!ok) return;
+    players=count;
     if (cancel) {
         chosen=false;
-        set_picker_pc(0xc71014); /* Initialize and rebuild the Normal file menu. */
-        g_ram[0x2006]=0xc7;g_ram[0x2007]=0x10;g_ram[0x2008]=0xc7;
+        if(from_continue) {
+            /* Resume the Continue script right after its menu fade-out, where
+             * it builds and fades in the file list ($C7:0D39, called from
+             * $C7:0BE4 with inner return $C7:0D37). */
+            set_picker_pc(0xc70d39);
+            g_ram[0x2003]=0xe4;g_ram[0x2004]=0x0b;g_ram[0x2005]=0xc7;
+            g_ram[0x2006]=0x37;g_ram[0x2007]=0x0d;g_ram[0x2008]=0xc7;
+        }
+        else {
+            set_picker_pc(0xc71014); /* Initialize and rebuild the Normal file menu. */
+            g_ram[0x2006]=0xc7;g_ram[0x2007]=0x10;g_ram[0x2008]=0xc7;
+        }
     } else {
         chosen=true;
         for(unsigned i=0;i<count;++i) {
@@ -64,6 +78,16 @@ static void finish_picker(bool cancel) {
         }
     }
 }
+
+/* Return stacks of the file-confirmation fade: New Game ($C7:0BFF/$C7:10E6)
+ * and Continue ($C7:0BEA/$C7:0E2B). Other fades (menus, Back) differ. */
+static bool return_stack(uint32_t outer,uint32_t inner) {
+    return g_ram[0x2003]==(uint8_t)outer && g_ram[0x2004]==(uint8_t)(outer>>8) &&
+        g_ram[0x2005]==(uint8_t)(outer>>16) && g_ram[0x2006]==(uint8_t)inner &&
+        g_ram[0x2007]==(uint8_t)(inner>>8) && g_ram[0x2008]==(uint8_t)(inner>>16);
+}
+static bool confirmed_new_game(void) { return return_stack(0xc70bff,0xc710e6); }
+static bool confirmed_continue(void) { return return_stack(0xc70bea,0xc70e2b); }
 
 void NormalCharacterBeforeFrame(void) {
     /* Consume Back before the native picker changes its script task. */
@@ -88,9 +112,8 @@ void NormalCharacterFrame(void) {
     if (g_ram[0x1031]!=3) { chosen=false;return; }
     /* This fade belongs to a confirmed file; Back/cancel uses another return
      * address. Intercept once, before the Zone map initializes gameplay. */
-    if (!chosen && pc==0xc71257 &&
-        g_ram[0x2003]==0xff && g_ram[0x2004]==0x0b && g_ram[0x2005]==0xc7 &&
-        g_ram[0x2006]==0xe6 && g_ram[0x2007]==0x10 && g_ram[0x2008]==0xc7) {
+    if (!chosen && pc==0xc71257 && (confirmed_new_game() || confirmed_continue())) {
+        from_continue=confirmed_continue();
         uint8_t *snapshot=malloc(SNAP_CAP);
         if (!snapshot) return;
         internal_snapshot=true;
@@ -98,7 +121,7 @@ void NormalCharacterFrame(void) {
         internal_snapshot=false;
         if (!size || size>RESUME_CAP) { free(snapshot);return; }
         resume=snapshot;resume_size=(uint32_t)size;
-        players=(g_ram[0x1d25]&3)==3?2:1;
+        players=NormalCoopPlayerCount();
         picking=true;
         set_picker_pc(0xc689cf);
         g_ram[0x1031]=4;
@@ -112,7 +135,8 @@ void NormalCharacterFrame(void) {
 void NormalCharacterSave(SaveLoadInfo *sli) {
     RtlSaveExecutionState(sli);
     uint32_t capacity=internal_snapshot?0:RESUME_CAP;
-    uint32_t header[5]={0x32434e42, picking?1u:chosen?2u:0u,players,resume_size,capacity};
+    /* State 3: picking, opened from Continue (cancel rebuilds that list). */
+    uint32_t header[5]={0x32434e42, picking?(from_continue?3u:1u):chosen?2u:0u,players,resume_size,capacity};
     sli->func(sli,header,sizeof(header));
     if(resume_size) sli->func(sli,resume,resume_size);
     /* The rewind ring sizes its slots from the first capture. Keep public
@@ -130,12 +154,13 @@ void NormalCharacterLoad(SaveLoadInfo *sli,uint32_t version) {
     if(!RtlLoadExecutionState(sli)) { RtlStateStreamFail(sli);return; }
     uint32_t header[5]={0};
     sli->func(sli,header,sizeof(header));
-    if(header[0]!=0x32434e42 || header[1]>2 || header[2]<1 || header[2]>2 ||
+    bool header_picking=header[1]==1 || header[1]==3;
+    if(header[0]!=0x32434e42 || header[1]>3 || header[2]<1 || header[2]>5 ||
        (header[4]!=0 && header[4]!=RESUME_CAP) || header[3]>header[4] ||
-       ((header[1]==1)!=(header[3]>0))) {
+       (header_picking!=(header[3]>0))) {
         RtlStateStreamFail(sli);return;
     }
-    picking=header[1]==1;chosen=header[1]==2;players=header[2];
+    picking=header_picking;from_continue=header[1]==3;chosen=header[1]==2;players=header[2];
     if(header[3]) {
         resume=malloc(header[3]);
         if(!resume) { RtlStateStreamFail(sli);return; }

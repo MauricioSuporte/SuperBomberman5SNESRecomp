@@ -14,6 +14,10 @@ const uint8 *g_rom=rom;
 Snes *g_snes;
 static uint16_t pad;
 uint16 RtlGetPadState(int slot) { (void)slot;return pad; }
+unsigned NormalCoopPlayerCount(void) {
+    unsigned count=0;for(unsigned i=0;i<5;++i) count+=(g_ram[0x1d25]>>i)&1;
+    return count?count:1;
+}
 size_t RtlSaveSnapshotToMemory(void *data,size_t capacity) {
     if(capacity<sizeof(g_ram)) return 0;
     memcpy(data,g_ram,sizeof(g_ram));return sizeof(g_ram);
@@ -72,9 +76,32 @@ int main(void) {
     g_ram[0x1038]=2;g_ram[0x625f]=3;g_ram[0x6260]=7;
     set_picker_pc(0xc68e30);NormalCharacterFrame(); /* Last confirm advances VM. */
     CHECK(!picking && g_ram[0x16c2]==2 && g_ram[0x16c3]==6);
+    for(unsigned count=3;count<=5;++count) {
+        NormalCharacterReset();file_ready(2);g_ram[0x1d25]=(uint8_t)((1u<<count)-1);
+        NormalCharacterFrame();CHECK(picking && players==count);
+        for(unsigned i=0;i<count;++i) { CHECK(g_ram[0x6269+i]==1);g_ram[0x625f+i]=(uint8_t)(i+2);g_ram[0x6264+i]=(uint8_t)i; }
+        set_picker_pc(0xc68e68);g_ram[0x1038]=(uint8_t)(count-1);NormalCharacterFrame();CHECK(picking);
+        g_ram[0x1038]=(uint8_t)count;NormalCharacterFrame();CHECK(!picking && chosen);
+        for(unsigned i=0;i<count;++i) { CHECK(g_ram[0x16c2+i]==i+1);CHECK(g_ram[0x16da+i]==rom[0xbb4f+i]+i); }
+    }
     NormalCharacterReset();file_ready(1);NormalCharacterFrame();
     set_picker_pc(0xc68e68);pad=0x0001;NormalCharacterBeforeFrame();
     CHECK(!picking && !chosen && picker_pc()==0xc71014 && g_ram[0x4000]==0x72);
+    /* Continue -> File confirms through its own fade return stack. */
+    pad=0;NormalCharacterReset();file_ready(1);
+    g_ram[0x2003]=0xea;g_ram[0x2006]=0x2b;g_ram[0x2007]=0x0e;
+    NormalCharacterFrame();CHECK(picking && from_continue);
+    s->at=0;s->reading=false;NormalCharacterSave(&s->base);
+    NormalCharacterReset();s->at=0;s->reading=true;
+    NormalCharacterLoad(&s->base,10);NormalCharacterLoaded(10);CHECK(!failed && picking && from_continue);
+    g_ram[0x625f]=4;set_picker_pc(0xc68e68);g_ram[0x1038]=1;NormalCharacterFrame();
+    CHECK(!picking && chosen && g_ram[0x16c2]==3);
+    NormalCharacterReset();file_ready(1);
+    g_ram[0x2003]=0xea;g_ram[0x2006]=0x2b;g_ram[0x2007]=0x0e;NormalCharacterFrame();
+    set_picker_pc(0xc68e68);pad=0x0001;NormalCharacterBeforeFrame();
+    CHECK(!picking && !chosen && picker_pc()==0xc70d39 && g_ram[0x2003]==0xe4 && g_ram[0x2006]==0x37);
+    /* Back from the file list and other fades never open the picker. */
+    pad=0;NormalCharacterReset();file_ready(1);g_ram[0x2006]=0x2b;NormalCharacterFrame();CHECK(!picking);
     pad=0;reset_callback();file_ready(1);NormalCharacterFrame();CHECK(!picking);
     /* Reject corrupt lengths without allocating an unbounded buffer. */
     memset(s,0,sizeof(*s));s->base.func=transfer;s->reading=true;

@@ -116,6 +116,39 @@ Builds/testes Windows e Linux passaram. Pacotes extraídos geraram e compilaram 
 
 Recompilação parcial com LLE; a maior parte da lógica permanece interpretada. Campanha completa, multiplayer completo e compatibilidade ampla de distribuições Linux continuam não qualificados. README.md e docs/STATUS.md registram as verificações concretas. Mantém as funcionalidades da v0.4.3; alterações locais ainda não commitadas do cooperativo não estão incluídas.
 '''
+if tuple(int(n) for n in version.split('.')) >= (0,5,0):
+    notes = f'''# Super Bomberman 5 v{version} — five-player Normal Game demo
+
+## English
+
+New optional mod: **Normal Game — five players**. After Generate & rebuild, enable **Play Normal Game with up to five players** in **Mods → Gameplay**. The title menu offers 1–5 PLAYER GAME (native colors, blinking Start, cursor sound). Players 3–5 use the multitap on port 2; the launcher now shows **PLAYER 1–5** tabs, and seats 3–5 start with no device, so assign each a gamepad or its own keys.
+
+- Shared lives start at players + 2 (3–7). A dead player presses Start to spend one life and rejoin while a teammate is alive.
+- Every player can finish a stage through an exit; bombs, fire, speed and other items carry over for all seats.
+- P3–P5 spawn on safe floor, including smaller arenas, take enemy contact damage and animate with their own sprite pages and palettes.
+- Boss stages with rival bombers seat up to four players (three when there are two rivals): the game has five bomber slots. Seats left out return in the next stage with their character, colors and items.
+- With **Choose a character in Normal Game** and **Choose character colors with L and R**, every seat picks its own character and color, from New Game and from Continue.
+
+All five optional mods are preinstalled and disabled by default: PT-BR menus, Normal character selection, L/R colors, infinite Normal timer and five-player Normal Game. Mod packages remain 0.1.0; the five-player mod requires host v0.5.0 or newer. Download the Windows x64 ZIP or the experimental Linux x86_64 AppImage, supply your own supported ROM and use Generate & rebuild.
+
+Validation: native tests for all mods, Python publication tests and audits; Linux LLE scripted runs with five players in Zone 1-1, exits to the next stage with items, Zone 1-A and the two-rival boss stage from Continue, Zone 2-4 and Zone 3-D/E spawns, enemy contact on P3, Start rejoin, Game Over and Continue. Not qualified: defeating each boss, the full campaign, boss choreography with benched seats, five physical controllers. Back (B) from the Normal character picker can leave a black screen; this predates v0.5.0 and remains open. Partial recompilation: most game logic still runs in the interpreter.
+
+Supported ROM: JPN header; CRC32 c25ab56a; SHA-256 5251e6491872dc51879b630a34d76a92e29ea0c39026c4f8773c1fe006d047c4. The downloads contain no ROM, generated game code, playable ROM-derived executable, extracted graphics/audio, saves or captures. SHA256SUMS covers both downloads.
+
+## Português
+
+Novo mod opcional: **Normal Game — five players**. Depois de Generate & rebuild, ative **Play Normal Game with up to five players** em **Mods → Gameplay**. O título oferece de 1 a 5 jogadores, com as cores originais, Start piscando e som do cursor. P3–P5 usam o multitap da porta 2; o launcher mostra as abas **PLAYER 1–5**, e P3–P5 começam sem dispositivo: configure um controle ou teclas próprias para cada um.
+
+- Vidas compartilhadas começam em jogadores + 2 (3–7). Quem morre aperta Start para gastar uma vida e voltar, desde que haja alguém vivo.
+- Qualquer jogador conclui a fase pelo portal; bombas, fogo, velocidade e demais itens seguem para a próxima fase em todos os assentos.
+- P3–P5 nascem em chão seguro, inclusive em arenas menores, tomam dano ao encostar em inimigos e têm animação e paletas próprias.
+- Fases de chefe com rivais Bomber aceitam até quatro jogadores (três com dois rivais), pois o jogo tem cinco vagas de bomber. Quem fica de fora volta na fase seguinte com personagem, cores e itens.
+- Com **Choose a character in Normal Game** e **Choose character colors with L and R**, cada jogador escolhe personagem e cor, em New Game e em Continue.
+
+Os cinco mods opcionais vêm pré-instalados e desativados: menus PT-BR, personagens no Normal, cores com L/R, tempo infinito e Normal Game com cinco jogadores. Os pacotes continuam em 0.1.0; o de cinco jogadores exige host v0.5.0 ou superior. Baixe o ZIP Windows x64 ou o AppImage Linux x86_64 experimental, forneça sua ROM compatível e use Generate & rebuild.
+
+Validação: testes nativos de todos os mods, testes Python e auditorias; rotas Linux LLE com cinco jogadores na Zone 1-1, portal para a próxima fase com itens, Zone 1-A e a fase com dois rivais via Continue, spawns na Zone 2-4 e Zone 3-D/E, dano de inimigo no P3, retorno com Start, Game Over e Continue. Não qualificados: derrotar cada chefe, campanha completa, cenas dos chefes com assentos de fora e cinco controles físicos. Voltar com B na seleção de personagens do Normal pode deixar a tela preta; isso já existia e continua aberto. Recompilação parcial: a maior parte da lógica ainda usa o interpretador.
+'''
 if args.output:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(notes, encoding='utf-8', newline='\n')

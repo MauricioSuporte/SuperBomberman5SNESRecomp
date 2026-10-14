@@ -47,7 +47,9 @@ add_executable(SuperBomberman5SNESRecomp
     src/game_rtl.c
     src/ptbr_mod.c
     src/normal_character_mod.c
+    # Register infinite-time cleanup before coop; its hook wraps the coop hook.
     src/infinite_time_mod.c
+    src/normal_coop_mod.c
     src/selection_color_mod.c
     src/gen_stubs.c
 )
@@ -69,18 +71,26 @@ add_custom_command(OUTPUT "${PTBR_HEADER}"
 target_sources(SuperBomberman5SNESRecomp PRIVATE "${PTBR_HEADER}")
 target_include_directories(SuperBomberman5SNESRecomp PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/translation")
 include(CTest)
+option(SB5_COOP_INPUT_FIXTURE "Test-only WRAM input mailbox for seats 3–5" OFF)
+if(SB5_COOP_INPUT_FIXTURE)
+    target_sources(SuperBomberman5SNESRecomp PRIVATE tests/coop_input_fixture.c)
+    target_compile_definitions(SuperBomberman5SNESRecomp PRIVATE SB5_COOP_INPUT_FIXTURE=1)
+endif()
 if(BUILD_TESTING)
     add_executable(ptbr_render_tests tests/ptbr_render_tests.c "${PTBR_HEADER}")
     target_include_directories(ptbr_render_tests PRIVATE
         "${SNESRECOMP_ROOT}/runner/src" "${CMAKE_CURRENT_BINARY_DIR}/translation")
     add_test(NAME ptbr_render_restore COMMAND ptbr_render_tests)
-    add_executable(infinite_time_tests tests/infinite_time_tests.c)
-    target_include_directories(infinite_time_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src")
-    add_test(NAME normal_infinite_time COMMAND infinite_time_tests)
     add_executable(normal_character_tests tests/normal_character_tests.c)
     target_include_directories(normal_character_tests PRIVATE
         "${SNESRECOMP_ROOT}/runner/src")
     add_test(NAME normal_character_selection COMMAND normal_character_tests)
+    add_executable(infinite_time_tests tests/infinite_time_tests.c)
+    target_include_directories(infinite_time_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src")
+    add_test(NAME normal_infinite_time COMMAND infinite_time_tests)
+    add_executable(normal_coop_tests tests/normal_coop_tests.c)
+    target_include_directories(normal_coop_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src")
+    add_test(NAME normal_five_player_coop COMMAND normal_coop_tests)
     add_executable(selection_color_tests tests/selection_color_tests.c)
     target_include_directories(selection_color_tests PRIVATE
         "${SNESRECOMP_ROOT}/runner/src")

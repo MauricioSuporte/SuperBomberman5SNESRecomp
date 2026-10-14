@@ -38,8 +38,9 @@
 #include "common_rtl.h"
 #include "ptbr_mod.h"
 #include "normal_character_mod.h"
-#include "selection_color_mod.h"
+#include "normal_coop_mod.h"
 #include "infinite_time_mod.h"
+#include "selection_color_mod.h"
 
 static void GameInitialize(void)
 {
@@ -51,10 +52,16 @@ static void GameInitialize(void)
 
 void GameRunOneFrame(void)
 {
+#ifdef SB5_COOP_INPUT_FIXTURE
+    extern void CoopInputFixture(void);
+    CoopInputFixture();
+#endif
     NormalCharacterBeforeFrame();
     SelectionColorBeforeFrame();
+    NormalCoopBeforeFrame();
     InfiniteTimeBeforeFrame();
     snes_beam_frame_driver_run_frame();
+    NormalCoopAfterFrame();
     SelectionColorAfterFrame();
     NormalCharacterFrame();
 }
@@ -71,24 +78,26 @@ void GameSessionReset(void)
      * been fine" is the usual desync culprit, because single-player never
      * re-enters the boot path twice in one process. */
     snes_beam_frame_driver_reset();
-    InfiniteTimeReset();
     NormalCharacterReset();
+    InfiniteTimeReset();
+    NormalCoopReset();
     SelectionColorReset();
 }
 
 static void GameHardwareReset(void)
 {
     snes_beam_frame_driver_reset();
-    InfiniteTimeReset();
     NormalCharacterReset();
+    InfiniteTimeReset();
+    NormalCoopReset();
     SelectionColorReset();
 }
 
 static void GameSaveExtra(struct SaveLoadInfo *sli) {
-    NormalCharacterSave(sli);SelectionColorSave(sli);
+    NormalCharacterSave(sli);SelectionColorSave(sli);NormalCoopSave(sli);
 }
 static void GameLoadExtra(struct SaveLoadInfo *sli,uint32_t version) {
-    NormalCharacterLoad(sli,version);SelectionColorLoad(sli,version);
+    NormalCharacterLoad(sli,version);SelectionColorLoad(sli,version);NormalCoopLoad(sli,version);
 }
 
 const RtlGameInfo kGameInfo = {

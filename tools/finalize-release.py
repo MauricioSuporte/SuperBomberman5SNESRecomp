@@ -72,7 +72,7 @@ def main() -> None:
         root = roots.pop()
         for item in src.infolist():
             # These upstream assets are not needed to generate or run the game.
-            if '/docs/assets/games/' in item.filename or '/test_data/' in item.filename:
+            if '/docs/assets/games/' in item.filename or '/test_data/' in item.filename or '/docs/images/' in item.filename:
                 continue
             out.writestr(item, src.read(item))
         analyzer_dir = root + '/snesrecomp/recompiler-rs/target/release/'

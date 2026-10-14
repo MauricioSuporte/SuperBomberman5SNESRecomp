@@ -33,6 +33,13 @@ class PublicationGuardTests(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertIsNotNone(audit.forbidden(path))
 
+    def test_showcase_exception_is_limited_to_reviewed_image(self):
+        self.assertIsNone(audit.forbidden('docs/images/five-player-showcase.png'))
+        for path in ['docs/images/other.png', 'docs/five-player-showcase.png',
+                     'screenshots/five-player-showcase.png']:
+            with self.subTest(path=path):
+                self.assertIsNotNone(audit.forbidden(path))
+
     def test_archive_rejects_renamed_rom_and_traversal(self):
         local_tmp = ROOT / '.bootstrap'
         local_tmp.mkdir(exist_ok=True)
@@ -44,11 +51,13 @@ class PublicationGuardTests(unittest.TestCase):
                 archive.writestr('setup/data.dat', synthetic)
                 archive.writestr('../escape.txt', 'synthetic')
                 archive.writestr('setup/snesrecomp/docs/assets/games/game.png', 'synthetic')
+                archive.writestr('setup/docs/images/five-player-showcase.png', 'synthetic')
             with patch.object(audit, 'rom_digest', return_value=hashlib.sha256(synthetic).hexdigest()):
                 errors = audit.audit_zip(archive_path)
             self.assertTrue(any('reference ROM bytes' in e for e in errors))
             self.assertTrue(any('path traversal' in e for e in errors))
             self.assertTrue(any('dependency screenshot' in e for e in errors))
+            self.assertTrue(any('README screenshot' in e for e in errors))
 
 
 if __name__ == '__main__':

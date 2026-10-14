@@ -1,10 +1,10 @@
 # Versions and publication / Versões e publicação
 
-Public repository: `MauricioSuporte/SuperBomberman5SNESRecomp`. VERSION is **0.4.4**. Publish prereleases while full-game accuracy remains unqualified. Preserve existing published tags and assets.
+Public repository: `MauricioSuporte/SuperBomberman5SNESRecomp`. VERSION is **0.5.0**. Publish prereleases while full-game accuracy remains unqualified. Preserve existing published tags and assets.
 
 ## Release contents
 
-Publish **superbomberman5-0.4.4-windows-x64.zip**, **superbomberman5-0.4.4-linux-x86_64.AppImage** and **SHA256SUMS**. Both are ROM-independent setup hosts with source, native analyzer, launcher resources, licenses and four optional, default-disabled mods: PT-BR menus, Normal character selection, L/R colors and infinite Normal timer. The playable executable is generated only on the player's machine. Linux is experimental; see STATUS.md for exact evidence.
+Publish **superbomberman5-0.5.0-windows-x64.zip**, **superbomberman5-0.5.0-linux-x86_64.AppImage** and **SHA256SUMS**. Both are ROM-independent setup hosts with source, native analyzer, launcher resources, licenses and five optional, default-disabled mods: PT-BR menus, Normal character selection, L/R colors, infinite Normal timer and five-player Normal Game. The playable executable is generated only on the player's machine. Linux is experimental; see STATUS.md for exact evidence.
 
 Build from a separate clean checkout with pinned submodules, no src/gen/*.c or recomp/funcs.h, `SNESRECOMP_SETUP_HOST=ON`, `SNESRECOMP_FRAME_IMPL=LLE` and the test input fixture OFF. Never package the development game executable or local ROM/save/capture data.
 
@@ -12,13 +12,29 @@ Build from a separate clean checkout with pinned submodules, no src/gen/*.c or r
 
 Update README.md in **both English and Portuguese** with useful current download links/formats, installation or upgrade steps, features/mods, requirements and validation limits. Review obsolete version/platform claims. Update VERSION, STATUS.md, these instructions and tools/release-notes.py to match the final artifacts. Keep dependency pins unchanged unless intentionally reviewed.
 
+## Forked framework submodules
+
+Since v0.5.0 `snesrecomp` and `recomp-ui` point to the maintainer's forks
+(`MauricioSuporte/snesrecomp`, `MauricioSuporte/recomp-ui`), branch
+`superbomberman5`, which carry the five-seat launcher/host input changes on top
+of the upstream commits recorded in docs/STATUS.md. Commit framework changes in
+the fork first, push that branch, then update the gitlink and run
+`bash snesrecomp/tools/ci/record_pins.sh framework_pins.txt`. Never publish a
+gitlink that exists only locally: CI checks out submodules recursively. Offer
+the same changes upstream as pull requests and return to the upstream URLs
+once merged.
+
+The README showcase `docs/images/five-player-showcase.png` is the only tracked
+screenshot (maintainer-requested exception, provenance in docs/images/README.md).
+Release packagers strip `docs/images/` and the ZIP audit rejects it.
+
 ```powershell
 python tools/audit-publication.py --history
 python -m unittest discover -s tests -v
 git diff --check
 ```
 
-Run all four native tests in the release source. Test package extraction, the native analyzer, first/repeat launcher startup and local ROM generation/rebuild. Exercise a real-ROM route locally and record its platform/frames and limitations in STATUS.md. No ROM enters CI or public artifacts.
+Run all five native tests in the release source (`ptbr_render_tests`, `normal_character_tests`, `selection_color_tests`, `infinite_time_tests`, `normal_coop_tests`). Test package extraction, the native analyzer, first/repeat launcher startup and local ROM generation/rebuild. Exercise a real-ROM route locally and record its platform/frames and limitations in STATUS.md. No ROM enters CI or public artifacts.
 
 ## Build and package
 
@@ -28,7 +44,7 @@ The Windows packager remains scripts/package_release.sh, followed by tools/final
 
 ```bash
 python3 tools/package-appimage.py \
-  --zip dist/superbomberman5-0.4.4-linux-x64.zip \
+  --zip dist/superbomberman5-0.5.0-linux-x64.zip \
   --build-dir build-ci \
   --analyzer snesrecomp/recompiler-rs/target/release/snesrecomp-analyze \
   --rust-sysroot "$(rustup run 1.97.1 rustc --print sysroot)" \
@@ -49,7 +65,7 @@ Verify the default branch, tag target, successful workflow, prerelease state, UT
 
 Toda nova release exige README.md atualizado nas duas línguas, com informações úteis: downloads, formatos, instalação/atualização, recursos, requisitos e limites reais de validação. Atualize VERSION, STATUS.md, este documento e o gerador de notas.
 
-A v0.4.4 distribui **ZIP Windows x64**, **AppImage Linux x86_64 experimental** e **SHA256SUMS**. Ambos incluem setup sem ROM, fontes, analisador, licenças e os quatro mods opcionais desligados por padrão. O jogo é gerado apenas na máquina do jogador. Use checkout limpo, LLE e setup host; nunca publique o executável de desenvolvimento, ROM, código gerado, saves ou capturas.
+A v0.5.0 distribui **ZIP Windows x64**, **AppImage Linux x86_64 experimental** e **SHA256SUMS**. Ambos incluem setup sem ROM, fontes, analisador, licenças e os quatro mods opcionais desligados por padrão. O jogo é gerado apenas na máquina do jogador. Use checkout limpo, LLE e setup host; nunca publique o executável de desenvolvimento, ROM, código gerado, saves ou capturas.
 
 A workflow Release é manual e só publica quando os dois builds e verificações passam. Valide os pacotes extraídos, analisador, primeira abertura/reabertura e geração/rebuild local. O AppImage copia o setup para a pasta XDG gravável da versão e reutiliza o jogo gerado; sem FUSE, use --appimage-extract-and-run. Registre plataforma, rota/frames e limitações no STATUS.md. Preserve fontes, licenças, revisões e checksums. Não reescreva tags ou assets públicos automaticamente. Confirme notas UTF-8, estado de pré-release e hashes dos arquivos no GitHub.
 

@@ -5,6 +5,9 @@ static SNESModActivationCallback activation, reset;
 int snes_mod_register_reset_callback(SNESModActivationCallback fn) { reset=fn; return 1; }
 int snes_mod_register_presentation_plugin(const char *id, SNESModActivationCallback fn) { (void)id; activation=fn; return 1; }
 #include "../src/ptbr_mod.c"
+static bool coop_fixture;
+bool NormalCoopPlayerMenu(void) { return coop_fixture; }
+unsigned NormalCoopPlayerCount(void) { return 5; }
 
 static Ppu fixture;
 static uint16_t original[0x8000];
@@ -93,6 +96,43 @@ int main(void) {
     memcpy(original,fixture.vram,sizeof(original));
     reset(); PtbrDrawPpuFrame();
     if(draws != 5 || memcmp(original,fixture.vram,sizeof(original))) return 3;
+    /* Five player rows fit between Start and the unchanged copyright. The
+     * title's blink window and cursor edits are render-only, in either language. */
+    memset(&fixture,0,sizeof(fixture));fixture.bgmode=9;fixture.bgXsc[2]=0x41;fixture.bgTileAdr=0x500;
+    fixture.screenWindowed[0]=23;fixture.oam[0]=0x8f40;fixture.oam[1]=0x2be8;
+    fixture.vram[0x4348]=0x2132;fixture.vram[0x5000+0x132*8]=0x7e5a;fixture.vram[0x6100]=0xabcd;
+    memcpy(original,fixture.vram,sizeof(original));
+    coop_fixture=true;
+    for(unsigned language=0;language<2;++language) {
+        if(language) activation();
+        fixture.renderFlags=kPpuRenderFlags_NewRenderer;
+        observe_line(&fixture,1,NULL);
+        if(fixture.renderFlags&kPpuRenderFlags_NewRenderer) return 15;
+        if(fixture.screenWindowed[0]&4 || fixture.oam[0]!=(175u<<8|48u) ||
+           fixture.vram[0x4348]!=0x2132 || !s_saved_count ||
+           fixture.vram[0x5000+0x132*8]!=0x7e5a ||
+           memcmp(fixture.vram+0x6000,original+0x6000,0x2000*sizeof(uint16_t))) return 12;
+        for(unsigned seat=1;seat<=5;++seat) {
+            unsigned at=0x4000+(12+seat*2)*32+6;
+            if((fixture.vram[at]&0x3ff)!=seat*40) return 13;
+        }
+        observe_line(&fixture,224,NULL);
+        if(fixture.renderFlags!=kPpuRenderFlags_NewRenderer) return 16;
+        if(memcmp(original,fixture.vram,sizeof(original)) || fixture.screenWindowed[0]!=23 || fixture.oam[0]!=0x8f40) return 14;
+    }
+    /* The confirmation bounce (tiles $1EA-$1EE, y $8A-$90) keeps its offset
+     * on the selected row instead of jumping back to the stock 2P row. */
+    fixture.oam[0]=0x8b40;fixture.oam[1]=0x2bee;observe_line(&fixture,1,NULL);
+    if(fixture.oam[0]!=(171u<<8|48u)) return 17;
+    observe_line(&fixture,224,NULL);if(fixture.oam[0]!=0x8b40) return 18;
+    fixture.oam[0]=0x7a40;observe_line(&fixture,1,NULL); /* 1P row bounce */
+    if(fixture.oam[0]!=(170u<<8|48u)) return 19;
+    observe_line(&fixture,224,NULL);
+    /* An idle cursor stays on the selected row whatever stock row Up/Down left. */
+    fixture.oam[0]=0x7f40;fixture.oam[1]=0x2be8;observe_line(&fixture,1,NULL);
+    if(fixture.oam[0]!=(175u<<8|48u)) return 20;
+    observe_line(&fixture,224,NULL);
+    coop_fixture=false;
     puts("PT-BR overlay: guards, restoration, disable, blink alignment, stable tiles, extended palettes, screen contexts and sprite heading passed.");
     return 0;
 }

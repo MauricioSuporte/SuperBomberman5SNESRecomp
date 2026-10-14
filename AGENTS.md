@@ -25,7 +25,7 @@ before changing code, docs or releases. Humans: see README.md and CONTRIBUTING.m
   `rom_identity.txt` is the single source of truth (hashes, `game_id =
   superbomberman5-jpn`). Hashes decide compatibility, never filenames.
 - Owner/public remote: `MauricioSuporte/SuperBomberman5SNESRecomp`. Windows x64
-  is the qualified platform; v0.4.4 also offers an experimental Linux x86_64
+  is the qualified platform; releases since v0.4.4 also offer an experimental Linux x86_64
   setup AppImage (Ubuntu CI and limited WSL evidence in docs/STATUS.md). Current version lives in `VERSION`.
 - The maintainer communicates in Brazilian Portuguese. Reply in PT-BR unless
   asked otherwise; code, commits and code comments are in English.
@@ -39,6 +39,9 @@ before changing code, docs or releases. Humans: see README.md and CONTRIBUTING.m
    `last_run_report.json` or crash reports. `.gitignore` plus
    `tools/audit-publication.py` enforce this; never bypass with `git add -f`
    or by widening the allowlist without a documented provenance review.
+   The single reviewed exception is the maintainer-requested README image
+   `docs/images/five-player-showcase.png` (see docs/images/README.md); it is
+   stripped from release packages.
 2. **Never hand-edit generated output.** Change `recomp/symbols.toml` (or
    hand-written parts of `recomp/bank*.cfg`) and regenerate. The block between
    `>>> BEGIN symbols.toml` and `<<< END symbols.toml` is rewritten on regen.
@@ -90,7 +93,7 @@ before changing code, docs or releases. Humans: see README.md and CONTRIBUTING.m
 | `.agents/skills/` | Agent skills (see §9). |
 | `.bootstrap/` | **Ignored** local lab: research scripts (`dis-hi.py` HiROM disassembler, route generators), captures, package tests. Never publish; fine to use and add scratch here. |
 | `.tools/` | Ignored portable toolchain (CMake, Ninja, Clang 22, SDL3, Rust 1.97.1). |
-| `snesrecomp/`, `recomp-ui/` | Pinned submodules. Do not edit for game-specific needs; fixes go upstream. Pins also in `framework_pins.txt`. |
+| `snesrecomp/`, `recomp-ui/` | Pinned submodules. Do not edit for game-specific needs; fixes go upstream. Pins also in `framework_pins.txt`. Since v0.5.0 both point to maintainer forks (branch `superbomberman5`) carrying generic multitap seats 3–8 (launcher SNES ceiling, keybinds `[player3]`.., host `SourceP3`/`EnableGamepad3`/`ControlsP3`), pending upstream; see `docs/PUBLISHING.md`. |
 
 ## 4. Build, run and test (Windows, PowerShell, repo root)
 
@@ -186,7 +189,18 @@ File 1 (A = keyboard X) → Start on Zone 1 map.
 | `$2910` | CGRAM shadow; set `$0351=1` after changing it |
 | `$0349`, `$06DF`, `$2B10/$2B18` | Palette slot refcounts, object→slot, slot palette id / owner |
 | `$C6:8E68` | Picker ready (accepting A) · `$C6:89CF` picker init · `$C7:1257` Normal file-confirm fade · `$C7:1014` file menu init |
-| `$C4:2A69` | Player actor spawn allocator · free in-memory patch areas used by coop: `$C2:4300`, `$C4:5B00`, `$C5:7000` |
+| `$C4:2A69` | Player actor spawn allocator · free in-memory patch areas used by coop: `$C2:4300`, `$C2:4340`, `$C4:5B00`, `$C5:7000`, `$C5:7100` |
+| `$0348` | OBJ palette-slot request mask for the next allocation (`$C0:028F`); players use `2<<player` (set at `$C4:2AD8/$C4:2B8D`), enemies `$38` |
+| `$1D00-$1D0F`, `$1D10` | Sprite page owners (object id, `$FF` free, `$7F` pending free, `$7E` static) for 1 KiB VRAM pages at `$6000+$200*i`; `$1D10` = pool size (5 in campaign stages; `$C5:6A00` sets 8). Allocator `$C5:6AF5`, upload `$C5:6B77`, request queue `$1CCC-$1CF4` |
+| `$0E1C/$0E1D/$0E1E` | Timer frames/seconds/minutes; seconds >=60 skip countdown at `$C5:046B`. Native 99/9 selects dash HUD at `$C5:0C00`. Verified by JPN disassembly and Windows/LLE Zone 1-1 forced-deadline runs. |
+| `$C5:066C` | Per-frame HUD selector: picks the two/P1/P2 HUD archive (`$E6/$E4/$E5`) from P1/P2 state and writes `$1D25/$1D24` |
+| `$C2:0C9F`, `$C5:6195/$C5:61C6`, `$C1:6BA1`, `$C0:373F` | P1/P2-only `CPX #$02` loops: script op `$12` (`$C2:0C67`, players on tile → exit warps/switches), floor gimmicks, cell hold, point damage (`$C0:374D` = first enemy actor). Coop raises them to the stage roster. Verified by warp runs with P3–P5 |
+| `$1031` / `$1046` | Campaign stage id (`$0D` = 1-01 … `$48`, Zone 5 `$49-$70`, bosses `$67-$6E`: `$67` = ZONE1 - A) / Continue stage saved to SRAM record byte 17 |
+| `$C2:16B8/$C2:16EE`, `$C4:3CCF` | Script actor creation at slot operand−1; bosses create rival bombers in slots 2 (and 3 in `$6A`). Bomber tables `$0FDE/$0F9B/$0FEA/$0FEF/$0FF4/$0FF9/$101F` hold five slots; slot 5 jumps into data. Boss choreography `$C5:2600-$C5:39FF` uses literal slots 2/3 |
+| `$0300` / `$67` | INIDISP shadow / NMI busy latch (`$C0:F3D4`) |
+| `$1FF4-$1FFF` | Enemy→player distance arrays (6 × 2 entries: dx, dy, dx hi, dy hi, dir codes) from `$C3:46CC`; coop relocates to 6 × 5 at `$1FC0-$1FDD` (+`$C3:FF70` seat loop). Verified by contact runs on P1/P3 |
+| `$C5:3D3F` | Copies stage collision map to `$1052` after player spawns; coop settles P3-P5 at its RTL `$C5:3D5D` |
+| SRAM `$30-$6A` | Checksum (16-bit sum of `$32-$6A`) and three 19-byte Normal records at `$32/$45/$58`: 16 flag bytes (stage N → byte N>>3 bit N&7), cleared count, Continue stage, `$6258` |
 
 When you identify a new address, document it here (and optionally name it in
 `src/variables.h`), with how it was verified.
@@ -229,10 +243,32 @@ Timer research: `$0E1C/$0E1D/$0E1E` hold frames/seconds/minutes. Seconds >=60 sk
   and NPCs to 10+ (only 14 NPC slots remain).
 - The five-player menu forces the accurate compositor for that frame because
   `NewRenderer=1` showed only two rows.
+- Title script return slots can retain attract-mode `$C7:1B3B`. Detect the
+  Normal player menu from mode 2 and both native BG3 tile pairs at VRAM word
+  `$424B/$424C` (302/261) and `$428B/$428C` (278/261), before overlays. Verified
+  against translation metadata, an interactive launch and scripted title runs.
 - The development exe in `build-lle/` must never be shipped; releases are a
   clean-checkout **setup host** (`SNESRECOMP_SETUP_HOST=ON`, no `src/gen/*.c`).
 - Mod package version (0.1.0) ≠ host version; a `.snesmod` cannot add native
   code to an older executable.
+- The cartridge is written for two seats. Exit warps (`$C2:0C9F`), damage,
+  floor gimmicks, enemy contact (`$1FF4` two-entry arrays) and boss
+  choreography (`LDX #2`, `LDA $17FC`) all needed explicit five-seat handling;
+  each fix is listed in §6 and docs/NORMAL_COOP.md. Check new features for the
+  same assumption with P3–P5, not just P1.
+- Bomber tables hold five slots. Boss rivals use them, so five players cannot
+  all fight rival-bomber bosses; slot 5 jumps into data and freezes the game.
+- Player spawns run before the stage collision map exists; anything reading
+  `$1052` at spawn time sees zeros (P3/P4 appeared outside smaller arenas).
+- Patch immediate operands at opcode+1. A one-byte offset error at
+  `$C3:4766` corrupted the following branch and crashed every enemy update.
+- Back (B) from the Normal character picker leaves a black screen in headless
+  LLE runs (script stops at `$C7:108D`, NMI latch `$67` set); it predates
+  v0.5.0 and is unresolved.
+- Framework submodules point to maintainer forks for the five-seat launcher;
+  push fork commits before updating gitlinks (see docs/PUBLISHING.md).
+- The developer plays `build-lle/SuperBomberman5SNESRecomp.exe` through a
+  desktop shortcut; source changes appear only after `./tools/build-windows.ps1`.
 
 ## 9. Skills in this repo
 

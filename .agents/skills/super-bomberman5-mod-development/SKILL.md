@@ -7,7 +7,8 @@ description: Create, extend, debug and validate native mods and gameplay/present
 
 Read `AGENTS.md` at the repository root first (hard rules, RAM map, build and
 pitfalls). This skill is the step-by-step recipe for a feature. Every existing
-mod (`ptbr`, `normal_character`, `selection_color`, `normal_coop`) is a worked
+mod (`ptbr`, `normal_character`, `selection_color`, `infinite_time`,
+`normal_coop`) is a worked
 example; copy their structure instead of inventing a new one.
 
 ## 1. Scope the feature against evidence
@@ -80,6 +81,65 @@ Create `src/<name>_mod.c` + `src/<name>_mod.h`, then:
   (`RtlStateBytesRemaining(sli)==0` ⇒ older state), validate every field and
   call `RtlStateStreamFail` on bad input, keep a constant size per build.
 
+### Lessons from the five-player co-op mod (v0.5.0)
+
+- **Hunt every two-seat assumption.** The cartridge was written for P1/P2:
+  `CPX/CPY #$02` loops (exit warps, damage, floor gimmicks), unrolled P1/P2
+  code, two-entry interleaved arrays (`$1FF4-$1FFF` enemy distances) and
+  hard-coded slot literals (`LDX #2`, `LDA $17FC` = actor slot 2). Search the
+  ROM for the pattern family, not only the first hit, and list each site with
+  its caller in AGENTS.md. A feature that works for P1 but not P3 almost
+  always means one of these.
+- **Know the fixed capacities.** Bomber tables (`$0FDE`, `$0FEA`, `$101F`, …)
+  have five entries; boss rivals take bomber slots. Exceeding them jumps into
+  data (BRK in the log, frozen/garbled frame). Prefer adapting the roster
+  (bench a seat for one stage, restore its fields afterwards) over growing a
+  native table you cannot fully enumerate.
+- **Relocate small arrays instead of overlapping them.** When an array must
+  grow, move every operand to verified-unused WRAM (scan many recorded dumps)
+  and patch the clear loop, the fill routine and each consumer loop together.
+- **Patch the operand byte, not the opcode.** `CPX #$0C` at `$C3:4765` has its
+  operand at `$C3:4766`; writing `pc+1` of the wrong base corrupted the next
+  instruction and crashed. Unit-test each patched byte against a fake ROM
+  containing the original bytes.
+- **Order matters.** Campaign spawns run before `$C5:3D3F` copies the stage
+  collision map; checks that read the map must run at its return (`$C5:3D5D`).
+  Hook the consumer boundary, not the first convenient PC.
+- **Interpreted code only.** In-memory ROM patches and the PC hook affect only
+  interpreted routines; confirm with a PC trace that the routine runs in the
+  interpreter before relying on a patch.
+- **Overlays follow native animation.** Sprites animate (tile and y bounce) and
+  screens keep drawing through fades (mode `$1031` 2 → 3). Recognize the whole
+  tile range, pin idle sprites to the overlay position, keep animation offsets
+  only for the animated tiles, and keep the overlay until the native screen is
+  gone while ignoring input outside the interactive mode.
+- **Leave native feedback alone.** Suppressing guest input (Up/Down) to drive
+  your own menu also removed the native cursor sound; let the guest see the
+  input and overwrite its state each frame instead.
+- **Snapshot extensions grow at the end.** Append new fields after the last
+  existing one and read them only when `RtlStateBytesRemaining` says they are
+  present, so older save states still load.
+
+### Research toolbox that paid off
+
+- Lab harness (kept outside the repo or under ignored `.bootstrap/`): build the
+  host with an opt-in instrumentation file that, from environment variables,
+  logs value changes of one WRAM address with a ring of the last 64 PCs and of
+  recent jumps (`from>to`), records executed PCs per frame window (diff two
+  runs to find the code that differs), and dumps the jump history when a given
+  PC is reached (find what led to a crash). Never compile it into releases.
+- Headless routes: `--script` with `press`, `poke`, `wait`, `dump`; the
+  `SB5_COOP_INPUT_FIXTURE` mailbox drives pads 3–5. Compare every scenario with
+  the same route on the unmodified game (mods off, 2P) as a control.
+- A stuck run at low FPS with only IRQ/NMI PCs: sample the native stack with
+  `gdb -p <pid> -batch -ex bt` to see whether it loops in an interrupt.
+- Test saves: SRAM records at `$32/$45/$58` (19 bytes) with a 16-bit checksum
+  at `$30`; byte 17 is the Continue stage id (`$0D` = 1-01, bosses `$67-$6E`).
+  Generate one file per scenario to start directly at a stage or boss. Saves
+  stay local; never commit them.
+- Read a full screenshot grid (several frames) before trusting a single dump;
+  sprites blink and labels cover the playfield during stage intros.
+
 ## 3. Package the mod (data only)
 
 - `mods/preloaded/packages/superbomberman5.<id>/0.1.0/manifest.toml` copying an
@@ -107,6 +167,12 @@ Create `src/<name>_mod.c` + `src/<name>_mod.h`, then:
   `interp_cap`, `unresolved-abandon`, `BRK`, `fatal`.
 - If you cannot run Windows builds from your environment, say so and list the
   exact commands for the user; do not claim validation.
+- The developer runs `build-lle/SuperBomberman5SNESRecomp.exe` (desktop
+  shortcut). Changes are invisible until `./tools/build-windows.ps1` rebuilds
+  it; say so when handing over.
+- Preserve each file's line endings (several sources/docs are CRLF) and never
+  overwrite the user's working tree blindly: compare checksums with the last
+  delivered version first.
 
 ## 5. Document
 

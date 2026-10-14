@@ -6,6 +6,10 @@ An unofficial, noncommercial **Super Bomberman 5** PC port prototype built with 
 
 > **Early prototype, partial recompilation.** Most game logic currently uses the framework's interpreter. First-stage entry has been verified locally; full-game accuracy and multiplayer have not been established. Supply your own legally obtained ROM. No ROM or extracted game assets are included.
 
+<p align="center"><img src="docs/images/five-player-showcase.png" width="820" alt="Five-player menu, Zone 1-1 with five characters and colors, Zone 1-A boss stage and five-player Battle Mode"></p>
+
+<p align="center"><b>New in v0.5.0:</b> up to five players in Normal Game, each with their own character and color — plus five-player Battle Mode.<br><b>Novidade da v0.5.0:</b> até cinco jogadores no Normal Game, cada um com personagem e cor próprios — e Battle Mode com cinco jogadores.</p>
+
 ## English
 
 ### Features and current validation
@@ -16,7 +20,8 @@ An unofficial, noncommercial **Super Bomberman 5** PC port prototype built with 
 | Opening, title, normal-mode menus, Zone 1 map and first-stage entry | Verified with captures; scripted route completed 3,628 frames |
 | Windows video and audio devices | Initialization and callbacks tested; audio accuracy not independently compared |
 | Static CPU recompilation | Small AOT coverage; reset/NMI and most game logic remain interpreted |
-| Five-player multitap | Port 2 configured; P2–P5 and battle mode not validated |
+| Five-player multitap | Port 2 configured; launcher PLAYER 1–5 tabs; Normal co-op and five-player Battle exercised with scripted inputs; full campaign/physical controllers unqualified |
+| Normal Game five players (v0.5.0) | Optional 1–5 player campaign with shared lives, Start rejoin, item carry-over, per-seat characters/colors; boss stages with rival bombers seat up to four |
 | PT-BR mod (v0.2.0) | Optional title, files, options and battle setup/rules translation preview; included in the v0.2.0 setup pack |
 | Normal Game character selection (v0.3.0) | Optional Battle picker after file confirmation; second/ninth characters verified in Zone 1-1 |
 | Character selection colors (v0.4.0) | Six palettes with L/R for all nine characters; Normal and Battle stage routes verified |
@@ -33,11 +38,11 @@ An unofficial, noncommercial **Super Bomberman 5** PC port prototype built with 
 
 Requires Windows 10 or newer, x64. Leave several GB free for extraction, tools and build output. Open the root executable to start release setup; the repository's developer `play.cmd` is for local source builds.
 
-### Linux AppImage — new in v0.4.4
+### Linux AppImage
 
-Download **superbomberman5-0.4.4-linux-x86_64.AppImage** from [v0.4.4](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.4.4), make it executable (`chmod +x superbomberman5-0.4.4-linux-x86_64.AppImage`) and run it. The AppImage copies its ROM-free setup into `${XDG_DATA_HOME:-~/.local/share}/superbomberman5/0.4.4` on first launch. Select your own supported ROM and use **Generate & rebuild**; subsequent launches open the locally rebuilt game. Rust is not required. Internet is needed for the first portable tool download. Linux x86_64, glibc 2.35+ (Ubuntu 22.04 baseline), desktop graphics/audio libraries and several GB free are required. If FUSE is unavailable, run with `--appimage-extract-and-run`. Keep the writable version folder to retain local builds and settings; ROM and generated game data are never part of the download. Linux distribution and full-campaign coverage remain limited; see [validation](docs/STATUS.md).
+Download **superbomberman5-0.5.0-linux-x86_64.AppImage** from [v0.5.0](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.5.0), make it executable (`chmod +x superbomberman5-0.5.0-linux-x86_64.AppImage`) and run it. The AppImage copies its ROM-free setup into `${XDG_DATA_HOME:-~/.local/share}/superbomberman5/0.5.0` on first launch. Select your own supported ROM and use **Generate & rebuild**; subsequent launches open the locally rebuilt game. Rust is not required. Internet is needed for the first portable tool download. Linux x86_64, glibc 2.35+ (Ubuntu 22.04 baseline), desktop graphics/audio libraries and several GB free are required. If FUSE is unavailable, run with `--appimage-extract-and-run`. Keep the writable version folder to retain local builds and settings; ROM and generated game data are never part of the download. Linux distribution and full-campaign coverage remain limited; see [validation](docs/STATUS.md).
 
-Windows users continue to download the **superbomberman5-0.4.4-windows-x64.zip** setup pack. Both formats include the same four optional mods, disabled by default. Check the release's **SHA256SUMS** before use.
+Windows users download the **superbomberman5-0.5.0-windows-x64.zip** setup pack. Both formats include the same five optional mods, disabled by default. Upgrading from an earlier version: extract v0.5.0 into a new folder (or the AppImage creates a new 0.5.0 folder) and run **Generate & rebuild** again so the new native plugins are compiled. Check the release's **SHA256SUMS** before use.
 
 ### Supported ROM
 
@@ -55,7 +60,7 @@ The developer's local filename is `Super Bomberman 5 (USA).sfc`, but its header 
 
 ### Included mods
 
-The **v0.4.4 setup packs** includes all four mods below, each at mod version **0.1.0** and disabled by default. Complete **Generate & rebuild**, open **Mods**, enable the desired features and select Play. Each setup package contains the executable, launcher resources, analyzer, source and all four preinstalled mods; no separate mod download or import is needed. `FILE_SHA256SUMS` inside each setup payload covers its packaged files. They require the corresponding native plugins in the host; importing a package cannot update an older executable.
+The **v0.5.0 setup packs** include all five mods below, each at mod version **0.1.0** and disabled by default. Complete **Generate & rebuild**, open **Mods**, enable the desired features and select Play. Each setup package contains the executable, launcher resources, analyzer, source and all five preinstalled mods; no separate mod download or import is needed. `FILE_SHA256SUMS` inside each setup payload covers its packaged files. They require the corresponding native plugins in the host; importing a package cannot update an older executable.
 
 | Mod / category | Feature and use |
 |---|---|
@@ -63,12 +68,18 @@ The **v0.4.4 setup packs** includes all four mods below, each at mod version **0
 | **Normal Game — character selection** / **Gameplay** | Enable **Choose a character in Normal Game** to open the original Battle character picker after confirming a Normal save file. Use the D-pad and A to choose; B returns to file selection. The campaign uses the chosen character. Requires host v0.3.0 or newer. [Instructions and validation](docs/NORMAL_CHARACTERS.md). |
 | **Normal Game — infinite time** / **Gameplay** | Enable **Unlimited time in Normal Game** for the native `-:--` timer without timeout deaths. Disabled by default. Requires host v0.4.3 or newer. [Details and validation](docs/INFINITE_TIME.md). |
 | **Character selection — color controls** / **Gameplay** | Enable **Choose character colors with L and R** for white, black, red, blue, green and yellow palettes across all nine characters. R cycles forward, L backward; A confirms. Works in Battle and in Normal when the character selection mod is enabled. Default keyboard: C/V; gamepad: LB/RB (L1/R1). Requires host v0.4.0 or newer. [Controls and validation](docs/SELECTION_COLORS.md). |
+| **Normal Game — five players** / **Gameplay** | Enable **Play Normal Game with up to five players** and choose 1–5 PLAYER GAME on the title. Shared lives start at players + 2 (3–7); a dead player presses Start to spend a life and rejoin while a teammate is alive. Any player finishes a stage through an exit, items carry over for every seat, P3–P5 spawn on safe floor and take enemy contact damage. Boss stages with rival bombers seat up to four players (three with two rivals); the others return in the next stage. With the character and color mods, each seat picks its own character and color from New Game or Continue. Requires host v0.5.0 or newer. [Instructions, tests and limits](docs/NORMAL_COOP.md). |
 
-The launcher categories use English, including **Translation**. The PT-BR mod's name and descriptions remain in Brazilian Portuguese. All four can be enabled together. Full campaign and multiplayer coverage remain unqualified.
+The launcher categories use English, including **Translation**. The PT-BR mod's name and descriptions remain in Brazilian Portuguese. All five can be enabled together. Full campaign and multiplayer coverage remain unqualified.
 
 v0.4.1 also embeds the supplied application icon with ten sizes from 16 to 256 pixels, preserving the whole drawing and transparency for Windows display scaling.
 
 ### Controls and starting a game
+
+For a local source build, open `build-lle/SuperBomberman5SNESRecomp.exe`
+directly; it includes the game icon. `play.cmd` opens that same executable
+with the local ROM selected. The five-player menu recognizes the native
+screen independently of script return history from the opening/demo.
 
 | Keyboard | SNES input |
 |---|---|
@@ -79,7 +90,7 @@ v0.4.1 also embeds the supplied application icon with ten sizes from 16 to 256 p
 | C / V | L / R |
 | Right Shift | Select |
 
-Press Enter in the opening/title sequence. Choose **Normal Game → 1 Player Game → New Game → File 1**, confirming with A (keyboard X). On the Zone 1 map, use Start (Enter) to enter the stage. Controls can be changed in the launcher. Five-player configuration is preparatory, not a claim of tested multiplayer.
+Press Enter in the opening/title sequence. Choose **Normal Game → 1 Player Game → New Game → File 1**, confirming with A (keyboard X). On the Zone 1 map, use Start (Enter) to enter the stage. Controls can be changed in the launcher. The optional Normal co-op mod adds choices through five players; full campaign coverage remains unqualified. The launcher shows **PLAYER 1–5** tabs: set each player's input to Keyboard or Gamepad and press **Configure**. Players 3–5 start with no device and no keys; give each a gamepad or its own keys (sharing keys moves both players).
 
 ### Building from source
 
@@ -130,7 +141,7 @@ Thanks to Matthew Stanley and RetroPorting ToolKit contributors for SNESRecomp a
 
 Protótipo não oficial e não comercial de port de **Super Bomberman 5** para PC, usando SNESRecomp e o launcher recomp-ui, com a estrutura de repositório por jogo utilizada pelo Mega Man X Recompiled.
 
-**A recompilação ainda é parcial:** a maior parte da lógica usa o interpretador. Abertura, título, menus, mapa da Zone 1 e entrada na primeira fase foram verificados numa rota de 3.628 frames. Isso não comprova o jogo completo, precisão de som, colisões ou multiplayer. O multitap para cinco jogadores está configurado, mas não foi validado. Não há netplay nem melhorias de widescreen neste jogo.
+**A recompilação ainda é parcial:** a maior parte da lógica usa o interpretador. Abertura, título, menus, mapa da Zone 1 e entrada na primeira fase foram verificados numa rota de 3.628 frames. Isso não comprova o jogo completo ou precisão de som. A v0.5.0 traz o mod opcional de até cinco jogadores no Normal Game, testado com entradas roteirizadas; campanha completa e cinco controles físicos ainda não foram qualificados. Não há netplay nem melhorias de widescreen neste jogo.
 
 ### Como instalar e jogar
 
@@ -142,15 +153,17 @@ Protótipo não oficial e não comercial de port de **Super Bomberman 5** para P
 
 Requer Windows 10 ou superior, x64, e alguns GB livres. **Nenhuma ROM, código gerado da ROM ou recurso extraído acompanha o download.** O arquivo de desenvolvimento tem “USA” no nome, porém o cabeçalho indica **JPN**. Confira os hashes em [Supported ROM](#supported-rom); o nome do arquivo não garante compatibilidade.
 
-### AppImage Linux — novidade da v0.4.4
+### AppImage Linux
 
 Build CI Ubuntu 22.04 e geração/rebuild local no Ubuntu 24.04/WSL passaram; a rota de 3.628 frames LLE até a primeira fase terminou com vídeo/áudio dummy. Launcher inicializado em modo offscreen. Dispositivos físicos e outras distribuições seguem não qualificados.
 
-Baixe **superbomberman5-0.4.4-linux-x86_64.AppImage** na [v0.4.4](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.4.4), dê permissão de execução e execute. Sem FUSE, use --appimage-extract-and-run. O setup é copiado para a pasta XDG de dados da versão (padrão ~/.local/share/superbomberman5/0.4.4), onde você fornece sua ROM e usa **Generate & rebuild**. Nas próximas aberturas, o AppImage usa o jogo gerado localmente. Requer Linux x86_64 com glibc 2.35+, bibliotecas de vídeo/áudio do desktop, internet para as primeiras ferramentas e alguns GB livres. Rust não é necessário. Preserve a pasta gravável para manter builds e configurações. Confira SHA256SUMS na release. Compatibilidade ampla e campanha completa continuam não qualificadas.
+Baixe **superbomberman5-0.5.0-linux-x86_64.AppImage** na [v0.5.0](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.5.0), dê permissão de execução e execute. Sem FUSE, use --appimage-extract-and-run. O setup é copiado para a pasta XDG de dados da versão (padrão ~/.local/share/superbomberman5/0.5.0), onde você fornece sua ROM e usa **Generate & rebuild**. Nas próximas aberturas, o AppImage usa o jogo gerado localmente. Requer Linux x86_64 com glibc 2.35+, bibliotecas de vídeo/áudio do desktop, internet para as primeiras ferramentas e alguns GB livres. Rust não é necessário. Preserve a pasta gravável para manter builds e configurações. Confira SHA256SUMS na release. Compatibilidade ampla e campanha completa continuam não qualificadas.
+
+No Windows, baixe **superbomberman5-0.5.0-windows-x64.zip**. Para atualizar de uma versão anterior, extraia a v0.5.0 numa pasta nova (o AppImage cria a pasta 0.5.0) e use **Generate & rebuild** de novo para compilar os novos plugins nativos.
 
 ### Mods incluídos
 
-Os **pacotes Windows e Linux v0.4.4** incluem os quatro mods abaixo, todos na versão de mod **0.1.0** e desabilitados por padrão. Conclua **Generate & rebuild**, abra **Mods**, ative as funções desejadas e selecione Play. Cada pacote inclui executável, recursos do launcher, analisador, fontes e os quatro mods pré-instalados; não é necessário baixar nem importar mods separados. O arquivo `FILE_SHA256SUMS` dentro do setup cobre os arquivos do pacote. Eles contêm apenas dados e dependem dos plugins nativos do host; importar um pacote não atualiza um executável antigo.
+Os **pacotes Windows e Linux v0.5.0** incluem os cinco mods abaixo, todos na versão de mod **0.1.0** e desabilitados por padrão. Conclua **Generate & rebuild**, abra **Mods**, ative as funções desejadas e selecione Play. Cada pacote inclui executável, recursos do launcher, analisador, fontes e os cinco mods pré-instalados; não é necessário baixar nem importar mods separados. O arquivo `FILE_SHA256SUMS` dentro do setup cobre os arquivos do pacote. Eles contêm apenas dados e dependem dos plugins nativos do host; importar um pacote não atualiza um executável antigo.
 
 | Mod / categoria | Função e uso |
 |---|---|
@@ -158,14 +171,20 @@ Os **pacotes Windows e Linux v0.4.4** incluem os quatro mods abaixo, todos na ve
 | **Normal Game — character selection** / **Gameplay** | Ative **Choose a character in Normal Game** para abrir o seletor original do Battle depois de confirmar um arquivo do Normal. Use direcional e A para escolher; B retorna aos arquivos. A campanha usa o personagem escolhido. Requer host v0.3.0 ou superior. [Instruções e validação](docs/NORMAL_CHARACTERS.md). |
 | **Normal Game — infinite time** / **Gameplay** | Ative **Unlimited time in Normal Game** para usar o cronômetro nativo `-:--` sem morte por tempo. Desativado por padrão. Requer host v0.4.3 ou superior. [Detalhes e validação](docs/INFINITE_TIME.md). |
 | **Character selection — color controls** / **Gameplay** | Ative **Choose character colors with L and R** para escolher branco, preto, vermelho, azul, verde e amarelo nos nove personagens. R avança, L retorna e A confirma. Funciona no Battle e no Normal com o mod de seleção de personagens ativo. Teclado padrão: C/V; controle: LB/RB (L1/R1). Requer host v0.4.0 ou superior. [Controles e validação](docs/SELECTION_COLORS.md). |
+| **Normal Game — five players** / **Gameplay** | Ative **Play Normal Game with up to five players** e escolha de 1 a 5 jogadores no título. As vidas compartilhadas começam em jogadores + 2 (3–7); quem morre aperta Start para gastar uma vida e voltar, se houver alguém vivo. Qualquer jogador conclui a fase pelo portal, os itens seguem para a próxima fase em todos os assentos, P3–P5 nascem em chão seguro e tomam dano dos inimigos. Fases de chefe com rivais Bomber aceitam até quatro jogadores (três com dois rivais); os demais voltam na fase seguinte. Com os mods de personagem e cor, cada jogador escolhe os seus em New Game ou Continue. Requer host v0.5.0 ou superior. [Instruções, testes e limites](docs/NORMAL_COOP.md). |
 
-As categorias do launcher ficam em inglês, incluindo **Translation**. O nome e as descrições do mod PT-BR continuam em português brasileiro. Os quatro podem ser ativados juntos. Campanha e multiplayer completos ainda não foram qualificados.
+As categorias do launcher ficam em inglês, incluindo **Translation**. O nome e as descrições do mod PT-BR continuam em português brasileiro. Os cinco podem ser ativados juntos. Campanha e multiplayer completos ainda não foram qualificados.
 
 A v0.4.1 também incorpora o ícone fornecido em dez tamanhos, de 16 a 256 pixels, preservando o desenho inteiro e a transparência para escalas de exibição do Windows.
 
 ### Controles e início de partida
 
-**Setas** para direção, **Enter** para Start, **X/Z** para A/B e **Shift direito** para Select. Pressione Enter na abertura/título, escolha **Normal Game → 1 Player Game → New Game → File 1**, confirme com **X** e pressione **Enter** no mapa da Zone 1 para entrar na fase. Remapeie os controles no launcher se desejar.
+No build local de fonte, abra diretamente `build-lle/SuperBomberman5SNESRecomp.exe`,
+que inclui o ícone do jogo. O `play.cmd` abre esse mesmo executável com a ROM
+local selecionada. O menu de cinco jogadores reconhece a tela original sem
+depender do histórico de retorno dos scripts da abertura/demonstração.
+
+**Setas** para direção, **Enter** para Start, **X/Z** para A/B e **Shift direito** para Select. Pressione Enter na abertura/título, escolha **Normal Game → 1 Player Game → New Game → File 1**, confirme com **X** e pressione **Enter** no mapa da Zone 1 para entrar na fase. Remapeie os controles no launcher se desejar. O launcher mostra as abas **PLAYER 1–5**: escolha Teclado ou Gamepad para cada jogador e use **Configure**. P3–P5 começam sem dispositivo e sem teclas; dê a cada um um controle ou teclas próprias (teclas iguais movem os dois jogadores).
 
 ### Compilar, contribuir e publicar
 

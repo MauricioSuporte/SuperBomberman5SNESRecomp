@@ -1,5 +1,6 @@
 /* Authored menu glyphs and translation metadata. No ROM assets are embedded. */
 #include "ptbr_mod.h"
+#include "normal_coop_mod.h"
 #include "beam_frame_driver.h"
 #include "mod_runtime.h"
 #include "snes/ppu.h"
@@ -7,6 +8,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdio.h>
 
 typedef struct {
     unsigned layer, row, column, width, height, guard0, guard1, ink, tile, style, context_row, context_column, context_tile;
@@ -34,6 +36,9 @@ static bool s_enabled;
 typedef struct { uint16_t address, original; } SavedWord;
 static SavedWord s_saved[8192];
 static unsigned s_saved_count;
+static bool coop_menu_applied,coop_cursor_moved;
+static uint8_t coop_windowed;
+static uint16_t coop_cursor;
 
 static void reset_ptbr(void) { s_enabled = false; s_saved_count = 0; }
 static void enable_ptbr(void) { s_enabled = true; }
@@ -90,7 +95,8 @@ static void render_text(uint8_t pixels[32][224], const PtbrLabel *label) {
         else if (c == 0xC2) { c = 'A'; accent = 4; }
         else if (c == 0xCA) { c = 'E'; accent = 4; }
         else if (c == 0xD4) { c = 'O'; accent = 4; }
-        const uint8_t *glyph=c>='A'&&c<='Z'?kFont[c-'A']:c>='0'&&c<='9'?kDigits[c-'0']:NULL;
+        static const uint8_t arrow[7]={8,4,2,1,2,4,8};
+        const uint8_t *glyph=c>='A'&&c<='Z'?kFont[c-'A']:c>='0'&&c<='9'?kDigits[c-'0']:c=='>'?arrow:NULL;
         unsigned top=label->style==1?4:accent && accent!=2?2:0, height=(label->height==32?28:14)-top;
         uint8_t mask[32][20]={{0}};
         if(glyph) {
@@ -211,26 +217,102 @@ static void apply_labels(Ppu *ppu) {
 static void restore_labels(Ppu *ppu) {
     if(!s_saved_count) return;
     while(s_saved_count) { SavedWord w=s_saved[--s_saved_count]; ppu->vram[w.address]=w.original; }
+    if(coop_menu_applied) {
+        ppu->screenWindowed[0]=coop_windowed;
+        if(coop_cursor_moved) { ppu->oam[0]=coop_cursor;++ppu->oamWriteCount; }
+        coop_menu_applied=coop_cursor_moved=false;
+    }
+    ++ppu->vramWriteCount;
+}
+
+/* Compact five-row title layout. Copyright remains in its original row 26.
+ * All writes are temporary, including when PT-BR is disabled. */
+static void apply_coop_menu(Ppu *ppu) {
+    if(!NormalCoopPlayerMenu() || (ppu->bgmode&7)!=1 || PPU_bgTilemapAdr(ppu,2)!=0x4000) return;
+    unsigned map=PPU_bgTilemapAdr(ppu,2),base=PPU_bgTileAdr(ppu,2);
+    coop_menu_applied=true;coop_windowed=ppu->screenWindowed[0];
+    ppu->screenWindowed[0]&=(uint8_t)~4;
+    /* Native cursor: tile $1E8 idle, $1EA-$1EE during the confirmation bounce
+     * (y within -5..+1 of the 1P/2P rows at $7F/$8F). The idle cursor sits on
+     * the selected row; Up/Down toggles the stock two-row y for a frame, so
+     * only the bounce keeps its offset. */
+    if((ppu->oam[1]&0xfff9)==0x2be8 && (ppu->oam[0]&0xff)==0x40) {
+        int target=(12+(int)NormalCoopPlayerCount()*2)*8-1,y=target;
+        if(ppu->oam[1]!=0x2be8) y+=(ppu->oam[0]>>8)-((ppu->oam[0]>>8)>=0x87?0x8f:0x7f);
+        coop_cursor_moved=true;coop_cursor=ppu->oam[0];
+        ppu->oam[0]=(uint16_t)(48+((unsigned)y&0xff)*256);
+        ++ppu->oamWriteCount;
+    }
+    for(unsigned row=10;row<24;++row) for(unsigned col=6;col<28;++col)
+        save_write(ppu,map+row*32+col,0x2000);
+    /* The native heading blinks through BG3 window 2 (W34SEL bit 11), whose
+     * HDMA band covers its original rows only. Follow the same phase here. */
+    const bool heading_hidden=(ppu->windowsel & 0x800)!=0;
+    for(unsigned row=0;row<6;++row) {
+        char text[32];
+        if(!row && heading_hidden) continue;
+        if(!row) snprintf(text,sizeof(text),"%s",s_enabled?"APERTE START":"PUSH START BUTTON");
+        else if(s_enabled) snprintf(text,sizeof(text),"  %u %s",row,row==1?"JOGADOR":"JOGADORES");
+        else snprintf(text,sizeof(text),"  %u PLAYER GAME",row);
+        PtbrLabel label={.width=20,.height=16,.style=1,.ink=3,.text=text};
+        uint8_t pixels[32][224];render_text(pixels,&label);
+        unsigned yrow=row?12+row*2:12;
+        for(unsigned ty=0;ty<2;++ty) for(unsigned tx=0;tx<20;++tx) {
+            /* The native text starts at tile $100; OBJ graphics start past
+             * this font page. Use only its unused lower 240 tiles. Tile zero
+             * remains blank because the heading has a centered left margin. */
+            unsigned tile=row*40+ty*20+tx;
+            save_write(ppu,map+(yrow+ty)*32+6+tx,(uint16_t)(0x2000|tile));
+            for(unsigned y=0;y<8;++y) {
+                uint16_t planes=0;
+                for(unsigned x=0;x<8;++x) {
+                    unsigned color=pixels[ty*8+y][tx*8+x];
+                    /* Native colors: the heading fills with BG3 palette 0
+                     * color 3 (yellow), player rows with color 2 (white). */
+                    if(row && color==3) color=2;
+                    if(color&1) planes|=1u<<(7-x);
+                    if(color&2) planes|=1u<<(15-x);
+                }
+                save_write(ppu,base+tile*8+y,planes);
+            }
+        }
+    }
     ++ppu->vramWriteCount;
 }
 
 static SnesBeamRasterObserver *extra_observer;
 static void *extra_context;
+static uint32_t coop_render_flags;
+static bool coop_renderer_changed;
 static void observe_line(const Ppu *view, unsigned line, void *unused) {
     (void)unused;
     Ppu *ppu=(Ppu *)view;
-    if(line==1 && s_enabled) apply_labels(ppu);
+    if(line==1) {
+        coop_renderer_changed=NormalCoopPlayerMenu();
+        if(coop_renderer_changed) {
+            coop_render_flags=ppu->renderFlags;
+            ppu->renderFlags&=~kPpuRenderFlags_NewRenderer;
+        }
+        if(s_enabled) apply_labels(ppu);apply_coop_menu(ppu);
+    }
     if(extra_observer) extra_observer(view,line,extra_context);
     /* Restore before the driver replays pending guest writes at RenderEnd. */
-    if(line==224 && s_enabled) restore_labels(ppu);
+    if(line==224) {
+        restore_labels(ppu);
+        if(coop_renderer_changed) ppu->renderFlags=coop_render_flags;
+        coop_renderer_changed=false;
+    }
 }
 
 void PtbrDrawPpuFrame(void) {
     PtbrDrawPpuFrameObserved(NULL,NULL);
 }
 void PtbrDrawPpuFrameObserved(SnesBeamRasterObserver *observer,void *context) {
+    /* The optimized compositor does not reproduce the title's temporary
+     * BG3 replacement correctly. Use the accurate compositor for this
+     * menu only, keeping the user's renderer setting for every other screen. */
     extra_observer=observer;extra_context=context;
-    if(s_enabled || observer) snes_beam_frame_driver_draw_ppu_frame_observed(observe_line,NULL);
+    if(s_enabled || observer || NormalCoopPlayerMenu()) snes_beam_frame_driver_draw_ppu_frame_observed(observe_line,NULL);
     else snes_beam_frame_driver_draw_ppu_frame();
     extra_observer=NULL;extra_context=NULL;
 }

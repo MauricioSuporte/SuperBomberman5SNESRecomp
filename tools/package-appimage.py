@@ -24,7 +24,7 @@ def complete_zip(path, analyzer, cargo_home, rust_sysroot):
             raise ValueError('Expected one setup root')
         root = roots.pop()
         entries = {i.filename: (i, archive.read(i)) for i in archive.infolist()
-                   if '/docs/assets/games/' not in i.filename and '/test_data/' not in i.filename}
+                   if '/docs/assets/games/' not in i.filename and '/test_data/' not in i.filename and '/docs/images/' not in i.filename}
     entries[root + '/snesrecomp/recompiler-rs/target/release/snesrecomp-analyze'] = (None, analyzer.read_bytes())
     lock = tomllib.loads((ROOT / 'snesrecomp/recompiler-rs/Cargo.lock').read_text())
     licensed = set()

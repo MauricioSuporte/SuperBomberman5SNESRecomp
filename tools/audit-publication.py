@@ -47,6 +47,10 @@ def forbidden(path: str, release: bool = False) -> str | None:
     # recorded in assets/README.md. Other media still require separate review.
     if not release and path == 'assets/app.ico':
         return None
+    # Maintainer-requested README showcase captured from the project's own
+    # build; provenance in docs/images/README.md. Never part of release ZIPs.
+    if not release and path == 'docs/images/five-player-showcase.png':
+        return None
     if not release and p.suffix.lower() in MEDIA | BINARIES:
         return 'binary/media asset requires an explicit provenance review'
     return None
@@ -99,6 +103,8 @@ def audit_zip(path: pathlib.Path) -> list[str]:
                 errors.append(f'archive {item.filename}: reference ROM bytes')
             if '/docs/assets/games/' in item.filename or '/test_data/' in item.filename:
                 errors.append(f'archive {item.filename}: dependency screenshot or test fixture')
+            if '/docs/images/' in item.filename:
+                errors.append(f'archive {item.filename}: README screenshot')
     return sorted(set(errors))
 
 
