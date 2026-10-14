@@ -69,6 +69,28 @@ Extraia todo o ZIP, abra **SuperBomberman5SNESRecomp.exe**, obtenha as ferrament
 
 Os recursos e mods ficam juntos, como no pacote Windows de referência do Mega Man X. Este protótipo ainda gera o executável jogável localmente. Não distribuímos ROM, C gerado, executável derivado da ROM, gráficos/áudio extraídos, saves ou capturas. A recompilação continua parcial, com a maior parte da lógica no interpretador; campanha e multiplayer completos não foram qualificados. Sem releases Linux/macOS.
 '''
+if tuple(int(n) for n in version.split('.')) >= (0,4,3):
+    notes = f'''# Super Bomberman 5 v{version} — Windows setup bundle
+
+New optional mod: **Normal Game — infinite time**. After Generate & rebuild, enable **Unlimited time in Normal Game** in **Mods → Gameplay**. Campaign stages show the native `-:--` boss timer and no longer cause timeout deaths. Enemies and bombs still kill players. Battle remains unchanged.
+
+All four optional mods are preinstalled and disabled by default: PT-BR menus, Normal character selection, L/R color controls and infinite time. Their package version remains 0.1.0; infinite time requires native host v0.4.3 or newer. Download and extract the complete Windows x64 ZIP; supply your own supported ROM and choose Generate & rebuild. Windows 10+ x64, several GB free and internet for the initial tool download are required.
+
+Windows/LLE Zone 1-1 tests exercise unlimited time, a forced 0:01 deadline, PT-BR and character/color selection; disabled control preserves countdown and native expiration. Native and Python tests and publication audits pass. Full campaign, real boss encounters, rewind with this mod and physical controls remain unqualified. Partial recompilation: most game logic uses the interpreter. No netplay or Linux/macOS release.
+
+ROM identity: JPN header; CRC32 c25ab56a; SHA-256 5251e6491872dc51879b630a34d76a92e29ea0c39026c4f8773c1fe006d047c4. The ZIP contains the ROM-free setup host, analyzer, sources, launcher resources and licenses. It contains no ROM, generated game C, playable ROM-derived executable, extracted graphics/audio, saves or captures. FILE_SHA256SUMS covers packaged files; GitHub supplies the ZIP digest.
+
+## Português
+
+Novo mod opcional: **Normal Game — infinite time**. Depois de Generate & rebuild, ative **Unlimited time in Normal Game** em **Mods → Gameplay**. As fases Normal usam o relógio nativo `-:--`, como nos chefes, sem morte por tempo esgotado. Bombas e inimigos ainda matam; Battle mantém seu comportamento.
+
+O ZIP Windows x64 inclui os quatro mods opcionais, desativados por padrão: menus PT-BR, personagens no Normal, cores com L/R e tempo infinito. Os pacotes continuam em 0.1.0; tempo infinito exige host v0.4.3 ou superior. Extraia o ZIP completo, forneça sua ROM compatível e use Generate & rebuild. Requer Windows 10+ x64, alguns GB livres e internet no primeiro download das ferramentas.
+
+Rotas Windows/LLE na Zone 1-1 verificam tempo ilimitado, tentativa de forçar 0:01, PT-BR e personagens/cores; com o mod desligado, a contagem e a expiração originais permanecem. Testes nativos/Python e auditorias passaram. Campanha completa, bosses reais, rewind com este mod e controles físicos seguem não qualificados. Recompilação parcial; sem release Linux/macOS ou netplay.
+
+Pacote sem ROM ou executável derivado dela: contém instalador, analisador, fontes, recursos do launcher e licenças. FILE_SHA256SUMS verifica o conteúdo; GitHub mostra o digest do ZIP.
+'''
+
 if args.output:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(notes, encoding='utf-8', newline='\n')

@@ -39,6 +39,7 @@
 #include "ptbr_mod.h"
 #include "normal_character_mod.h"
 #include "selection_color_mod.h"
+#include "infinite_time_mod.h"
 
 static void GameInitialize(void)
 {
@@ -52,6 +53,7 @@ void GameRunOneFrame(void)
 {
     NormalCharacterBeforeFrame();
     SelectionColorBeforeFrame();
+    InfiniteTimeBeforeFrame();
     snes_beam_frame_driver_run_frame();
     SelectionColorAfterFrame();
     NormalCharacterFrame();
@@ -69,6 +71,7 @@ void GameSessionReset(void)
      * been fine" is the usual desync culprit, because single-player never
      * re-enters the boot path twice in one process. */
     snes_beam_frame_driver_reset();
+    InfiniteTimeReset();
     NormalCharacterReset();
     SelectionColorReset();
 }
@@ -76,6 +79,7 @@ void GameSessionReset(void)
 static void GameHardwareReset(void)
 {
     snes_beam_frame_driver_reset();
+    InfiniteTimeReset();
     NormalCharacterReset();
     SelectionColorReset();
 }

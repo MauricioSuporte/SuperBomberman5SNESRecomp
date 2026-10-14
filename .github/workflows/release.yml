@@ -6,7 +6,7 @@ on:
       version:
         description: 'Version matching VERSION (without v)'
         type: string
-        default: '0.4.2'
+        default: '0.4.3'
       publish_release:
         description: 'Publish the audited Windows setup pack'
         type: boolean
@@ -60,6 +60,7 @@ jobs:
           ./build-ci/ptbr_render_tests.exe
           ./build-ci/normal_character_tests.exe
           ./build-ci/selection_color_tests.exe
+          ./build-ci/infinite_time_tests.exe
       - name: Package and audit Windows setup release
         run: |
           source "${TOOLCHAIN_DIR}/env.sh"

@@ -49,15 +49,16 @@ The developer's local filename is `Super Bomberman 5 (USA).sfc`, but its header 
 
 ### Included mods
 
-The **v0.4.2 Windows setup pack** includes all three mods below, each at mod version **0.1.0** and disabled by default. Complete **Generate & rebuild**, open **Mods**, enable the desired features and select Play. The release has one Windows ZIP containing the executable, launcher resources, analyzer, source and all three preinstalled mods; no separate mod download or import is needed. `FILE_SHA256SUMS` inside the ZIP covers its packaged files. They require the corresponding native plugins in the host; importing a package cannot update an older executable.
+The **v0.4.3 Windows setup pack** includes all four mods below, each at mod version **0.1.0** and disabled by default. Complete **Generate & rebuild**, open **Mods**, enable the desired features and select Play. The release has one Windows ZIP containing the executable, launcher resources, analyzer, source and all four preinstalled mods; no separate mod download or import is needed. `FILE_SHA256SUMS` inside the ZIP covers its packaged files. They require the corresponding native plugins in the host; importing a package cannot update an older executable.
 
 | Mod / category | Feature and use |
 |---|---|
 | **Português brasileiro — menus (prévia)** / **Translation** | Enable **Menus em português brasileiro** to translate mapped title, player/file selection, options, sound test, battle setup/rules and stage headings. Partial menu translation with authored accented glyphs; unmapped screens, gameplay messages and endings remain original. Disable to restore the original presentation. [Scope and testing](docs/TRANSLATION_PTBR.md). |
 | **Normal Game — character selection** / **Gameplay** | Enable **Choose a character in Normal Game** to open the original Battle character picker after confirming a Normal save file. Use the D-pad and A to choose; B returns to file selection. The campaign uses the chosen character. Requires host v0.3.0 or newer. [Instructions and validation](docs/NORMAL_CHARACTERS.md). |
+| **Normal Game — infinite time** / **Gameplay** | Enable **Unlimited time in Normal Game** for the native `-:--` timer without timeout deaths. Disabled by default. Requires host v0.4.3 or newer. [Details and validation](docs/INFINITE_TIME.md). |
 | **Character selection — color controls** / **Gameplay** | Enable **Choose character colors with L and R** for white, black, red, blue, green and yellow palettes across all nine characters. R cycles forward, L backward; A confirms. Works in Battle and in Normal when the character selection mod is enabled. Default keyboard: C/V; gamepad: LB/RB (L1/R1). Requires host v0.4.0 or newer. [Controls and validation](docs/SELECTION_COLORS.md). |
 
-The launcher categories use English, including **Translation**. The PT-BR mod's name and descriptions remain in Brazilian Portuguese. All three can be enabled together. Full campaign and multiplayer coverage remain unqualified.
+The launcher categories use English, including **Translation**. The PT-BR mod's name and descriptions remain in Brazilian Portuguese. All four can be enabled together. Full campaign and multiplayer coverage remain unqualified.
 
 v0.4.1 also embeds the supplied application icon with ten sizes from 16 to 256 pixels, preserving the whole drawing and transparency for Windows display scaling.
 
@@ -137,12 +138,13 @@ Requer Windows 10 ou superior, x64, e alguns GB livres. **Nenhuma ROM, código g
 
 ### Mods incluídos
 
-O **pacote Windows v0.4.2** inclui os três mods abaixo, todos na versão de mod **0.1.0** e desabilitados por padrão. Conclua **Generate & rebuild**, abra **Mods**, ative as funções desejadas e selecione Play. A release tem um único ZIP Windows com executável, recursos do launcher, analisador, fontes e os três mods pré-instalados; não é necessário baixar nem importar mods separados. O arquivo `FILE_SHA256SUMS` dentro do ZIP cobre os arquivos do pacote. Eles contêm apenas dados e dependem dos plugins nativos do host; importar um pacote não atualiza um executável antigo.
+O **pacote Windows v0.4.3** inclui os quatro mods abaixo, todos na versão de mod **0.1.0** e desabilitados por padrão. Conclua **Generate & rebuild**, abra **Mods**, ative as funções desejadas e selecione Play. A release tem um único ZIP Windows com executável, recursos do launcher, analisador, fontes e os quatro mods pré-instalados; não é necessário baixar nem importar mods separados. O arquivo `FILE_SHA256SUMS` dentro do ZIP cobre os arquivos do pacote. Eles contêm apenas dados e dependem dos plugins nativos do host; importar um pacote não atualiza um executável antigo.
 
 | Mod / categoria | Função e uso |
 |---|---|
 | **Português brasileiro — menus (prévia)** / **Translation** | Ative **Menus em português brasileiro** para traduzir rótulos de título, jogadores/arquivos, opções, teste de som, menus/regras de batalha e cabeçalhos de fases. Tradução parcial com fonte própria e acentos; telas não mapeadas, mensagens de gameplay e finais permanecem originais. Desative para restaurar a apresentação original. [Escopo e testes](docs/TRANSLATION_PTBR.md). |
 | **Normal Game — character selection** / **Gameplay** | Ative **Choose a character in Normal Game** para abrir o seletor original do Battle depois de confirmar um arquivo do Normal. Use direcional e A para escolher; B retorna aos arquivos. A campanha usa o personagem escolhido. Requer host v0.3.0 ou superior. [Instruções e validação](docs/NORMAL_CHARACTERS.md). |
+| **Normal Game — infinite time** / **Gameplay** | Ative **Unlimited time in Normal Game** para usar o cronômetro nativo `-:--` sem morte por tempo. Desativado por padrão. Requer host v0.4.3 ou superior. [Detalhes e validação](docs/INFINITE_TIME.md). |
 | **Character selection — color controls** / **Gameplay** | Ative **Choose character colors with L and R** para escolher branco, preto, vermelho, azul, verde e amarelo nos nove personagens. R avança, L retorna e A confirma. Funciona no Battle e no Normal com o mod de seleção de personagens ativo. Teclado padrão: C/V; controle: LB/RB (L1/R1). Requer host v0.4.0 ou superior. [Controles e validação](docs/SELECTION_COLORS.md). |
 
 As categorias do launcher ficam em inglês, incluindo **Translation**. O nome e as descrições do mod PT-BR continuam em português brasileiro. Os três podem ser ativados juntos. Campanha e multiplayer completos ainda não foram qualificados.

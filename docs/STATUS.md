@@ -1,5 +1,30 @@
 # Super Bomberman 5: estado do protótipo
 
+## v0.4.3 infinite time / Tempo infinito — 2026-10-14
+
+Release scope: optional, default-disabled infinite Normal timer, packaged with
+PT-BR menus, character selection and L/R colors. Existing dependency pins stay
+unchanged. Local five-player/control changes are not part of this release.
+Native WRAM sentinel 99 seconds/9 minutes selects the stock `-:--` HUD and
+skips timeout. Interpreter hooks at `$C5:0400/$C5:0460/$C5:0BEF` chain the
+previous hook; reset restores it. No cartridge file, SRAM or boss flags change.
+No extra gameplay state/save-state extension. These routines must remain interpreted.
+
+Initial Windows/LLE Zone 1-1 evidence: native dash HUD inspected; 1P/2P
+forced 0:01 expiration remains unlimited after 780 frames; disabled control
+retains countdown and timeout. A two-player route combines PT-BR, characters
+and colors. Full campaign, real bosses, rewind and physical controls remain
+unqualified. Release package verification is recorded below after completion.
+
+Escopo: tempo infinito opcional no Normal, junto dos três mods anteriores,
+sem publicar as alterações locais de cinco jogadores/controles. O relógio usa
+os valores nativos 99/9 e HUD `-:--`; não altera ROM em disco, SRAM ou flags de
+boss. Evidência inicial Windows/LLE na Zone 1-1 confirma HUD, ausência de
+expiração após forçar 0:01 e contagem/morte normais com o mod desligado.
+Combinação com PT-BR/personagens/cores em dois jogadores testada. Campanha
+completa, bosses reais, rewind e controles físicos ainda não qualificados.
+
+
 Base criada pelo scaffolder oficial do SNESRecomp em 2026-10-13.
 
 ## ROM de referência
