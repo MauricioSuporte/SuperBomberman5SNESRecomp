@@ -2,7 +2,7 @@
 
 Public repository: `MauricioSuporte/SuperBomberman5SNESRecomp`. The initial release is **v0.1.0**, marked as a prerelease. Windows x64 is the qualified platform; Linux/macOS are not release targets yet.
 
-Current VERSION is **0.3.0**, the Windows prerelease with Normal Game character selection v0.1.0 and PT-BR menus v0.1.0. The setup pack includes both optional mods; separate data-only `.snesmod` archives are also provided. Preserve v0.1.0 and v0.2.0 tags and assets.
+Current VERSION is **0.4.0**, the Windows prerelease with character selection color controls v0.1.0, Normal Game character selection v0.1.0 and PT-BR menus v0.1.0. The setup pack includes all three optional mods; separate data-only `.snesmod` archives are also provided. Preserve v0.1.0 and v0.2.0 tags and assets.
 
 Generate notes with `python tools/release-notes.py --output .bootstrap/notes.md`; read that file as UTF-8 and send UTF-8 JSON bytes through the API. Avoid Windows console pipelines that may replace accented characters. Verify the returned body equals the authored text and contains no U+FFFD. Use `--version 0.1.0` when repairing the already published release.
 
@@ -27,8 +27,8 @@ Do not package the development `build-lle/` executable: it includes locally gene
 The official packager is `scripts/package_release.sh`; its output is completed and audited by:
 
 ```powershell
-python tools/finalize-release.py --zip dist/superbomberman5-0.3.0-windows-x64.zip --build-dir build-ci --analyzer snesrecomp/recompiler-rs/target/release/snesrecomp-analyze.exe --toolchain C:/path/to/toolchain --cargo-home C:/path/to/cargo --rust-sysroot C:/path/to/rust-toolchain
-python tools/audit-publication.py --zip dist/superbomberman5-0.3.0-windows-x64.zip
+python tools/finalize-release.py --zip dist/superbomberman5-0.4.0-windows-x64.zip --build-dir build-ci --analyzer snesrecomp/recompiler-rs/target/release/snesrecomp-analyze.exe --toolchain C:/path/to/toolchain --cargo-home C:/path/to/cargo --rust-sysroot C:/path/to/rust-toolchain
+python tools/audit-publication.py --zip dist/superbomberman5-0.4.0-windows-x64.zip
 ```
 
 Use the exact package version in the filename. The finalizer creates `dist/SHA256SUMS`. Preserve `SOURCE_REVISIONS`, `PACKAGE_MANIFEST.json` and licenses in the archive.

@@ -14,6 +14,13 @@ Base criada pelo scaffolder oficial do SNESRecomp em 2026-10-13.
 
 ## Base disponível
 
+v0.4.0 inclui o mod de cores na seleção: L/R percorrem branco, preto, vermelho, azul,
+verde e amarelo nos nove personagens. Cursor com L + R acima e jogador abaixo.
+Testes nativos passaram para paletas, entradas, confirmação, snapshots e
+restauração de OAM/VRAM; rotas locais com PT-BR validaram as seis cores e o
+segundo personagem verde em fases do Normal e Battle. Multiplayer completo
+continua pendente. Requer o host atualizado v0.4.0. Detalhes em [SELECTION_COLORS.md](SELECTION_COLORS.md).
+
 Repositório Git local com SNESRecomp e recomp-ui como submódulos fixados em commits, CMake, configuração inicial de análise, launcher, scripts de geração e empacotamento e workflow oficial. A inicialização do jogo ativa o multitap na porta 2 para cinco assentos; multiplayer ainda não foi validado. Netplay está desabilitado.
 
 Ferramentas locais preparadas em `.tools/`: RetroPorting Toolchains v1.0.14 (CMake, Ninja, Clang e SDL3) e Rust 1.97.1 Windows GNU LLVM. Scripts reproduzíveis: `tools/setup-windows.ps1` e `tools/build-windows.ps1`. Instruções em `BUILD_WINDOWS.md`.

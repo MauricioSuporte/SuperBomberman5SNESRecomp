@@ -38,6 +38,7 @@
 #include "common_rtl.h"
 #include "ptbr_mod.h"
 #include "normal_character_mod.h"
+#include "selection_color_mod.h"
 
 static void GameInitialize(void)
 {
@@ -50,13 +51,15 @@ static void GameInitialize(void)
 void GameRunOneFrame(void)
 {
     NormalCharacterBeforeFrame();
+    SelectionColorBeforeFrame();
     snes_beam_frame_driver_run_frame();
+    SelectionColorAfterFrame();
     NormalCharacterFrame();
 }
 
 void GameDrawPpuFrame(void)
 {
-    PtbrDrawPpuFrame();
+    SelectionColorDrawPpuFrame();
 }
 
 void GameSessionReset(void)
@@ -67,12 +70,21 @@ void GameSessionReset(void)
      * re-enters the boot path twice in one process. */
     snes_beam_frame_driver_reset();
     NormalCharacterReset();
+    SelectionColorReset();
 }
 
 static void GameHardwareReset(void)
 {
     snes_beam_frame_driver_reset();
     NormalCharacterReset();
+    SelectionColorReset();
+}
+
+static void GameSaveExtra(struct SaveLoadInfo *sli) {
+    NormalCharacterSave(sli);SelectionColorSave(sli);
+}
+static void GameLoadExtra(struct SaveLoadInfo *sli,uint32_t version) {
+    NormalCharacterLoad(sli,version);SelectionColorLoad(sli,version);
 }
 
 const RtlGameInfo kGameInfo = {
@@ -83,7 +95,7 @@ const RtlGameInfo kGameInfo = {
     .save_name_prefix = "save",
     .session_reset = &GameSessionReset,
     .hardware_reset = &GameHardwareReset,
-    .state_save_extra = &NormalCharacterSave,
-    .state_load_extra = &NormalCharacterLoad,
+    .state_save_extra = &GameSaveExtra,
+    .state_load_extra = &GameLoadExtra,
     .on_state_loaded = &NormalCharacterLoaded,
 };

@@ -214,15 +214,23 @@ static void restore_labels(Ppu *ppu) {
     ++ppu->vramWriteCount;
 }
 
+static SnesBeamRasterObserver *extra_observer;
+static void *extra_context;
 static void observe_line(const Ppu *view, unsigned line, void *unused) {
     (void)unused;
     Ppu *ppu=(Ppu *)view;
-    if(line==1) apply_labels(ppu);
+    if(line==1 && s_enabled) apply_labels(ppu);
+    if(extra_observer) extra_observer(view,line,extra_context);
     /* Restore before the driver replays pending guest writes at RenderEnd. */
-    if(line==224) restore_labels(ppu);
+    if(line==224 && s_enabled) restore_labels(ppu);
 }
 
 void PtbrDrawPpuFrame(void) {
-    if(s_enabled) snes_beam_frame_driver_draw_ppu_frame_observed(observe_line,NULL);
+    PtbrDrawPpuFrameObserved(NULL,NULL);
+}
+void PtbrDrawPpuFrameObserved(SnesBeamRasterObserver *observer,void *context) {
+    extra_observer=observer;extra_context=context;
+    if(s_enabled || observer) snes_beam_frame_driver_draw_ppu_frame_observed(observe_line,NULL);
     else snes_beam_frame_driver_draw_ppu_frame();
+    extra_observer=NULL;extra_context=NULL;
 }

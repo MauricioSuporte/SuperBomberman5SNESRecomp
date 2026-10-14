@@ -47,6 +47,7 @@ add_executable(SuperBomberman5SNESRecomp
     src/game_rtl.c
     src/ptbr_mod.c
     src/normal_character_mod.c
+    src/selection_color_mod.c
     src/gen_stubs.c
 )
 
@@ -68,6 +69,10 @@ if(BUILD_TESTING)
     target_include_directories(normal_character_tests PRIVATE
         "${SNESRECOMP_ROOT}/runner/src")
     add_test(NAME normal_character_selection COMMAND normal_character_tests)
+    add_executable(selection_color_tests tests/selection_color_tests.c)
+    target_include_directories(selection_color_tests PRIVATE
+        "${SNESRECOMP_ROOT}/runner/src")
+    add_test(NAME selection_color_controls COMMAND selection_color_tests)
 endif()
 
 # ROM identity. rom_identity.txt is the one place the digests live: the build
