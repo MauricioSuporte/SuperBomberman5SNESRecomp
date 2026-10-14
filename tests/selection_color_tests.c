@@ -120,6 +120,14 @@ int main(void) {
     press(0,0x800);CHECK(colors[2]==1 && colors[3]==1 && colors[0]==0);
     g_ram[0x62b8]=0xff;g_ram[0x62ab]=4;g_ram[0x62b9]=1;
     press(0,0x800);CHECK(colors[4]==1 && colors[3]==1 && colors[2]==1);
+    /* Same-character previews must not share the palette of a pending CPU. */
+    g_ram[0x625f]=g_ram[0x6260]=2;colors[0]=4;colors[1]=2;
+    g_ram[0x62b5]=1;g_ram[0x62b6]=0;
+    g_ram[0x6df+10]=1;g_ram[0x349]=0;g_ram[0x34a]=2;
+    SelectionColorAfterFrame();
+    CHECK(g_ram[0x6df+10]==0 && g_ram[0x6df+12]==1);
+    CHECK(g_ram[0x349]==1 && g_ram[0x34a]==1);
+    CHECK(g_ram[0x2b10]==13 && g_ram[0x2b11]==11 && g_ram[0x62d4]==4);
     /* Final cleanup may reset CPU colors before the stage derives palettes. */
     g_ram[0x1038]=g_ram[0x103a]=5;set_pc(0xc68ef0);
     memset(g_ram+0x6264,4,5);SelectionColorAfterFrame();

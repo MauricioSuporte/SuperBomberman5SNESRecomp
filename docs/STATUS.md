@@ -20,6 +20,11 @@ e `$62AB` associa cada controle ao cursor atual: humanos usam seus controles e,
 ao confirmar, passam a escolher CPUs pendentes. L/R acompanha essas tabelas
 e preserva os confirmados; Normal de dois jogadores aguarda contador 2.
 
+Prévias de um mesmo personagem podem compartilhar uma paleta no alocador
+original. O mod separa as cinco referências dos retratos em slots próprios,
+preservando os demais donos/refcounts. A cor da grade acompanha o cursor ativo;
+CPUs pendentes não sobrescrevem a prévia do personagem em escolha.
+
 Na saída do seletor, a limpeza original pode restaurar cores padrão dos CPUs.
 O mod preserva as escolhas até o inicializador nativo consumir os offsets e
 derivar as paletas das fases; snapshots incluem essa transição. Rota de 7.360

@@ -57,6 +57,8 @@ independent player state, sequential human/CPU selection, simultaneous R+A,
 snapshot compatibility, and restoration of cursor OAM/VRAM after rendering.
 Tests also cover native controller-to-cursor handoff and preserving CPU colors
 through final picker cleanup until the stage initializer consumes them.
+Same-character previews use independent native palette slots, and pending CPU
+previews cannot overwrite the active grid palette.
 Local runtime routes verified the six-color preview with PT-BR enabled and
 the second character in green in actual Normal and Battle stages. Five-seat
 input routing is covered by native tests; a two-human/three-CPU Battle route

@@ -45,14 +45,31 @@ static void upload_palette(unsigned source,unsigned destination,unsigned count) 
         }
     }
 }
+static void isolate_portrait_palettes(void) {
+    /* Native allocation shares slots when two previews name the same palette.
+     * Detach the five portrait references before assigning private slots. */
+    uint8_t refs[8];memcpy(refs,g_ram+0x349,sizeof(refs));
+    for(unsigned i=0;i<5;++i) {
+        unsigned object=g_ram[0x62bf+i];
+        if(object>=0x60) return;
+        unsigned slot=g_ram[0x6df+object];
+        if(slot>=8 || g_ram[0x2b18+slot]!=0 || !refs[slot]) return;
+        --refs[slot];
+    }
+    for(unsigned slot=0;slot<5;++slot) if(refs[slot]) return; /* Another native owner. */
+    for(unsigned i=0;i<5;++i) {
+        g_ram[0x6df+g_ram[0x62bf+i]]=(uint8_t)i;
+        refs[i]=1;g_ram[0x2b18+i]=0;
+    }
+    memcpy(g_ram+0x349,refs,sizeof(refs));
+}
 static void apply_color(unsigned player) {
     unsigned character=g_ram[0x625f+player];
     if(character<1 || character>9) return; /* The native random/exit cell. */
     unsigned color=colors[player];
     g_ram[0x6264+player]=(uint8_t)color;
     unsigned source=palette_source(g_rom[0xbb4e + character-1]+color);
-    /* Portraits already have a dedicated native palette slot per seat. Keep
-     * its allocation/refcount and replace the cartridge palette it names. */
+    /* Each preview has its own slot even when the native allocator shared it. */
     unsigned object=g_ram[0x62bf+player];
     if(object<0x60) {
         unsigned slot=g_ram[0x6df+object];
@@ -63,7 +80,7 @@ static void apply_color(unsigned player) {
     }
     /* Native grid entries use eight-color strips in the BG palette. The
      * cartridge lookup also handles each villain's original palette layout. */
-    for(unsigned cell=0;cell<9;++cell) if(g_ram[0x62c9+cell]==character) {
+    for(unsigned cell=0;g_ram[0x62b5+player]==1 && cell<9;++cell) if(g_ram[0x62c9+cell]==character) {
         g_ram[0x62d3+cell]=(uint8_t)color;
         unsigned id=g_rom[0x2130b+(character-1)*7+color];
         upload_palette(palette_source(id),g_rom[0x21301+cell],8);
@@ -112,7 +129,10 @@ void SelectionColorAfterFrame(void) {
     if(!live && picker_pc()==0xc68e68) {
         live=true;pending=false;memset(colors,0,sizeof(colors));
     }
-    if(live) for(unsigned i=0;i<5;++i) apply_color(i);
+    if(live) {
+        isolate_portrait_palettes();
+        for(unsigned i=0;i<5;++i) apply_color(i);
+    }
 }
 
 /* Render-only cursor changes; every guest OAM/VRAM word is restored. */
