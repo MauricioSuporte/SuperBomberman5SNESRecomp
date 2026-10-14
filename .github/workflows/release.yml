@@ -6,7 +6,7 @@ on:
       version:
         description: 'Version matching VERSION (without v)'
         type: string
-        default: '0.4.1'
+        default: '0.4.2'
       publish_release:
         description: 'Publish the audited Windows setup pack'
         type: boolean
@@ -71,13 +71,6 @@ jobs:
             --toolchain "${TOOLCHAIN_DIR}" \
             --rust-sysroot "$(rustup run 1.97.1-x86_64-pc-windows-gnullvm rustc --print sysroot)"
           python tools/audit-publication.py --zip "dist/superbomberman5-${RELEASE_VERSION}-windows-x64.zip"
-          python tools/generate-ptbr.py --mod-out dist/superbomberman5-ptbr-menus-0.1.0.snesmod
-          python tools/audit-publication.py --zip dist/superbomberman5-ptbr-menus-0.1.0.snesmod
-          python tools/package-normal-characters.py
-          python tools/audit-publication.py --zip dist/superbomberman5-normal-characters-0.1.0.snesmod
-          python tools/package-selection-colors.py
-          python tools/audit-publication.py --zip dist/superbomberman5-selection-colors-0.1.0.snesmod
-          python -c 'import hashlib,pathlib; d=pathlib.Path("dist"); files=sorted([*d.glob("superbomberman5-*-windows-x64.zip"),*d.glob("*.snesmod")]); (d/"SHA256SUMS").write_text("".join(hashlib.sha256(p.read_bytes()).hexdigest()+"  "+p.name+"\n" for p in files),encoding="utf-8")'
           python tools/release-notes.py --output dist/notes.md
       - name: Smoke test setup host and packaged analyzer
         run: |
@@ -89,7 +82,6 @@ jobs:
           name: superbomberman5-windows-x64
           path: |
             dist/superbomberman5-*-windows-x64.zip
-            dist/*.snesmod
             dist/SHA256SUMS
           if-no-files-found: error
           compression-level: 0
@@ -113,5 +105,3 @@ jobs:
           overwrite_files: false
           files: |
             dist/superbomberman5-*-windows-x64.zip
-            dist/*.snesmod
-            dist/SHA256SUMS

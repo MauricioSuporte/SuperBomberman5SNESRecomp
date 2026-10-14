@@ -12,6 +12,19 @@ import tomllib
 import zipfile
 
 
+def add_file_checksums(path: pathlib.Path) -> None:
+    """Include checksums of every packaged file, excluding the checksum itself."""
+    with zipfile.ZipFile(path, 'a', zipfile.ZIP_DEFLATED) as archive:
+        root = archive.namelist()[0].split('/')[0]
+        lines = []
+        for item in sorted(archive.infolist(), key=lambda item: item.filename):
+            if item.is_dir():
+                continue
+            relative = item.filename[len(root) + 1:]
+            lines.append(hashlib.sha256(archive.read(item)).hexdigest() + '  ' + relative + '\n')
+        archive.writestr(root + '/FILE_SHA256SUMS', ''.join(lines))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--zip', type=pathlib.Path, required=True)
@@ -94,6 +107,7 @@ def main() -> None:
             'Recompilação parcial: a maior parte da lógica ainda usa o interpretador.\n'
             'Multiplayer e jogo completo ainda não foram validados.\n'
             'Consulte README.md, docs/STATUS.md e THIRD_PARTY_NOTICES.md.\n')
+    add_file_checksums(temp)
     spec = importlib.util.spec_from_file_location('audit', pathlib.Path(__file__).with_name('audit-publication.py'))
     audit = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(audit)

@@ -49,7 +49,7 @@ The developer's local filename is `Super Bomberman 5 (USA).sfc`, but its header 
 
 ### Included mods
 
-The **v0.4.1 Windows setup pack** includes all three mods below, each at mod version **0.1.0** and disabled by default. Complete **Generate & rebuild**, open **Mods**, enable the desired features and select Play. Separate data-only `.snesmod` downloads are optional: the packages are already included. They require the corresponding native plugins in the host; importing a package cannot update an older executable.
+The **v0.4.2 Windows setup pack** includes all three mods below, each at mod version **0.1.0** and disabled by default. Complete **Generate & rebuild**, open **Mods**, enable the desired features and select Play. The release has one Windows ZIP containing the executable, launcher resources, analyzer, source and all three preinstalled mods; no separate mod download or import is needed. `FILE_SHA256SUMS` inside the ZIP covers its packaged files. They require the corresponding native plugins in the host; importing a package cannot update an older executable.
 
 | Mod / category | Feature and use |
 |---|---|
@@ -135,7 +135,7 @@ Requer Windows 10 ou superior, x64, e alguns GB livres. **Nenhuma ROM, código g
 
 ### Mods incluídos
 
-O **pacote Windows v0.4.1** inclui os três mods abaixo, todos na versão de mod **0.1.0** e desabilitados por padrão. Conclua **Generate & rebuild**, abra **Mods**, ative as funções desejadas e selecione Play. Os downloads separados `.snesmod` são opcionais: os pacotes já estão incluídos. Eles contêm apenas dados e dependem dos plugins nativos do host; importar um pacote não atualiza um executável antigo.
+O **pacote Windows v0.4.2** inclui os três mods abaixo, todos na versão de mod **0.1.0** e desabilitados por padrão. Conclua **Generate & rebuild**, abra **Mods**, ative as funções desejadas e selecione Play. A release tem um único ZIP Windows com executável, recursos do launcher, analisador, fontes e os três mods pré-instalados; não é necessário baixar nem importar mods separados. O arquivo `FILE_SHA256SUMS` dentro do ZIP cobre os arquivos do pacote. Eles contêm apenas dados e dependem dos plugins nativos do host; importar um pacote não atualiza um executável antigo.
 
 | Mod / categoria | Função e uso |
 |---|---|

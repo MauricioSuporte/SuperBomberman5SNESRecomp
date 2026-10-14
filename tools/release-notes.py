@@ -40,6 +40,35 @@ if tuple(int(n) for n in version.split('.')) >= (0,4,0):
     notes += '''\nThe original picker lets humans use their own controllers, and take over pending CPU selections after confirming. Color changes follow the native active-cursor/controller tables and preserve confirmed choices. The confirmation counter is also handled correctly for two-player Normal selection. Default keyboard: C = L, V = R; default gamepad: LB/RB (L1/R1).\n\nNo seletor original, humanos usam seus próprios controles e passam a escolher CPUs pendentes depois de confirmar. A troca de cor acompanha as tabelas originais de cursor/controle e preserva as escolhas confirmadas. O contador de confirmação também é tratado corretamente no Normal de dois jogadores. Teclado padrão: C = L, V = R; controle padrão: LB/RB (L1/R1).\n'''
 if tuple(int(n) for n in version.split('.')) >= (0,4,1):
     notes = notes.replace('# Super Bomberman 5 v' + version + ' — Windows prototype', '# Super Bomberman 5 v' + version + ' — Windows prototype\n\n## New in v0.4.1 / Novidades da v0.4.1\n\nThe Windows setup host and locally rebuilt game embed the supplied application icon in ten sizes (16–256 pixels), scaled to fill the available space without clipping or losing transparency. The Mods category is now **Translation** in English; the PT-BR mod keeps its Portuguese name and descriptions. The bilingual README now documents all three included optional mods: PT-BR menus, Normal Game character selection and character color controls. All remain at mod version 0.1.0 and disabled by default.\n\nO setup host Windows e o jogo recompilado localmente incorporam o ícone fornecido em dez tamanhos (16–256 pixels), preenchendo o espaço sem cortes e preservando a transparência. A categoria de Mods passa a **Translation**, em inglês; o mod PT-BR mantém nome e descrições em português. O README bilíngue descreve os três mods opcionais incluídos: menus PT-BR, seleção de personagens no Normal Game e controles de cores. Todos permanecem na versão de mod 0.1.0 e desabilitados por padrão.')
+if tuple(int(n) for n in version.split('.')) >= (0,4,2):
+    notes = f'''# Super Bomberman 5 v{version} — Windows setup bundle
+
+## English
+
+Download **superbomberman5-{version}-windows-x64.zip**. This single Windows download includes the setup executable with its scaled icon, launcher resources, native analyzer and required DLL/license, source and documentation, and all three preinstalled optional mods:
+
+- **Português brasileiro — menus (prévia)**: partial Brazilian Portuguese menu translation, under **Translation**. The mod's labels remain Portuguese.
+- **Normal Game — character selection**: choose a campaign character using the original Battle picker after confirming a file.
+- **Character selection — color controls**: L/R cycles six colors for all nine characters in Battle and the optional Normal picker.
+
+All mods remain at version 0.1.0 and disabled by default. No separate mod download or import is needed. The ZIP includes **FILE_SHA256SUMS**, covering its contents; GitHub also provides the uploaded ZIP's SHA-256 digest.
+
+Extract the entire ZIP into a writable folder, open **SuperBomberman5SNESRecomp.exe**, obtain the official portable build tools, select your own supported ROM and choose **Generate & rebuild**. Configure Mods and select Play in the rebuilt launcher. Requires Windows 10+ x64, several GB free and internet for the first tool download. Rust is not required.
+
+Like the reference Mega Man X Windows release, application resources and mods are bundled together. This prototype still generates the playable executable locally. No ROM, generated game C, ROM-derived game executable, extracted game graphics/audio, saves or gameplay captures are distributed. Partial recompilation: most logic uses the interpreter; full campaign and multiplayer remain unqualified. Linux/macOS releases are not provided.
+
+Supported ROM: JPN header; CRC32 c25ab56a; SHA-256 5251e6491872dc51879b630a34d76a92e29ea0c39026c4f8773c1fe006d047c4. See README.md, docs/STATUS.md and THIRD_PARTY_NOTICES.md.
+
+## Português
+
+Baixe **superbomberman5-{version}-windows-x64.zip**. O único download Windows reúne o executável de instalação com ícone corrigido, recursos do launcher, analisador nativo e DLL/licença, fontes, documentação e os três mods opcionais pré-instalados: **menus PT-BR**, **seleção de personagens no Normal Game** e **controles de cores com L/R**.
+
+Os mods permanecem na versão 0.1.0, desligados por padrão. A categoria é **Translation**, mantendo os textos do mod PT-BR em português. Não é necessário baixar nem importar mods separados. O ZIP inclui **FILE_SHA256SUMS** para conferir seus arquivos; o GitHub também informa o SHA-256 do ZIP publicado.
+
+Extraia todo o ZIP, abra **SuperBomberman5SNESRecomp.exe**, obtenha as ferramentas oficiais, selecione sua própria ROM compatível e use **Generate & rebuild**. No launcher recompilado, configure Mods e selecione Play. Requer Windows 10+ x64, alguns GB livres e internet para baixar ferramentas na primeira instalação; Rust não é necessário.
+
+Os recursos e mods ficam juntos, como no pacote Windows de referência do Mega Man X. Este protótipo ainda gera o executável jogável localmente. Não distribuímos ROM, C gerado, executável derivado da ROM, gráficos/áudio extraídos, saves ou capturas. A recompilação continua parcial, com a maior parte da lógica no interpretador; campanha e multiplayer completos não foram qualificados. Sem releases Linux/macOS.
+'''
 if args.output:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(notes, encoding='utf-8', newline='\n')

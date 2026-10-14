@@ -14,6 +14,15 @@ Base criada pelo scaffolder oficial do SNESRecomp em 2026-10-13.
 
 ## Base disponível
 
+v0.4.2 consolida a publicação em um único ZIP Windows, com executável de
+instalação, recursos do launcher, analisador, fontes e os três mods em
+`mods/preloaded/packages`. Não há downloads de mods separados nessa release.
+`FILE_SHA256SUMS` lista os hashes de todos os arquivos dentro do pacote; o
+teste de integridade cobre conteúdo e caminhos relativos. A referência
+MegaManXSNESRecomp v2.2.2-alpha foi conferida: seu ZIP Windows reúne
+executável, recursos e catálogos de mods, sem compilador portátil embutido.
+O Bomberman mantém a geração/rebuild local necessária ao seu setup host.
+
 v0.4.1 atualiza o ícone Windows fornecido pelo mantenedor: dez tamanhos de
 16 a 256 pixels, com escala proporcional e transparência, incorporados por
 recurso RC no setup host e no jogo gerado localmente. O ícone foi extraído do
