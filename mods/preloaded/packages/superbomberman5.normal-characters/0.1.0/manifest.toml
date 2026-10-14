@@ -1,0 +1,25 @@
+format_version = 1
+id = "superbomberman5.normal-characters"
+version = "0.1.0"
+name = "Normal Game — character selection"
+author = "MauricioSuporte"
+description = "Opens the original Battle Mode character selection after confirming a Normal Game save file. Choose your character for campaign stages. Requires a host with the character selection plugin."
+license = "PolyForm-Noncommercial-1.0.0"
+resolver = "declarative"
+save_compatibility = "shared"
+
+[[target]]
+game_id = "superbomberman5-jpn"
+rom_sha256 = "5251e6491872dc51879b630a34d76a92e29ea0c39026c4f8773c1fe006d047c4"
+
+[[feature]]
+id = "character_select"
+name = "Choose a character in Normal Game"
+description = "Use the D-pad to select a character and press A to confirm. Press B to return to file selection."
+group = "Gameplay"
+default_enabled = false
+presentation_only = false
+
+[[plugin]]
+feature = "character_select"
+id = "superbomberman5.normal.characters"

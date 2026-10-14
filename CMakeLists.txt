@@ -46,6 +46,7 @@ add_executable(SuperBomberman5SNESRecomp
     src/host_contract.c
     src/game_rtl.c
     src/ptbr_mod.c
+    src/normal_character_mod.c
     src/gen_stubs.c
 )
 
@@ -63,6 +64,10 @@ if(BUILD_TESTING)
     target_include_directories(ptbr_render_tests PRIVATE
         "${SNESRECOMP_ROOT}/runner/src" "${CMAKE_CURRENT_BINARY_DIR}/translation")
     add_test(NAME ptbr_render_restore COMMAND ptbr_render_tests)
+    add_executable(normal_character_tests tests/normal_character_tests.c)
+    target_include_directories(normal_character_tests PRIVATE
+        "${SNESRECOMP_ROOT}/runner/src")
+    add_test(NAME normal_character_selection COMMAND normal_character_tests)
 endif()
 
 # ROM identity. rom_identity.txt is the one place the digests live: the build

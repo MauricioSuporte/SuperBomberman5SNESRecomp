@@ -37,6 +37,7 @@
 #include "beam_frame_driver.h"
 #include "common_rtl.h"
 #include "ptbr_mod.h"
+#include "normal_character_mod.h"
 
 static void GameInitialize(void)
 {
@@ -48,7 +49,9 @@ static void GameInitialize(void)
 
 void GameRunOneFrame(void)
 {
+    NormalCharacterBeforeFrame();
     snes_beam_frame_driver_run_frame();
+    NormalCharacterFrame();
 }
 
 void GameDrawPpuFrame(void)
@@ -63,6 +66,13 @@ void GameSessionReset(void)
      * been fine" is the usual desync culprit, because single-player never
      * re-enters the boot path twice in one process. */
     snes_beam_frame_driver_reset();
+    NormalCharacterReset();
+}
+
+static void GameHardwareReset(void)
+{
+    snes_beam_frame_driver_reset();
+    NormalCharacterReset();
 }
 
 const RtlGameInfo kGameInfo = {
@@ -72,4 +82,8 @@ const RtlGameInfo kGameInfo = {
     .draw_ppu_frame = &GameDrawPpuFrame,
     .save_name_prefix = "save",
     .session_reset = &GameSessionReset,
+    .hardware_reset = &GameHardwareReset,
+    .state_save_extra = &NormalCharacterSave,
+    .state_load_extra = &NormalCharacterLoad,
+    .on_state_loaded = &NormalCharacterLoaded,
 };

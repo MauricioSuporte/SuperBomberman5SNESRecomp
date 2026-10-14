@@ -87,3 +87,21 @@ Uma tentativa de promover reset e NMI a AOT descobriu 69 variantes elegíveis, m
 ## Release v0.2.0
 
 Pré-release Windows x64 com o mod PT-BR v0.1.0 incluído no catálogo Mods, mais arquivo `.snesmod` separado. Publicação usa um checkout limpo e setup host LLE, sem código gerado/ROM. SHA256SUMS cobre o ZIP e o mod. A versão 0.1.0 permanece preservada. Tradução e precisão do jogo continuam parciais.
+## Release v0.3.0 — Normal Game character selection
+
+The v0.3.0 setup pack includes the optional, default-disabled
+`superbomberman5.normal-characters` v0.1.0 package and trusted plugin. Confirming
+a Normal file opens the cartridge's Battle character picker, then restores the
+suspended campaign and applies the character/palette before stage graphics
+load. The second and ninth characters were observed in Zone 1-1; the latter
+was exercised with movement/bomb input and the PT-BR overlay enabled. Cancel
+returns to file selection. Source build and focused selection/state tests pass.
+Full campaign and cooperative stage behavior are not qualified. This Windows prerelease includes a ROM-free setup host and two data-only mod archives. See [NORMAL_CHARACTERS.md](NORMAL_CHARACTERS.md).
+
+O setup pack v0.3.0 inclui o mod opcional, desabilitado por padrão, de seleção de
+personagens no Normal Game. A seleção original do Battle abre depois da
+confirmação do arquivo e a escolha é aplicada antes de carregar os sprites da
+fase. O segundo e o nono personagens foram observados na Zone 1-1; o nono foi
+testado com movimento/bomba e tradução PT-BR. B volta aos arquivos. Compilação
+e testes de seleção/estado passaram. Campanha completa e fases cooperativas
+ainda não foram qualificadas. Pré-release Windows com setup host sem ROM e dois pacotes de mods.

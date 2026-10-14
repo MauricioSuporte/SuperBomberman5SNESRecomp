@@ -18,6 +18,7 @@ An unofficial, noncommercial **Super Bomberman 5** PC port prototype built with 
 | Static CPU recompilation | Small AOT coverage; reset/NMI and most game logic remain interpreted |
 | Five-player multitap | Port 2 configured; P2–P5 and battle mode not validated |
 | PT-BR mod (v0.2.0) | Optional title, files, options and battle setup/rules translation preview; included in the v0.2.0 setup pack |
+| Normal Game character selection (v0.3.0) | Optional Battle picker after file confirmation; second/ninth characters verified in Zone 1-1 |
 | Netplay / widescreen enhancements | Not implemented for this title |
 | Linux / macOS | Framework build paths exist; this release is Windows only |
 
@@ -52,6 +53,10 @@ The v0.2.0 release includes **Português brasileiro — menus (prévia)** in **M
 Build a data-only installable archive with `python tools/generate-ptbr.py --mod-out dist/superbomberman5-ptbr-menus-0.1.0.snesmod`. The trusted plugin must already be linked into the host; the package cannot install native code.
 
 ### Controls and starting a game
+
+The v0.3.0 setup pack includes an optional **Normal Game — character selection**
+mod. Enable **Choose a character in Normal Game** in Mods to open the original
+Battle character picker after confirming a Normal file. Complete Generate & rebuild using the v0.3.0 setup host. See [instructions and validation](docs/NORMAL_CHARACTERS.md).
 
 | Keyboard | SNES input |
 |---|---|
@@ -128,6 +133,10 @@ Requer Windows 10 ou superior, x64, e alguns GB livres. **Nenhuma ROM, código g
 Na versão v0.2.0, depois de Generate & rebuild, abra **Mods → Português brasileiro — menus (prévia)**, ative **Menus em português brasileiro** e clique em Play. Há traduções para título, seleção de jogadores/arquivos, cabeçalhos, opções, teste de som, menus/regras de batalha e cabeçalho de fases, com acentos numa fonte própria. O aviso de Start pisca sem cortar JOGO NORMAL. É uma tradução parcial; telas não mapeadas e mensagens de fases/finais ainda permanecem originais. Desative para retornar à apresentação original. **A release antiga v0.1.0 não contém o plugin**. Veja [TRANSLATION_PTBR.md](docs/TRANSLATION_PTBR.md) para instruções, escopo e criação do `.snesmod`.
 
 ### Controles e início de partida
+
+O pacote v0.3.0 inclui o mod opcional **Normal Game — character selection**.
+Ative **Choose a character in Normal Game** em Mods para abrir
+a seleção original do Battle depois de confirmar o arquivo. Conclua Generate & rebuild usando o setup host v0.3.0. Veja [instruções e validação](docs/NORMAL_CHARACTERS.md).
 
 **Setas** para direção, **Enter** para Start, **X/Z** para A/B e **Shift direito** para Select. Pressione Enter na abertura/título, escolha **Normal Game → 1 Player Game → New Game → File 1**, confirme com **X** e pressione **Enter** no mapa da Zone 1 para entrar na fase. Remapeie os controles no launcher se desejar.
 

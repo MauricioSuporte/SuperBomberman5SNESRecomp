@@ -6,7 +6,7 @@ on:
       version:
         description: 'Version matching VERSION (without v)'
         type: string
-        default: '0.2.0'
+        default: '0.3.0'
       publish_release:
         description: 'Publish the audited Windows setup pack'
         type: boolean
@@ -58,6 +58,7 @@ jobs:
             -DSNESRECOMP_BUILD_VERSION="${RELEASE_VERSION}"
           cmake --build build-ci --parallel 4
           ./build-ci/ptbr_render_tests.exe
+          ./build-ci/normal_character_tests.exe
       - name: Package and audit Windows setup release
         run: |
           source "${TOOLCHAIN_DIR}/env.sh"
@@ -71,6 +72,8 @@ jobs:
           python tools/audit-publication.py --zip "dist/superbomberman5-${RELEASE_VERSION}-windows-x64.zip"
           python tools/generate-ptbr.py --mod-out dist/superbomberman5-ptbr-menus-0.1.0.snesmod
           python tools/audit-publication.py --zip dist/superbomberman5-ptbr-menus-0.1.0.snesmod
+          python tools/package-normal-characters.py
+          python tools/audit-publication.py --zip dist/superbomberman5-normal-characters-0.1.0.snesmod
           python -c 'import hashlib,pathlib; d=pathlib.Path("dist"); files=sorted([*d.glob("superbomberman5-*-windows-x64.zip"),*d.glob("*.snesmod")]); (d/"SHA256SUMS").write_text("".join(hashlib.sha256(p.read_bytes()).hexdigest()+"  "+p.name+"\n" for p in files),encoding="utf-8")'
           python tools/release-notes.py --output dist/notes.md
       - name: Smoke test setup host and packaged analyzer
