@@ -53,8 +53,8 @@ state. No ROM bytes are modified.
 Battle choices at `$7E:625F` are one based. Normal's character fields at `$16C2`
 are zero based and initialized before the file menu. Confirmation applies this
 conversion and the original palette table at ROM `$80:BB4E`, before native
-stage routines load graphics. Two-player confirmation waits for both selection
-bits; broader cooperative gameplay requires runtime validation.
+stage routines load graphics. Two-player confirmation waits until the native
+confirmed-seat count reaches two; broader cooperative gameplay requires runtime validation.
 
 The title's snapshot extension includes execution position, selection state and
 the suspended snapshot, with a bounded allocation. Tests cover disabled mode,

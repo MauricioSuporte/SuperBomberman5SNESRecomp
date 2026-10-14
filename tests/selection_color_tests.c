@@ -43,6 +43,7 @@ static void fixture(void) {
     }
     for(unsigned player=0;player<5;++player) {
         g_ram[0x6269+player]=1;g_ram[0x625f+player]=player+1;
+        g_ram[0x62ab+player]=player;g_ram[0x62b5+player]=1;
         unsigned object=10+player*2;
         g_ram[0x62bf+player]=object;g_ram[0x6df+object]=player;
         g_ram[0x349+player]=1;
@@ -70,7 +71,7 @@ int main(void) {
     SelectionColorBeforeFrame();SelectionColorAfterFrame();CHECK(g_ram[0x6264]==0); /* Held key. */
     pads[0]=0;SelectionColorBeforeFrame();
     /* The shared grid portrait has one palette; isolate P1 while checking it. */
-    for(unsigned p=1;p<5;++p) g_ram[0x6269+p]=2;
+    for(unsigned p=1;p<5;++p) g_ram[0x625f+p]=0;
     for(unsigned character=1;character<=9;++character) {
         g_ram[0x625f]=character;
         for(unsigned c=0;c<6;++c) {
@@ -82,18 +83,43 @@ int main(void) {
             CHECK((g_ram[dest]|g_ram[dest+1]<<8)==id*16);
         }
     }
-    g_ram[0x6269+4]=1;
-    press(4,0x800);CHECK(g_ram[0x6268]==1 && g_ram[0x6264]==5); /* Separate P5. */
-    g_ram[0x6269+3]=2;press(3,0x800);CHECK(colors[3]==0); /* CPU. */
-    g_ram[0x1038]=1;press(0,0x800);CHECK(colors[0]==5); /* Confirmed P1. */
-    g_ram[0x1038]=0;press(0,0x900);CHECK(colors[0]==0); /* R plus A. */
-    colors[0]=4;g_ram[0x1038]=1;set_pc(0xc68e30);SelectionColorAfterFrame();
+    for(unsigned p=1;p<5;++p) { g_ram[0x625f+p]=p+1;g_ram[0x6269+p]=2; }
+    memset(g_ram+0x62b5,0xff,5);
+    memset(g_ram+0x62ab,0xff,5);
+    /* Active CPUs are selected through controller 1; confirmed seats freeze. */
+    for(unsigned seat=1;seat<5;++seat) {
+        g_ram[0x1038]=seat;g_ram[0x62ab]=seat;g_ram[0x62b5+seat]=1;press(0,0x800);
+        CHECK(colors[seat]==1 && colors[0]==5);
+        CHECK(g_ram[0x6264+seat]==1);
+        press(0,0x400);CHECK(colors[seat]==0 && colors[0]==5);
+        g_ram[0x62b5+seat]=0xff;
+    }
+    g_ram[0x1038]=4;g_ram[0x62b5+4]=1;press(0,0x800);CHECK(colors[4]==1);
+    for(unsigned seat=0;seat<5;++seat) { g_ram[0x6269+seat]=1;g_ram[0x62ab+seat]=seat;g_ram[0x62b5+seat]=1; }
+    for(unsigned seat=0;seat<5;++seat) {
+        g_ram[0x6269+seat]=1;g_ram[0x1038]=seat;
+        uint8 before[5];memcpy(before,colors,sizeof(before));
+        press(seat,0x800);CHECK(colors[seat]==(before[seat]+1)%6);
+        for(unsigned other=0;other<5;++other) if(other!=seat) CHECK(colors[other]==before[other]);
+        press(seat,0x400);CHECK(!memcmp(before,colors,sizeof(before)));
+    }
+    memset(g_ram+0x62b5,0xff,5);
+    g_ram[0x1038]=5;press(0,0x800);CHECK(colors[0]==5 && colors[4]==1); /* Complete. */
+    g_ram[0x1038]=0;g_ram[0x62b5]=1;press(0,0x900);CHECK(colors[0]==0); /* R plus A. */
+    colors[0]=4;g_ram[0x1038]=5;set_pc(0xc68e30);SelectionColorAfterFrame();
     CHECK(g_ram[0x6264]==4); /* Last confirmation advances the script. */
     Stream state={.base={.func=transfer}};SelectionColorSave(&state.base);
     SelectionColorReset();state.reading=true;state.at=0;SelectionColorLoad(&state.base,10);
     CHECK(!failed && live && colors[0]==4 && colors[4]==1);
     state.at=state.end;SelectionColorLoad(&state.base,10);CHECK(!live); /* Old snapshot, no chunk. */
     state.at=0;state.bytes[5]=6;SelectionColorLoad(&state.base,10);CHECK(failed);
+    fixture();activation();SelectionColorAfterFrame();
+    memset(g_ram+0x62ab,0xff,5);memset(g_ram+0x62b5,0xff,5);
+    g_ram[0x62ab]=3;g_ram[0x62ac]=2;g_ram[0x62b7]=g_ram[0x62b8]=1;
+    press(1,0x800);CHECK(colors[2]==1 && colors[3]==0 && colors[0]==0);
+    press(0,0x800);CHECK(colors[2]==1 && colors[3]==1 && colors[0]==0);
+    g_ram[0x62b8]=0xff;g_ram[0x62ab]=4;g_ram[0x62b9]=1;
+    press(0,0x800);CHECK(colors[4]==1 && colors[3]==1 && colors[2]==1);
     fixture();activation();SelectionColorAfterFrame();
     Ppu *ppu=calloc(1,sizeof(Ppu));CHECK(ppu);ppu->obsel=3;
     for(unsigned s=0;s<128;++s) ppu->oam[s*2]=0xe000;

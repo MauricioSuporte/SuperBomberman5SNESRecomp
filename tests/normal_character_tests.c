@@ -66,7 +66,7 @@ int main(void) {
     /* Both players must confirm before the Normal machine resumes. */
     NormalCharacterReset();file_ready(2);NormalCharacterFrame();CHECK(players==2);
     set_picker_pc(0xc68e68);g_ram[0x1038]=1;NormalCharacterFrame();CHECK(picking);
-    g_ram[0x1038]=3;g_ram[0x625f]=3;g_ram[0x6260]=7;
+    g_ram[0x1038]=2;g_ram[0x625f]=3;g_ram[0x6260]=7;
     set_picker_pc(0xc68e30);NormalCharacterFrame(); /* Last confirm advances VM. */
     CHECK(!picking && g_ram[0x16c2]==2 && g_ram[0x16c3]==6);
     NormalCharacterReset();file_ready(1);NormalCharacterFrame();

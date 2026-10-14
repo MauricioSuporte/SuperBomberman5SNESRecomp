@@ -14,6 +14,12 @@ Base criada pelo scaffolder oficial do SNESRecomp em 2026-10-13.
 
 ## Base disponível
 
+Correção antes da publicação v0.4.0: `$1038` é um contador de escolhas
+confirmadas, não uma máscara. A tabela `$62B5` indica cursors ativos/confirmados
+e `$62AB` associa cada controle ao cursor atual: humanos usam seus controles e,
+ao confirmar, passam a escolher CPUs pendentes. L/R acompanha essas tabelas
+e preserva os confirmados; Normal de dois jogadores aguarda contador 2.
+
 v0.4.0 inclui o mod de cores na seleção: L/R percorrem branco, preto, vermelho, azul,
 verde e amarelo nos nove personagens. Cursor com L + R acima e jogador abaixo.
 Testes nativos passaram para paletas, entradas, confirmação, snapshots e

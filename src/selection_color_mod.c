@@ -20,7 +20,6 @@ static bool picker(void) {
         ((pc>=0xc68b48 && pc<0xc68ee4) ||
          (live && pc>=0xc6a300 && pc<0xc6a800 && g_ram[0x1032]==5));
 }
-static bool human(unsigned player) { return (g_ram[0x6269+player]&3)==1; }
 void SelectionColorReset(void) {
     live=false;memset(colors,0,sizeof(colors));memset(previous,0,sizeof(previous));
 }
@@ -73,15 +72,21 @@ static void apply_color(unsigned player) {
 }
 void SelectionColorBeforeFrame(void) {
     if(!enabled) return;
-    for(unsigned i=0;i<5;++i) {
-        uint16_t pad=RtlGetPadState(i),pressed=pad & ~previous[i];
-        previous[i]=pad;
-        if(live && picker() && human(i) && !(g_ram[0x1038]&(1u<<i))) {
-            unsigned shoulders=pressed & 0xc00;
-            if(shoulders==0x800) colors[i]=(colors[i]+1)%6; /* R */
-            else if(shoulders==0x400) colors[i]=(colors[i]+5)%6; /* L */
-            g_ram[0x6264+i]=colors[i]; /* Includes simultaneous color + A. */
-        }
+    uint16_t pressed[5];
+    for(unsigned slot=0;slot<5;++slot) {
+        uint16_t pad=RtlGetPadState(slot);
+        pressed[slot]=pad & ~previous[slot];previous[slot]=pad;
+    }
+    /* Native seat state: 0 = pending CPU, 1 = active, FF = confirmed.
+     * $62AB maps each controller to its current seat, including CPU handoff.
+     * $1038 only counts confirmations; it is not a per-seat bit mask. */
+    if(live && picker()) for(unsigned slot=0;slot<5;++slot) {
+        unsigned i=g_ram[0x62ab+slot];
+        if(i>=5 || g_ram[0x62b5+i]!=1) continue;
+        unsigned shoulders=pressed[slot] & 0xc00;
+        if(shoulders==0x800) colors[i]=(colors[i]+1)%6; /* R */
+        else if(shoulders==0x400) colors[i]=(colors[i]+5)%6; /* L */
+        g_ram[0x6264+i]=colors[i]; /* Includes simultaneous color + A. */
     }
 }
 void SelectionColorAfterFrame(void) {
@@ -90,7 +95,7 @@ void SelectionColorAfterFrame(void) {
     if(!live && picker_pc()==0xc68e68) {
         live=true;memset(colors,0,sizeof(colors));
     }
-    if(live) for(unsigned i=0;i<5;++i) if(human(i)) apply_color(i);
+    if(live) for(unsigned i=0;i<5;++i) apply_color(i);
 }
 
 /* Render-only cursor changes; every guest OAM/VRAM word is restored. */

@@ -78,10 +78,9 @@ void NormalCharacterFrame(void) {
     uint16_t pad=RtlGetPadState(0);
     previous_pad=pad;
     if (picking) {
-        unsigned mask=(1u<<players)-1;
         /* The last human's confirmation can advance the native script in
-         * this same field, so the selection bits are the completion signal. */
-        if ((g_ram[0x1038]&mask)==mask) finish_picker(false);
+         * this same field. $1038 counts confirmed seats in selection order. */
+        if (g_ram[0x1038]>=players) finish_picker(false);
         return;
     }
     if (g_ram[0x1031]!=3) { chosen=false;return; }
