@@ -16,7 +16,7 @@ class PublicationGuardTests(unittest.TestCase):
     def test_rejects_dumps_generated_code_and_secrets(self):
         for path in ['game.SFC', 'renamed.rom', 'audio/song.spc', 'other/src/gen/bank00.c',
                      'copied/bankC0_v2.c', 'recomp/funcs.h', '.env', 'secret.pem',
-                     '.tools/tool.exe', 'captures/image.png']:
+                     '.tools/tool.exe', 'captures/image.png', 'assets/game.AppImage']:
             with self.subTest(path=path):
                 self.assertIsNotNone(audit.forbidden(path))
 

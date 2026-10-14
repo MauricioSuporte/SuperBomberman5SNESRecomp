@@ -19,13 +19,14 @@ before changing code, docs or releases. Humans: see README.md and CONTRIBUTING.m
 - **Hybrid port, partial recompilation.** Only ~9 routine variants are AOT;
   reset/NMI and almost all game logic run on the framework's 65816
   interpreter. PPU, APU/SPC700, DMA are emulated. Never describe this as
-  "fully recompiled" or claim full-game, multiplayer, netplay or Linux/macOS support.
+  "fully recompiled" or claim full-game, multiplayer, netplay or broad Linux/macOS support.
 - Reference ROM: file `Super Bomberman 5 (USA).sfc` but the header says
   **JPN** (`Hu SUPER BOMBERMAN 5`), Fast HiROM, 4 MiB, 8 KiB SRAM.
   `rom_identity.txt` is the single source of truth (hashes, `game_id =
   superbomberman5-jpn`). Hashes decide compatibility, never filenames.
 - Owner/public remote: `MauricioSuporte/SuperBomberman5SNESRecomp`. Windows x64
-  is the only qualified platform. Current version lives in `VERSION`.
+  is the qualified platform; v0.4.4 also offers an experimental Linux x86_64
+  setup AppImage (Ubuntu CI and limited WSL evidence in docs/STATUS.md). Current version lives in `VERSION`.
 - The maintainer communicates in Brazilian Portuguese. Reply in PT-BR unless
   asked otherwise; code, commits and code comments are in English.
 

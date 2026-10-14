@@ -1,24 +1,16 @@
-# v0.4.4 distribution / Distribuição v0.4.4
-
-Each new release must update README.md in English and Portuguese with useful current download, installation, feature and validation information before publication.
-
-The Release workflow now builds a Windows x64 setup ZIP and an experimental Linux x86_64 AppImage. Both use clean sources, SNESRECOMP_SETUP_HOST=ON and LLE; no ROM-derived code is shipped. Publication depends on both jobs passing. The Linux packager wraps the audited setup ZIP with scripts/AppRun, which copies setup into a versioned writable XDG data directory before generation. It bundles the Linux native analyzer and Cargo/Rust notices, excludes upstream screenshots/fixtures, and preserves file checksums. appimagetool is checked against a pinned SHA-256; changes require deliberate pin updates. Test first/repeat AppImage launches, the packaged analyzer and local ROM generation/rebuild, and record precise coverage in STATUS.md. SHA256SUMS is uploaded alongside the AppImage and Windows ZIP. Preserve existing public tags/assets.
-
-Toda nova release exige README.md atualizado nas duas línguas. A workflow gera ZIP Windows e AppImage Linux experimental, com setup sem ROM e LLE. Publicação depende dos dois jobs. O AppImage copia o setup para a pasta XDG gravável da versão; inclui analisador/licenças e exclui capturas/fixtures upstream. Valide primeira abertura, reabertura, analisador e geração/rebuild local; registre a cobertura no STATUS.md. Publique SHA256SUMS junto aos dois pacotes. Preserve tags e assets existentes.
-
-The following describes the earlier Windows-only publication process and remains relevant to the Windows finalizer.
-
 # Versions and publication / Versões e publicação
 
-Public repository: `MauricioSuporte/SuperBomberman5SNESRecomp`. The initial release is **v0.1.0**, marked as a prerelease. Windows x64 is the qualified platform; Linux/macOS are not release targets yet.
+Public repository: `MauricioSuporte/SuperBomberman5SNESRecomp`. VERSION is **0.4.4**. Publish prereleases while full-game accuracy remains unqualified. Preserve existing published tags and assets.
 
-Current VERSION is **0.4.3**, the Windows prerelease with Normal Game infinite time v0.1.0, character selection color controls v0.1.0, Normal Game character selection v0.1.0 and PT-BR menus v0.1.0. The setup pack includes all four optional mods; the release publishes only the Windows ZIP, with no separate mod assets. It adds the native infinite-time timer, with all four mods documented together. Preserve all previously published tags and assets.
+## Release contents
 
-Generate notes with `python tools/release-notes.py --output .bootstrap/notes.md`; read that file as UTF-8 and send UTF-8 JSON bytes through the API. Avoid Windows console pipelines that may replace accented characters. Verify the returned body equals the authored text and contains no U+FFFD. Use `--version 0.1.0` when repairing the already published release.
+Publish **superbomberman5-0.4.4-windows-x64.zip**, **superbomberman5-0.4.4-linux-x86_64.AppImage** and **SHA256SUMS**. Both are ROM-independent setup hosts with source, native analyzer, launcher resources, licenses and four optional, default-disabled mods: PT-BR menus, Normal character selection, L/R colors and infinite Normal timer. The playable executable is generated only on the player's machine. Linux is experimental; see STATUS.md for exact evidence.
 
-## Before committing
+Build from a separate clean checkout with pinned submodules, no src/gen/*.c or recomp/funcs.h, `SNESRECOMP_SETUP_HOST=ON`, `SNESRECOMP_FRAME_IMPL=LLE` and the test input fixture OFF. Never package the development game executable or local ROM/save/capture data.
 
-Keep `README.md` English/Portuguese sections, `docs/STATUS.md`, build instructions, VERSION and dependency pins consistent with the actual change. Run:
+## Before every publication
+
+Update README.md in **both English and Portuguese** with useful current download links/formats, installation or upgrade steps, features/mods, requirements and validation limits. Review obsolete version/platform claims. Update VERSION, STATUS.md, these instructions and tools/release-notes.py to match the final artifacts. Keep dependency pins unchanged unless intentionally reviewed.
 
 ```powershell
 python tools/audit-publication.py --history
@@ -26,37 +18,39 @@ python -m unittest discover -s tests -v
 git diff --check
 ```
 
-The audit checks this project's tracked files/history, not the upstream submodule histories. Ignore patterns do not remove already committed files. New binary/media assets require a provenance review and a deliberate guard update. No local ROM, generated C, game build, extracts, saves, dumps, captures or personal settings are published.
+Run all four native tests in the release source. Test package extraction, the native analyzer, first/repeat launcher startup and local ROM generation/rebuild. Exercise a real-ROM route locally and record its platform/frames and limitations in STATUS.md. No ROM enters CI or public artifacts.
 
-## Release contents
+## Build and package
 
-A **setup pack**, built from a clean checkout with `SNESRECOMP_SETUP_HOST=ON` and `SNESRECOMP_FRAME_IMPL=LLE`. It includes a setup host, launcher assets with upstream notices, project/framework sources, ROM identity hashes and the native analyzer with its libunwind DLL/license. Portable compiler tools are downloaded from the official toolchain release on first use. The game C and playable executable are generated only on the user's machine.
+The manual **Release** workflow builds on Windows and Ubuntu 22.04 using portable toolchain v1.0.14, Rust 1.97.1 for the analyzer and Python 3.12 for Linux checks. Both platform jobs must pass before the publish job runs. Dispatch with the version matching VERSION; `publish_release=false` produces test artifacts, `true` publishes after the same checks. Releases are prereleases and existing assets cannot be overwritten.
 
-Do not package the development `build-lle/` executable: it includes locally generated ROM-derived code. The framework rejects a setup build when `src/gen/*.c` exists. Keep the user's development build intact and use a separate clean clone for packaging.
+The Windows packager remains scripts/package_release.sh, followed by tools/finalize-release.py with the analyzer, libunwind DLL, toolchain and Rust license paths. The Linux job first builds the same ROM-independent setup ZIP, then invokes:
 
-The official packager is `scripts/package_release.sh`; its output is completed and audited by:
-
-```powershell
-python tools/finalize-release.py --zip dist/superbomberman5-0.4.3-windows-x64.zip --build-dir build-ci --analyzer snesrecomp/recompiler-rs/target/release/snesrecomp-analyze.exe --toolchain C:/path/to/toolchain --cargo-home C:/path/to/cargo --rust-sysroot C:/path/to/rust-toolchain
-python tools/audit-publication.py --zip dist/superbomberman5-0.4.3-windows-x64.zip
+```bash
+python3 tools/package-appimage.py \
+  --zip dist/superbomberman5-0.4.4-linux-x64.zip \
+  --build-dir build-ci \
+  --analyzer snesrecomp/recompiler-rs/target/release/snesrecomp-analyze \
+  --rust-sysroot "$(rustup run 1.97.1 rustc --print sysroot)" \
+  --appimagetool /path/to/appimagetool --runtime /path/to/runtime-x86_64
 ```
 
-Use the exact package version in the filename. The finalizer embeds `FILE_SHA256SUMS` for all packaged files and creates `dist/SHA256SUMS` for local/CI ZIP verification. Only the ZIP is uploaded to the release; GitHub exposes its asset digest. Preserve `SOURCE_REVISIONS`, `PACKAGE_MANIFEST.json` and licenses in the archive.
+The workflow verifies pinned SHA-256 hashes for appimagetool and the type2 runtime. Updating these pins requires reviewing their source/notice changes. The Linux finalizer removes upstream game screenshots/test fixtures, adds Cargo/Rust notices and the native analyzer, audits the ZIP and wraps it in AppRun plus an authored SVG icon. The intermediate Linux ZIP is a CI artifact; the public Linux download is the AppImage. Preserve SOURCE_REVISIONS, PACKAGE_MANIFEST.json, FILE_SHA256SUMS and notices.
 
-## GitHub workflow
+AppRun installs a versioned writable copy under `${XDG_DATA_HOME:-$HOME/.local/share}/superbomberman5/<version>`. It never overwrites an existing generated build. Subsequent launches use `build/SuperBomberman5SNESRecomp` when present. Test `--appimage-extract-and-run` for systems without FUSE. Linux requires x86_64, glibc 2.35+ and desktop graphics/audio libraries; Windows requires Windows 10+ x64. Both need several GB free and internet for the first portable tools download. Rust is not required by players.
 
-The **Release** workflow is manual, Windows only and pins the portable toolchain to v1.0.14. It checks source/history, builds the setup host and native analyzer, packages/audits the ZIP, and uploads an artifact. Set `publish_release` to true to publish only after successful checks. The version input must match VERSION. Releases default to prerelease; changing that status requires broader runtime validation.
+## Publish and verify
 
-For local publication, complete the same checks, test extraction and local Generate → rebuild, commit, push, then create the version tag at that commit and upload the audited ZIP (SHA256SUMS stays in the local/CI verification artifact). Verify the remote tag target and uploaded asset digest. Do not move a public tag or overwrite published assets without an explicit replacement decision.
+Generate bilingual notes with `python tools/release-notes.py --output .bootstrap/notes.md`; read/send UTF-8 bytes, then verify the remote body exactly matches and has no U+FFFD. Stage explicit paths and preserve the user's working tree. Push reviewed commits, create a new version tag at the release commit and publish only audited assets. Never move published tags or overwrite assets without explicit authorization.
 
-Release notes belong on GitHub Releases, not tracked `RELEASE_NOTES*.md` files. `tools/release-notes.py` generates bilingual prototype notes to an ignored temporary path. Update that generator when the release scope changes. Do not blindly repeat prototype limitations in future releases after they are resolved.
+Verify the default branch, tag target, successful workflow, prerelease state, UTF-8 notes, asset sizes and SHA-256 digests. SHA256SUMS covers both public packages; FILE_SHA256SUMS covers the setup payload. GitHub also exposes each uploaded asset digest. Check remote state before retrying an API failure to avoid duplicates.
 
 ## Português
 
-Antes de publicar, atualize versão, README nas duas línguas, observações e testes em STATUS.md, instruções e licenças. Execute auditoria, testes e revisão do diff. A primeira versão é uma **pré-release v0.1.0 para Windows x64**, com recompilação parcial.
+Toda nova release exige README.md atualizado nas duas línguas, com informações úteis: downloads, formatos, instalação/atualização, recursos, requisitos e limites reais de validação. Atualize VERSION, STATUS.md, este documento e o gerador de notas.
 
-Prepare o pacote a partir de um clone limpo, sem código gerado. Ele contém o instalador, fontes e analisador independente da ROM; o jogador fornece sua própria ROM e gera o jogo localmente. Não publique o executável de desenvolvimento, que contém código derivado da ROM.
+A v0.4.4 distribui **ZIP Windows x64**, **AppImage Linux x86_64 experimental** e **SHA256SUMS**. Ambos incluem setup sem ROM, fontes, analisador, licenças e os quatro mods opcionais desligados por padrão. O jogo é gerado apenas na máquina do jogador. Use checkout limpo, LLE e setup host; nunca publique o executável de desenvolvimento, ROM, código gerado, saves ou capturas.
 
-A workflow Release é manual. Ela só publica quando `publish_release` está ativo e todas as verificações passam. Valide também o pacote extraído e a geração/compilação local. Preserve licenças, arquivos de revisão e checksums. Não reescreva tags públicas automaticamente.
+A workflow Release é manual e só publica quando os dois builds e verificações passam. Valide os pacotes extraídos, analisador, primeira abertura/reabertura e geração/rebuild local. O AppImage copia o setup para a pasta XDG gravável da versão e reutiliza o jogo gerado; sem FUSE, use --appimage-extract-and-run. Registre plataforma, rota/frames e limitações no STATUS.md. Preserve fontes, licenças, revisões e checksums. Não reescreva tags ou assets públicos automaticamente. Confirme notas UTF-8, estado de pré-release e hashes dos arquivos no GitHub.
 
-A skill instalada é `$super-bomberman5-repository`, com cópia versionada em `.agents/skills/super-bomberman5-repository/`. Ela gerencia Git, versões, documentação, exclusões, anotações, auditorias e releases, respeitando a autorização de cada pedido.
+A skill instalada é `$super-bomberman5-repository`, com cópia versionada em `.agents/skills/super-bomberman5-repository/`.

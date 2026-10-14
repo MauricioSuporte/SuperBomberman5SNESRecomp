@@ -18,7 +18,7 @@ LOCAL_DIRS = {'.bootstrap', '.tools', '.cache', 'roms', 'extracted', 'captures',
 MEDIA = {'.ico', '.png', '.bmp', '.jpg', '.jpeg', '.gif', '.tga', '.wav', '.mp3', '.ogg',
          '.flac', '.mp4', '.webm'}
 BINARIES = {'.exe', '.dll', '.obj', '.o', '.a', '.lib', '.pdb', '.zip', '.snesmod', '.7z',
-            '.rar', '.tar', '.gz'}
+            '.rar', '.tar', '.gz', '.appimage'}
 
 
 def git(*args: str) -> str:

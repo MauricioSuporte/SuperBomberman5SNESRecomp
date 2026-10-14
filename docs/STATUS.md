@@ -1,10 +1,15 @@
-## Linux AppImage packaging — 2026-10-14
-
-v0.4.4 adds an experimental ROM-independent Linux x86_64 setup AppImage alongside the Windows ZIP, retaining v0.4.3 gameplay. AppRun copies setup into a versioned writable XDG data directory and reuses the generated build on repeat launch. Clean pinned submodules are used; local uncommitted co-op changes are excluded. Package validation is in progress; no Linux gameplay or desktop-device qualification is claimed yet.
-
-A v0.4.4 acrescenta AppImage Linux experimental ao ZIP Windows, mantendo as funções da v0.4.3. O setup é copiado para uma pasta XDG gravável e reutiliza o build local. Submódulos fixados limpos; mudanças locais do cooperativo não incluídas. Validação dos pacotes em andamento; gameplay e dispositivos Linux ainda não qualificados.
-
 # Super Bomberman 5: estado do protótipo
+
+## v0.4.4 Linux AppImage + Windows ZIP — 2026-10-14
+
+Experimental Linux x86_64 ROM-independent setup AppImage added alongside the Windows x64 ZIP, retaining v0.4.3's four optional mods. Clean published framework pins are unchanged; local uncommitted co-op/control changes are excluded. AppRun copies setup to a versioned writable XDG data directory, preserves existing files and selects the locally generated build on repeat launch. Runtime/tool hashes and licenses are included; upstream game screenshots/fixtures are removed and both payloads audited.
+
+Evidence: Windows and Ubuntu 22.04 CI setup-host/analyzer builds, four native tests per platform, publication history/package audits, eight Python tests (two Linux launcher tests skipped on Windows), two AppImage --help launches and synthetic analyzer smoke passed. Extracted Windows and Linux AppImage payloads generated real-ROM code and rebuilt locally using portable toolchain v1.0.14. Linux local environment: Ubuntu 24.04.4 via WSL; launcher initialized using SDL offscreen, with no visual QA or physical devices. Windows setup handed off to the locally rebuilt launcher. The four native tests passed on both local game builds. The unchanged first-stage route completed 3,628 LLE frames on each platform, with dummy video/audio and mods disabled, including map/stage entry, movement and bomb input. Logs had no interp_cap, unresolved-abandon, dispatch_abandon or fatal. The Linux route was invoked through the AppImage after local rebuild, confirming repeat launch uses the generated game. Linux FUSE mounting, full campaign, physical controllers/audio and broad distribution compatibility remain unqualified; extract-and-run was used. Windows gameplay qualification remains limited to the recorded routes. No ROM or generated code is published.
+
+A v0.4.4 acrescenta AppImage Linux x86_64 experimental ao ZIP Windows e mantém os quatro mods da v0.4.3. Submódulos publicados preservados; mudanças locais do cooperativo não incluídas. Setup copiado para uma pasta XDG gravável, sem sobrescrever arquivos existentes; próximas aberturas usam o jogo gerado. Auditorias, licenças e hashes dos pacotes/ferramentas preservados.
+
+Builds CI Windows/Ubuntu 22.04, quatro testes nativos por plataforma, auditorias e oito testes Python passaram (dois testes Linux pulados no Windows). Analisador validado com ROM sintética; AppImage abriu duas vezes. Pacotes extraídos geraram e compilaram o jogo localmente. No Ubuntu 24.04.4/WSL, o launcher inicializou com SDL offscreen; sem inspeção visual ou dispositivos físicos. O setup Windows encaminhou para o launcher recompilado. A rota de 3.628 frames LLE passou nas duas plataformas, com vídeo/áudio dummy e mods desligados, incluindo entrada na fase, movimento e bomba; logs sem os erros conhecidos. A rota Linux foi iniciada pelo AppImage após recompilar, validando a reabertura. Montagem FUSE, campanha completa, controles/áudio físicos e outras distribuições Linux não qualificados. ROM e código gerado permanecem locais.
+
 
 ## v0.4.3 infinite time / Tempo infinito — 2026-10-14
 

@@ -100,6 +100,8 @@ New: experimental Linux x86_64 AppImage alongside the Windows x64 ZIP. Both are 
 
 Windows: extract the entire ZIP and open SuperBomberman5SNESRecomp.exe. Linux: make the AppImage executable and run it; without FUSE, use --appimage-extract-and-run. First launch copies setup into $XDG_DATA_HOME/superbomberman5/{version} (default ~/.local/share). Provide your supported ROM and use Generate & rebuild. Later AppImage launches use the locally rebuilt game. Requires internet for the first portable tools download, several GB free, Windows 10+ x64 or Linux x86_64 with glibc 2.35+ and desktop graphics/audio libraries. Rust is unnecessary. SHA256SUMS covers both downloads.
 
+Windows and Linux setup builds/tests passed. Extracted packages generated and rebuilt locally; both completed the 3,628-frame LLE first-stage route with dummy video/audio and mods disabled. Linux local check used Ubuntu 24.04/WSL and extract-and-run; FUSE and physical devices were not tested.
+
 Partial recompilation with LLE: most game logic remains interpreted. Full campaign, full multiplayer and broad Linux distribution compatibility remain unqualified. See README.md and docs/STATUS.md for concrete package/runtime checks. This release retains the v0.4.3 feature set; local uncommitted co-op work is not included.
 
 Supported ROM: JPN header, CRC32 c25ab56a, SHA-256 5251e6491872dc51879b630a34d76a92e29ea0c39026c4f8773c1fe006d047c4.
@@ -109,6 +111,8 @@ Supported ROM: JPN header, CRC32 c25ab56a, SHA-256 5251e6491872dc51879b630a34d76
 Novidade: AppImage Linux x86_64 experimental junto ao ZIP Windows x64. Ambos incluem setup sem ROM, analisador nativo, fontes, licenças e quatro mods opcionais: menus PT-BR, personagens no Normal, cores com L/R e tempo infinito. Todos desligados por padrão. Não distribuímos ROM, código gerado, executável jogável derivado da ROM, recursos extraídos ou saves.
 
 Windows: extraia todo o ZIP e abra SuperBomberman5SNESRecomp.exe. Linux: dê permissão de execução ao AppImage e execute; sem FUSE, use --appimage-extract-and-run. Na primeira abertura, o setup é copiado para $XDG_DATA_HOME/superbomberman5/{version} (padrão ~/.local/share). Forneça sua ROM compatível e use Generate & rebuild. Nas próximas aberturas, o AppImage usa o jogo recompilado localmente. Requer internet no primeiro download de ferramentas, alguns GB livres, Windows 10+ x64 ou Linux x86_64 com glibc 2.35+ e bibliotecas de vídeo/áudio do desktop. Rust não é necessário. SHA256SUMS cobre os dois downloads.
+
+Builds/testes Windows e Linux passaram. Pacotes extraídos geraram e compilaram localmente; ambos concluíram a rota de 3.628 frames LLE até a primeira fase, com vídeo/áudio dummy e mods desligados. Linux validado no Ubuntu 24.04/WSL via extract-and-run; FUSE e dispositivos físicos não testados.
 
 Recompilação parcial com LLE; a maior parte da lógica permanece interpretada. Campanha completa, multiplayer completo e compatibilidade ampla de distribuições Linux continuam não qualificados. README.md e docs/STATUS.md registram as verificações concretas. Mantém as funcionalidades da v0.4.3; alterações locais ainda não commitadas do cooperativo não estão incluídas.
 '''

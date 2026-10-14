@@ -21,7 +21,7 @@ An unofficial, noncommercial **Super Bomberman 5** PC port prototype built with 
 | Normal Game character selection (v0.3.0) | Optional Battle picker after file confirmation; second/ninth characters verified in Zone 1-1 |
 | Character selection colors (v0.4.0) | Six palettes with L/R for all nine characters; Normal and Battle stage routes verified |
 | Netplay / widescreen enhancements | Not implemented for this title |
-| Linux / macOS | Experimental Linux x86_64 AppImage; macOS package unavailable |
+| Linux / macOS | Experimental x86_64 AppImage: Ubuntu 22.04 CI; Ubuntu 24.04/WSL local rebuild and 3,628-frame LLE route; macOS unavailable |
 
 ### Quick start — Windows setup release
 
@@ -144,11 +144,13 @@ Requer Windows 10 ou superior, x64, e alguns GB livres. **Nenhuma ROM, código g
 
 ### AppImage Linux — novidade da v0.4.4
 
+Build CI Ubuntu 22.04 e geração/rebuild local no Ubuntu 24.04/WSL passaram; a rota de 3.628 frames LLE até a primeira fase terminou com vídeo/áudio dummy. Launcher inicializado em modo offscreen. Dispositivos físicos e outras distribuições seguem não qualificados.
+
 Baixe **superbomberman5-0.4.4-linux-x86_64.AppImage** na [v0.4.4](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.4.4), dê permissão de execução e execute. Sem FUSE, use --appimage-extract-and-run. O setup é copiado para a pasta XDG de dados da versão (padrão ~/.local/share/superbomberman5/0.4.4), onde você fornece sua ROM e usa **Generate & rebuild**. Nas próximas aberturas, o AppImage usa o jogo gerado localmente. Requer Linux x86_64 com glibc 2.35+, bibliotecas de vídeo/áudio do desktop, internet para as primeiras ferramentas e alguns GB livres. Rust não é necessário. Preserve a pasta gravável para manter builds e configurações. Confira SHA256SUMS na release. Compatibilidade ampla e campanha completa continuam não qualificadas.
 
 ### Mods incluídos
 
-Os **pacotes Windows e Linux v0.4.4** inclui os quatro mods abaixo, todos na versão de mod **0.1.0** e desabilitados por padrão. Conclua **Generate & rebuild**, abra **Mods**, ative as funções desejadas e selecione Play. Cada pacote inclui executável, recursos do launcher, analisador, fontes e os quatro mods pré-instalados; não é necessário baixar nem importar mods separados. O arquivo `FILE_SHA256SUMS` dentro do setup cobre os arquivos do pacote. Eles contêm apenas dados e dependem dos plugins nativos do host; importar um pacote não atualiza um executável antigo.
+Os **pacotes Windows e Linux v0.4.4** incluem os quatro mods abaixo, todos na versão de mod **0.1.0** e desabilitados por padrão. Conclua **Generate & rebuild**, abra **Mods**, ative as funções desejadas e selecione Play. Cada pacote inclui executável, recursos do launcher, analisador, fontes e os quatro mods pré-instalados; não é necessário baixar nem importar mods separados. O arquivo `FILE_SHA256SUMS` dentro do setup cobre os arquivos do pacote. Eles contêm apenas dados e dependem dos plugins nativos do host; importar um pacote não atualiza um executável antigo.
 
 | Mod / categoria | Função e uso |
 |---|---|
