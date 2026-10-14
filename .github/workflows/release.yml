@@ -125,8 +125,12 @@ jobs:
           bash scripts/package_release.sh build-ci linux-x64 --no-embed-toolchain
           curl -fL https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage -o "$RUNNER_TEMP/appimagetool"
           echo '95cbe7cce9717fce90c484e34052ee7c7f1d7635b33c12525b4776826a7d29b6  '"$RUNNER_TEMP/appimagetool" | sha256sum -c -
+          curl -fL https://github.com/AppImage/type2-runtime/releases/download/continuous/runtime-x86_64 -o "$RUNNER_TEMP/runtime-x86_64"
+          echo '156f4bdbde9c52d01814600013e0a273f0118dc2de98975f3c8c63427ec79074  '"$RUNNER_TEMP/runtime-x86_64" | sha256sum -c -
+          curl -fL https://github.com/AppImage/type2-runtime/releases/download/continuous/runtime-x86_64 -o "$RUNNER_TEMP/runtime-x86_64"
+          echo '156f4bdbde9c52d01814600013e0a273f0118dc2de98975f3c8c63427ec79074  '"$RUNNER_TEMP/runtime-x86_64" | sha256sum -c -
           chmod +x "$RUNNER_TEMP/appimagetool"
-          python3 tools/package-appimage.py --zip "dist/superbomberman5-${RELEASE_VERSION}-linux-x64.zip" --build-dir build-ci --analyzer snesrecomp/recompiler-rs/target/release/snesrecomp-analyze --rust-sysroot "$(rustup run 1.97.1 rustc --print sysroot)" --appimagetool "$RUNNER_TEMP/appimagetool"
+          python3 tools/package-appimage.py --zip "dist/superbomberman5-${RELEASE_VERSION}-linux-x64.zip" --build-dir build-ci --analyzer snesrecomp/recompiler-rs/target/release/snesrecomp-analyze --rust-sysroot "$(rustup run 1.97.1 rustc --print sysroot)" --appimagetool "$RUNNER_TEMP/appimagetool" --runtime "$RUNNER_TEMP/runtime-x86_64" --runtime "$RUNNER_TEMP/runtime-x86_64"
       - name: Smoke test AppImage and writable setup
         run: |
           image="$PWD/dist/superbomberman5-${RELEASE_VERSION}-linux-x86_64.AppImage"

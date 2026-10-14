@@ -74,6 +74,8 @@ def main():
     parser.add_argument('--cargo-home', type=Path, default=Path(os.environ.get('CARGO_HOME', str(Path.home()/'.cargo'))))
     parser.add_argument('--rust-sysroot', type=Path, required=True)
     parser.add_argument('--appimagetool', type=Path, required=True)
+    parser.add_argument('--runtime', type=Path, required=True)
+    parser.add_argument('--runtime', type=Path, required=True)
     args = parser.parse_args()
     cache = (args.build_dir/'CMakeCache.txt').read_text()
     if 'SNESRECOMP_SETUP_HOST:BOOL=ON' not in cache or 'SNESRECOMP_FRAME_IMPL:STRING=LLE' not in cache:
@@ -99,7 +101,7 @@ def main():
         (appdir/'superbomberman5.desktop').write_text('[Desktop Entry]\nType=Application\nName=Super Bomberman 5 Setup\nExec=AppRun\nIcon=superbomberman5\nCategories=Game;\nTerminal=false\n')
         # Authored geometric icon; no cartridge artwork.
         (appdir/'superbomberman5.svg').write_text('<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128"><rect width="128" height="128" rx="24" fill="#172b46"/><text x="64" y="85" text-anchor="middle" font-family="sans-serif" font-size="64" fill="white">5</text></svg>')
-        subprocess.run([str(args.appimagetool.resolve()), '--appimage-extract-and-run', str(appdir), str(output.resolve())], check=True,
+        subprocess.run([str(args.appimagetool.resolve()), '--appimage-extract-and-run', '--runtime-file', str(args.runtime.resolve()), str(appdir), str(output.resolve())], check=True,
                        env={**os.environ, 'ARCH': 'x86_64'})
     output.chmod(0o755)
     print(output)

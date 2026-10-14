@@ -21,3 +21,7 @@ The application icon (`assets/app.ico`) uses the game-themed image supplied by
 MauricioSuporte for inclusion in the executable and release. It was converted
 without ROM extraction. Its original author/license was not supplied, and the
 project's software license does not license this artwork. See `assets/README.md`.
+
+The Linux AppImage uses the AppImage type2 runtime (source commit 8f39b89e2ac31e1640b3d3f7e9a5108e6ce805fa), verified by SHA-256. Runtime and linked library notices are preserved under licenses/appimage/. Corresponding runtime source and build recipe: https://github.com/AppImage/type2-runtime/tree/8f39b89e2ac31e1640b3d3f7e9a5108e6ce805fa . The AppImage launcher icon is an authored geometric SVG with the numeral 5; it contains no cartridge pixels. appimagetool is used only during packaging and is not bundled.
+
+The Linux AppImage uses the AppImage type2 runtime (source commit 8f39b89e2ac31e1640b3d3f7e9a5108e6ce805fa), verified by SHA-256. Runtime and linked library notices are preserved under licenses/appimage/. Corresponding runtime source and build recipe: https://github.com/AppImage/type2-runtime/tree/8f39b89e2ac31e1640b3d3f7e9a5108e6ce805fa . The AppImage launcher icon is an authored geometric SVG with the numeral 5; it contains no cartridge pixels. appimagetool is used only during packaging and is not bundled.

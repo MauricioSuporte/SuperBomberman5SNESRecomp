@@ -10,8 +10,10 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--analyzer', type=Path, required=True)
 args = parser.parse_args()
 analyzer = args.analyzer.resolve()
-if not analyzer.is_file() or not analyzer.with_name('libunwind.dll').is_file():
-    raise SystemExit('Packaged analyzer and libunwind.dll must exist together.')
+if not analyzer.is_file():
+    raise SystemExit('Packaged analyzer must exist.')
+if analyzer.suffix.lower() == '.exe' and not analyzer.with_name('libunwind.dll').is_file():
+    raise SystemExit('Windows analyzer and libunwind.dll must exist together.')
 root = Path(__file__).resolve().parents[1]
 local_tmp = root / '.bootstrap'
 local_tmp.mkdir(exist_ok=True)
