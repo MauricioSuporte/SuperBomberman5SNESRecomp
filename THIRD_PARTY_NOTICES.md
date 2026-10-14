@@ -16,3 +16,8 @@ The lean Windows setup release does not bundle the portable toolchain. The frame
 No ROM, ROM-derived C, ROM-derived game executable, cartridge audio dump, extracted game graphics, save state or gameplay capture is included in this repository's release package. Dependency game screenshots and test ROM fixtures are excluded from the packaged source tree. Licensed launcher fonts, flags and interface assets retain their upstream notices.
 
 Super Bomberman 5, Bomberman names and game content belong to their respective rights holders. This is an unofficial, noncommercial community project, without affiliation or endorsement.
+
+The application icon (`assets/app.ico`) uses the game-themed image supplied by
+MauricioSuporte for inclusion in the executable and release. It was converted
+without ROM extraction. Its original author/license was not supplied, and the
+project's software license does not license this artwork. See `assets/README.md`.

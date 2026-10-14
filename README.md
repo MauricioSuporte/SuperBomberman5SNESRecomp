@@ -47,21 +47,21 @@ The developer's local filename is `Super Bomberman 5 (USA).sfc`, but its header 
 
 [rom_identity.txt](rom_identity.txt) is authoritative. No ROM download links are provided.
 
-### Mods — Brazilian Portuguese preview
+### Included mods
 
-The v0.2.0 release includes **Português brasileiro — menus (prévia)** in **Mods**. Enable **Menus em português brasileiro** and select Play. It translates mapped title, player/file selection, options, sound test and battle setup/rules labels with authored glyphs and Portuguese accents, without modifying the ROM. Disable it to restore original presentation. This is a partial menu translation; unmapped screens, dialogue/endings and gameplay messages remain original. Title blinking is preserved without clipping the normal-game label. The published host v0.1.0 predates the plugin and cannot run this mod. See [PT-BR implementation and testing](docs/TRANSLATION_PTBR.md).
+The **v0.4.1 Windows setup pack** includes all three mods below, each at mod version **0.1.0** and disabled by default. Complete **Generate & rebuild**, open **Mods**, enable the desired features and select Play. Separate data-only `.snesmod` downloads are optional: the packages are already included. They require the corresponding native plugins in the host; importing a package cannot update an older executable.
 
-Build a data-only installable archive with `python tools/generate-ptbr.py --mod-out dist/superbomberman5-ptbr-menus-0.1.0.snesmod`. The trusted plugin must already be linked into the host; the package cannot install native code.
+| Mod / category | Feature and use |
+|---|---|
+| **Português brasileiro — menus (prévia)** / **Translation** | Enable **Menus em português brasileiro** to translate mapped title, player/file selection, options, sound test, battle setup/rules and stage headings. Partial menu translation with authored accented glyphs; unmapped screens, gameplay messages and endings remain original. Disable to restore the original presentation. [Scope and testing](docs/TRANSLATION_PTBR.md). |
+| **Normal Game — character selection** / **Gameplay** | Enable **Choose a character in Normal Game** to open the original Battle character picker after confirming a Normal save file. Use the D-pad and A to choose; B returns to file selection. The campaign uses the chosen character. Requires host v0.3.0 or newer. [Instructions and validation](docs/NORMAL_CHARACTERS.md). |
+| **Character selection — color controls** / **Gameplay** | Enable **Choose character colors with L and R** for white, black, red, blue, green and yellow palettes across all nine characters. R cycles forward, L backward; A confirms. Works in Battle and in Normal when the character selection mod is enabled. Default keyboard: C/V; gamepad: LB/RB (L1/R1). Requires host v0.4.0 or newer. [Controls and validation](docs/SELECTION_COLORS.md). |
+
+The launcher categories use English, including **Translation**. The PT-BR mod's name and descriptions remain in Brazilian Portuguese. All three can be enabled together. Full campaign and multiplayer coverage remain unqualified.
+
+v0.4.1 also embeds the supplied application icon with ten sizes from 16 to 256 pixels, preserving the whole drawing and transparency for Windows display scaling.
 
 ### Controls and starting a game
-
-The v0.4.0 setup pack also includes **Choose character colors with L and R**:
-white, black, red, blue, green, yellow for all nine characters, in Battle and
-the optional Normal picker. See [controls and build requirements](docs/SELECTION_COLORS.md).
-
-The v0.3.0 setup pack includes an optional **Normal Game — character selection**
-mod. Enable **Choose a character in Normal Game** in Mods to open the original
-Battle character picker after confirming a Normal file. Complete Generate & rebuild using the v0.3.0 setup host. See [instructions and validation](docs/NORMAL_CHARACTERS.md).
 
 | Keyboard | SNES input |
 |---|---|
@@ -133,19 +133,21 @@ Protótipo não oficial e não comercial de port de **Super Bomberman 5** para P
 
 Requer Windows 10 ou superior, x64, e alguns GB livres. **Nenhuma ROM, código gerado da ROM ou recurso extraído acompanha o download.** O arquivo de desenvolvimento tem “USA” no nome, porém o cabeçalho indica **JPN**. Confira os hashes em [Supported ROM](#supported-rom); o nome do arquivo não garante compatibilidade.
 
-### Mods — tradução PT-BR (prévia)
+### Mods incluídos
 
-Na versão v0.2.0, depois de Generate & rebuild, abra **Mods → Português brasileiro — menus (prévia)**, ative **Menus em português brasileiro** e clique em Play. Há traduções para título, seleção de jogadores/arquivos, cabeçalhos, opções, teste de som, menus/regras de batalha e cabeçalho de fases, com acentos numa fonte própria. O aviso de Start pisca sem cortar JOGO NORMAL. É uma tradução parcial; telas não mapeadas e mensagens de fases/finais ainda permanecem originais. Desative para retornar à apresentação original. **A release antiga v0.1.0 não contém o plugin**. Veja [TRANSLATION_PTBR.md](docs/TRANSLATION_PTBR.md) para instruções, escopo e criação do `.snesmod`.
+O **pacote Windows v0.4.1** inclui os três mods abaixo, todos na versão de mod **0.1.0** e desabilitados por padrão. Conclua **Generate & rebuild**, abra **Mods**, ative as funções desejadas e selecione Play. Os downloads separados `.snesmod` são opcionais: os pacotes já estão incluídos. Eles contêm apenas dados e dependem dos plugins nativos do host; importar um pacote não atualiza um executável antigo.
+
+| Mod / categoria | Função e uso |
+|---|---|
+| **Português brasileiro — menus (prévia)** / **Translation** | Ative **Menus em português brasileiro** para traduzir rótulos de título, jogadores/arquivos, opções, teste de som, menus/regras de batalha e cabeçalhos de fases. Tradução parcial com fonte própria e acentos; telas não mapeadas, mensagens de gameplay e finais permanecem originais. Desative para restaurar a apresentação original. [Escopo e testes](docs/TRANSLATION_PTBR.md). |
+| **Normal Game — character selection** / **Gameplay** | Ative **Choose a character in Normal Game** para abrir o seletor original do Battle depois de confirmar um arquivo do Normal. Use direcional e A para escolher; B retorna aos arquivos. A campanha usa o personagem escolhido. Requer host v0.3.0 ou superior. [Instruções e validação](docs/NORMAL_CHARACTERS.md). |
+| **Character selection — color controls** / **Gameplay** | Ative **Choose character colors with L and R** para escolher branco, preto, vermelho, azul, verde e amarelo nos nove personagens. R avança, L retorna e A confirma. Funciona no Battle e no Normal com o mod de seleção de personagens ativo. Teclado padrão: C/V; controle: LB/RB (L1/R1). Requer host v0.4.0 ou superior. [Controles e validação](docs/SELECTION_COLORS.md). |
+
+As categorias do launcher ficam em inglês, incluindo **Translation**. O nome e as descrições do mod PT-BR continuam em português brasileiro. Os três podem ser ativados juntos. Campanha e multiplayer completos ainda não foram qualificados.
+
+A v0.4.1 também incorpora o ícone fornecido em dez tamanhos, de 16 a 256 pixels, preservando o desenho inteiro e a transparência para escalas de exibição do Windows.
 
 ### Controles e início de partida
-
-O pacote v0.4.0 também inclui **Choose character colors with L and R**:
-branco, preto, vermelho, azul, verde e amarelo para os nove personagens, no
-Battle e na seleção opcional do Normal. Veja [controles e requisitos](docs/SELECTION_COLORS.md).
-
-O pacote v0.3.0 inclui o mod opcional **Normal Game — character selection**.
-Ative **Choose a character in Normal Game** em Mods para abrir
-a seleção original do Battle depois de confirmar o arquivo. Conclua Generate & rebuild usando o setup host v0.3.0. Veja [instruções e validação](docs/NORMAL_CHARACTERS.md).
 
 **Setas** para direção, **Enter** para Start, **X/Z** para A/B e **Shift direito** para Select. Pressione Enter na abertura/título, escolha **Normal Game → 1 Player Game → New Game → File 1**, confirme com **X** e pressione **Enter** no mapa da Zone 1 para entrar na fase. Remapeie os controles no launcher se desejar.
 

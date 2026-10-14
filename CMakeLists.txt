@@ -51,6 +51,14 @@ add_executable(SuperBomberman5SNESRecomp
     src/gen_stubs.c
 )
 
+if(WIN32)
+    enable_language(RC)
+    target_sources(SuperBomberman5SNESRecomp PRIVATE assets/app.rc)
+    set_source_files_properties(assets/app.rc PROPERTIES
+        OBJECT_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/assets/app.ico")
+    target_include_directories(SuperBomberman5SNESRecomp PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/assets")
+endif()
+
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 set(PTBR_HEADER "${CMAKE_CURRENT_BINARY_DIR}/translation/ptbr_labels.h")
 add_custom_command(OUTPUT "${PTBR_HEADER}"

@@ -14,6 +14,14 @@ Base criada pelo scaffolder oficial do SNESRecomp em 2026-10-13.
 
 ## Base disponível
 
+v0.4.1 atualiza o ícone Windows fornecido pelo mantenedor: dez tamanhos de
+16 a 256 pixels, com escala proporcional e transparência, incorporados por
+recurso RC no setup host e no jogo gerado localmente. O ícone foi extraído do
+executável local para conferência visual. A categoria do mod PT-BR passa a
+`Translation`; seu nome e descrições continuam em português. O README reúne
+os três mods opcionais, todos v0.1.0, com ativação, controles e requisitos de
+host em inglês e português. Essas mudanças não ampliam a validação de gameplay.
+
 Correção antes da publicação v0.4.0: `$1038` é um contador de escolhas
 confirmadas, não uma máscara. A tabela `$62B5` indica cursors ativos/confirmados
 e `$62AB` associa cada controle ao cursor atual: humanos usam seus controles e,

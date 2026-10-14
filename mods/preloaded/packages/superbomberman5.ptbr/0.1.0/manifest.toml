@@ -16,7 +16,7 @@ rom_sha256 = "5251e6491872dc51879b630a34d76a92e29ea0c39026c4f8773c1fe006d047c4"
 id = "menus_ptbr"
 name = "Menus em português brasileiro"
 description = "Ative para traduzir os rótulos mapeados. Outros textos permanecem originais."
-group = "Tradução"
+group = "Translation"
 default_enabled = false
 presentation_only = true
 

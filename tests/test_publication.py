@@ -27,6 +27,12 @@ class PublicationGuardTests(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertIsNone(audit.forbidden(path))
 
+    def test_icon_exception_is_limited_to_reviewed_asset(self):
+        self.assertIsNone(audit.forbidden('assets/app.ico'))
+        for path in ['assets/other.ico', 'other/assets/app.ico', 'assets/app.png']:
+            with self.subTest(path=path):
+                self.assertIsNotNone(audit.forbidden(path))
+
     def test_archive_rejects_renamed_rom_and_traversal(self):
         local_tmp = ROOT / '.bootstrap'
         local_tmp.mkdir(exist_ok=True)

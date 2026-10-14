@@ -6,7 +6,7 @@ on:
       version:
         description: 'Version matching VERSION (without v)'
         type: string
-        default: '0.4.0'
+        default: '0.4.1'
       publish_release:
         description: 'Publish the audited Windows setup pack'
         type: boolean

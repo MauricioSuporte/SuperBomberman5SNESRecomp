@@ -15,7 +15,7 @@ RESTRICTED = {'.sfc', '.smc', '.fig', '.swc', '.rom', '.bin', '.spc', '.brr',
 LOCAL_DIRS = {'.bootstrap', '.tools', '.cache', 'roms', 'extracted', 'captures',
               'screenshots', 'audio-dumps', 'profiles', 'coverage', 'saves',
               'logs', 'dist'}
-MEDIA = {'.png', '.bmp', '.jpg', '.jpeg', '.gif', '.tga', '.wav', '.mp3', '.ogg',
+MEDIA = {'.ico', '.png', '.bmp', '.jpg', '.jpeg', '.gif', '.tga', '.wav', '.mp3', '.ogg',
          '.flac', '.mp4', '.webm'}
 BINARIES = {'.exe', '.dll', '.obj', '.o', '.a', '.lib', '.pdb', '.zip', '.snesmod', '.7z',
             '.rar', '.tar', '.gz'}
@@ -43,6 +43,10 @@ def forbidden(path: str, release: bool = False) -> str | None:
         return 'credentials or Git internals'
     if name.startswith(('last_run_report', 'crash_report', 'crash_minidump')) or name == 'rom.cfg':
         return 'local diagnostic or ROM path'
+    # User-supplied application icon approved for this release; provenance is
+    # recorded in assets/README.md. Other media still require separate review.
+    if not release and path == 'assets/app.ico':
+        return None
     if not release and p.suffix.lower() in MEDIA | BINARIES:
         return 'binary/media asset requires an explicit provenance review'
     return None
