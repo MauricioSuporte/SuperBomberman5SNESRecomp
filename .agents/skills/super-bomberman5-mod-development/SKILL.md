@@ -214,7 +214,7 @@ their own frames. Reuse this split for any future boss/NPC character.
    and Subordinate mods keep working (their tests stub these helpers).
 4. **Map the choice before the native consumers.** Every table indexed by
    `$625F-1` must be clamped: stage init `$C4:2A3C` (store the real choice in
-   a per-seat marker, `$7F:F818`, then play as 1), score board `$C4:3BDF`,
+   a per-seat marker, `$7F:F824` (was `$F818` before the three-row core), then play as 1), score board `$C4:3BDF`,
    portrait helpers FF.66/FF.67. Clear markers on the title (`$1031 == 2`);
    the Normal hand-off (`HoneyKotetsuSetSeatChoice`) records them too.
 5. **Replace exactly the bomber's sprites.** Do not pick sprites by palette
@@ -253,12 +253,78 @@ their own frames. Reuse this split for any future boss/NPC character.
    and champion screen (three won rounds), picker portraits and HUD faces,
    plus picker/Battle with Subordinate and colors enabled.
 
+### Characters from another game and special abilities (Bomber Kings)
+
+The Bomber Kings mod adds Super Bomberman 4's Bomberman and five Bomber Kings
+(choices 13-18) on a third picker row, and B + direction abilities with SB4's
+debuff (also for Honey/Kotetsu). `src/honey_kotetsu_mod.c` is now the
+**extra-character core**; add future characters there as new skins, not as a
+second copy of the picker/skin code.
+
+1. **Second ROM, read at runtime.** `src/sb4_rom.c` searches `$SB5_SB4_ROM`,
+   the working directory, `roms/` and the folder of the ROM named in `rom.cfg`
+   for `.sfc/.smc` files of the right size, skips a 512-byte header and
+   accepts only the verified SHA-256 (`sha256_compute` from the runner).
+   Without it the mod reports where to place the file and the picker keeps
+   its old layout. Never commit or package anything from that ROM.
+2. **Research the other game in an emulator, not by guessing.** Build the
+   libretro snes9x core locally with debug exports (RAM/VRAM/OAM/CGRAM, a DMA
+   log, a write watch with PCs, PC breakpoints with registers) and drive it
+   from Python with ctypes (save states for each scenario). SB4 facts found
+   that way: battle sheets of raw 32x32 frames (`base + (f/4)*$800 +
+   (f%4)*$80`, tile rows `$200` apart) found from the DMA source of the
+   player's VRAM uploads; frame roles from the frames uploaded while walking
+   each direction; five player palettes per character `$20` apart from
+   five-player CGRAM dumps (multitap: `retro_set_controller_port_device(1,
+   0x101)`); ability input/debuff from breakpoints and RAM diffs.
+3. **Three-row picker.** Generate the movement tables from one grid array
+   (`kGrid`), with separate up/down tables (`$C6:8CEE` moves **up**,
+   `$C6:8D62` **down**). Move the native BG figures by patching the row table
+   `$C2:12DC`; cursor Y = row*8+24. Patch records need room for 19-byte
+   tables (the patch helper silently refused >16 bytes and the whole install
+   was rolled back — keep the count check).
+4. **Many figures, few OBJ palettes.** Rows have their own palettes: the
+   overlay schedules CGRAM loads at the first opaque line of each row (the
+   raster observer runs every line; `put()` saves originals so line 224
+   restores everything). A palette is usable for a row when no native sprite
+   in it reaches that line or below and the previous row's figures ended
+   above it. Emit 16x16 block rows starting at the first drawn line (32-line
+   figures then need two block rows, not three). Draw seat portraits before
+   grid figures, or a portrait's own-palette check sees your figures.
+5. **Anchor foreign frames to the native bomber.** Compute the native standing
+   frame's centre/bottom from its pieces (set `$10`, anim `$47`) and place
+   every foreign frame by a fixed reference (its own standing frame's opaque
+   box), so walking frames don't jitter; riders use the current native
+   frame's bottom and the foreign frame's own box.
+6. **Abilities through pre-opcode hooks.** `interp_bridge_add_pre_opcode_hook`
+   gives the `CpuState` at one PC: `$C0:0AF9` (pad reader done, arrays
+   `$2C/$31/$36/$3B+seat` filled, nothing consumed yet) and `$C4:3180` (walk
+   steps in A, X = seat). When you change A before a store, also set
+   `_flag_Z`/`_flag_N`: the following `BEQ` reads the flags of the original
+   computation (a 0 count without Z made the walker loop 256 pixels).
+7. **Input rules that keep native B.** Ability = B newly pressed with a
+   direction (held or new), or a new direction while B is held. A fresh B
+   alone is held back for 8 frames waiting for a direction and then given
+   back (remote detonation unchanged); riding (`$1782` bit 7), debuff or
+   cooldown → native B immediately.
+8. **Damage with the cartridge's own rules.** Actors 0-23 (`$17FA` bit 7 =
+   none), world `$182A/$1842`, `$1872/$188A`, cell = (pos+8)/16. Player:
+   `$15A2 |= $40` unless `$15A2` bit 2 (native invulnerability, timer
+   `$170A`, also used for Jet/Great). Enemy: `$085F[object]` = 0 → `DEC
+   $1662`; zero → `$15A2 |= $40`, else `$085F = $B4`. Normal: never a seat in
+   `$1D25`. Battle: Team Battle `$625D` bit 0, teams `$15A2` bits 3-4.
+9. **State in free WRAM** (`$7F:F830-$F86B`) instead of C statics: save
+   states and rewind keep it without a new extension. Clear it whenever the
+   game is outside a stage.
+10. **Effects** are authored shapes (filled circles) drawn through the core's
+    `ExtraEmitPixels()` with their own palette.
+
 ### Playable-character checklist (any new one)
 
 - Native table or skin? If the cartridge has per-character table entries, use
   the Subordinate route; otherwise play as an existing character and skin it.
-- Choice number and cell: next free choice (13+), its own picker cell; extend
-  `kRight/kLeft/kVert`, cursor tables and the grid packing; keep
+- Choice number and cell: next free choice (19+), its own picker cell in
+  `kGrid` (tables are generated from it), cursor tables and grid rows; keep
   `PickerCellCount()` the single source of truth for other mods.
 - Every `$625F-1`/`$16C2` consumer clamped; markers per seat; Normal hand-off.
 - Art fully from ROM at runtime with an exact-end check; refuse on mismatch.
@@ -266,7 +332,10 @@ their own frames. Reuse this split for any future boss/NPC character.
 - Poses for walk/stand/action/victory/draw/death/stun/Time Up/riding,
   picker figure, seat portrait, HUD face (alive and defeated), score board,
   champion screen.
-- Single cartridge palette: L/R colors disabled for it (`selection_color_mod.c`).
+- Colors: `ExtraCharacterColorCount()` (1 = no L/R; SB4 characters 5); the
+  seat's color lives at `$7F:F829+seat`.
+- Ability? Add it to `kAbility` (`special_abilities.c`) with debuff/cooldown
+  and a pose; test input, damage rules (Normal/FFA/Team) and blocks natively.
 - Tests: patch bytes and restore, movement tables inverse/reachable, refusal
   on unexpected bytes or corrupt stream, synthetic archive encoder with the
   exact end, pose mapping, piece matching (nearby same-slot sprite untouched),

@@ -11,3 +11,5 @@ void SelectionColorObserve(const struct Ppu *ppu, unsigned line, void *context);
 void SelectionColorReset(void);
 void SelectionColorSave(struct SaveLoadInfo *sli);
 void SelectionColorLoad(struct SaveLoadInfo *sli, uint32_t version);
+/* Color chosen with L/R for a picker seat, or -1 when the mod is off/idle. */
+int SelectionColorSeat(unsigned seat);

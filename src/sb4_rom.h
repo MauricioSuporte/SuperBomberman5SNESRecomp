@@ -1,0 +1,16 @@
+#pragma once
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+/* The player's own Super Bomberman 4 image (verified by SHA-256), loaded
+ * on first use; NULL when none was found. Never stored or redistributed. */
+enum { SB4_CHARACTERS = 6, SB4_COLORS = 5 };
+/* Character order: Bomberman, Hammer, Jet, Lady, Bazooka, Great. */
+const uint8_t *Sb4Rom(void);
+const char *Sb4RomPath(void);
+bool Sb4RomAccept(const uint8_t *data,size_t size);
+/* Battle frame `frame` (0-63) of a character as 32x32 color indices. */
+bool Sb4Frame(unsigned character,unsigned frame,uint8_t out[32][32]);
+/* BGR555 color `index` of player palette `palette` (0-4). */
+uint16_t Sb4Color(unsigned character,unsigned palette,unsigned index);
+void Sb4RomForTests(const uint8_t *data);

@@ -14,6 +14,24 @@ int snes_mod_register_activation_plugin(const char *id,SNESModActivationCallback
     activation=fn;return 1;
 }
 int snes_frame_counter;
+/* Collaborators of the core, stubbed: Bomber Kings switch, Super Bomberman 4
+ * image (synthetic frames: pixel = (frame + character) % 15 + 1 inside a
+ * 20 x 28 body at x 6..25, y 2..29), abilities and seat colors. */
+static bool kings_wanted,kings_ready;
+bool BomberKingsWanted(void) { return kings_wanted; }
+bool BomberKingsReady(void) { return kings_ready; }
+bool Sb4Frame(unsigned character,unsigned frame,uint8_t out[32][32]) {
+    if(!kings_ready || character>=6 || frame>=64) return false;
+    memset(out,0,32*32);
+    for(unsigned y=2;y<30;++y) for(unsigned x=6;x<26;++x) out[y][x]=(uint8_t)((frame+character)%15+1);
+    return true;
+}
+uint16_t Sb4Color(unsigned character,unsigned palette,unsigned index) { return (uint16_t)(0x4000+character*0x100+palette*0x10+index); }
+static int ability_pose=-1;
+int SpecialAbilityPose(unsigned seat) { (void)seat;return ability_pose; }
+void SpecialAbilitiesInstall(void) {}
+void SpecialAbilityDraw(void) {}
+int SelectionColorSeat(unsigned seat) { (void)seat;return -1; }
 #include "../src/honey_kotetsu_mod.c"
 uint8 g_ram[0x20000];
 static uint8 cartridge[0x400000];
@@ -82,13 +100,14 @@ static void stock_cartridge(void) {
     static const uint8_t portrait[]={0x3a,0x29,0x0f,0xaa},init[]={0xbf,0x5f,0x62,0x7e,0x3a};
     static const uint8_t cursor_x[]={0xbf,0x76,0xc9,0x80},cursor_y[]={0xbf,0x80,0xc9,0x80};
     static const uint8_t grid_x[]={5,10,15,20,25,5,10,15,20,25},set[]={0x9c,0xe7,0x0a,0x9d,0xc2,0x16};
+    static const uint8_t grid_y[]={15,15,15,15,15,20,20,20,20,20};
     put_bytes(0xc68c02,right,sizeof(right));put_bytes(0xc68c78,left,sizeof(left));
     put_bytes(0xc68cee,vert,sizeof(vert));put_bytes(0xc68d62,vert,sizeof(vert));
     put_bytes(0xc213e7,portrait,4);put_bytes(0xc21356,portrait,4);put_bytes(0xc42a3c,init,5);
     put_bytes(0xc0c93a,cursor_x,4);put_bytes(0xc0c941,cursor_y,4);put_bytes(0xc212d2,grid_x,10);
+    put_bytes(0xc212dc,grid_y,10);
     put_bytes(0xc43bdf,set,6);
     for(unsigned c=0;c<10;++c) at(0xc0c980)[c]=c<5?0x90:0xb8;
-    at(0xc212dc)[0]=0x0f;at(0xc212dc)[5]=0x14;
     at(0xc21470)[0]=0x14;at(0xc512fe)[0]=0x1e;
     build_archive(ARCHIVE,ARCHIVE_END,expected,ARCHIVE_SIZE,0);
     build_archive(CHAMPION,CHAMPION_END,expected_champion,CHAMPION_SIZE,7);
@@ -155,27 +174,30 @@ int main(void) {
     activation();HoneyKotetsuBeforeFrame();
     CHECK(installed && patched && art_ready && champion_ready && HoneyKotetsuInstalled());
     CHECK(!memcmp(archive,expected,sizeof(archive)) && !memcmp(champion,expected_champion,sizeof(champion)));
-    CHECK(PickerCellCharacters()==g_ram+0x1f800 && PickerCellColors()==g_ram+0x1f80c && PickerCellCount()==12);
+    CHECK(PickerCellCharacters()==g_ram+0x1f800 && PickerCellColors()==g_ram+0x1f812 && PickerCellCount()==12);
     for(unsigned i=0;i<sizeof(kCellCharRefs)/sizeof(*kCellCharRefs);++i)
         CHECK(at(kCellCharRefs[i])[0]==0x00 && at(kCellCharRefs[i])[1]==0xf8 && at(kCellCharRefs[i])[2]==0x7f);
     for(unsigned i=0;i<sizeof(kCellColorRefs)/sizeof(*kCellColorRefs);++i)
-        CHECK(at(kCellColorRefs[i])[0]==0x0c && at(kCellColorRefs[i])[1]==0xf8 && at(kCellColorRefs[i])[2]==0x7f);
+        CHECK(at(kCellColorRefs[i])[0]==0x12 && at(kCellColorRefs[i])[1]==0xf8 && at(kCellColorRefs[i])[2]==0x7f);
     /* Grid: five packed columns, column six at tile 25 for both rows. */
     static const uint8_t packed[]={5,9,13,17,21,5,9,13,17,21};
+    static const uint8_t grid_rows_stock[]={15,15,15,15,15,20,20,20,20,20};
     CHECK(!memcmp(at(0xc212d2),packed,10));
     CHECK(at(TABLE_CURSOR_X)[4]==168 && at(TABLE_CURSOR_X)[10]==200 && at(TABLE_CURSOR_X)[11]==200);
     CHECK(at(TABLE_CURSOR_Y)[10]==0x90 && at(TABLE_CURSOR_Y)[11]==0xb8);
-    CHECK(!memcmp(at(0xc0c93a),"\xbf\x70\x60\xc2",4) && !memcmp(at(0xc0c941),"\xbf\x7c\x60\xc2",4));
+    CHECK(!memcmp(at(0xc0c93a),"\xbf\x0c\x61\xc2",4) && !memcmp(at(0xc0c941),"\xbf\x1e\x61\xc2",4));
+    CHECK(!memcmp(at(0xc212dc),grid_rows_stock,10)); /* two rows: rows unchanged */
     /* Movement: lookups replace the 5x2 arithmetic; every cell is reachable
-     * and right/left, up/down are inverses. */
-    CHECK(!memcmp(at(0xc68c02),"\x36\x34\x10\x40\x60\xc2\x5f\x34\x10\x45\x10",11));
-    CHECK(!memcmp(at(0xc68c78),"\x36\x34\x10\x50\x60\xc2\x5f\x34\x10\x45\x10",11));
-    CHECK(!memcmp(at(0xc68cee),"\x36\x34\x10\x60\x60\xc2\x5f\x34\x10\x45\x0e",11));
-    CHECK(!memcmp(at(0xc68d62),"\x36\x34\x10\x60\x60\xc2\x5f\x34\x10\x45\x0e",11));
-    for(unsigned c=1;c<=12;++c) {
-        CHECK(kLeft[kRight[c]]==c && kRight[kLeft[c]]==c && kVert[kVert[c]]==c && kVert[c]!=c);
+     * and right/left, up/down are inverses ($C6:8CEE up, $C6:8D62 down). */
+    CHECK(!memcmp(at(0xc68c02),"\x36\x34\x10\xc0\x60\xc2\x5f\x34\x10\x45\x10",11));
+    CHECK(!memcmp(at(0xc68c78),"\x36\x34\x10\xd3\x60\xc2\x5f\x34\x10\x45\x10",11));
+    CHECK(!memcmp(at(0xc68cee),"\x36\x34\x10\xf9\x60\xc2\x5f\x34\x10\x45\x0e",11));
+    CHECK(!memcmp(at(0xc68d62),"\x36\x34\x10\xe6\x60\xc2\x5f\x34\x10\x45\x0e",11));
+    {
+        const uint8 *r=at(TABLE_RIGHT),*l=at(TABLE_LEFT),*d=at(TABLE_DOWN),*u=at(TABLE_UP);
+        for(unsigned c=1;c<=12;++c) CHECK(l[r[c]]==c && r[l[c]]==c && u[d[c]]==c && d[u[c]]==c && d[c]!=c);
+        CHECK(r[5]==11 && r[10]==12 && d[11]==12 && u[11]==12 && l[1]==11 && l[6]==12);
     }
-    CHECK(kRight[5]==11 && kRight[10]==12 && kVert[11]==12 && kLeft[1]==11 && kLeft[6]==12);
     /* Routines and calls. */
     CHECK(!memcmp(at(CLAMP),kClamp,sizeof(kClamp)) && !memcmp(at(STAGE_INIT),kStageInit,sizeof(kStageInit)));
     CHECK(!memcmp(at(SET_CHARACTER),kSetCharacter,sizeof(kSetCharacter)));
@@ -183,11 +205,13 @@ int main(void) {
     CHECK(!memcmp(at(0xc42a3c),"\x22\x94\x60\xc2\xea",5) && !memcmp(at(0xc43bdf),"\x22\xa4\x60\xc2\xea\xea",6));
     unsigned count=patch_count;HoneyKotetsuBeforeFrame();CHECK(patch_count==count); /* Installed once. */
     /* Cells 10/11 hold the choices; the title clears remembered seats. */
-    g_ram[0x1031]=4;g_ram[0x1f818]=11;HoneyKotetsuBeforeFrame();
-    CHECK(g_ram[0x1f80a]==11 && g_ram[0x1f80b]==12 && g_ram[0x1f818]==11);
-    g_ram[0x1031]=2;HoneyKotetsuBeforeFrame();CHECK(!g_ram[0x1f818]);
+    g_ram[0x1031]=4;g_ram[0x1f824]=11;HoneyKotetsuBeforeFrame();
+    CHECK(g_ram[0x1f80a]==11 && g_ram[0x1f80b]==12 && g_ram[0x1f824]==11);
+    g_ram[0x1031]=2;HoneyKotetsuBeforeFrame();CHECK(!g_ram[0x1f824]);
     CHECK(HoneyKotetsuBaseChoice(11)==1 && HoneyKotetsuBaseChoice(12)==1 && HoneyKotetsuBaseChoice(10)==10);
-    HoneyKotetsuSetSeatChoice(3,12);CHECK(g_ram[0x1f81b]==12);
+    CHECK(HoneyKotetsuBaseChoice(18)==1 && HoneyKotetsuBaseChoice(19)==19);
+    CHECK(ExtraCharacterColorCount(11)==1 && ExtraCharacterColorCount(15)==5 && ExtraCharacterColorCount(3)==0);
+    HoneyKotetsuSetSeatChoice(3,12);CHECK(g_ram[0x1f827]==12 && ExtraCharacterSeatChoice(3)==12);
     /* Reset restores every byte. */
     reset_callback();CHECK(!HoneyKotetsuEnabled() && !installed && !memcmp(stock_rom,cartridge,sizeof(stock_rom)));
     /* A different image (unexpected bytes) is left untouched. */
@@ -205,7 +229,7 @@ int main(void) {
     for(unsigned i=0;i<0x8000;++i) ppu->vram[i]=(uint16)(i*7);
     /* Stage: seat 0 is Honey (object 8, palette slot 1) walking right. Its
      * native frame ($C4:F000) has three pieces matching sprites 10-12. */
-    memset(g_ram,0,sizeof(g_ram));g_ram[0x1031]=0x0d;g_ram[0x1f818]=11;
+    memset(g_ram,0,sizeof(g_ram));g_ram[0x1031]=0x0d;g_ram[0x1f824]=11;
     memset(g_ram+0x17fa,0xff,5);g_ram[0x17fa]=8;g_ram[0x6df+8]=1;g_ram[0x55f+8]=100;g_ram[0x5bf+8]=100;
     g_ram[0x79f+8]=1;g_ram[0x7ff+8]=2; /* walk right, step A */
     static const int walk[]={-8,-1,0x20, 0,-1,0x20, -8,-17,0x21};
@@ -221,15 +245,16 @@ int main(void) {
      * frame of animation $1E step 1: frame (0x1e%32)*4+2 = 122, in the free
      * palette 7 (slot 1 keeps its colors for the mount and eggs). */
     unsigned expected_frame=(0x1e%32)*4+2;
-    CHECK(pose_frame(0,8)==expected_frame);
+    CHECK(pose_frame(0,8,-1)==expected_frame);
     unsigned big_rows=0;
     for(unsigned s=10;s<=12;++s) if(visible(ppu,s)) {
         CHECK(big(ppu,s) && sprite_palette(ppu,s)==7 && sprite_x(ppu,s)==92);
         unsigned tile=ppu->oam[s*2+1]&0x1ff,y=ppu->oam[s*2]>>8;
-        /* Block rows start at y-42 (+2 lift): the head block is row 1. */
-        if(y==(unsigned)(100-42+16)) {
+        /* Block rows start at the first drawn line: the 16x16 piece at
+         * dy -22, composed 2 lines up (canvas 18), is the first block row. */
+        if(y==(unsigned)(100-42+18)) {
             unsigned v=(expected_frame%8)*2,want=(2*v)%15+1; /* VRAM tile v = archive tile 2v */
-            CHECK(pixel(ppu,tile,4,6)==want); /* row 6 of the block = frame dy -22 + lift */
+            CHECK(pixel(ppu,tile,4,0)==want);
         }
         ++big_rows;
     }
@@ -256,7 +281,7 @@ int main(void) {
     HoneyKotetsuObserve(ppu,1,NULL);CHECK(drawn);
     unsigned lowest=0;
     for(unsigned s=10;s<=11;++s) if(visible(ppu,s)) { unsigned y=ppu->oam[s*2]>>8;if(y>lowest) lowest=y; }
-    CHECK(lowest==(unsigned)(100-42+32-16) && visible(ppu,14) && sprite_palette(ppu,14)==1);
+    CHECK(lowest==(unsigned)(100-42-16+34) && visible(ppu,14) && sprite_palette(ppu,14)==1);
     HoneyKotetsuObserve(ppu,224,NULL);CHECK(same(before,ppu));
     /* Victory: the champion frames alternate with their native durations. */
     native_frame(0xc4f000,3,walk);g_ram[0x79f+8]=0x20;g_ram[0x1782]=0;
@@ -269,24 +294,22 @@ int main(void) {
         HoneyKotetsuObserve(ppu,1,NULL);CHECK(drawn);
         int s=-1;for(unsigned i=10;i<=12;++i) if(visible(ppu,i)) s=(int)i;
         CHECK(s>=0 && sprite_x(ppu,(unsigned)s)==92);
-        /* Champion frame f = tile 2f, pixel (4f+7)%15+1; piece at canvas
-         * (8, 25..40) inside the block row 1 (16..31) at y 74. */
-        unsigned tile=ppu->oam[s*2+1]&0x1ff;
-        CHECK((ppu->oam[s*2]>>8)==74 || (ppu->oam[s*2]>>8)==90);
-        shown[k]=0;
-        for(unsigned i=10;i<=12;++i) if(visible(ppu,i) && (ppu->oam[i*2]>>8)==74) shown[k]=pixel(ppu,(ppu->oam[i*2+1]&0x1ff)+16,0,7);
-        (void)tile;
+        /* Champion frame f = tile 2f, pixel (4f+7)%15+1; the piece at canvas
+         * (8, 25..40) is the only block row, at y 100-42+25. */
+        CHECK((ppu->oam[s*2]>>8)==83);
+        shown[k]=pixel(ppu,ppu->oam[s*2+1]&0x1ff,0,0);
         HoneyKotetsuObserve(ppu,224,NULL);CHECK(same(before,ppu));
     }
     CHECK(shown[0]==(4*1+7)%15+1 && shown[1]==(4*2+7)%15+1); /* tile 2f = archive tile 4f */
     snes_frame_counter=0;
     /* Non-walking animation (outside the four-way groups) shows the spin. */
     int dir;
-    CHECK(bomber_pose(0x16,&dir)==POSE_SPIN && bomber_pose(0x21,&dir)==POSE_SPIN);
+    CHECK(bomber_pose(0x16,&dir)==POSE_DEATH && bomber_pose(0x21,&dir)==POSE_STUN && bomber_pose(0x60,&dir)==POSE_SPIN);
     CHECK(bomber_pose(0x47,&dir)==POSE_STAND && dir==1 && bomber_pose(3,&dir)==POSE_WALK && dir==2);
-    CHECK(bomber_pose(0x31,&dir)==POSE_WALK && dir==2 && bomber_pose(0x28,&dir)==POSE_ACTION && dir==1);
+    CHECK(bomber_pose(0x31,&dir)==POSE_CARRY_WALK && dir==2 && bomber_pose(0x28,&dir)==POSE_ACTION && dir==1);
     CHECK(bomber_pose(0x36,&dir)==POSE_ACTION && dir==3 && bomber_pose(0x20,&dir)==POSE_VICTORY);
-    CHECK(bomber_pose(0x2c,&dir)==POSE_STAND && dir==1 && bomber_pose(0x44,&dir)==POSE_STAND && dir==2);
+    CHECK(bomber_pose(0x2c,&dir)==POSE_CARRY && dir==1 && bomber_pose(0x44,&dir)==POSE_STAND && dir==2);
+    CHECK(bomber_pose(0x1f,&dir)==POSE_TIME_UP && bomber_pose(0x18,&dir)==POSE_AIR && dir==1);
     /* Picker: seat 0 hovers Honey; figures for cells 10/11 and the seat
      * portrait use borrowed blocks; all restored at line 224. */
     memset(g_ram,0,sizeof(g_ram));g_ram[0x1031]=4;g_ram[0xc90]=0x68;g_ram[0xcb8]=0x8e;g_ram[0xce0]=0xc6;
@@ -304,6 +327,69 @@ int main(void) {
     HoneyKotetsuObserve(ppu,224,NULL);CHECK(same(before,ppu));
     memcpy(at(0xc4f000),stock_rom+file(0xc4f000),32); /* test-written native frames */
     reset_callback();CHECK(!memcmp(stock_rom,cartridge,sizeof(stock_rom)));
+
+    /* Bomber Kings without a Super Bomberman 4 image: two rows, as before. */
+    kings_wanted=true;kings_ready=false;
+    HoneyKotetsuBeforeFrame();CHECK(patched && rows==2 && PickerCellCount()==12 && HoneyKotetsuEnabled());
+    reset_callback();kings_wanted=false;CHECK(!memcmp(stock_rom,cartridge,sizeof(stock_rom)));
+    /* With the image: three rows of six (BG rows 12/16/20), 18 cells. */
+    kings_wanted=kings_ready=true;
+    HoneyKotetsuBeforeFrame();CHECK(patched && rows==3 && PickerCellCount()==18);
+    static const uint8_t three_rows[]={12,12,12,12,12,16,16,16,16,16};
+    CHECK(!memcmp(at(0xc212dc),three_rows,10));
+    {
+        const uint8 *r=at(TABLE_RIGHT),*l=at(TABLE_LEFT),*d=at(TABLE_DOWN),*u=at(TABLE_UP);
+        for(unsigned c=1;c<=18;++c) CHECK(l[r[c]]==c && r[l[c]]==c && u[d[c]]==c && d[u[c]]==c);
+        CHECK(d[1]==6 && d[6]==13 && d[13]==1 && u[1]==13 && d[11]==12 && d[12]==18 && r[17]==18 && r[18]==13);
+        CHECK(at(TABLE_CURSOR_Y)[0]==12*8+24 && at(TABLE_CURSOR_Y)[5]==16*8+24 && at(TABLE_CURSOR_Y)[12]==20*8+24);
+        CHECK(at(TABLE_CURSOR_X)[12]==40 && at(TABLE_CURSOR_X)[17]==200);
+    }
+    g_ram[0x1031]=4;HoneyKotetsuBeforeFrame();
+    for(unsigned c=12;c<18;++c) CHECK(g_ram[0x1f800+c]==c+1);
+    /* Picker grid: Honey (row 1), Kotetsu (row 2) and six Super Bomberman 4
+     * figures (row 3), each row's palettes loaded on its first line. */
+    memset(g_ram+0x1f812,0,18);g_ram[0x1f812+14]=3; /* Jet's cell shows color 3 */
+    g_ram[0xc90]=0x68;g_ram[0xcb8]=0x8e;g_ram[0xce0]=0xc6;memset(g_ram+0x625f,1,5);
+    hide_all(ppu);snap(before,ppu);
+    HoneyKotetsuObserve(ppu,1,NULL);CHECK(drawn);
+    unsigned row3=0,first_line=999;
+    for(unsigned s=0;s<128;++s) if(visible(ppu,s)) {
+        unsigned y=ppu->oam[s*2]>>8;
+        if(y>=150 && y<200) { ++row3;if(y<first_line) first_line=y; }
+    }
+    CHECK(row3>=12); /* six 32-line figures: two 16x16 blocks each at least */
+    unsigned loads_at_row3=0;
+    for(unsigned k=0;k<line_load_count;++k) if(line_loads[k].line==first_line) ++loads_at_row3;
+    CHECK(loads_at_row3==6);
+    for(unsigned k=0;k<line_load_count;++k) if(line_loads[k].key==(2+2)*8+3) {
+        unsigned p=line_loads[k].palette;
+        CHECK(ppu->cgram[0x80+p*16+5]!=Sb4Color(2,3,5) || p==7);
+        HoneyKotetsuObserve(ppu,first_line,NULL);
+        CHECK(ppu->cgram[0x80+p*16+5]==Sb4Color(2,3,5));
+    }
+    HoneyKotetsuObserve(ppu,224,NULL);CHECK(!drawn && same(before,ppu));
+    /* Stage: seat 0 plays Hammer (choice 14) in color 2, drawn from frame
+     * 3 (stand facing right) with the image's palette 2 in a free palette. */
+    memset(g_ram,0,sizeof(g_ram));g_ram[0x1031]=0x74;g_ram[0x1f824]=14;g_ram[0x1f829]=2;
+    memset(g_ram+0x17fa,0xff,5);g_ram[0x17fa]=8;g_ram[0x6df+8]=1;g_ram[0x55f+8]=100;g_ram[0x5bf+8]=100;
+    g_ram[0x79f+8]=0x46;g_ram[0x7ff+8]=0;
+    native_frame(0xc4f000,3,walk);g_ram[0x2eea+8]=0x00;g_ram[0x2eeb+8]=0xf0;g_ram[0x2f4a+8]=0xc4;
+    memset(g_ram+0x35c5,0xff,5);
+    hide_all(ppu);
+    sprite(ppu,10,92,99,0x23,1,false);sprite(ppu,11,100,99,0x25,1,false);sprite(ppu,12,92,83,0x20,1,true);
+    snap(before,ppu);
+    CHECK(sb4_pose_frame(8,-1,false)==3 && sb4_pose_frame(8,1,false)==22 && sb4_pose_frame(8,-1,true)==57);
+    HoneyKotetsuObserve(ppu,1,NULL);CHECK(drawn);
+    unsigned shown_blocks=0;
+    for(unsigned s=10;s<=12;++s) if(visible(ppu,s)) {
+        CHECK(sprite_palette(ppu,s)==7);++shown_blocks;
+        CHECK(pixel(ppu,ppu->oam[s*2+1]&0x1ff,0,4)==(3+1)%15+1); /* body column 0 of each block */
+    }
+    CHECK(shown_blocks>=2);
+    for(unsigned c=1;c<16;++c) CHECK(ppu->cgram[0x80+7*16+c]==Sb4Color(1,2,c));
+    HoneyKotetsuObserve(ppu,224,NULL);CHECK(same(before,ppu));
+    memcpy(at(0xc4f000),stock_rom+file(0xc4f000),32);
+    reset_callback();kings_wanted=kings_ready=false;CHECK(!memcmp(stock_rom,cartridge,sizeof(stock_rom)));
     free(before);free(ppu);
     puts("honey_kotetsu_tests: ok");
     return 0;

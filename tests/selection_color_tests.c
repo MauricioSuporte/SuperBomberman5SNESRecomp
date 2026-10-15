@@ -15,7 +15,8 @@ uint8 g_ram[0x20000];
 uint8_t *PickerCellCharacters(void) { return g_ram+0x62c9; }
 uint8_t *PickerCellColors(void) { return g_ram+0x62d3; }
 unsigned PickerCellCount(void) { return 10; }
-unsigned HoneyKotetsuBaseChoice(unsigned choice) { return choice==11 || choice==12 ? 1 : choice; }
+unsigned HoneyKotetsuBaseChoice(unsigned choice) { return choice>=11 && choice<=18 ? 1 : choice; }
+unsigned ExtraCharacterColorCount(unsigned choice) { return choice==11 || choice==12 ? 1 : choice>=13 && choice<=18 ? 5 : 0; }
 unsigned hk_seat_choice[5];
 void HoneyKotetsuSetSeatChoice(unsigned seat,unsigned choice) { if(seat<5) hk_seat_choice[seat]=choice; }
 static uint8 rom[0x400000];
@@ -91,6 +92,14 @@ int main(void) {
     CHECK(g_ram[0x6264]==0);
     SelectionColorBeforeFrame();SelectionColorAfterFrame();CHECK(g_ram[0x6264]==0); /* Held key. */
     pads[0]=0;SelectionColorBeforeFrame();
+    /* A Super Bomberman 4 character (choice 15) has five colors. */
+    {
+        unsigned saved=g_ram[0x625f];g_ram[0x625f]=15;colors[0]=0;
+        for(unsigned c=1;c<=5;++c) { press(0,0x800);CHECK(colors[0]==c%5 && g_ram[0x6264]==c%5); }
+        press(0,0x400);CHECK(colors[0]==4);
+        CHECK(SelectionColorSeat(0)==4);
+        g_ram[0x625f]=(uint8_t)saved;colors[0]=0;press(0,0x400);press(0,0x800);
+    }
     /* The shared grid portrait has one palette; isolate P1 while checking it. */
     for(unsigned p=1;p<5;++p) g_ram[0x625f+p]=0;
     for(unsigned character=1;character<=9;++character) {

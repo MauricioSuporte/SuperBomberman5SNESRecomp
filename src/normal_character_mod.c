@@ -68,8 +68,9 @@ static void finish_picker(bool cancel) {
     } else {
         chosen=true;
         for(unsigned i=0;i<count;++i) {
-            /* 10: Subordinate mod; 11/12: Honey/Kotetsu mod (play as 1). */
-            unsigned choice=choices[i]>=1 && choices[i]<=12?choices[i]:1;
+            /* 10: Subordinate mod; 11/12: Honey/Kotetsu; 13-18: Bomber Kings
+             * (all extra characters play as 1). */
+            unsigned choice=choices[i]>=1 && choices[i]<=EXTRA_CHOICE_LAST?choices[i]:1;
             HoneyKotetsuSetSeatChoice(i,choice);
             g_ram[0x625f+i]=(uint8_t)HoneyKotetsuBaseChoice(choice);
             g_ram[0x6264+i]=palettes[i];

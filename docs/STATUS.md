@@ -1,6 +1,50 @@
 # Super Bomberman 5: estado do protótipo
 
 
+## Bomber Kings and special abilities / Reis Bomber e habilidades — 2026-10-15 (unreleased)
+
+Scope: new optional mod **Bomber Kings — Super Bomberman 4 characters**
+(`superbomberman5.bomber-kings` 0.1.0, host v0.10.0+, default disabled) and B +
+direction special abilities for Honey, Kotetsu and the five Bomber Kings. The
+Honey/Kotetsu module became the extra-character core (18-cell, three-row
+picker when the Bomber Kings mod is on and a verified Super Bomberman 4 image
+is found). Super Bomberman 4 graphics/palettes are read at runtime from the
+player's own ROM (`src/sb4_rom.c`, SHA-256 checked); nothing from it is in the
+repository. Research tools (snes9x libretro core with debug exports, Python
+frontend, captures) stayed local.
+
+Evidence (Linux LLE headless, fixture build, SB4 ROM via `SB5_SB4_ROM`):
+- Native tests: all eleven pass, including new `special_abilities_tests`
+  (input rule, remote detonation, riding, debuff speed and Z flag, Normal /
+  Free-for-All / Team damage, blocks) and `sb4_rom_tests`; `honey_kotetsu_tests`
+  extended to the three-row layout, row palettes and Super Bomberman 4 skins.
+- Picker, Battle, five seats: three rows, all six SB4 figures with their own
+  palettes, SB4 portraits, cursor through the rows, L/R through five colors
+  (choices 14/15/17/18/18 with colors 2/0/2/3/0 reached the stage with those
+  palettes). Honey/Kotetsu-only picker unchanged (two rows).
+- Battle stage with five kings: walking four directions, power-glove throw,
+  Louie riding (egg placed by poke), victory, defeat and score board drawn with
+  SB4 frames; HUD faces.
+- Abilities: Honey shot, Bazooka flame column (killed Honey: `$15A2`=`$D9`), Jet
+  dash (stopped by walls), Great shield (native invulnerability blink), debuff
+  speed 10 px per 20 frames vs 20 and back after 640 frames. Remote control
+  (`$4ED5`=1): B + direction used the ability and kept the bomb; B alone
+  detonated after the wait; riding (`$1782` bit 7): no ability.
+- Team Battle: Bazooka's flames killed an opponent and spared a teammate
+  (`$6269` bit 7 / `$625D` bit 0).
+- Normal Game (five-player coop, Zone 1-1): flames killed two enemies; no
+  player was hit by an ability.
+
+Not verified: Windows build/run, physical controllers, every SB4 pose (stun,
+Time Up and Bad Bomber cart were not captured), boss stages, CPU seats with
+extra characters, save state/rewind during an ability (state lives in WRAM
+`$7F:F830-$F86B`, so it is included in snapshots).
+
+Novo mod opcional dos Reis Bomber (lidos da ROM do Super Bomberman 4 do
+jogador) com habilidades B + direção também para Honey e Kotetsu. Testes
+nativos e rotas roteirizadas no Linux passaram (seleção, Battle Free-for-All e
+Team Battle, Normal com cinco jogadores); Windows ainda não foi testado.
+
 ## v0.9.0 published / Publicada — 2026-10-15
 
 Published prerelease:

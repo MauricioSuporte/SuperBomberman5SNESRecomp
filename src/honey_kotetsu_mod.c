@@ -32,8 +32,18 @@
  *
  * Victory/cheer poses alternate the two frames Honey and Kotetsu use on the
  * Battle champion screen (object set 6, animations $50 and $4E), decoded from
- * that screen's archive ($D6:D871, $0D40 bytes) at runtime. */
+ * that screen's archive ($D6:D871, $0D40 bytes) at runtime.
+ *
+ * This file is also the extra-character core used by the Bomber Kings mod
+ * (bomber_kings_mod.c): with it, a third grid row holds Super Bomberman 4's
+ * Bomberman and the five Bomber Kings (choices 13-18), drawn from the
+ * player's own Super Bomberman 4 image (sb4_rom.c). The grid then has three
+ * rows (BG tile rows 12/16/20 instead of 15/20) and 18 cells. */
 #include "honey_kotetsu_mod.h"
+#include "bomber_kings_mod.h"
+#include "sb4_rom.h"
+#include "special_abilities.h"
+#include "selection_color_mod.h"
 #include "common_rtl.h"
 #include "common_cpu_infra.h"
 #include "mod_runtime.h"
@@ -42,8 +52,8 @@
 #include <string.h>
 
 enum {
-    CELLS = 12, STOCK_CELLS = 10,
-    CELL_CHARS = 0x1f800, CELL_COLORS = 0x1f80c, SEAT_CHOICE = 0x1f818,
+    MAX_CELLS = 18, HK_CELLS = 12, STOCK_CELLS = 10, SKINS = 2+SB4_CHARACTERS,
+    CELL_CHARS = 0x1f800, CELL_COLORS = 0x1f812, SEAT_CHOICE = 0x1f824, SEAT_COLOR = 0x1f829,
     ARCHIVE = 0xcc289d, ARCHIVE_SIZE = 0x1e00, ARCHIVE_END = 0xcc40e4, OBJECT_SET = 0x0d,
     CHAMPION = 0xd6d871, CHAMPION_SIZE = 0xd40, CHAMPION_END = 0xd6e0bb, CHAMPION_SET = 0x06,
 };
@@ -53,7 +63,10 @@ static const uint8_t kAttackBase[2]={0x23,0x30},kAttackStep[2]={2,2},kVictorySte
 /* Champion screen (Battle winner): Honey $A2/$A3, Kotetsu $9E/$9F. */
 static const uint8_t kChampionAnim[2]={0x50,0x4e};
 
-static bool enabled,installed,patched,art_ready,champion_ready;
+static bool hk_enabled,enabled,installed,patched,art_ready,champion_ready;
+/* Grid rows (2 without the Bomber Kings, 3 with them) and cells. */
+static unsigned rows=2,cells=HK_CELLS;
+static const uint8_t kRowTiles[2][3]={{15,20,20},{12,16,20}};
 /* Each object's last distinct frame pointers ($7E2EEA/$7E2F4A), newest
  * first, sampled at the start of every frame. */
 enum { FRAME_HISTORY = 3 };
@@ -61,7 +74,7 @@ static uint32_t frame_history[0x30][FRAME_HISTORY];
 static uint32_t frame_pointer(unsigned object) {
     return g_ram[0x2eea+object]|(uint32_t)g_ram[0x2eeb+object]<<8|(uint32_t)g_ram[0x2f4a+object]<<16;
 }
-typedef struct { uint32_t pc; unsigned size; uint8_t original[16]; } Patch;
+typedef struct { uint32_t pc; unsigned size; uint8_t original[24]; } Patch;
 static Patch patches[64];
 static unsigned patch_count;
 
@@ -69,12 +82,20 @@ bool HoneyKotetsuEnabled(void) { return enabled; }
 bool HoneyKotetsuInstalled(void) { return enabled && patched; }
 uint8_t *PickerCellCharacters(void) { return g_ram+(HoneyKotetsuInstalled()?CELL_CHARS:0x62c9); }
 uint8_t *PickerCellColors(void) { return g_ram+(HoneyKotetsuInstalled()?CELL_COLORS:0x62d3); }
-unsigned PickerCellCount(void) { return HoneyKotetsuInstalled()?CELLS:STOCK_CELLS; }
+unsigned PickerCellCount(void) { return HoneyKotetsuInstalled()?cells:STOCK_CELLS; }
 unsigned HoneyKotetsuBaseChoice(unsigned choice) {
-    return choice==HK_CHOICE_HONEY || choice==HK_CHOICE_KOTETSU ? 1 : choice;
+    return choice>=HK_CHOICE_HONEY && choice<=EXTRA_CHOICE_LAST ? 1 : choice;
 }
 void HoneyKotetsuSetSeatChoice(unsigned seat,unsigned choice) {
     if(seat<5 && HoneyKotetsuInstalled()) g_ram[SEAT_CHOICE+seat]=(uint8_t)choice;
+}
+unsigned ExtraCharacterSeatChoice(unsigned seat) {
+    return seat<5 && HoneyKotetsuInstalled()?g_ram[SEAT_CHOICE+seat]:0;
+}
+unsigned ExtraCharacterColorCount(unsigned choice) {
+    if(choice==HK_CHOICE_HONEY || choice==HK_CHOICE_KOTETSU) return 1;
+    if(choice>=KINGS_CHOICE_FIRST && choice<=EXTRA_CHOICE_LAST) return SB4_COLORS;
+    return 0;
 }
 
 static uint8_t *rom(uint32_t pc) { return SnesRomPtr(pc); }
@@ -100,16 +121,21 @@ static const uint32_t kCellColorRefs[]={
     0xc212c3,0xc68ae5,0xc68b0c,0xc68b2a,0xc68c49,0xc68cbf,0xc68d33,0xc68da7,
     0xc69adf,0xc69bf4,0xc69c5d,0xc69cd0,0xc69d37,0xc69e3d,0xc6a684,
 };
-/* Choice (cursor cell + 1) after a move on the 6x2 grid:
+/* Grid (choice = cursor cell + 1), two or three rows of six ($C6:8CEE
+ * moves up, $C6:8D62 down):
  *    1  2  3  4  5 11
- *    6  7  8  9 10 12 */
-static const uint8_t kRight[13]={0, 2,3,4,5,11, 7,8,9,10,12, 1,6};
-static const uint8_t kLeft[13] ={0, 11,1,2,3,4, 12,6,7,8,9, 5,10};
-static const uint8_t kVert[13] ={0, 6,7,8,9,10, 1,2,3,4,5, 12,11};
-static const uint8_t kGridX[STOCK_CELLS]={5,9,13,17,21,5,9,13,17,21};
-enum { TABLE_RIGHT=0xc26040, TABLE_LEFT=0xc26050, TABLE_VERT=0xc26060,
-       TABLE_CURSOR_X=0xc26070, TABLE_CURSOR_Y=0xc2607c, CLAMP=0xc26088, STAGE_INIT=0xc26094,
-       SET_CHARACTER=0xc260a4, PATCH_END=0xc260b1 };
+ *    6  7  8  9 10 12
+ *   13 14 15 16 17 18   (Bomber Kings)
+ * Movement wraps inside a row and between rows. */
+static const uint8_t kGrid[3][6]={{1,2,3,4,5,11},{6,7,8,9,10,12},{13,14,15,16,17,18}};
+static const uint8_t kGridX[6]={5,9,13,17,21,25};
+static void cell_place(unsigned choice,unsigned *row,unsigned *col) {
+    for(unsigned r=0;r<3;++r) for(unsigned c=0;c<6;++c) if(kGrid[r][c]==choice) { *row=r;*col=c;return; }
+    *row=*col=0;
+}
+enum { TABLE_RIGHT=0xc260c0, TABLE_LEFT=0xc260d3, TABLE_DOWN=0xc260e6, TABLE_UP=0xc260f9,
+       TABLE_CURSOR_X=0xc2610c, TABLE_CURSOR_Y=0xc2611e, CLAMP=0xc26088, STAGE_INIT=0xc26094,
+       SET_CHARACTER=0xc260a4, PATCH_START=0xc26040, PATCH_END=0xc26130 };
 static const uint8_t kClamp[]={
     0x3a,             /* DEC A                                     */
     0x29,0x0f,        /* AND #$0F                                  */
@@ -121,10 +147,10 @@ static const uint8_t kClamp[]={
 };
 static const uint8_t kStageInit[]={
     0xbf,0x5f,0x62,0x7e, /* LDA $7E625F,X  seat choice                */
-    0x9f,0x18,0xf8,0x7f, /* STA $7FF818,X  remembered for rendering   */
+    0x9f,0x24,0xf8,0x7f, /* STA $7FF824,X  remembered for rendering   */
     0xc9,0x0b,           /* CMP #11                                   */
     0x90,0x02,           /* BCC +2                                    */
-    0xa9,0x01,           /* LDA #1         Honey/Kotetsu play as 1    */
+    0xa9,0x01,           /* LDA #1         extra characters play as 1 */
     0x3a,                /* DEC A                                     */
     0x6b,                /* RTL                                       */
 };
@@ -132,7 +158,7 @@ static const uint8_t kSetCharacter[]={
     0x9c,0xe7,0x0a,      /* STZ $0AE7      (moved from $C4:3BDF)      */
     0xc9,0x0a,           /* CMP #$0A                                  */
     0x90,0x02,           /* BCC +2                                    */
-    0xa9,0x00,           /* LDA #$00       Honey/Kotetsu play as 0    */
+    0xa9,0x00,           /* LDA #$00       extra characters play as 0 */
     0x9d,0xc2,0x16,      /* STA $16C2,X                               */
     0x6b,                /* RTL                                       */
 };
@@ -214,7 +240,13 @@ static unsigned champion_frame(unsigned skin) {
     }
     return rb(script);
 }
-static unsigned palette_color(unsigned skin,unsigned index) { return rw(kPalette[skin]+index*2)&0x7fff; }
+/* Palette keys: skin*8 + color (Honey/Kotetsu have one, Super Bomberman 4
+ * characters five). */
+static unsigned palette_color(unsigned key,unsigned index) {
+    unsigned skin=key/8;
+    if(skin<2) return rw(kPalette[skin]+index*2)&0x7fff;
+    return Sb4Color(skin-2,key%8,index);
+}
 
 /* Pose canvas: 48 x 64 pixels, origin (16, 42) is the object's position. */
 enum { CANVAS_W = 48, CANVAS_H = 64, ORIGIN_X = 16, ORIGIN_Y = 42 };
@@ -255,13 +287,14 @@ static void compose_data(uint32_t data,const uint8_t *art,unsigned art_size,int 
 }
 static void compose(unsigned frame,int ox,int oy) { compose_data(frame_data(frame),archive,ARCHIVE_SIZE,ox,oy,true); }
 
-static void reset_plugin(void) { uninstall();enabled=false; }
-static void activate(void) { enabled=true; }
+static void reset_plugin(void) { uninstall();enabled=hk_enabled=false; }
+static void activate(void) { hk_enabled=enabled=true; }
 SNES_MOD_CONSTRUCTOR(register_honey_kotetsu) {
     snes_mod_register_reset_callback(reset_plugin);
     snes_mod_register_activation_plugin("superbomberman5.honey-kotetsu.characters",activate);
 }
 
+static void bomber_anchor(void);
 static void install(void) {
     if(installed || !g_rom || !g_snes || !g_snes->cart) return;
     installed=true;
@@ -274,34 +307,45 @@ static void install(void) {
     static const uint8_t vert[]={0x5d,0x34,0x10,0x96,0x06,0x49,0x0a,0x5d,0x34,0x10,0x61};
     static const uint8_t portrait[]={0x3a,0x29,0x0f,0xaa},init[]={0xbf,0x5f,0x62,0x7e,0x3a};
     static const uint8_t cursor_x[]={0xbf,0x76,0xc9,0x80},cursor_y[]={0xbf,0x80,0xc9,0x80};
-    static const uint8_t grid_x[]={5,10,15,20,25,5,10,15,20,25};
+    static const uint8_t grid_x[]={5,10,15,20,25,5,10,15,20,25},grid_y[]={15,15,15,15,15,20,20,20,20,20};
     static const uint8_t set_character[]={0x9c,0xe7,0x0a,0x9d,0xc2,0x16};
     if(!stock(0xc68c02,right,sizeof(right)) || !stock(0xc68c78,left,sizeof(left)) ||
        !stock(0xc68cee,vert,sizeof(vert)) || !stock(0xc68d62,vert,sizeof(vert)) ||
        !stock(0xc213e7,portrait,4) || !stock(0xc21356,portrait,4) || !stock(0xc42a3c,init,5) ||
-       !stock(0xc0c93a,cursor_x,4) || !stock(0xc0c941,cursor_y,4) || !stock(0xc212d2,grid_x,10) || !stock(0xc43bdf,set_character,6)) return;
-    for(uint32_t pc=TABLE_RIGHT;pc<PATCH_END;++pc) if(*rom(pc)!=0xff) return;
+       !stock(0xc0c93a,cursor_x,4) || !stock(0xc0c941,cursor_y,4) || !stock(0xc212d2,grid_x,10) || !stock(0xc212dc,grid_y,10) ||
+       !stock(0xc43bdf,set_character,6)) return;
+    for(uint32_t pc=PATCH_START;pc<PATCH_END;++pc) if(*rom(pc)!=0xff) return;
     art_ready=decompress(ARCHIVE,archive,ARCHIVE_SIZE,ARCHIVE_END) && check_art();
     if(!art_ready) return;
     /* Optional: without it, victory poses use a still attack frame. */
     champion_ready=decompress(CHAMPION,champion,CHAMPION_SIZE,CHAMPION_END) && check_champion();
+    rows=BomberKingsReady()?3:2;cells=rows==3?MAX_CELLS:HK_CELLS;
 
     uint8_t chars[]={(uint8_t)CELL_CHARS,(uint8_t)(CELL_CHARS>>8),0x7f};
     uint8_t colors[]={(uint8_t)CELL_COLORS,(uint8_t)(CELL_COLORS>>8),0x7f};
     for(unsigned i=0;i<sizeof(kCellCharRefs)/sizeof(*kCellCharRefs);++i) patch(kCellCharRefs[i],chars,3);
     for(unsigned i=0;i<sizeof(kCellColorRefs)/sizeof(*kCellColorRefs);++i) patch(kCellColorRefs[i],colors,3);
-    patch(TABLE_RIGHT,kRight,13);patch(TABLE_LEFT,kLeft,13);patch(TABLE_VERT,kVert,13);
-    uint8_t cx[CELLS],cy[CELLS];
-    for(unsigned c=0;c<STOCK_CELLS;++c) { cx[c]=(uint8_t)(kGridX[c]*8);cy[c]=rb(0xc0c980+c); }
-    cx[10]=cx[11]=25*8;cy[10]=cy[0];cy[11]=cy[5];
-    patch(TABLE_CURSOR_X,cx,CELLS);patch(TABLE_CURSOR_Y,cy,CELLS);
+    uint8_t to_right[MAX_CELLS+1]={0},to_left[MAX_CELLS+1]={0},down[MAX_CELLS+1]={0},up[MAX_CELLS+1]={0};
+    uint8_t cx[MAX_CELLS],cy[MAX_CELLS];
+    for(unsigned r=0;r<rows;++r) for(unsigned c=0;c<6;++c) {
+        unsigned choice=kGrid[r][c];
+        to_right[choice]=kGrid[r][(c+1)%6];to_left[choice]=kGrid[r][(c+5)%6];
+        down[choice]=kGrid[(r+1)%rows][c];up[choice]=kGrid[(r+rows-1)%rows][c];
+        cx[choice-1]=(uint8_t)(kGridX[c]*8);cy[choice-1]=(uint8_t)(kRowTiles[rows-2][r]*8+24);
+    }
+    patch(TABLE_RIGHT,to_right,cells+1);patch(TABLE_LEFT,to_left,cells+1);
+    patch(TABLE_DOWN,down,cells+1);patch(TABLE_UP,up,cells+1);
+    patch(TABLE_CURSOR_X,cx,cells);patch(TABLE_CURSOR_Y,cy,cells);
     patch(CLAMP,kClamp,sizeof(kClamp));patch(STAGE_INIT,kStageInit,sizeof(kStageInit));
-    patch(0xc212d2,kGridX,STOCK_CELLS);
+    uint8_t new_x[STOCK_CELLS],new_y[STOCK_CELLS];
+    for(unsigned c=0;c<STOCK_CELLS;++c) { new_x[c]=kGridX[c%5];new_y[c]=kRowTiles[rows-2][c/5]; }
+    patch(0xc212d2,new_x,STOCK_CELLS);
+    if(rows==3) patch(0xc212dc,new_y,STOCK_CELLS);
     uint8_t read_x[]={0xbf,(uint8_t)TABLE_CURSOR_X,(uint8_t)(TABLE_CURSOR_X>>8),0xc2};
     uint8_t read_y[]={0xbf,(uint8_t)TABLE_CURSOR_Y,(uint8_t)(TABLE_CURSOR_Y>>8),0xc2};
     patch(0xc0c93a,read_x,4);patch(0xc0c941,read_y,4);
     move_patch(0xc68c02,TABLE_RIGHT,0x10);move_patch(0xc68c78,TABLE_LEFT,0x10);
-    move_patch(0xc68cee,TABLE_VERT,0x0e);move_patch(0xc68d62,TABLE_VERT,0x0e);
+    move_patch(0xc68cee,TABLE_UP,0x0e);move_patch(0xc68d62,TABLE_DOWN,0x0e);
     uint8_t clamp[]={0x22,(uint8_t)CLAMP,(uint8_t)(CLAMP>>8),0xc2};
     patch(0xc213e7,clamp,4);patch(0xc21356,clamp,4);
     uint8_t stage[]={0x22,(uint8_t)STAGE_INIT,(uint8_t)(STAGE_INIT>>8),0xc2,0xea};
@@ -309,22 +353,36 @@ static void install(void) {
     patch(SET_CHARACTER,kSetCharacter,sizeof(kSetCharacter));
     uint8_t set_call[]={0x22,(uint8_t)SET_CHARACTER,(uint8_t)(SET_CHARACTER>>8),0xc2,0xea,0xea};
     patch(0xc43bdf,set_call,6);
-    patched=patch_count==sizeof(kCellCharRefs)/sizeof(*kCellCharRefs)+sizeof(kCellColorRefs)/sizeof(*kCellColorRefs)+19;
+    patched=patch_count==sizeof(kCellCharRefs)/sizeof(*kCellCharRefs)+sizeof(kCellColorRefs)/sizeof(*kCellColorRefs)+20+(rows==3);
     if(!patched) uninstall(),installed=true;
+    else bomber_anchor();
 }
 
 void HoneyKotetsuBeforeFrame(void) {
+    if(!enabled && BomberKingsWanted()) enabled=true;
     if(!enabled) return;
     install();
     if(!patched) return;
-    /* The picker script fills cells 0-9; cells 10/11 are Honey/Kotetsu.
-     * Its exit code copies the cell character into $625F ($C6:A575), and
-     * the portrait helpers show Bomberman for 11/12 (clamp patch). */
-    g_ram[CELL_CHARS+10]=HK_CHOICE_HONEY;g_ram[CELL_CHARS+11]=HK_CHOICE_KOTETSU;
-    if(g_ram[CELL_COLORS+10]>6) g_ram[CELL_COLORS+10]=6;
-    if(g_ram[CELL_COLORS+11]>6) g_ram[CELL_COLORS+11]=6;
+    SpecialAbilitiesInstall();
+    /* The picker script fills cells 0-9; cells 10/11 are Honey/Kotetsu and
+     * 12-17 the Super Bomberman 4 characters. Its exit code copies the cell
+     * character into $625F ($C6:A575), and the portrait helpers show
+     * Bomberman for choices above 10 (clamp patch). */
+    for(unsigned c=STOCK_CELLS;c<cells;++c) {
+        g_ram[CELL_CHARS+c]=(uint8_t)(c+1);
+        unsigned count=ExtraCharacterColorCount(c+1);
+        if(g_ram[CELL_COLORS+c]>=(count>1?count:7)) g_ram[CELL_COLORS+c]=0;
+    }
     /* A new session (title / player menu) forgets the previous choices. */
-    if(g_ram[0x1031]==2) memset(g_ram+SEAT_CHOICE,0,5);
+    if(g_ram[0x1031]==2) memset(g_ram+SEAT_CHOICE,0,10);
+    /* Seat colors of extra characters: the L/R choice with the color mod,
+     * otherwise one color per seat (as in Super Bomberman 4). */
+    if(g_ram[0x1031]==4) for(unsigned i=0;i<5;++i) {
+        unsigned choice=g_ram[0x625f+i],count=ExtraCharacterColorCount(choice);
+        if(!count) continue;
+        int color=SelectionColorSeat(i);
+        g_ram[SEAT_COLOR+i]=(uint8_t)(count<2?0:(color>=0?(unsigned)color:i)%count);
+    }
     for(unsigned o=0;o<0x60;o+=2) {
         uint32_t *h=frame_history[o/2],now=frame_pointer(o);
         if(h[0]!=now) { memmove(h+1,h,(FRAME_HISTORY-1)*sizeof(*h));h[0]=now; }
@@ -372,7 +430,7 @@ static bool tile_shown(const Ppu *ppu,unsigned tile) {
 }
 /* Borrowed 16x16 OBJ blocks no visible sprite shows this frame. $1F0-$1FF
  * stay reserved for the color mod's cursor hint. */
-static uint16_t borrowed[48];
+static uint16_t borrowed[128];
 static unsigned borrowed_count;
 static bool tile_free(const Ppu *ppu,unsigned tile) {
     if(tile>=0x1f0 || tile_shown(ppu,tile)) return false;
@@ -409,8 +467,8 @@ static void place(Ppu *ppu,unsigned s,unsigned x,unsigned y,unsigned tile,unsign
     ppu->highOam[s/4]=high; /* Whole table restored from saved_high. */
 }
 static void hide(Ppu *ppu,unsigned s) { put(&ppu->oam[s*2],(uint16_t)((ppu->oam[s*2]&0xff)|(224u<<8))); }
-static void load_palette(Ppu *ppu,unsigned palette,unsigned skin) {
-    for(unsigned c=1;c<16;++c) put(&ppu->cgram[0x80+palette*16+c],(uint16_t)palette_color(skin,c));
+static void load_palette(Ppu *ppu,unsigned palette,unsigned key) {
+    for(unsigned c=1;c<16;++c) put(&ppu->cgram[0x80+palette*16+c],(uint16_t)palette_color(key,c));
 }
 static int idle_slot(const Ppu *ppu,bool *taken) {
     for(int s=127;s>=0;--s) if(!visible(ppu,(unsigned)s) && !taken[s]) { taken[s]=true;return s; }
@@ -422,6 +480,10 @@ static int idle_slot(const Ppu *ppu,bool *taken) {
  * nothing changes, so the native sprites stay visible. The `hide` sprites
  * (the native ones being replaced) are then hidden and reused first,
  * keeping their place in the OAM priority order. */
+static bool row_empty(unsigned cy) {
+    for(unsigned x=0;x<CANVAS_W;++x) if(canvas[cy][x]) return false;
+    return true;
+}
 static bool column_empty(unsigned cx) {
     for(unsigned y=0;y<CANVAS_H;++y) if(canvas[y][cx]) return false;
     return true;
@@ -431,11 +493,18 @@ static bool emit(Ppu *ppu,int x,int y,unsigned palette,unsigned priority,
     enum { MAX = (CANVAS_H/16)*2 };
     unsigned left=0;
     while(left<CANVAS_W-16 && column_empty(left)) ++left;
+    /* Rows of blocks start at the first drawn line, so a 32-line figure
+     * takes two rows of blocks wherever it sits on the canvas. */
+    unsigned top=0,bottom=CANVAS_H-1;
+    while(top<CANVAS_H-1 && row_empty(top)) ++top;
+    while(bottom>top && row_empty(bottom)) --bottom;
+    unsigned block_rows=(bottom-top+16)/16;
+    if(top+block_rows*16>CANVAS_H) top=CANVAS_H-block_rows*16;
     unsigned cols[MAX],rows[MAX],count=0,first=borrowed_count;
     for(unsigned c=0;c<2;++c) {
         unsigned cx=left+c*16;
         if(cx+16>CANVAS_W) break;
-        for(unsigned row=0;row<CANVAS_H/16;++row) if(!block_empty(cx,row*16)) { cols[count]=cx;rows[count++]=row; }
+        for(unsigned row=0;row<block_rows;++row) if(!block_empty(cx,top+row*16)) { cols[count]=cx;rows[count++]=top+row*16; }
     }
     int blocks[MAX],slots[MAX];
     for(unsigned k=0;k<count;++k) if((blocks[k]=borrow_block(ppu))<0) { borrowed_count=first;return false; }
@@ -446,16 +515,19 @@ static bool emit(Ppu *ppu,int x,int y,unsigned palette,unsigned priority,
     }
     for(unsigned k=0;k<hide_count;++k) hide(ppu,hide_slots[k]);
     for(unsigned k=0;k<count;++k) {
-        paint_block(ppu,(unsigned)blocks[k],cols[k],rows[k]*16);
-        place(ppu,(unsigned)slots[k],(unsigned)((x+(int)cols[k])&0x1ff),(unsigned)((y+(int)rows[k]*16)&255),
+        paint_block(ppu,(unsigned)blocks[k],cols[k],rows[k]);
+        place(ppu,(unsigned)slots[k],(unsigned)((x+(int)cols[k])&0x1ff),(unsigned)((y+(int)rows[k])&255),
               (unsigned)blocks[k],palette,priority);
     }
     return true;
 }
 
-/* ---- Stage: replace each Honey/Kotetsu seat's bomber sprites. ---- */
+/* ---- Stage: replace each extra character seat's bomber sprites. ---- */
 static int skin_of(unsigned choice) {
-    return choice==HK_CHOICE_HONEY?0:choice==HK_CHOICE_KOTETSU?1:-1;
+    if(choice==HK_CHOICE_HONEY) return 0;
+    if(choice==HK_CHOICE_KOTETSU) return 1;
+    if(choice>=KINGS_CHOICE_FIRST && choice<=EXTRA_CHOICE_LAST && rows==3) return 2+(int)(choice-KINGS_CHOICE_FIRST);
+    return -1;
 }
 /* Bomber animations (object set $10, four-way groups in the order right,
  * down, left, up; verified by scripted routes):
@@ -463,35 +535,95 @@ static int skin_of(unsigned choice) {
  *   $27-$2A punch (boxing glove, Y), $33-$36 throw (power glove),
  *   $3B-$3E second action group: shown with the attack frames;
  *   $15/$20 cheer and victory: shown with the victory frame;
- *   other four-way groups (stand $46-$49/$4A-$4D, lift $2B-$2E, hold
- *   $37-$3A, Bad Bomber cart $42-$45, ...) stand facing that way;
- *   anything else (death $16, stun $21, ...) spins. */
-enum { POSE_STAND, POSE_WALK, POSE_ACTION, POSE_VICTORY, POSE_SPIN };
+ *   $2B-$2E lift and $37-$3A hold: standing while carrying;
+ *   other four-way groups (stand $46-$49/$4A-$4D, Bad Bomber cart $42-$45,
+ *   ...) stand facing that way; death $16, stun $21, Time Up $1F and
+ *   airborne $17-$1A have their own poses; anything else spins. */
+enum { POSE_STAND, POSE_WALK, POSE_ACTION, POSE_VICTORY, POSE_SPIN, POSE_CARRY_WALK, POSE_CARRY,
+       POSE_DEATH, POSE_STUN, POSE_TIME_UP, POSE_AIR };
 static int bomber_pose(unsigned anim,int *direction) {
-    static const uint8_t walks[]={0x01,0x2f},actions[]={0x27,0x33,0x3b};
-    static const uint8_t stands[]={0x05,0x09,0x0d,0x11,0x17,0x1b,0x23,0x2b,0x37,0x42,0x46,0x4a};
-    for(unsigned i=0;i<sizeof(walks);++i) if(anim>=walks[i] && anim<walks[i]+4u) { *direction=(int)(anim-walks[i]);return POSE_WALK; }
+    static const uint8_t actions[]={0x27,0x33,0x3b};
+    static const uint8_t stands[]={0x05,0x09,0x0d,0x11,0x1b,0x23,0x42,0x46,0x4a};
+    if(anim>=0x01 && anim<0x05) { *direction=(int)(anim-0x01);return POSE_WALK; }
+    if(anim>=0x2f && anim<0x33) { *direction=(int)(anim-0x2f);return POSE_CARRY_WALK; }
+    if(anim>=0x2b && anim<0x2f) { *direction=(int)(anim-0x2b);return POSE_CARRY; }
+    if(anim>=0x37 && anim<0x3b) { *direction=(int)(anim-0x37);return POSE_CARRY; }
+    if(anim>=0x17 && anim<0x1b) { *direction=(int)(anim-0x17);return POSE_AIR; }
     for(unsigned i=0;i<sizeof(actions);++i) if(anim>=actions[i] && anim<actions[i]+4u) { *direction=(int)(anim-actions[i]);return POSE_ACTION; }
     for(unsigned i=0;i<sizeof(stands);++i) if(anim>=stands[i] && anim<stands[i]+4u) { *direction=(int)(anim-stands[i]);return POSE_STAND; }
     *direction=1;
-    return anim==0x15 || anim==0x20 ? POSE_VICTORY : POSE_SPIN;
+    if(anim==0x15 || anim==0x20) return POSE_VICTORY;
+    if(anim==0x16) return POSE_DEATH;
+    if(anim==0x21) return POSE_STUN;
+    if(anim==0x1f) return POSE_TIME_UP;
+    return POSE_SPIN;
 }
-/* Attack animations ($23-$26 Honey shooting, $30-$33 Kotetsu thrusting)
- * and the victory frame (Honey's gun twirl, $24 step 4; Kotetsu's raised
- * weapon, $31 step 1). */
-static unsigned pose_frame(unsigned skin,unsigned object) {
-    int direction;
-    switch(bomber_pose(g_ram[0x79f+object],&direction)) {
-    case POSE_WALK: {
-        unsigned position=g_ram[0x7ff+object]/2;
-        unsigned step=position>=1 && position<=3?1:position>=6 && position<=8?3:0;
-        return anim_frame(kAnimBase[skin]+(unsigned)direction,step);
-    }
+static unsigned walk_step(unsigned object) {
+    unsigned position=g_ram[0x7ff+object]/2;
+    return position>=1 && position<=3?1:position>=6 && position<=8?3:0;
+}
+/* Honey/Kotetsu: attack animations ($23-$26 Honey shooting, $30-$33
+ * Kotetsu thrusting) and the victory frame (Honey's gun twirl, $24 step 4;
+ * Kotetsu's raised weapon, $31 step 1). Carrying poses use the plain ones. */
+static unsigned pose_frame(unsigned skin,unsigned object,int ability) {
+    int direction;int pose=bomber_pose(g_ram[0x79f+object],&direction);
+    if(ability>=0) return anim_frame(kAttackBase[skin]+(unsigned)ability,kAttackStep[skin]);
+    switch(pose) {
+    case POSE_WALK: case POSE_CARRY_WALK: return anim_frame(kAnimBase[skin]+(unsigned)direction,walk_step(object));
     case POSE_ACTION: return anim_frame(kAttackBase[skin]+(unsigned)direction,kAttackStep[skin]);
     case POSE_VICTORY: return anim_frame(kAttackBase[skin]+1,kVictoryStep[skin]);
-    case POSE_SPIN: return anim_frame(kAnimBase[skin]+4,(snes_frame_counter/6)&3);
-    default: return anim_frame(kAnimBase[skin]+(unsigned)direction,0);
+    case POSE_STAND: case POSE_CARRY: case POSE_AIR: return anim_frame(kAnimBase[skin]+(unsigned)direction,0);
+    default: return anim_frame(kAnimBase[skin]+4,(snes_frame_counter/6)&3);
     }
+}
+/* Super Bomberman 4 battle frames (all six characters share the layout;
+ * verified by the cartridge's own walking uploads): directions up, right,
+ * down, left; 0-11 stand/walk (stand, step, step per direction), 20-23
+ * special-ability lunge, 24-27 defeat, 32-43 walking with a bomb overhead,
+ * 45-47 and 53-54 cheering, 52 surprised (Time Up), 55 electrocuted,
+ * 48-51 crouch (airborne), 56-59 riding, 60-63 kick/throw. SB5 directions
+ * are right, down, left, up. */
+static unsigned sb4_direction(int direction) { return (unsigned)(direction+1)&3; }
+static unsigned sb4_pose_frame(unsigned object,int ability,bool rider) {
+    int direction;int pose=bomber_pose(g_ram[0x79f+object],&direction);
+    unsigned d=sb4_direction(direction),step=walk_step(object);
+    unsigned walk=step==1?1:step==3?2:0;
+    if(ability>=0) return 20+sb4_direction(ability);
+    if(rider) return 56+d;
+    switch(pose) {
+    case POSE_WALK: return d*3+walk;
+    case POSE_CARRY_WALK: return 32+d*3+walk;
+    case POSE_CARRY: return 32+d*3;
+    case POSE_ACTION: return 60+d;
+    case POSE_AIR: return 48+d;
+    case POSE_VICTORY: return (snes_frame_counter/16)&1?53:54;
+    case POSE_DEATH: { unsigned k=g_ram[0x7ff+object]/2;return 24+(k>3?3:k); }
+    case POSE_STUN: return 55;
+    case POSE_TIME_UP: return 52;
+    case POSE_STAND: return d*3;
+    default: return ((snes_frame_counter/6)&3)*3;
+    }
+}
+/* Draws Super Bomberman 4 frame `frame` with the character's standing
+ * anchor (centre of the opaque columns, lowest opaque line of the front
+ * standing frame) at canvas (cx, bottom); `own_anchor` uses this frame's
+ * own box instead (riding frames). Returns false without the image. */
+static bool sb4_box(const uint8_t px[32][32],int *cx,int *bottom) {
+    int l=32,r=-1,b=-1;
+    for(int y=0;y<32;++y) for(int x=0;x<32;++x) if(px[y][x]) { if(x<l) l=x;if(x>r) r=x;if(y>b) b=y; }
+    if(r<0) return false;
+    *cx=(l+r+1)/2;*bottom=b;return true;
+}
+static bool compose_sb4(unsigned character,unsigned frame,int cx,int bottom,bool own_anchor) {
+    uint8_t px[32][32],ref[32][32];int ax=16,ay=31;
+    if(!Sb4Frame(character,frame,px)) return false;
+    if(own_anchor) { if(!sb4_box(px,&ax,&ay)) return false; }
+    else if(!Sb4Frame(character,6,ref) || !sb4_box(ref,&ax,&ay)) return false;
+    for(int y=0;y<32;++y) for(int x=0;x<32;++x) if(px[y][x]) {
+        int X=cx-ax+x,Y=bottom-ay+y;
+        if(X>=0 && X<CANVAS_W && Y>=0 && Y<CANVAS_H) canvas[Y][X]=px[y][x];
+    }
+    return true;
 }
 static bool stage(void) {
     unsigned mode=g_ram[0x1031];
@@ -501,18 +633,29 @@ static bool palette_unused(const Ppu *ppu,unsigned palette) {
     for(unsigned s=0;s<128;++s) if(visible(ppu,s) && sprite_palette(ppu,s)==palette) return false;
     return true;
 }
-/* One OBJ palette per skin and frame. A seat's palette slot is shared with
- * its mount (Louie) and the eggs it hatches, so a palette no visible sprite
- * uses is taken first; only when none is free is `fallback` recolored. */
-static int skin_palette[2];
-static int choose_palette(Ppu *ppu,unsigned skin,int fallback) {
-    if(skin_palette[skin]>=0) return skin_palette[skin];
+/* One OBJ palette per palette key and frame. A seat's palette slot is
+ * shared with its mount (Louie) and the eggs it hatches, so a palette no
+ * visible sprite uses is taken first; only when none is free is `fallback`
+ * recolored. */
+static int key_palette[SKINS*8];
+static bool palette_given[8];
+static int choose_palette(Ppu *ppu,unsigned key,int fallback) {
+    if(key_palette[key]>=0) return key_palette[key];
     int chosen=-1;
-    for(int p=7;p>=0 && chosen<0;--p) if(p!=skin_palette[skin^1] && palette_unused(ppu,(unsigned)p)) chosen=p;
-    if(chosen<0) chosen=fallback;
-    if(chosen<0 || chosen==skin_palette[skin^1]) return -1;
-    load_palette(ppu,(unsigned)chosen,skin);
-    return skin_palette[skin]=chosen;
+    for(int p=7;p>=0 && chosen<0;--p) if(!palette_given[p] && palette_unused(ppu,(unsigned)p)) chosen=p;
+    if(chosen<0 && fallback>=0 && fallback<8 && !palette_given[fallback]) chosen=fallback;
+    if(chosen<0) return -1;
+    load_palette(ppu,(unsigned)chosen,key);palette_given[chosen]=true;
+    return key_palette[key]=chosen;
+}
+/* Bounding box of a native frame's pieces relative to the object. */
+static void frame_box(uint32_t data,int *left,int *right,int *bottom) {
+    unsigned n=rb(data);*left=127;*right=-128;*bottom=-128;
+    for(unsigned k=0;k<n && k<16;++k) {
+        uint32_t piece=data+1+k*7;int size=(rb(piece+6)&1)?16:8;
+        int dx=(int16_t)rw(piece),dy=(int16_t)rw(piece+2);
+        if(dx<*left) *left=dx;if(dx+size>*right) *right=dx+size;if(dy+size>*bottom) *bottom=dy+size;
+    }
 }
 /* The bomber's own sprites: the pieces of its current frame (24-bit pointer
  * $7E2EEA/$7E2F4A + object) at object position + piece offset, in its
@@ -567,6 +710,16 @@ static unsigned match_native(const Ppu *ppu,unsigned object,unsigned slot,unsign
     }
     return best;
 }
+/* Native standing frame of the bomber (set $10, animation $47 = stand
+ * facing down): its centre and lowest line anchor the Super Bomberman 4
+ * frames, so every pose keeps the same feet line as the native bomber. */
+static int bomber_cx=0,bomber_bottom=11;
+static void bomber_anchor(void) {
+    uint32_t data=set_frame_data(0x10,rb(anim_script(0x10,0x47)));
+    if(rb(data)<1 || rb(data)>16) return;
+    int l,r,b;frame_box(data,&l,&r,&b);
+    if(r>l && b>-64 && b<64) { bomber_cx=(l+r)/2;bomber_bottom=b; }
+}
 static void draw_players(Ppu *ppu,bool *taken) {
     for(unsigned i=0;i<5;++i) {
         int skin=skin_of(g_ram[SEAT_CHOICE+i]);
@@ -584,31 +737,55 @@ static void draw_players(Ppu *ppu,bool *taken) {
          * stands with its feet where the native rider frame ends; neither
          * keeps the ground shadow (the jump has its own native one). */
         bool rider=g_ram[0x1782+i]&0x80,shadow=!(g_ram[0x1782+i]&0x82);
-        int direction;
+        int ability=SpecialAbilityPose(i);
+        int direction;unsigned key=(unsigned)skin*8;
         memset(canvas,0,sizeof(canvas));
-        if(bomber_pose(g_ram[0x79f+object],&direction)==POSE_VICTORY && champion_ready && !rider) {
+        int lift=0;
+        if(skin>=2) {
+            key+=g_ram[SEAT_COLOR+i]%SB4_COLORS;
+            if(!compose_sb4((unsigned)skin-2,sb4_pose_frame(object,ability,rider),ORIGIN_X+bomber_cx,
+                            rider?ORIGIN_Y+bottom-1:ORIGIN_Y+bomber_bottom-1,rider)) continue;
+        } else if(ability<0 && bomber_pose(g_ram[0x79f+object],&direction)==POSE_VICTORY && champion_ready && !rider) {
             /* Champion frames are anchored at their left edge with the feet
              * one line above the origin. */
             compose_data(set_frame_data(CHAMPION_SET,champion_frame((unsigned)skin)),champion,CHAMPION_SIZE,
                          ORIGIN_X-8,ORIGIN_Y,true);
         } else {
-            compose_data(frame_data(pose_frame((unsigned)skin,object)),archive,ARCHIVE_SIZE,ORIGIN_X,ORIGIN_Y-2,shadow);
+            compose_data(frame_data(pose_frame((unsigned)skin,object,ability)),archive,ARCHIVE_SIZE,ORIGIN_X,ORIGIN_Y-2,shadow);
+            lift=rider?bottom+1:0;
         }
-        int palette=choose_palette(ppu,(unsigned)skin,(int)slot);
+        int palette=choose_palette(ppu,key,(int)slot);
         if(palette<0) continue;
-        int lift=rider?bottom+1:0;
         emit(ppu,g_ram[0x55f+object]+ox-ORIGIN_X,g_ram[0x5bf+object]+oy-ORIGIN_Y+lift,(unsigned)palette,priority,mine,count,taken);
     }
 }
+/* Head of a character in a 16x16 block at canvas (ORIGIN_X-8, ORIGIN_Y):
+ * Honey/Kotetsu's front walking frame, or the top 16 opaque lines of the
+ * Super Bomberman 4 front standing frame. */
+static bool compose_head(unsigned key) {
+    memset(canvas,0,sizeof(canvas));
+    unsigned skin=key/8;
+    if(skin<2) { compose(anim_frame(kAnimBase[skin]+1,0),ORIGIN_X,ORIGIN_Y+22);return true; }
+    uint8_t px[32][32];int cx,b;
+    if(!Sb4Frame(skin-2,6,px) || !sb4_box(px,&cx,&b)) return false;
+    int top=0;
+    for(bool found=false;top<32 && !found;) { for(int x=0;x<32;++x) found|=px[top][x]!=0; if(!found) ++top; }
+    for(int y=0;y<16 && top+y<32;++y) for(int x=0;x<32;++x) if(px[top+y][x]) {
+        int X=ORIGIN_X-cx+x,Y=ORIGIN_Y+y;
+        if(X>=ORIGIN_X-8 && X<ORIGIN_X+8) canvas[Y][X]=px[top+y][x];
+    }
+    return true;
+}
 /* HUD faces: one 16x16 sprite 17 lines above the face object ($7E35C5+i);
- * a Honey/Kotetsu seat plays as Bomberman, so its face animation is
- * Bomberman's ($C2:1470[0], defeated $C5:12FE[0]). Both show the head. */
+ * an extra character plays as Bomberman, so its face animation is
+ * Bomberman's ($C2:1470[0], defeated $C5:12FE[0]). */
 static void draw_faces(Ppu *ppu) {
     unsigned face=rb(0xc21470),face_alt=rb(0xc512fe);
-    int blocks[2]={-1,-1};
+    int blocks[SKINS*8];memset(blocks,0xff,sizeof(blocks));
     for(unsigned i=0;i<5;++i) {
         int skin=skin_of(g_ram[SEAT_CHOICE+i]);
         if(skin<0 || g_ram[0x16c2+i]!=0) continue;
+        unsigned key=(unsigned)skin*8+(skin>=2?g_ram[SEAT_COLOR+i]%SB4_COLORS:0);
         unsigned object=g_ram[0x35c5+i];
         if(object>=0x60 || g_ram[0x4ff+object]!=6) continue;
         unsigned anim=g_ram[0x79f+object];
@@ -616,20 +793,18 @@ static void draw_faces(Ppu *ppu) {
         unsigned x=g_ram[0x55f+object],y=(g_ram[0x5bf+object]-17)&255;
         for(unsigned s=0;s<128;++s) {
             if(!visible(ppu,s) || !big(ppu,s) || sprite_x(ppu,s)!=x || (ppu->oam[s*2]>>8)!=y) continue;
-            int palette=choose_palette(ppu,(unsigned)skin,(int)sprite_palette(ppu,s));
+            int palette=choose_palette(ppu,key,(int)sprite_palette(ppu,s));
             if(palette<0) return;
-            if(blocks[skin]<0) {
-                if((blocks[skin]=borrow_block(ppu))<0) return;
-                memset(canvas,0,sizeof(canvas));
-                compose(anim_frame(kAnimBase[skin]+1,0),ORIGIN_X,ORIGIN_Y+22);
-                paint_block(ppu,(unsigned)blocks[skin],ORIGIN_X-8,ORIGIN_Y);
+            if(blocks[key]<0) {
+                if((blocks[key]=borrow_block(ppu))<0 || !compose_head(key)) return;
+                paint_block(ppu,(unsigned)blocks[key],ORIGIN_X-8,ORIGIN_Y);
             }
-            put(&ppu->oam[s*2+1],(uint16_t)((ppu->oam[s*2+1]&~0xfffu)|(unsigned)palette<<9|(unsigned)blocks[skin]));
+            put(&ppu->oam[s*2+1],(uint16_t)((ppu->oam[s*2+1]&~0xfffu)|(unsigned)palette<<9|(unsigned)blocks[key]));
         }
     }
 }
 
-/* ---- Picker: grid figures (cells 10/11) and seat portraits. ---- */
+/* ---- Picker: grid figures (cells 10-17) and seat portraits. ---- */
 static uint32_t picker_pc(void) {
     return g_ram[0xc90]|((uint32_t)g_ram[0xcb8]<<8)|((uint32_t)g_ram[0xce0]<<16);
 }
@@ -637,59 +812,95 @@ static bool picker(void) {
     uint32_t pc=picker_pc();
     return g_ram[0x1031]==4 && pc>=0xc68b48 && pc<0xc68ee4;
 }
-/* With only one free OBJ palette, both figures share a 15-color merge of
- * the two cartridge palettes (closest pairs merged). */
-static uint8_t merged_index[2][16];
-static void merge_palettes(Ppu *ppu,unsigned palette) {
-    uint16_t color[30];unsigned owner[30],count=0;
-    for(unsigned s=0;s<2;++s) for(unsigned c=1;c<16;++c) { color[count]=(uint16_t)palette_color(s,c);owner[count++]=s*16+c; }
-    int group[30];for(unsigned i=0;i<30;++i) group[i]=(int)i;
-    unsigned groups=30;
-    while(groups>15) {
-        unsigned best=~0u,a=0,b=0;
-        for(unsigned i=0;i<30;++i) if(group[i]==(int)i) for(unsigned j=i+1;j<30;++j) if(group[j]==(int)j) {
-            int dr=(color[i]&31)-(color[j]&31),dg=((color[i]>>5)&31)-((color[j]>>5)&31),db=((color[i]>>10)&31)-((color[j]>>10)&31);
-            unsigned d=(unsigned)(dr*dr+dg*dg+db*db);
-            if(d<best) { best=d;a=i;b=j; }
-        }
-        for(unsigned i=0;i<30;++i) if(group[i]==(int)b) group[i]=(int)a;
-        --groups;
-    }
-    unsigned slot_of[30],next=1;
-    for(unsigned i=0;i<30;++i) if(group[i]==(int)i) {
-        slot_of[i]=next;put(&ppu->cgram[0x80+palette*16+next],color[i]);++next;
-    }
-    for(unsigned i=0;i<30;++i) merged_index[owner[i]/16][owner[i]%16]=(uint8_t)slot_of[group[i]];
+/* Palette loads applied on a later line: grid rows have their own palettes,
+ * loaded where the row starts, so the six figures of a row (and the rows
+ * above) each keep their own colors. */
+typedef struct { unsigned line,palette,key; } LineLoad;
+static LineLoad line_loads[24];
+static unsigned line_load_count;
+static int sprite_bottom(const Ppu *ppu,unsigned s) {
+    int y=ppu->oam[s*2]>>8;if(y>=240) y-=256;
+    return y+(big(ppu,s)?16:8);
+}
+/* True when no native sprite in `palette` reaches line `from` or below. */
+static bool palette_free_from(const Ppu *ppu,unsigned palette,int from,const bool *taken) {
+    for(unsigned s=0;s<128;++s)
+        if(!taken[s] && visible(ppu,s) && sprite_palette(ppu,s)==palette && sprite_bottom(ppu,s)>from) return false;
+    return true;
+}
+/* First and last canvas lines with a drawn pixel. */
+static int canvas_top(void) {
+    for(int y=0;y<CANVAS_H;++y) for(int x=0;x<CANVAS_W;++x) if(canvas[y][x]) return y;
+    return CANVAS_H;
+}
+static int canvas_bottom(void) {
+    for(int y=CANVAS_H-1;y>=0;--y) for(int x=0;x<CANVAS_W;++x) if(canvas[y][x]) return y;
+    return -1;
+}
+static bool compose_grid_figure(unsigned cell) {
+    memset(canvas,0,sizeof(canvas));
+    int skin=skin_of(cell+1);
+    if(skin<0) return false;
+    if(skin<2) { compose(anim_frame(kAnimBase[skin]+1,0),ORIGIN_X,ORIGIN_Y);return true; }
+    /* The native figure's bottom line is canvas ORIGIN_Y+7: Super
+     * Bomberman 4 figures keep the front standing frame's lowest line there. */
+    return compose_sb4((unsigned)skin-2,6,ORIGIN_X,ORIGIN_Y+7,false);
 }
 static void draw_grid(Ppu *ppu,bool *taken) {
-    unsigned free_palettes[2],free_count=0;
-    for(int p=7;p>=5 && free_count<2;p-=2) if(palette_unused(ppu,(unsigned)p)) free_palettes[free_count++]=(unsigned)p;
-    if(!free_count) return;
-    bool merged=free_count<2;
-    if(merged) merge_palettes(ppu,free_palettes[0]);
     unsigned scroll_x=ppu->hScroll[0]&0x3ff,scroll_y=ppu->vScroll[0]&0x3ff;
-    for(unsigned skin=0;skin<2;++skin) {
-        unsigned cell=10+skin,palette=free_palettes[merged?0:skin];
-        if(!merged) load_palette(ppu,palette,skin);
-        /* Same anchor as the native 16x24 figures: tile column 25, the cell's
-         * row ($C2:12DC), feet on the figure's bottom line. */
-        (void)cell;
-        unsigned row_tile=rb(0xc212dc+(skin?5:0));
-        int px=(int)((25*8-scroll_x)&0x1ff),py=(int)((((row_tile+1)*8+24)-scroll_y)&0xff);
-        if(px>240 || py>216) continue;
-        memset(canvas,0,sizeof(canvas));
-        compose(anim_frame(kAnimBase[skin]+1,0),ORIGIN_X,ORIGIN_Y);
-        if(merged) for(unsigned y=0;y<CANVAS_H;++y) for(unsigned x=0;x<CANVAS_W;++x)
-            if(canvas[y][x]) canvas[y][x]=merged_index[skin][canvas[y][x]];
-        /* Frames reach 11 lines below the origin (shadow); feet at +8. */
-        emit(ppu,px-ORIGIN_X+8,py-8-ORIGIN_Y,palette,3,NULL,0,taken);
+    int busy_until[8];for(unsigned p=0;p<8;++p) busy_until[p]=-1;
+    for(unsigned r=0;r<rows;++r) {
+        /* Same anchor as the native 16x24 figures: the cell's tile column,
+         * the row's tile row, feet on the figure's bottom line. */
+        unsigned row_tile=kRowTiles[rows-2][r];
+        int py=(int)((((row_tile+1)*8+24)-scroll_y)&0xff);
+        if(py>216) continue;
+        unsigned keys[6],cols[6],count=0;int top=1000,bottom=-1000;
+        for(unsigned c=0;c<6;++c) {
+            unsigned choice=kGrid[r][c];
+            if(choice<=STOCK_CELLS || choice>cells || !compose_grid_figure(choice-1)) continue;
+            int skin=skin_of(choice);
+            keys[count]=(unsigned)skin*8+(skin>=2?g_ram[CELL_COLORS+choice-1]%SB4_COLORS:0);cols[count++]=c;
+            int t=py-8-ORIGIN_Y+canvas_top(),b=py-8-ORIGIN_Y+canvas_bottom();
+            if(t<top) top=t;
+            if(b>bottom) bottom=b;
+        }
+        if(!count) continue;
+        if(top<1) top=1;
+        int palettes[6];
+        for(unsigned k=0;k<count;++k) {
+            palettes[k]=-1;
+            for(unsigned j=0;j<k && palettes[k]<0;++j) if(keys[j]==keys[k]) palettes[k]=palettes[j];
+            for(int p=7;p>=0 && palettes[k]<0;--p) {
+                bool mine=false;
+                for(unsigned j=0;j<k;++j) mine|=palettes[j]==p;
+                if(!mine && busy_until[p]<top && palette_free_from(ppu,(unsigned)p,top,taken)) palettes[k]=p;
+            }
+            if(palettes[k]<0) continue;
+            busy_until[palettes[k]]=bottom;
+            if(line_load_count<sizeof(line_loads)/sizeof(*line_loads))
+                line_loads[line_load_count++]=(LineLoad){(unsigned)top,(unsigned)palettes[k],keys[k]};
+        }
+        for(unsigned k=0;k<count;++k) {
+            if(palettes[k]<0) continue;
+            unsigned c=cols[k];
+            int px=(int)((kGridX[c]*8-scroll_x)&0x1ff);
+            if(px>240) continue;
+            compose_grid_figure(kGrid[r][c]-1);
+            emit(ppu,px-ORIGIN_X+8,py-8-ORIGIN_Y,(unsigned)palettes[k],3,NULL,0,taken);
+        }
     }
 }
+static void apply_line_loads(Ppu *ppu,unsigned line) {
+    for(unsigned k=0;k<line_load_count;++k) if(line_loads[k].line==line || (line==1 && line_loads[k].line<1))
+        load_palette(ppu,line_loads[k].palette,line_loads[k].key);
+}
 static void draw_portraits(Ppu *ppu) {
-    int blocks[2][4];memset(blocks,0xff,sizeof(blocks));
+    int blocks[SKINS*8][4];memset(blocks,0xff,sizeof(blocks));
     for(unsigned i=0;i<5;++i) {
         int skin=skin_of(g_ram[0x625f+i]);
         if(skin<0) continue;
+        unsigned key=(unsigned)skin*8+(skin>=2?g_ram[SEAT_COLOR+i]%SB4_COLORS:0);
         unsigned object=g_ram[0x62bf+i];
         if(object>=0x60 || g_ram[0x6df+object]>=8) continue;
         unsigned slot=g_ram[0x6df+object];
@@ -704,35 +915,73 @@ static void draw_portraits(Ppu *ppu) {
         bool usable=true;
         for(unsigned s=0;s<128;++s) if(visible(ppu,s) && sprite_palette(ppu,s)==slot && !mine[s]) usable=false;
         if(!usable) continue;
-        if(blocks[skin][0]<0) {
-            /* Head and shoulders of the front standing frame: its top 24
-             * lines, centered in the 32x32 portrait (native faces sit at
-             * 4..27, the frame and background stay visible around). */
-            for(unsigned q=0;q<4;++q) if((blocks[skin][q]=borrow_block(ppu))<0) return;
+        if(blocks[key][0]<0) {
+            /* Honey/Kotetsu: head and shoulders of the front standing frame,
+             * its top 24 lines centred in the 32x32 portrait (native faces sit
+             * at 4..27). Super Bomberman 4: the whole front standing frame,
+             * which is 32x32 already. */
+            for(unsigned q=0;q<4;++q) if((blocks[key][q]=borrow_block(ppu))<0) return;
             memset(canvas,0,sizeof(canvas));
-            compose(anim_frame(kAnimBase[skin]+1,0),16,4+22);
-            for(unsigned y=28;y<CANVAS_H;++y) memset(canvas[y],0,CANVAS_W);
-            for(unsigned q=0;q<4;++q) paint_block(ppu,(unsigned)blocks[skin][q],(q&1)*16,(q>>1)*16);
+            if(skin<2) {
+                compose(anim_frame(kAnimBase[skin]+1,0),16,4+22);
+                for(unsigned y=28;y<CANVAS_H;++y) memset(canvas[y],0,CANVAS_W);
+            } else if(!compose_sb4((unsigned)skin-2,6,16,29,false)) return;
+            for(unsigned q=0;q<4;++q) paint_block(ppu,(unsigned)blocks[key][q],(q&1)*16,(q>>1)*16);
         }
-        load_palette(ppu,slot,(unsigned)skin);
+        load_palette(ppu,slot,key);
         for(unsigned q=0;q<4;++q)
-            put(&ppu->oam[quarter[q]*2+1],(uint16_t)((ppu->oam[quarter[q]*2+1]&~0x1ffu)|(unsigned)blocks[skin][q]));
+            put(&ppu->oam[quarter[q]*2+1],(uint16_t)((ppu->oam[quarter[q]*2+1]&~0x1ffu)|(unsigned)blocks[key][q]));
     }
+}
+
+/* Draws `w` x `h` color indices (0 = transparent, at most 48 x 64) at
+ * screen (x, y) with its own 15 colors, in a palette no visible sprite
+ * uses. For ability effects drawn during the stage overlay. */
+static Ppu *effect_ppu;static bool *effect_taken;
+bool ExtraEmitPixels(int x,int y,const uint8_t *pixels,unsigned w,unsigned h,const uint16_t colors[16],unsigned priority) {
+    Ppu *ppu=effect_ppu;
+    if(!ppu || w>CANVAS_W || h>CANVAS_H) return false;
+    int palette=-1;
+    for(int p=7;p>=0;--p) {
+        if(!palette_given[p] && palette_unused(ppu,(unsigned)p)) { palette=p;break; }
+        if(palette_given[p]) {
+            bool same=true;
+            for(unsigned c=1;c<16 && same;++c) same=ppu->cgram[0x80+p*16+c]==colors[c];
+            if(same) { palette=p;break; }
+        }
+    }
+    if(palette<0) return false;
+    if(!palette_given[palette]) {
+        for(unsigned c=1;c<16;++c) put(&ppu->cgram[0x80+palette*16+c],colors[c]);
+        palette_given[palette]=true;
+    }
+    memset(canvas,0,sizeof(canvas));
+    for(unsigned yy=0;yy<h;++yy) for(unsigned xx=0;xx<w;++xx) canvas[yy][xx]=pixels[yy*w+xx];
+    return emit(ppu,x,y,(unsigned)palette,priority,NULL,0,effect_taken);
 }
 
 void HoneyKotetsuObserve(const Ppu *view,unsigned line,void *context) {
     (void)context;Ppu *ppu=(Ppu *)view;
     if(line==224) {
+        line_load_count=0;
         if(!drawn) return;
         while(saved_count) { Saved w=saved[--saved_count];*w.word=w.value; }
         memcpy(ppu->highOam,saved_high,sizeof(saved_high));
         ++ppu->vramWriteCount;++ppu->oamWriteCount;drawn=false;return;
     }
-    if(line!=1 || !enabled || !patched || !art_ready || PPU_objSize(ppu)!=0) return;
-    saved_count=0;borrowed_count=0;memcpy(saved_high,ppu->highOam,sizeof(saved_high));
+    if(line!=1) {
+        if(drawn && line_load_count) apply_line_loads(ppu,line);
+        return;
+    }
+    if(!enabled || !patched || !art_ready || PPU_objSize(ppu)!=0) return;
+    saved_count=0;borrowed_count=0;line_load_count=0;memcpy(saved_high,ppu->highOam,sizeof(saved_high));
     bool taken[128]={false};
-    skin_palette[0]=skin_palette[1]=-1;
-    if(picker()) { draw_grid(ppu,taken);draw_portraits(ppu); }
-    else if(stage()) { draw_players(ppu,taken);draw_faces(ppu); }
-    if(saved_count) { drawn=true;++ppu->vramWriteCount;++ppu->oamWriteCount; }
+    for(unsigned k=0;k<SKINS*8;++k) key_palette[k]=-1;
+    memset(palette_given,0,sizeof(palette_given));
+    if(picker()) { draw_portraits(ppu);draw_grid(ppu,taken);apply_line_loads(ppu,1); }
+    else if(stage()) {
+        draw_players(ppu,taken);draw_faces(ppu);
+        effect_ppu=ppu;effect_taken=taken;SpecialAbilityDraw();effect_ppu=NULL;effect_taken=NULL;
+    }
+    if(saved_count || line_load_count) { drawn=true;++ppu->vramWriteCount;++ppu->oamWriteCount; }
 }

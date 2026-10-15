@@ -69,8 +69,18 @@ static void isolate_portrait_palettes(void) {
 static unsigned last_character(void) { return SubordinateEnabled()?10:9; }
 static void apply_color(unsigned player) {
     unsigned character=g_ram[0x625f+player];
-    /* Honey/Kotetsu have one cartridge palette: no L/R variants. */
-    if(HoneyKotetsuBaseChoice(character)!=character) { colors[player]=0;g_ram[0x6264+player]=0;return; }
+    /* Honey/Kotetsu have one cartridge palette: no L/R variants. The Super
+     * Bomberman 4 characters have five; the core draws them, this keeps the
+     * seat's choice and the cell's color. */
+    unsigned extra=ExtraCharacterColorCount(character);
+    if(extra==1 || (extra==0 && HoneyKotetsuBaseChoice(character)!=character)) { colors[player]=0;g_ram[0x6264+player]=0;return; }
+    if(extra>1) {
+        colors[player]=(uint8_t)(colors[player]%extra);g_ram[0x6264+player]=colors[player];
+        uint8_t *cells=PickerCellCharacters(),*cell_colors=PickerCellColors();
+        for(unsigned cell=10;g_ram[0x62b5+player]==1 && cell<PickerCellCount();++cell)
+            if(cells[cell]==character) cell_colors[cell]=colors[player];
+        return;
+    }
     if(character<1 || character>last_character()) return; /* The native random/exit cell. */
     unsigned color=colors[player];
     g_ram[0x6264+player]=(uint8_t)color;
@@ -119,8 +129,10 @@ void SelectionColorBeforeFrame(void) {
         unsigned i=g_ram[0x62ab+slot];
         if(i>=5 || g_ram[0x62b5+i]!=1) continue;
         unsigned shoulders=pressed[slot] & 0xc00;
-        if(shoulders==0x800) colors[i]=(colors[i]+1)%6; /* R */
-        else if(shoulders==0x400) colors[i]=(colors[i]+5)%6; /* L */
+        unsigned count=ExtraCharacterColorCount(g_ram[0x625f+i]);
+        if(!count) count=6;
+        if(shoulders==0x800) colors[i]=(uint8_t)((colors[i]+1)%count); /* R */
+        else if(shoulders==0x400) colors[i]=(uint8_t)((colors[i]+count-1)%count); /* L */
         g_ram[0x6264+i]=colors[i]; /* Includes simultaneous color + A. */
     }
 }
@@ -251,6 +263,7 @@ void SelectionColorObserve(const Ppu *view,unsigned line,void *unused) {
     if(drawn) { ++ppu->vramWriteCount;++ppu->oamWriteCount; }
 }
 bool SelectionColorEnabled(void) { return enabled; }
+int SelectionColorSeat(unsigned seat) { return enabled && (live || pending) && seat<5 ? colors[seat] : -1; }
 void SelectionColorDrawPpuFrame(void) {
     PtbrDrawPpuFrameObserved(enabled?SelectionColorObserve:NULL,NULL);
 }

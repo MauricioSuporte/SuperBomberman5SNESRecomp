@@ -35,6 +35,16 @@ são selecionáveis no jogo original.
 - **Subordinate Bomber:** compatível. Com os dois mods ativos, o Subordinate fica
   na quinta coluna de baixo e o Kotetsu ao lado.
 
+- **Habilidade (B + direção):** segure B e aperte uma direção (ou aperte B
+  segurando uma direção): a Honey atira em linha reta e o Kotetsu dá uma
+  espadada no bloco da frente, acertando inimigos no Normal Game (nunca outros
+  jogadores) e os outros jogadores/o time adversário no Battle. Depois, como os
+  Reis Bomber do Super Bomberman 4, ficam com metade da velocidade por cerca de
+  10,7 s. Detalhes em [BOMBER_KINGS.md](BOMBER_KINGS.md).
+- **Reis Bomber:** com o mod **Play as the Bomber Kings** e a ROM do Super
+  Bomberman 4, a seleção ganha uma terceira fileira; Honey e Kotetsu continuam
+  no fim das duas primeiras.
+
 Quadros, paletas e gráficos vêm da sua ROM em tempo de execução (o arquivo
 comprimido de gráficos dos dois é descomprimido na memória). Nenhum gráfico ou
 paleta do cartucho fica no código-fonte.
@@ -81,6 +91,14 @@ original game.
     colors and Honey/Kotetsu ride it, facing the move direction;
   - death, stun (thrown bomb on the head) and Time Up: spinning; the final
     death frame shows the original ashes.
+- **Ability (B + direction):** hold B and press a direction (or press B while
+  holding one): Honey shoots in a straight line and Kotetsu slashes the tile in
+  front, hitting enemies in Normal Game (never other players) and other
+  players/the other team in Battle. Afterwards, like Super Bomberman 4's
+  Bomber Kings, they move at half speed for about 10.7 s. See
+  [BOMBER_KINGS.md](BOMBER_KINGS.md).
+- **Bomber Kings:** with **Play as the Bomber Kings** and a Super Bomberman 4
+  ROM the picker gets a third row; Honey and Kotetsu still end the first two.
 - **Portrait and HUD:** the picker portrait and Battle HUD face are the head of
   each one's front frame.
 - **Colors:** each has a single cartridge palette, so L/R do not recolor them.

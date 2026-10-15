@@ -56,6 +56,9 @@ add_executable(SuperBomberman5SNESRecomp
     src/selection_color_mod.c
     src/subordinate_mod.c
     src/honey_kotetsu_mod.c
+    src/bomber_kings_mod.c
+    src/sb4_rom.c
+    src/special_abilities.c
     src/gen_stubs.c
 )
 
@@ -114,6 +117,14 @@ if(BUILD_TESTING)
     target_include_directories(honey_kotetsu_tests PRIVATE
         "${SNESRECOMP_ROOT}/runner/src")
     add_test(NAME honey_kotetsu_characters COMMAND honey_kotetsu_tests)
+    add_executable(special_abilities_tests tests/special_abilities_tests.c)
+    target_include_directories(special_abilities_tests PRIVATE
+        "${SNESRECOMP_ROOT}/runner/src")
+    add_test(NAME special_abilities COMMAND special_abilities_tests)
+    add_executable(sb4_rom_tests tests/sb4_rom_tests.c)
+    target_include_directories(sb4_rom_tests PRIVATE
+        "${SNESRECOMP_ROOT}/runner/src")
+    add_test(NAME sb4_rom COMMAND sb4_rom_tests)
 endif()
 
 # ROM identity. rom_identity.txt is the one place the digests live: the build

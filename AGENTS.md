@@ -50,7 +50,9 @@ before changing code, docs or releases. Humans: see README.md and CONTRIBUTING.m
 4. **Mods use only cartridge data at runtime or authored data.** Fonts/glyphs
    in `ptbr_mod.c` and cursor hints in `selection_color_mod.c` are drawn from
    authored bitmaps or derived from VRAM/ROM at runtime — never embed ripped
-   pixels, palettes or text dumps in source.
+   pixels, palettes or text dumps in source. Data from another game (the
+   Bomber Kings mod's Super Bomberman 4 frames) follows the same rule: read at
+   runtime from the player's own ROM, verified by hash, never stored.
 5. **ROM patches are in-memory only** (see `normal_coop_mod.c`): reserve and
    save original bytes, install only while the feature is enabled, restore on
    reset. The ROM file on disk and the SRAM layout are never changed.
@@ -80,7 +82,9 @@ before changing code, docs or releases. Humans: see README.md and CONTRIBUTING.m
 | `src/normal_character_mod.c` | Opens Battle's character picker after Normal file confirmation using an in-memory snapshot of the suspended campaign. |
 | `src/selection_color_mod.c` | L/R palette cycling in the picker + authored "L+R" cursor hint drawn into borrowed OBJ tiles, restored at line 224. |
 | `src/subordinate_mod.c` | Subordinate Bomber (index 9) in the picker's X cell: in-memory patches + render-only grid figure/HUD alive face from its ROM sprite tiles, authored per-color seat portraits and a palette-indexed defeated HUD face, all in borrowed OBJ tiles. Overlays chain after the color hint (`ObserveOverlays` in `game_rtl.c`). |
-| `src/honey_kotetsu_mod.c` | Honey/Kotetsu (secret-stage bosses) as choices 11/12 in a 6x2 picker: relocated cell arrays (`$7F:F800/$F80C`), lookup-table cursor movement, Bomberman gameplay, render-only skins (object set `$0D` frames from the runtime-decompressed `$CC:289D` archive) replacing the bomber's sprites, HUD face and seat portrait. Exposes `PickerCellCharacters()`/`PickerCellColors()` for the other picker mods. |
+| `src/honey_kotetsu_mod.c` | Honey/Kotetsu (secret-stage bosses) as choices 11/12 in a 6x2 picker (6x3 with Bomber Kings, choices 13-18): relocated cell arrays (`$7F:F800/$F812`), lookup-table cursor movement, Bomberman gameplay, render-only skins (object set `$0D` frames from the runtime-decompressed `$CC:289D` archive) replacing the bomber's sprites, HUD face and seat portrait. Exposes `PickerCellCharacters()`/`PickerCellColors()` for the other picker mods. |
+| `src/bomber_kings_mod.c`, `src/sb4_rom.c` | Bomber Kings: switches the extra-character core to its three-row picker; Super Bomberman 4 frames/palettes read at runtime from the player's own SB4 ROM (searched next to the SB5 ROM, `roms/`, `$SB5_SB4_ROM`; SHA-256 checked). Never embed or package SB4 data. |
+| `src/special_abilities.c` | B + direction abilities and SB4 debuff for Honey/Kotetsu/Bomber Kings: pre-opcode hooks at `$C0:0AF9` (pads) and `$C4:3180` (walking steps), native damage rules, state in WRAM `$7F:F830-$F86B`. |
 | `src/normal_coop_mod.c` | 1–5 player Normal Game: 65816 trampolines in unused ROM space, interpreter PC hook, safe-spawn search, shared lives, Start rejoin. |
 | `src/host_contract.c`, `src/gen_stubs.c`, `src/variables.h` | Framework contract placeholders (trace hooks, stubs, WRAM names). |
 | `recomp/` | Analysis inputs: `symbols.toml` (source of truth), `bank00.cfg`. `funcs.h` is generated. |
@@ -209,13 +213,17 @@ File 1 (A = keyboard X) → Start on Zone 1 map.
 | `$71-$73` | Secret stages `ZONE1/2/3 - S`: Honey and Kotetsu boss actors (`$16C7/$16C8` = `$3C/$3E`), object set `$0D` (anims `$1E-$22` Honey, `$2B-$2F` Kotetsu: R/D/L/U/spin). Reached from Zone 1-11, 2-11, 3-7 exits |
 | `$C0:171D` / `$C0:16CC` | Per object set (`$04FF`): 24-bit animation table (16-bit pointers to `frame, duration` pairs; `$07FF` = offset of the current pair, `$079F` = anim id, `$049F` = frame) / frame table (count + 7-byte pieces `dx16 dy16 tile16 attr`, attr bit0 = 16x16). Bomber set `$10`: anims 1-4 walk R/D/L/U, `$46-$49` stand |
 | `$C0:1B04` / `$C0:1CB0`-`$1CCC` | Graphics archive loader (set `$0AE7`, entries `[vram, size, src24, flags]`, flag bit7 = raw) / decompressor: control = mode bits 5-7 (literal, prev+1, prev, copy -2/-4/-16/-32/-64 in a 256-byte ring at `$0200`) + count-1 bits 0-4. Honey/Kotetsu archive `$CC:289D` (`$1E00` bytes, ends `$CC:40E4`), palettes `$C1:8FC6/$C1:8FA6` |
-| `$C6:8C02/$8C78/$8CEE/$8D62` | Picker cursor right/left/down/up blocks (`$1034` = cell+1 = choice). Exit script `$C6:A575` copies the cell character into `$625F` and keeps the cell in `$6291`. Cursor positions `$C0:C927` with `$C0:C976/$C980` (10 entries) |
-| `$C4:2A3C` / `$C4:3BDE` | Battle stage init `$16C2 = $625F - 1` / score board (script `$C6:7736`, FF.59) stores `$625F - 1` again. Honey/Kotetsu mod patches both and uses `$C2:6040-$60B0` |
+| `$C6:8C02/$8C78/$8CEE/$8D62` | Picker cursor right/left/up/down blocks (`$8CEE` moves up, `$8D62` down; verified by three-row routes) (`$1034` = cell+1 = choice). Exit script `$C6:A575` copies the cell character into `$625F` and keeps the cell in `$6291`. Cursor positions `$C0:C927` with `$C0:C976/$C980` (10 entries) |
+| `$C4:2A3C` / `$C4:3BDE` | Battle stage init `$16C2 = $625F - 1` / score board (script `$C6:7736`, FF.59) stores `$625F - 1` again. Honey/Kotetsu core patches both and uses `$C2:6088-$60B0` plus tables `$C2:60C0-$612F` |
 | `$C5:4195` / `$7E4ED5+i` | Item effect jump table (item id at `$145A+cell`; revealed items have `$1052=$10`, `$1152=$80`) / ability bits: 1 remote (`$04`), 2 (`$0B`, with `$167A` bit 6), 4 power glove (`$0C`), 8 boxing glove (`$11`, Y), `$10/$20/$40` bomb types. Items `$12/$13` set `$176A` (not eggs; the egg is `$15`). Verified by placing items with pokes in Battle |
 | Bomber anims (set `$10`) | 1-4 walk, `$15` cheer, `$16` death, `$17-$1A` airborne, `$1F` Time Up, `$20` victory, `$21` stun, `$27-$2A` punch, `$2B-$2E` lift, `$2F-$32` carry walk, `$33-$36` throw, `$37-$3A` hold, `$42-$45` Bad Bomber cart, `$46-$49` stand (R/D/L/U) |
 | `$7E2EEA/$7E2F4A` + object, `$1782+i` | Object's current frame pointer (16-bit + bank; OAM shown can lag it by 1-2 steps) / bomber mount state: bit 7 riding, bit 1 jumping onto the mount. Mount is its own object (set `$01`) in the rider's palette slot. Egg item `$15`. Verified by Battle egg routes and OAM/frame matching |
 | `$D6:D871`, set 6 anims `$50`/`$4E` | Battle champion screen archive (`$0D40` bytes, ends `$D6:E0BB`, 16x16 block layout at OBJ tile `$C0`) / Honey (frames `$A2/$A3`) and Kotetsu (`$9E/$9F`) cheering poses; Honey's palette there `$C1:A8AE`. Verified by champion-screen dumps |
-| `$7F:F800-$F81C` | Honey/Kotetsu mod: relocated 12-cell picker arrays and per-seat choice markers. Zero in all 154 research captures; no ROM operand points there |
+| `$7F:F800-$F86B` | Extra-character core: 18-cell picker arrays `$F800/$F812`, per-seat choice `$F824`, seat color `$F829`; abilities `$F830-$F86B`. Zero in all 187 research captures without the mods; no ROM operand points there |
+| `$C0:0AF9`, `$2C/$31/$36/$3B+seat` | End of the pad reader `$C0:0A56` (before `RTL`): held actions (A `$80`, B `$08`, Y `$04`), held directions (right 1, left 2, down 4, up 8), new actions, new directions. Remote detonation `$C4:2FF7` tests `$36,X & 8` → `$C5:1F84`. Verified by watch logs and ability routes |
+| `$C4:3231/$C4:3180` | Walking pixels this frame (`$1602` += `$15D2`, + `$15EA`; 4 when riding) stored at `$C4:3180` (X = seat) and tested by the next `BEQ`; a pre-opcode hook changing A must set `_flag_Z` too. Verified by debuff speed routes |
+| `$7E625D` bit 0, `$6269+i` bit 7, `$15A2+i` bits 3-4 | Team Battle / lower team on the Team Members screen / team at stage start (`$C4:2A1C`: `$18` Free-for-All, `$10`/`$08` teams). `$15A2` bit 2 + `$170A` = native player invulnerability. Verified by Team Battle routes |
+| `$182A/$1842`, `$1872/$188A` + actor | Actor world x/y (lo/hi), cell = (pos + 8) / 16; actors 0-23, `$17FA` bit 7 = none; enemy point damage `$C0:373F` (`$1662` HP, `$085F` invulnerability). Verified by ability damage routes |
 | `$0300` / `$67` | INIDISP shadow / NMI busy latch (`$C0:F3D4`) |
 | `$1FF4-$1FFF` | Enemy→player distance arrays (6 × 2 entries: dx, dy, dx hi, dy hi, dir codes) from `$C3:46CC`; coop relocates to 6 × 5 at `$1FC0-$1FDD` (+`$C3:FF70` seat loop). Verified by contact runs on P1/P3 |
 | `$C5:3D3F` | Copies stage collision map to `$1052` after player spawns; coop settles P3-P5 at its RTL `$C5:3D5D` |
