@@ -1,6 +1,7 @@
 /* Native Battle character picker, temporarily entered from Normal's file
  * confirmation. All graphics come from the player's verified cartridge. */
 #include "normal_character_mod.h"
+#include "honey_kotetsu_mod.h"
 #include "normal_coop_mod.h"
 #include "common_rtl.h"
 #include "common_cpu_infra.h"
@@ -67,7 +68,10 @@ static void finish_picker(bool cancel) {
     } else {
         chosen=true;
         for(unsigned i=0;i<count;++i) {
-            g_ram[0x625f+i]=choices[i]>=1 && choices[i]<=10?choices[i]:1; /* 10: Subordinate mod */
+            /* 10: Subordinate mod; 11/12: Honey/Kotetsu mod (play as 1). */
+            unsigned choice=choices[i]>=1 && choices[i]<=12?choices[i]:1;
+            HoneyKotetsuSetSeatChoice(i,choice);
+            g_ram[0x625f+i]=(uint8_t)HoneyKotetsuBaseChoice(choice);
             g_ram[0x6264+i]=palettes[i];
             /* Normal initializes these before showing the file menu, while
              * Battle derives them after the picker. Apply that same mapping

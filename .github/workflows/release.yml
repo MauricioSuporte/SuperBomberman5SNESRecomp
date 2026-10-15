@@ -6,7 +6,7 @@ on:
       version:
         description: 'Version matching VERSION (without v)'
         type: string
-        default: '0.8.2'
+        default: '0.9.0'
       publish_release:
         description: 'Publish audited Linux AppImage and Windows ZIP'
         type: boolean
@@ -65,6 +65,7 @@ jobs:
           ./build-ci/subordinate_tests.exe
           ./build-ci/pause_menu_tests.exe
           ./build-ci/portal_labels_tests.exe
+          ./build-ci/honey_kotetsu_tests.exe
       - name: Package and audit Windows setup release
         run: |
           source "${TOOLCHAIN_DIR}/env.sh"

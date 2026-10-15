@@ -9,6 +9,13 @@ int snes_mod_register_reset_callback(SNESModActivationCallback fn) { reset_callb
 int snes_mod_register_activation_plugin(const char *id,SNESModActivationCallback fn) { (void)id;activation=fn;return 1; }
 #include "../src/normal_character_mod.c"
 uint8 g_ram[0x20000];
+/* Honey/Kotetsu mod not linked: stock ten-cell picker arrays. */
+uint8_t *PickerCellCharacters(void) { return g_ram+0x62c9; }
+uint8_t *PickerCellColors(void) { return g_ram+0x62d3; }
+unsigned PickerCellCount(void) { return 10; }
+unsigned HoneyKotetsuBaseChoice(unsigned choice) { return choice==11 || choice==12 ? 1 : choice; }
+unsigned hk_seat_choice[5];
+void HoneyKotetsuSetSeatChoice(unsigned seat,unsigned choice) { if(seat<5) hk_seat_choice[seat]=choice; }
 static uint8 rom[0x10000];
 const uint8 *g_rom=rom;
 Snes *g_snes;

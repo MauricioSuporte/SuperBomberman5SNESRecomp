@@ -1,6 +1,80 @@
 # Super Bomberman 5: estado do protótipo
 
 
+## v0.9.0 preparation — Honey and Kotetsu / Preparação — 2026-10-15
+
+Release scope: v0.8.2 plus the optional **Honey and Kotetsu — playable
+characters** mod (`superbomberman5.honey-kotetsu` 0.1.0, host v0.9.0+), default
+disabled, and the helpers the picker mods now share (`PickerCellCharacters()`,
+`PickerCellColors()`, `HoneyKotetsuBaseChoice()`). Framework pins unchanged
+from v0.8.2. The README showcase keeps the five-player title frame and replaces
+the other three with v0.9.0 captures (six-column Battle picker with Honey,
+Kotetsu, Subordinate Bomber and colors; Zone 1-1 and Battle stage 1 with five
+different characters and palettes). The mod-development skill gained the
+playable-character recipe and checklist learned from this mod.
+
+Pre-publication evidence (Linux, this source tree with pinned submodules,
+locally regenerated code): build, all nine native test executables, Python
+tests, publication audit and `git diff --check` pass. Showcase captures used a
+local opt-in `SB5_COOP_INPUT_FIXTURE=ON` host to drive pads 3-5 (never shipped):
+five-seat Battle picker → stage 1 and five-player Normal Zone 1-1 with
+Honey/Kotetsu/Subordinate Bomber and colors, no interpreter cap, BRK or fatal.
+Windows evidence comes from the release workflow; Windows runtime of the new
+mod, physical controllers and full campaign remain unqualified.
+
+Preparada a v0.9.0 com o mod Honey e Kotetsu, imagem do README atualizada e
+skill de mods ampliada. Build Linux, nove testes nativos, testes Python e
+auditoria passaram; validação Windows vem do workflow de release.
+
+## Honey and Kotetsu playable / Honey e Kotetsu jogáveis — 2026-10-15
+
+Optional, default-disabled `superbomberman5.honey-kotetsu` 0.1.0 turns the
+picker into a 6x2 grid: stock columns packed to tiles 5/9/13/17/21, Honey
+(choice 11) and Kotetsu (choice 12), the secret-stage bosses of `$71-$73`, at
+tile 25. In-memory patches relocate the cell arrays to `$7F:F800/$7F:F80C`,
+replace cursor movement with lookup tables, extend cursor positions, clamp the
+portrait helpers, and map choices 11/12 to Bomberman at Battle stage init
+(`$C4:2A3C`) and the score board (`$C4:3BDF`), recording each seat's choice at
+`$7F:F818`. Their sprites are render-only: object set `$0D` frames composed from
+the `$CC:289D` archive (decompressed at runtime, `$C0:1CCC` format) with
+palettes `$C1:8FC6/$C1:8FA6`, replacing the bomber's OBJ sprites; HUD face and
+seat portrait use the head of the front frame. Subordinate Bomber's X-skip
+trampoline now tests the character in A instead of reading `$62C9`, and the
+color/Normal-character mods read the cells through `PickerCellCharacters()`.
+
+Evidence (Linux LLE build of the same sources, JPN ROM): new
+`honey_kotetsu_tests` and all other native test executables pass; Python tests
+pass. Scripted: Battle picker (movement/wrap, portraits, PT-BR), five-seat
+Battle with P1 Honey and seat 2 Kotetsu for ~9,600 frames through the score
+board and next round, Normal Zone 1-1 as Honey, `ZONE1 - S` as Honey and
+`ZONE3 - S` as Kotetsu, controls with the mod off. No BRK, `interp_cap`,
+unresolved abandon or fatal. Not qualified: Windows build, physical controls,
+full campaign, coop P3-P5 as them, Louie. Details in `docs/HONEY_KOTETSU.md`.
+
+Update: poses now follow the bomber animation groups — glove punch/throw use
+their attack frames (Honey's gun, Kotetsu's spear), victory/cheer a victory
+frame, carrying walks, death/stun/Time Up spin and the last death frame stays
+native (ashes). Wide frames get a second block column. Verified with
+side-by-side Battle routes (power/boxing glove items placed by poke, own-bomb
+death, stun poke, victory, Time Up); egg items gave no visible Louie even
+without mods, so riding stays unverified.
+
+Update 2: the replaced sprites are now exactly the pieces of the bomber's
+current frame (`$7E2EEA/$7E2F4A`, with the last three distinct pointers for
+OAM lag), drawn in a free OBJ palette, so the Louie mount and eggs sharing the
+seat's slot keep their sprites and colors; riding (`$1782` bit 7) shows the
+figure on the mount. Victory, cheer and the DRAW GAME screen alternate the two
+champion-screen poses (set 6 anims `$50`/`$4E`, archive `$D6:D871` decoded at
+runtime). Verified by Linux LLE routes: egg `$15` collected and ridden, DRAW
+GAME, victory (60 frames), champion screen with each as winner (48 frames each
+dumped every frame) and walking (60 frames) without native fallback frames;
+glove/stun/death/picker regressions; all native tests pass.
+
+Honey e Kotetsu podem ser escolhidos numa sexta coluna da seleção (Honey em
+cima, Kotetsu embaixo, ao lado do Subordinate/X), no Battle e no Normal. Jogam
+como Bomberman e aparecem com os próprios sprites, retrato e rosto no HUD,
+lidos da ROM.
+
 ## v0.8.2 published / Publicada — 2026-10-15
 
 Published prerelease:

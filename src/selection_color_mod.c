@@ -4,6 +4,7 @@
 #include "mod_runtime.h"
 #include "ptbr_mod.h"
 #include "subordinate_mod.h"
+#include "honey_kotetsu_mod.h"
 #include "snes/ppu.h"
 #include "snes/saveload.h"
 #include <stdbool.h>
@@ -68,6 +69,8 @@ static void isolate_portrait_palettes(void) {
 static unsigned last_character(void) { return SubordinateEnabled()?10:9; }
 static void apply_color(unsigned player) {
     unsigned character=g_ram[0x625f+player];
+    /* Honey/Kotetsu have one cartridge palette: no L/R variants. */
+    if(HoneyKotetsuBaseChoice(character)!=character) { colors[player]=0;g_ram[0x6264+player]=0;return; }
     if(character<1 || character>last_character()) return; /* The native random/exit cell. */
     unsigned color=colors[player];
     g_ram[0x6264+player]=(uint8_t)color;
@@ -83,8 +86,9 @@ static void apply_color(unsigned player) {
     }
     /* Native grid entries use eight-color strips in the BG palette. The
      * cartridge lookup also handles each villain's original palette layout. */
-    for(unsigned cell=0;g_ram[0x62b5+player]==1 && cell<10;++cell) if(g_ram[0x62c9+cell]==character) {
-        g_ram[0x62d3+cell]=(uint8_t)color;
+    uint8_t *cell_characters=PickerCellCharacters(),*cell_colors=PickerCellColors();
+    for(unsigned cell=0;g_ram[0x62b5+player]==1 && cell<10;++cell) if(cell_characters[cell]==character) {
+        cell_colors[cell]=(uint8_t)color;
         /* Subordinate Bomber has no grid strip; its overlay reads $62D3. */
         if(character==10) break;
         unsigned id=g_rom[0x2130b+(character-1)*7+color];
@@ -129,7 +133,7 @@ void SelectionColorAfterFrame(void) {
             bool consumed=true;
             for(unsigned i=0;i<5;++i) {
                 g_ram[0x6264+i]=colors[i];
-                unsigned character=g_ram[0x625f+i];
+                unsigned character=HoneyKotetsuBaseChoice(g_ram[0x625f+i]);
                 if(character<1 || character>last_character() || g_ram[0x16c2+i]!=character-1 ||
                    g_ram[0x16da+i]!=g_rom[0xbb4e + character-1]+colors[i]) consumed=false;
             }

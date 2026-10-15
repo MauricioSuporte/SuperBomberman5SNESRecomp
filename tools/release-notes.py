@@ -398,6 +398,92 @@ saves ou dumps. Recompilação parcial: a maior parte da lógica usa o interpret
 Veja README.md e docs/STATUS.md para evidências e limites.
 '''
 
+if tuple(int(n) for n in version.split('.')) >= (0,9,0):
+    notes = f'''# Super Bomberman 5 v{version} — Honey and Kotetsu playable
+
+## English
+
+New optional mod **Honey and Kotetsu — playable characters** (Gameplay,
+disabled by default). Enable **Play as Honey and Kotetsu** for a six-column
+character selection: the stock columns move closer, Honey (the cowgirl boss
+of the Zone 1-3 secret stages) ends the top row and Kotetsu the bottom row,
+next to Subordinate Bomber/X.
+
+- Battle and, with the Normal character selection mod, Normal Game
+  (including five-player co-op seats).
+- They play as Bomberman (same rules, hitbox and items) and are drawn with
+  their own cartridge frames, decoded from your ROM at runtime: walking,
+  standing, gun/spear attacks for the Boxing and Power Glove, victory and
+  DRAW GAME poses taken from the Battle champion screen, death, stun,
+  Time Up and riding a Louie (mount and eggs keep their own colors).
+- Own picker figures, seat portraits and Battle HUD faces. They have a single
+  cartridge palette, so L/R colors do not change them.
+- Subordinate Bomber and the color controls keep working with the new grid.
+
+Evidence: native tests for every patch byte, movement tables, archive
+decoding, pose mapping, sprite matching, palettes and restoration; Linux LLE
+scripted routes for the Battle picker, five-seat Battle through the score
+board and champion screen, DRAW GAME, glove/egg/death/stun/Time Up poses,
+Normal Zone 1-1 and the ZONE1/3 - S stages. Windows runtime of this mod,
+physical controllers and full campaign remain unqualified; Linux is
+experimental.
+
+Download **superbomberman5-{version}-windows-x64.zip** or
+**superbomberman5-{version}-linux-x86_64.AppImage** and verify **SHA256SUMS**.
+Extract Windows into a new writable folder. On Linux, chmod +x and run the
+AppImage (without FUSE use --appimage-extract-and-run). Supply your own
+compatible JPN ROM and use **Generate & rebuild**, including when upgrading;
+an old generated executable does not receive native changes automatically.
+Rust is not required. Internet is needed for the initial portable tool download.
+
+All nine optional mods are included, disabled by default, at package version
+0.1.0. No ROM, generated game code, ROM-derived playable executable,
+extracted assets, saves or raw dumps are distributed; Honey and Kotetsu's
+graphics are read from your ROM. Partial recompilation: most logic still runs
+on the interpreter. See README.md, docs/HONEY_KOTETSU.md and docs/STATUS.md.
+
+## Português
+
+Novo mod opcional **Honey and Kotetsu — playable characters** (Gameplay,
+desligado por padrão). Ative **Play as Honey and Kotetsu** para ter a seleção
+com seis colunas: as colunas originais ficam mais próximas, a Honey (a cowgirl
+chefe das fases secretas das zonas 1 a 3) fecha a fileira de cima e o Kotetsu
+a de baixo, ao lado do Subordinate Bomber/X.
+
+- Battle e, com o mod de seleção no Normal, Normal Game (inclusive nos
+  assentos do co-op de cinco jogadores).
+- Jogam como o Bomberman (mesmas regras, hitbox e itens) e aparecem com os
+  próprios quadros do cartucho, lidos da sua ROM: andando, parados, ataques
+  com pistola/lança na Boxing e Power Glove, poses de vitória e DRAW GAME da
+  tela de campeão do Battle, morte, atordoamento, Time Up e montados no Louie
+  (montaria e ovos mantêm as cores originais).
+- Figuras próprias na seleção, retratos e rostos no HUD do Battle. Têm uma
+  única paleta no cartucho, então L/R não mudam a cor deles.
+- Subordinate Bomber e o controle de cores continuam funcionando na nova grade.
+
+Evidências: testes nativos de cada byte alterado, tabelas do cursor,
+decodificação do arquivo gráfico, poses, correspondência de sprites, paletas
+e restauração; rotas Linux LLE da seleção, Battle com cinco assentos até o
+placar e a tela de campeão, DRAW GAME, luvas/ovo/morte/atordoamento/Time Up,
+Normal Zone 1-1 e as fases ZONE1/3 - S. Execução deste mod no Windows,
+controles físicos e campanha completa seguem sem qualificação; Linux continua
+experimental.
+
+Baixe **superbomberman5-{version}-windows-x64.zip** ou
+**superbomberman5-{version}-linux-x86_64.AppImage** e confira **SHA256SUMS**.
+Extraia o Windows numa pasta nova e gravável. No Linux, use chmod +x e execute
+(sem FUSE: --appimage-extract-and-run). Forneça sua ROM JPN compatível e use
+**Generate & rebuild**, inclusive ao atualizar: o executável antigo não recebe
+as mudanças nativas automaticamente. Rust não é necessário; o primeiro
+download das ferramentas exige internet.
+
+Os nove mods opcionais estão incluídos, desligados por padrão, com versão de
+pacote 0.1.0. Sem ROM, código gerado, executável jogável derivado dela, assets
+extraídos, saves ou dumps; os gráficos da Honey e do Kotetsu são lidos da sua
+ROM. Recompilação parcial: a maior parte da lógica usa o interpretador. Veja
+README.md, docs/HONEY_KOTETSU.md e docs/STATUS.md.
+'''
+
 if args.output:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(notes, encoding='utf-8', newline='\n')

@@ -39,9 +39,9 @@ before changing code, docs or releases. Humans: see README.md and CONTRIBUTING.m
    `last_run_report.json` or crash reports. `.gitignore` plus
    `tools/audit-publication.py` enforce this; never bypass with `git add -f`
    or by widening the allowlist without a documented provenance review.
-   The single reviewed exception is the maintainer-requested README image
-   `docs/images/five-player-showcase.png` (see docs/images/README.md); it is
-   stripped from release packages.
+   Exception authorized 2026-10-15: gameplay screenshots may be published in
+   `docs/images/` for README/docs/releases, including `five-player-showcase.png`.
+   Extracted sprites/tiles/palettes/audio remain prohibited.
 2. **Never hand-edit generated output.** Change `recomp/symbols.toml` (or
    hand-written parts of `recomp/bank*.cfg`) and regenerate. The block between
    `>>> BEGIN symbols.toml` and `<<< END symbols.toml` is rewritten on regen.
@@ -74,11 +74,13 @@ before changing code, docs or releases. Humans: see README.md and CONTRIBUTING.m
 | Path | What it is |
 |---|---|
 | `src/main.c` | Desktop host shim: title identity, `num_players = 5`, SRAM path. Host itself is the framework's. |
+| `src/portal_labels_mod.c` | Read-only Normal portal labels, from native stage scripts and live gate/OAM visibility; authored PT-BR title font shared via `menu_font.h`, no persistent campaign state. |
 | `src/game_rtl.c` | **The port.** Frame loop (beam-aligned driver), multitap init, ordered mod hooks, reset and save-state extension wiring. |
 | `src/ptbr_mod.c` | PT-BR menu overlay (presentation plugin). Labels come from `translations/ptbr/labels.json` → generated header `ptbr_labels.h` via `tools/generate-ptbr.py`. Also owns the final PPU draw and an observer chain. |
 | `src/normal_character_mod.c` | Opens Battle's character picker after Normal file confirmation using an in-memory snapshot of the suspended campaign. |
 | `src/selection_color_mod.c` | L/R palette cycling in the picker + authored "L+R" cursor hint drawn into borrowed OBJ tiles, restored at line 224. |
 | `src/subordinate_mod.c` | Subordinate Bomber (index 9) in the picker's X cell: in-memory patches + render-only grid figure/HUD alive face from its ROM sprite tiles, authored per-color seat portraits and a palette-indexed defeated HUD face, all in borrowed OBJ tiles. Overlays chain after the color hint (`ObserveOverlays` in `game_rtl.c`). |
+| `src/honey_kotetsu_mod.c` | Honey/Kotetsu (secret-stage bosses) as choices 11/12 in a 6x2 picker: relocated cell arrays (`$7F:F800/$F80C`), lookup-table cursor movement, Bomberman gameplay, render-only skins (object set `$0D` frames from the runtime-decompressed `$CC:289D` archive) replacing the bomber's sprites, HUD face and seat portrait. Exposes `PickerCellCharacters()`/`PickerCellColors()` for the other picker mods. |
 | `src/normal_coop_mod.c` | 1–5 player Normal Game: 65816 trampolines in unused ROM space, interpreter PC hook, safe-spawn search, shared lives, Start rejoin. |
 | `src/host_contract.c`, `src/gen_stubs.c`, `src/variables.h` | Framework contract placeholders (trace hooks, stubs, WRAM names). |
 | `recomp/` | Analysis inputs: `symbols.toml` (source of truth), `bank00.cfg`. `funcs.h` is generated. |
@@ -110,7 +112,8 @@ git submodule update --init --recursive
 - Output: `build-lle/SuperBomberman5SNESRecomp.exe` (contains ROM-derived code — local only).
 - Native tests (built with `BUILD_TESTING`, default ON):
   `./build-lle/normal_coop_tests.exe`, `normal_character_tests.exe`,
-  `selection_color_tests.exe`, `ptbr_render_tests.exe`, `infinite_time_tests.exe`, `subordinate_tests.exe`
+  `selection_color_tests.exe`, `ptbr_render_tests.exe`, `infinite_time_tests.exe`, `subordinate_tests.exe`,
+  `pause_menu_tests.exe`, `portal_labels_tests.exe`, `honey_kotetsu_tests.exe`
   (run each one; the portable toolchain has no ctest.exe).
 - Before any commit:
   ```powershell
@@ -136,7 +139,8 @@ Script grammar (framework `host_main.c`): `wait N`, `press a+b [N]`
 `quit`. Run in an isolated copy (fresh SRAM; enable mods via
 `mods/preloaded/state.toml` in that copy) — see `tests/normal_coop_runtime.py`
 for the canonical harness. Check logs for `interp_cap`, `unresolved-abandon`,
-`BRK`, `error`, `fatal`. Keep all captures under `.bootstrap/`.
+`BRK`, `error`, `fatal`. Keep raw captures under `.bootstrap/`; selected gameplay screenshots for
+README/docs/releases may be copied into `docs/images/`.
 
 Start route by hand: Enter at title → Normal Game → 1 Player → New Game →
 File 1 (A = keyboard X) → Start on Zone 1 map.
@@ -202,15 +206,29 @@ File 1 (A = keyboard X) → Start on Zone 1 map.
 | `$C2:0C9F`, `$C5:6195/$C5:61C6`, `$C1:6BA1`, `$C0:373F` | P1/P2-only `CPX #$02` loops: script op `$12` (`$C2:0C67`, players on tile → exit warps/switches), floor gimmicks, cell hold, point damage (`$C0:374D` = first enemy actor). Coop raises them to the stage roster. Verified by warp runs with P3–P5 |
 | `$1031` / `$1046` | Campaign stage id (`$0D` = 1-01 … `$48`, Zone 5 `$49-$70`, bosses `$67-$6E`: `$67` = ZONE1 - A) / Continue stage saved to SRAM record byte 17 |
 | `$C2:16B8/$C2:16EE`, `$C4:3CCF` | Script actor creation at slot operand−1; bosses create rival bombers in slots 2 (and 3 in `$6A`). Bomber tables `$0FDE/$0F9B/$0FEA/$0FEF/$0FF4/$0FF9/$101F` hold five slots; slot 5 jumps into data. Boss choreography `$C5:2600-$C5:39FF` uses literal slots 2/3 |
+| `$71-$73` | Secret stages `ZONE1/2/3 - S`: Honey and Kotetsu boss actors (`$16C7/$16C8` = `$3C/$3E`), object set `$0D` (anims `$1E-$22` Honey, `$2B-$2F` Kotetsu: R/D/L/U/spin). Reached from Zone 1-11, 2-11, 3-7 exits |
+| `$C0:171D` / `$C0:16CC` | Per object set (`$04FF`): 24-bit animation table (16-bit pointers to `frame, duration` pairs; `$07FF` = offset of the current pair, `$079F` = anim id, `$049F` = frame) / frame table (count + 7-byte pieces `dx16 dy16 tile16 attr`, attr bit0 = 16x16). Bomber set `$10`: anims 1-4 walk R/D/L/U, `$46-$49` stand |
+| `$C0:1B04` / `$C0:1CB0`-`$1CCC` | Graphics archive loader (set `$0AE7`, entries `[vram, size, src24, flags]`, flag bit7 = raw) / decompressor: control = mode bits 5-7 (literal, prev+1, prev, copy -2/-4/-16/-32/-64 in a 256-byte ring at `$0200`) + count-1 bits 0-4. Honey/Kotetsu archive `$CC:289D` (`$1E00` bytes, ends `$CC:40E4`), palettes `$C1:8FC6/$C1:8FA6` |
+| `$C6:8C02/$8C78/$8CEE/$8D62` | Picker cursor right/left/down/up blocks (`$1034` = cell+1 = choice). Exit script `$C6:A575` copies the cell character into `$625F` and keeps the cell in `$6291`. Cursor positions `$C0:C927` with `$C0:C976/$C980` (10 entries) |
+| `$C4:2A3C` / `$C4:3BDE` | Battle stage init `$16C2 = $625F - 1` / score board (script `$C6:7736`, FF.59) stores `$625F - 1` again. Honey/Kotetsu mod patches both and uses `$C2:6040-$60B0` |
+| `$C5:4195` / `$7E4ED5+i` | Item effect jump table (item id at `$145A+cell`; revealed items have `$1052=$10`, `$1152=$80`) / ability bits: 1 remote (`$04`), 2 (`$0B`, with `$167A` bit 6), 4 power glove (`$0C`), 8 boxing glove (`$11`, Y), `$10/$20/$40` bomb types. Items `$12/$13` set `$176A` (not eggs; the egg is `$15`). Verified by placing items with pokes in Battle |
+| Bomber anims (set `$10`) | 1-4 walk, `$15` cheer, `$16` death, `$17-$1A` airborne, `$1F` Time Up, `$20` victory, `$21` stun, `$27-$2A` punch, `$2B-$2E` lift, `$2F-$32` carry walk, `$33-$36` throw, `$37-$3A` hold, `$42-$45` Bad Bomber cart, `$46-$49` stand (R/D/L/U) |
+| `$7E2EEA/$7E2F4A` + object, `$1782+i` | Object's current frame pointer (16-bit + bank; OAM shown can lag it by 1-2 steps) / bomber mount state: bit 7 riding, bit 1 jumping onto the mount. Mount is its own object (set `$01`) in the rider's palette slot. Egg item `$15`. Verified by Battle egg routes and OAM/frame matching |
+| `$D6:D871`, set 6 anims `$50`/`$4E` | Battle champion screen archive (`$0D40` bytes, ends `$D6:E0BB`, 16x16 block layout at OBJ tile `$C0`) / Honey (frames `$A2/$A3`) and Kotetsu (`$9E/$9F`) cheering poses; Honey's palette there `$C1:A8AE`. Verified by champion-screen dumps |
+| `$7F:F800-$F81C` | Honey/Kotetsu mod: relocated 12-cell picker arrays and per-seat choice markers. Zero in all 154 research captures; no ROM operand points there |
 | `$0300` / `$67` | INIDISP shadow / NMI busy latch (`$C0:F3D4`) |
 | `$1FF4-$1FFF` | Enemy→player distance arrays (6 × 2 entries: dx, dy, dx hi, dy hi, dir codes) from `$C3:46CC`; coop relocates to 6 × 5 at `$1FC0-$1FDD` (+`$C3:FF70` seat loop). Verified by contact runs on P1/P3 |
 | `$C5:3D3F` | Copies stage collision map to `$1052` after player spawns; coop settles P3-P5 at its RTL `$C5:3D5D` |
+| `$1D1D`, `$0AEE`, `$C5:00B7/$00C8/$009E` | Native in-stage pause latch / gameplay-ready byte / living-seat Start test and paused poll. Verified by Windows/LLE Normal and Battle pause/resume dumps and disassembly. Pause-menu trampoline uses free `$C5:7180-$719A`; resume sound call `$C5:0096` is suppressed while enabled. |
+| `$C2:1AEC`, `$C7:0B8B/$0B97`, `$1036=4` | Native Normal menu entry store / New Game and Continue initialization / direct map state. VM `$0A` already points after the store (`$C7:0B8E/$0B9A`). Verified by Normal map return and reentry with 1/2/5 seats; skips the file menu. |
+| `$35B2=1`, `$C0:3D8E`, `$C6:A28D` | Native end-of-match arena return flag (with mode 4 and `$1D1E` bit 2) / native setter / interactive Battle arena selector. Verified by disassembly and Windows/LLE Battle exit/reentry. |
+| `$1D1A` bit `$40`, `$C5:3D19` | Completion-record permission: native success exit records `$102F+3` only with this bit. Pause-menu Normal exit clears it, keeping WRAM/SRAM cleared-stage flags unchanged. Verified by disassembly and isolated before/after saves. |
+| `$C4:28CE`, `$15A2+i`, `$1BA3+i` bit 1, `$C5:0307` | End of campaign player reset / actor death / Revenge survivor flag / Battle survivor count. Pause-menu restores saved campaign fields at reset return; Force Draw removes all survivors. Verified by native tests and Normal/Battle runtime transitions. |
+| `$C0:0CED`, `ROM[$8086D0+id]` | Native SFX command group 2: menu move/accept/back ids 1/4/3 (commands `$21/$24/$23`). Verified against Battle setup scripts and Windows/LLE CPU-to-APU traces. |
 | SRAM `$30-$6A` | Checksum (16-bit sum of `$32-$6A`) and three 19-byte Normal records at `$32/$45/$58`: 16 flag bytes (stage N → byte N>>3 bit N&7), cleared count, Continue stage, `$6258` |
 
 When you identify a new address, document it here (and optionally name it in
 `src/variables.h`), with how it was verified.
-
-Timer research: `$0E1C/$0E1D/$0E1E` hold frames/seconds/minutes. Seconds >=60 skip countdown at `$C5:046B`; native 99/9 gives the dash HUD at `$C5:0C00`. Verified by JPN disassembly and Zone 1-1 forced expiration tests.
 
 Portal labels research (2026-10-15): `$C6:0000 + (stage-1)*3` points to the
 native per-stage script list (`$C2:0008`); gate entries use handlers 13/11/12,
@@ -246,6 +264,10 @@ zero animation frames are deliberately invisible, even with an allocated object.
 
 ## 8. Pitfalls already paid for
 
+- Pause panel transparency must dim the field through the color window, with
+  BG3 excluded from color math. Half-adding BG3 also blends PAUSE/ZONE, menu
+  glyphs and the glove. Restore window/fixed-color registers after drawing.
+
 - Windows console pipelines corrupt UTF-8 release notes (U+FFFD). Use
   `tools/release-notes.py --output <file>` and send UTF-8 bytes.
 - PT-BR title text was clipped by the game's HDMA window hiding "Start";
@@ -270,6 +292,16 @@ zero animation frames are deliberately invisible, even with an allocated object.
   Normal player menu from mode 2 and both native BG3 tile pairs at VRAM word
   `$424B/$424C` (302/261) and `$428B/$428C` (278/261), before overlays. Verified
   against translation metadata, an interactive launch and scripted title runs.
+- Picker cells are counted by the script in several places, but the choice is
+  the *cursor value* (`$1034` → `$625F`) until the exit script rewrites
+  `$625F` with the cell's character (`$C6:A575`). A new cell must hold its own
+  choice as character, and every ten-entry table indexed by `$625F - 1`
+  (FF.66/FF.67 portraits, `$C4:2A3C`, score board `$C4:3BDE`) needs a clamp.
+- Script data operands are inline: relocating a WRAM array means patching each
+  `51 lo hi 7E` / `36`/`37` operand plus native long reads (and any mod
+  trampoline that reads it — use registers instead, as Subordinate now does).
+- Hide replaced sprites at y=224, not 240: `y>=240` wraps a 16x16 sprite into
+  the top lines and the overlays treat it as visible.
 - The development exe in `build-lle/` must never be shipped; releases are a
   clean-checkout **setup host** (`SNESRECOMP_SETUP_HOST=ON`, no `src/gen/*.c`).
 - Mod package version (0.1.0) ≠ host version; a `.snesmod` cannot add native

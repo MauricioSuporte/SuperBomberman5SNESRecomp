@@ -166,6 +166,11 @@ int main(void) {
     g_ram[0x1031]=0x0d;instruction(0xc21697,1,1);
     CHECK(!benched_mask && g_ram[0x16c6]==3 && g_ram[0x17ce]==7 && g_ram[0x4ec1]==4 && g_ram[0x1d25]==31);
     g_ram[0x1031]=13;active_mask=saved_active;configure();build_spawn();
+    /* Pause-menu map return restores a benched seat before the scene ends. */
+    g_ram[0x1031]=0x67;benched_mask=16;benched[4][0]=3;benched[4][7]=7;
+    g_ram[0x16c6]=9;g_ram[0x17ce]=1;NormalCoopPrepareWorldMapReturn();
+    CHECK(!benched_mask && g_ram[0x16c6]==3 && g_ram[0x17ce]==7);
+    g_ram[0x1031]=13;
     /* Seats 3-5 request idle OBJ palette slots 7, 6 and 5; P1/P2 keep theirs. */
     g_ram[0x8d]=1;g_ram[0x348]=4;instruction(0xc42adc,1,1);CHECK(g_ram[0x348]==4);
     g_ram[0x8d]=2;g_ram[0x348]=8;instruction(0xc42adc,1,1);CHECK(g_ram[0x348]==0x80);

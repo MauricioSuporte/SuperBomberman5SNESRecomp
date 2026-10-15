@@ -20,6 +20,7 @@
  *  - $C5:129B/$C5:1319/$C5:12EE: the HUD face tables $C2:1470/$C5:12FE have
  *    nine entries; read ten-entry copies at $C2:6020/$C2:6030 instead. */
 #include "subordinate_mod.h"
+#include "honey_kotetsu_mod.h"
 #include "common_rtl.h"
 #include "common_cpu_infra.h"
 #include "mod_runtime.h"
@@ -53,14 +54,15 @@ static const uint8_t grid_skip[]={
     0x80,0x04,        /* 1279 BRA $127F   next cell                  */
     0xea,0xea,0xea,0xea,
 };
+/* A holds the cell character - 1 here ($C2:1243). Not reading the cell
+ * array keeps this working when the Honey/Kotetsu mod relocates it. */
 static const uint8_t grid_x[]={
-    0xbf,0xc9,0x62,0x7e, /* 6000 LDA $7E62C9,X  cell character      */
-    0xc9,CHARACTER,      /* 6004 CMP #10                             */
-    0xf0,0x09,           /* 6006 BEQ $6011  no X for this bomber     */
-    0xce,0x28,0x1d,      /* 6008 DEC $1D28  stock X arrangement      */
-    0xa9,0x90,           /* 600B LDA #$90                            */
-    0x22,0x09,0x00,0xc0, /* 600D JSL $C00009                         */
-    0x60,                /* 6011 RTS                                 */
+    0xc9,INDEX,          /* 6000 CMP #9     character 10             */
+    0xf0,0x09,           /* 6002 BEQ $600D  no X for this bomber     */
+    0xce,0x28,0x1d,      /* 6004 DEC $1D28  stock X arrangement      */
+    0xa9,0x90,           /* 6007 LDA #$90                            */
+    0x22,0x09,0x00,0xc0, /* 6009 JSL $C00009                         */
+    0x60,                /* 600D RTS                                 */
 };
 static void install(void) {
     if(installed || !g_rom || !g_snes || !g_snes->cart) return;
@@ -182,7 +184,7 @@ static uint32_t picker_pc(void) {
 }
 static bool picker(void) {
     uint32_t pc=picker_pc();
-    return g_ram[0x1031]==4 && pc>=0xc68b48 && pc<0xc68ee4 && g_ram[0x62c9+CELL]==CHARACTER;
+    return g_ram[0x1031]==4 && pc>=0xc68b48 && pc<0xc68ee4 && PickerCellCharacters()[CELL]==CHARACTER;
 }
 static unsigned palette_source(unsigned id) {
     unsigned table=g_rom[0x379]|g_rom[0x37a]<<8;
@@ -209,7 +211,7 @@ static void draw_grid(Ppu *ppu) {
     int block=borrow_block(ppu);
     if(block<0) return;
     unsigned tiles[3]={(unsigned)block,(unsigned)block+1,(unsigned)block+16};
-    unsigned shade=g_ram[0x62d3+CELL];
+    unsigned shade=PickerCellColors()[CELL];
     unsigned id=g_rom[0xbb4e + INDEX]+(shade>=6?7:shade);
     const uint8_t *colors=g_rom+palette_source(id);
     for(unsigned c=1;c<9;++c) put(&ppu->cgram[0x80+palette*16+c],(uint16_t)(colors[c*2]|colors[c*2+1]<<8));

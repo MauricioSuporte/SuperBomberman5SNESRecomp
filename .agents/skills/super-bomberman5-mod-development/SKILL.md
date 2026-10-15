@@ -8,8 +8,9 @@ description: Create, extend, debug and validate native mods and gameplay/present
 Read `AGENTS.md` at the repository root first (hard rules, RAM map, build and
 pitfalls). This skill is the step-by-step recipe for a feature. Every existing
 mod (`ptbr`, `normal_character`, `selection_color`, `infinite_time`,
-`normal_coop`) is a worked
-example; copy their structure instead of inventing a new one.
+`normal_coop`, `subordinate`, `honey_kotetsu`, `pause_menu`, `portal_labels`)
+is a worked example; copy their structure instead of inventing a new one. For a
+new playable character read both character sections below first.
 
 ## 1. Scope the feature against evidence
 
@@ -174,6 +175,102 @@ character 10 (`src/subordinate_mod.c`), reusable for the next ones:
    VRAM/OAM/CGRAM restoration. Runtime: picker cycling all colors (PT-BR on),
    Battle through the score board, a defeated HUD face (`poke 0x1ffe7 <mask>`
    with the fixture), Normal Zone 1-1 and the character's boss stage.
+
+### Adding a non-bomber playable character (Honey and Kotetsu, v0.9.0)
+
+Honey and Kotetsu are boss actors of the secret stages `$71-$73`, not bombers:
+there is no entry for them in any per-character table. `src/honey_kotetsu_mod.c`
+makes them choices 11/12 that **play as Bomberman** and are **drawn** with
+their own frames. Reuse this split for any future boss/NPC character.
+
+1. **Identify the art, not the gameplay.** Force the character's stage
+   (`poke 0x1031 <stage>` after `until 0x1031 == 0d`), list objects
+   (`$04FF` set, `$079F` anim, `$07FF` step offset, `$055F/$05BF` x/y,
+   `$06DF` palette slot) and read the set's tables: animations
+   `$C0:171D+set*3` (16-bit pointers to `frame, duration` pairs ending with 0)
+   and frames `$C0:16CC+set*3` (count + 7-byte pieces `dx16 dy16 tile16 attr`,
+   attr bit 0 = 16x16, `$40/$80` flips). Map each animation to a direction
+   (R/D/L/U/spin for Honey `$1E-$22`, Kotetsu `$2B-$2F`) by rendering it.
+2. **Decode graphics at runtime.** Log `$C0:1B04` archive loads (set `$0AE7`,
+   entries `[vram,size,src24,flags]`, bit 7 raw) to find the archive, port the
+   `$C0:1CB0/$1CCC` decompressor (control: mode bits 5-7 literal/prev+1/prev/
+   copy -2/-4/-16/-32/-64 in a 256-byte ring, count-1 bits 0-4) and check the
+   **exact stream end** (`$CC:40E4`) at install; refuse the feature on
+   mismatch. VRAM layout is 16x16 blocks (TL, BL, TR, BR): frame tile `t` is
+   archive block `(t%16)/2 + 8*(t/32)`, sub-tile `(t%2)*2 + (t/16)%2`.
+   Validate every frame you will draw (piece count, tile range); some pieces
+   use tiles outside the archive (Kotetsu `$F0-$F7`) — skip those, don't fail.
+   Palettes are read from the ROM (`$C1:8FC6` / `$C1:8FA6`); nothing ripped
+   goes into source.
+3. **Grow the picker without touching native tables.** The picker script
+   counts ten cells everywhere. Relocate the cell arrays (`$62C9/$62D3`) to
+   verified-free WRAM (`$7F:F800`, 12 entries) by patching every script
+   operand (`51 lo hi 7E`, `36/37`) and native long read, replace the cursor
+   arithmetic with lookup tables (`$C6:8C02/$8C78/$8CEE/$8D62`, op `$36`),
+   extend cursor-position tables, and repack the grid (`$C2:12D2`). The exit
+   script writes the **cell character** to `$625F` (`$C6:A575`): the new
+   cells must hold their own choice numbers. Expose the arrays through
+   `PickerCellCharacters()/PickerCellColors()` so the colors, Normal-picker
+   and Subordinate mods keep working (their tests stub these helpers).
+4. **Map the choice before the native consumers.** Every table indexed by
+   `$625F-1` must be clamped: stage init `$C4:2A3C` (store the real choice in
+   a per-seat marker, `$7F:F818`, then play as 1), score board `$C4:3BDF`,
+   portrait helpers FF.66/FF.67. Clear markers on the title (`$1031 == 2`);
+   the Normal hand-off (`HoneyKotetsuSetSeatChoice`) records them too.
+5. **Replace exactly the bomber's sprites.** Do not pick sprites by palette
+   and distance: the Louie mount (its own object, set `$01`) and eggs share
+   the rider's palette slot. Read the object's current frame pointer
+   (`$7E2EEA/$7E2F4A + object`), find each piece in OAM at object + offset
+   (search a constant screen offset; airborne frames are offset), and keep the
+   last 2-3 distinct pointers because the OAM shown lags the pointer by one or
+   two steps (without that, ~3/48 frames flashed the native bomber). Borrow
+   all 16x16 blocks before hiding anything; reuse the hidden native OAM slots
+   first to keep priority; hide at y=224.
+6. **Pick a free OBJ palette.** Use a palette no visible sprite uses (7 first)
+   and recolor the seat's slot only as a last resort; one palette per skin per
+   frame, shared with the HUD face (set the face sprite's palette bits).
+7. **Pose mapping from bomber animations** (set `$10`): walk 1-4 and carry
+   walk `$2F-$32` (step from `$07FF`); actions `$27-$2A` punch, `$33-$36`
+   throw, `$3B-$3E`; stand for the other four-way groups (riding `$05-$14`,
+   lift, hold, airborne `$17-$1A`, cart); victory `$20`/cheer `$15` (also the
+   DRAW GAME screen, mode `$0A`, and the champion screen, mode 5); spin for the
+   rest (death `$16` — keep the native last step, the ashes —, stun `$21`,
+   Time Up `$1F`). `$1782+seat` bit 7 riding (stand the figure where the
+   native rider frame ends, no shadow), bit 1 jumping onto the mount (no
+   shadow). Look for dedicated cartridge poses before inventing: the Battle
+   champion screen (archive `$D6:D871`, set 6 anims `$50`/`$4E`) holds the
+   cheering frames used for victory/draw, alternated with native durations.
+8. **Canvas.** Compose frames into a palette-index canvas (48x64, origin
+   16,42) and emit 16x16 blocks for non-empty areas (second column for wide
+   weapon frames). Different archives use different anchors (champion frames
+   are left-anchored, feet one line above the origin): align feet, not tops.
+9. **Validate like a player.** Side-by-side scripted routes against the same
+   route without the mod, dumped every frame for animated cases: walking,
+   power/boxing glove (items placed with `poke 0x145a+cell`, revealed via
+   `$1052=$10`, `$1152=$80`), own-bomb death, stun (`poke 0x15ba 40`), victory
+   (other seats `poke 0x15a3.. 99`), draw (all seats), Time Up, egg (item
+   `$15`, revealed from a destroyed soft block) → ride → dismount, score board
+   and champion screen (three won rounds), picker portraits and HUD faces,
+   plus picker/Battle with Subordinate and colors enabled.
+
+### Playable-character checklist (any new one)
+
+- Native table or skin? If the cartridge has per-character table entries, use
+  the Subordinate route; otherwise play as an existing character and skin it.
+- Choice number and cell: next free choice (13+), its own picker cell; extend
+  `kRight/kLeft/kVert`, cursor tables and the grid packing; keep
+  `PickerCellCount()` the single source of truth for other mods.
+- Every `$625F-1`/`$16C2` consumer clamped; markers per seat; Normal hand-off.
+- Art fully from ROM at runtime with an exact-end check; refuse on mismatch.
+- Exact-piece replacement, OAM-lag tolerant, free palette, mount/egg intact.
+- Poses for walk/stand/action/victory/draw/death/stun/Time Up/riding,
+  picker figure, seat portrait, HUD face (alive and defeated), score board,
+  champion screen.
+- Single cartridge palette: L/R colors disabled for it (`selection_color_mod.c`).
+- Tests: patch bytes and restore, movement tables inverse/reachable, refusal
+  on unexpected bytes or corrupt stream, synthetic archive encoder with the
+  exact end, pose mapping, piece matching (nearby same-slot sprite untouched),
+  palette fallback, riding lift, alternating poses, exact restoration.
 
 ### Research toolbox that paid off
 
