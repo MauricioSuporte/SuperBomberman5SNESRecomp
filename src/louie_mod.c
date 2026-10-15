@@ -100,13 +100,13 @@ static void a8(CpuState *cpu,unsigned value) {
 }
 static void redirect(uint32_t pc) { interp_bridge_pre_opcode_redirect(pc); }
 
-/* PCM is a local user resource. Never package this file or cartridge audio. */
+/* Maintainer-supplied add-on PCM lives in the selected mod package. */
 static SNESModAudioClip load_wav(const char *variable,const char *filename) {
     const char *path=getenv(variable);
     char package_root[3072],local_path[4096];
     if(!path && snes_mod_runtime_package_root_c("superbomberman5.louie-improvements",NULL,
                                                package_root,sizeof(package_root))) {
-        int n=snprintf(local_path,sizeof(local_path),"%s/../../../../local/louie-improvements/%s",package_root,filename);
+        int n=snprintf(local_path,sizeof(local_path),"%s/audio/%s",package_root,filename);
         if(n>0 && (size_t)n<sizeof(local_path)) path=local_path;
     }
     if(!path) {

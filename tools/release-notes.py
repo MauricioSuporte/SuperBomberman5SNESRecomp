@@ -585,9 +585,10 @@ in Mods → Gameplay after Generate & rebuild. Press Y while mounted:
 - Black can hatch from eggs and performs a protected dash that pushes players
   and Normal enemies. It retains the native Louie death sound.
 
-Optional Black acquisition/dash sounds use player-supplied local
-MountBlackLouie.wav and BlackLouieDash.wav; no WAVs are distributed. See
-[local audio setup](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/blob/v{version}/docs/LOUIE_IMPROVEMENTS.md).
+Black acquisition/dash sounds include the maintainer-supplied additional
+resources MountBlackLouie.wav and BlackLouieDash.wav, explicitly authorized
+for distribution as non-extracted mod resources. See
+[audio details and provenance](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/blob/v{version}/docs/LOUIE_IMPROVEMENTS.md).
 The acquisition cue matches the native Louie timing; initial digital silence
 is skipped in memory. Super Bomberman 4 characters are still in development
 and are excluded from this release.
@@ -627,9 +628,10 @@ Novo mod opcional **Louie improvements**. Depois de Generate & rebuild, ative
 - Black pode sair dos ovos e executa uma arrancada protegida que empurra
   jogadores e inimigos do Normal. Mantém o som nativo de morte dos Louies.
 
-Os sons opcionais de aquisição/arrancada do Black usam MountBlackLouie.wav e
-BlackLouieDash.wav locais, fornecidos pelo jogador; os WAVs não acompanham a
-release. Veja as [instruções de áudio local](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/blob/v{version}/docs/LOUIE_IMPROVEMENTS.md).
+Os sons de aquisição/arrancada do Black incluem MountBlackLouie.wav e
+BlackLouieDash.wav como recursos adicionais fornecidos pelo mantenedor, que
+autorizou a publicação e esclareceu não serem extrações do jogo original.
+Veja os [detalhes e a origem do áudio](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/blob/v{version}/docs/LOUIE_IMPROVEMENTS.md).
 A aquisição usa o mesmo instante dos outros Louies e o silêncio digital
 inicial é ignorado em memória. Os personagens do Super Bomberman 4 continuam
 em desenvolvimento e ficam fora desta release.

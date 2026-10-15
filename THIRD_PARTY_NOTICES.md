@@ -23,3 +23,5 @@ without ROM extraction. Its original author/license was not supplied, and the
 project's software license does not license this artwork. See `assets/README.md`.
 
 The Linux AppImage uses the AppImage type2 runtime (source commit 8f39b89e2ac31e1640b3d3f7e9a5108e6ce805fa), verified by SHA-256. Runtime and linked library notices are preserved under licenses/appimage/. Corresponding runtime source and build recipe: https://github.com/AppImage/type2-runtime/tree/8f39b89e2ac31e1640b3d3f7e9a5108e6ce805fa . The AppImage launcher icon is an authored geometric SVG with the numeral 5; it contains no cartridge pixels. appimagetool is used only during packaging and is not bundled.
+
+Black Louie acquisition/dash sounds are maintainer-supplied additional mod resources, explicitly authorized for distribution on 2026-10-15 and identified by the maintainer as not extracted from the original game. Their provenance, source paths, digests and licensing limits are recorded in `mods/preloaded/packages/superbomberman5.louie-improvements/0.1.0/AUDIO_PROVENANCE.md`. The exception does not permit cartridge audio dumps.

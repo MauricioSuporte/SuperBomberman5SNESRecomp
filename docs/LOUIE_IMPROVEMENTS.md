@@ -27,16 +27,17 @@ Behavior is informed by the three ability classes in the maintainer's SB6
 Unity project. Sprite sheets are references only: all displayed mount art,
 palettes and animations come from the player's SB5 cartridge at runtime.
 
-### Local Black Louie sounds
+### Included Black Louie sounds
 
-The maintainer selected SB6's `Assets/Resources/Sounds/MountBlackLouie.wav`
-and `Assets/Sounds/BlackLouieDash.wav`. Both are user-supplied local PCM WAVs,
-never embedded or packaged. In this workspace they are installed under
-`mods/local/louie-improvements/` (ignored), also beside the development
-executable under `build-lle/mods/local/louie-improvements/`. The loader resolves
-the directory relative to the selected package root; desktop shortcuts work
-independently of the working directory. `SB5_BLACK_LOUIE_SFX` and
-`SB5_BLACK_LOUIE_DASH_SFX` can override the acquisition and dash paths.
+The release includes `audio/MountBlackLouie.wav` and
+`audio/BlackLouieDash.wav` inside the selected mod package. No separate
+installation is needed. The maintainer supplied them from SB6 and explicitly
+authorized publication as additional mod resources, clarifying that they are
+not extractions of the original game. See the package's
+[AUDIO_PROVENANCE.md](../mods/preloaded/packages/superbomberman5.louie-improvements/0.1.0/AUDIO_PROVENANCE.md)
+for exact source paths, hashes and licensing limits. `SB5_BLACK_LOUIE_SFX` and
+`SB5_BLACK_LOUIE_DASH_SFX` override the acquisition/dash paths if desired.
+The package-root lookup works independently of the working directory.
 
 The supported format is PCM signed 16-bit, mono/stereo, 8–192 kHz, at most
 4 MiB per file. The host's PCM overlay mixer plays acquisition at the other
@@ -93,22 +94,24 @@ As três classes de habilidades do projeto SB6 Unity orientam o comportamento.
 As imagens anexadas servem de referência; gráficos, paletas e animações são
 lidos da ROM de SB5 do jogador durante a execução.
 
-Os áudios escolhidos são `Assets/Resources/Sounds/MountBlackLouie.wav` e
-`Assets/Sounds/BlackLouieDash.wav` do SB6. Nesta máquina ficam em
-`mods/local/louie-improvements/`, ignorados pelo Git, com cópias em
-`build-lle/mods/local/louie-improvements/`. O caminho é resolvido a partir do
-catálogo de mods, inclusive ao abrir pelo atalho. `SB5_BLACK_LOUIE_SFX` e
-`SB5_BLACK_LOUIE_DASH_SFX` permitem indicar outros caminhos locais para a
-aquisição e a arrancada, respectivamente. Aceita WAV PCM de 16 bits,
-mono/estéreo, 8–192 kHz, até 4 MiB por arquivo.
+Os dois sons acompanham a release em `audio/MountBlackLouie.wav` e
+`audio/BlackLouieDash.wav` dentro do pacote selecionado. Não é necessário
+instalá-los separadamente. O mantenedor forneceu os arquivos pelo SB6,
+autorizou a distribuição e esclareceu que não são extrações do jogo original.
+Origem, hashes e limites de licença constam no
+[AUDIO_PROVENANCE.md](../mods/preloaded/packages/superbomberman5.louie-improvements/0.1.0/AUDIO_PROVENANCE.md).
+O caminho é resolvido a partir do pacote, inclusive ao abrir pelo atalho.
+`SB5_BLACK_LOUIE_SFX` e `SB5_BLACK_LOUIE_DASH_SFX` permitem substituir os
+caminhos de aquisição/arrancada. Aceita WAV PCM de 16 bits, mono/estéreo,
+8–192 kHz, até 4 MiB por arquivo.
 
 O som do ovo começa no mesmo ponto nativo dos demais Louies (`$C4:5168`),
 antes do fim da animação de montagem. A arrancada toca uma vez por ativação
 válida de Y, com vozes independentes para P1–P5. O silêncio digital inicial
 dos dois WAVs é ignorado ao carregá-los, preservando os arquivos e o ataque
-da forma de onda. Sem um arquivo local, somente seu respectivo som fica
-silencioso. Reset e carregamento interrompem as vozes deste mod. Os áudios
-não são incorporados ao código nem ao pacote público.
+da forma de onda. Se um arquivo estiver ausente, somente seu respectivo som fica silencioso.
+Reset e carregamento interrompem as vozes deste mod. Os áudios são arquivos
+adicionais do pacote, sem incorporação de áudio do cartucho ao código.
 
 A implementação usa hooks aditivos do interpretador e trampolins autorais em
 `$C4:5B80-$5C1F`, com restauração dos bytes originais no reset. Estados salvos

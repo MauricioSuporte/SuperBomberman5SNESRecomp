@@ -8,8 +8,11 @@
 static SNESModActivationCallback activation,reset_callback;
 int snes_mod_register_reset_callback(SNESModActivationCallback f) { reset_callback=f;return 1; }
 int snes_mod_register_activation_plugin(const char *id,SNESModActivationCallback f) { (void)id;activation=f;return 1; }
+static const char *audio_package_root;
 int snes_mod_runtime_package_root_c(const char *id,const char *version,char *out,uint32_t cap) {
-    (void)id;(void)version;(void)out;(void)cap;return 0;
+    (void)id;(void)version;
+    if(!audio_package_root) return 0;
+    return snprintf(out,cap,"%s",audio_package_root)>0;
 }
 static unsigned redirect_pc,registrations;
 bool interp_bridge_add_pre_opcode_hook(uint32_t pc,InterpPreOpcodeHook f) { (void)pc;(void)f;++registrations;return true; }
@@ -20,7 +23,7 @@ SNESModAudioClip snes_mod_audio_register_pcm_s16(const int16_t *s,uint32_t n,uin
 void snes_mod_audio_unregister(SNESModAudioClip c) { (void)c; }
 SNESModAudioVoice snes_mod_audio_play_voice(SNESModAudioClip c,int g) { (void)g;++plays_audio;last_clip=c;return c; }
 void snes_mod_audio_stop_voice(SNESModAudioVoice c) { (void)c; }
-static const char *test_audio_path(const char *name) { (void)name;return "louie-pcm-test.tmp"; }
+static const char *test_audio_path(const char *name) { (void)name;return audio_package_root?NULL:"louie-pcm-test.tmp"; }
 #define getenv test_audio_path
 #include "../src/louie_mod.c"
 #undef getenv
@@ -144,7 +147,17 @@ int main(void) {
     audio=fopen("louie-pcm-test.tmp","wb");CHECK(audio);
     CHECK(fwrite(onset_wav,1,sizeof(onset_wav),audio)==sizeof(onset_wav));fclose(audio);
     CHECK(load_wav("SB5_BLACK_LOUIE_SFX","MountBlackLouie.wav") && last_frames==1);
-    remove("louie-pcm-test.tmp");mount_clip=dash_clip=0;
+    remove("louie-pcm-test.tmp");
+    char package_path[4096];snprintf(package_path,sizeof(package_path),"%s",__FILE__);
+    char *slash=strrchr(package_path,'/');
+    if(!slash) slash=strrchr(package_path,'\\');
+    CHECK(slash);*slash=0;
+    const char *relative="/../mods/preloaded/packages/superbomberman5.louie-improvements/0.1.0";
+    CHECK(strlen(package_path)+strlen(relative)<sizeof(package_path));strcat(package_path,relative);
+    audio_package_root=package_path;mount_clip=dash_clip=0;registrations_audio=0;
+    load_audio();CHECK(mount_clip==1 && dash_clip==2 && last_frames==30696);
+    audio_package_root=NULL;
+mount_clip=dash_clip=0;
     Stream stream={.base.func=transfer};LouieSave(&stream.base);
     unsigned duration=state.dash[0];memset(&state,0,sizeof(state));
     stream.at=0;stream.reading=true;LouieLoad(&stream.base,0);CHECK(!failed && state.dash[0]==duration);

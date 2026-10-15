@@ -21,6 +21,17 @@ BINARIES = {'.exe', '.dll', '.obj', '.o', '.a', '.lib', '.pdb', '.zip', '.snesmo
             '.rar', '.tar', '.gz', '.appimage'}
 
 
+APPROVED_AUDIO = {'mods/preloaded/packages/superbomberman5.louie-improvements/0.1.0/audio/MountBlackLouie.wav': '4b5afa1270189ab095089b006a73b222320fc28926534466570091b911674f65', 'mods/preloaded/packages/superbomberman5.louie-improvements/0.1.0/audio/BlackLouieDash.wav': '82e30aaced6c9276a564e137bc38af2b163fa287d521030cb5b06eff5d7fa36e'}
+
+
+def approved_audio_path(path: str) -> str | None:
+    parts = pathlib.PurePosixPath(path).parts
+    for candidate in (path, "/".join(parts[1:])):
+        if candidate in APPROVED_AUDIO:
+            return candidate
+    return None
+
+
 def git(*args: str) -> str:
     return subprocess.check_output(['git', '-C', str(ROOT), *args], text=True,
                                    encoding='utf-8').strip()
@@ -51,6 +62,8 @@ def forbidden(path: str, release: bool = False) -> str | None:
     # This path permission does not authorize extracted cartridge assets.
     if len(parts) == 3 and parts[:2] == ['docs', 'images'] and p.suffix.lower() in {'.png', '.jpg', '.jpeg', '.webp'}:
         return None
+    if p.suffix.lower() == '.wav':
+        return None if path in APPROVED_AUDIO or (release and approved_audio_path(path)) else 'audio asset requires an explicit provenance review'
     if not release and p.suffix.lower() in MEDIA | BINARIES:
         return 'binary/media asset requires an explicit provenance review'
     return None
@@ -65,6 +78,9 @@ def audit_source(history: bool) -> list[str]:
     errors = []
     paths = git('ls-files', '-z').split('\0')
     for path in filter(None, paths):
+        approved = approved_audio_path(path)
+        if approved and hashlib.sha256((ROOT / path).read_bytes()).hexdigest() != APPROVED_AUDIO[approved]:
+            errors.append(f'tracked {path}: approved audio digest mismatch')
         reason = forbidden(path)
         if reason:
             errors.append(f'tracked {path}: {reason}')
@@ -79,6 +95,11 @@ def audit_source(history: bool) -> list[str]:
             reason = forbidden(path)
             if reason:
                 errors.append(f'history {path}: {reason}')
+            approved = approved_audio_path(path)
+            if approved:
+                data = subprocess.check_output(['git', '-C', str(ROOT), 'cat-file', 'blob', oid])
+                if hashlib.sha256(data).hexdigest() != APPROVED_AUDIO[approved]:
+                    errors.append(f'history {path}: approved audio digest mismatch')
             kind = git('cat-file', '-t', oid)
             if kind == 'blob' and int(git('cat-file', '-s', oid)) in {4194304, 4194816}:
                 data = subprocess.check_output(['git', '-C', str(ROOT), 'cat-file', 'blob', oid])
@@ -96,6 +117,9 @@ def audit_zip(path: pathlib.Path) -> list[str]:
             if p.is_absolute() or '..' in p.parts or '\\' in item.filename:
                 errors.append(f'archive path traversal: {item.filename}')
                 continue
+            approved = approved_audio_path(item.filename)
+            if approved and hashlib.sha256(archive.read(item)).hexdigest() != APPROVED_AUDIO[approved]:
+                errors.append(f'archive {item.filename}: approved audio digest mismatch')
             reason = forbidden(item.filename, release=True)
             if reason:
                 errors.append(f'archive {item.filename}: {reason}')

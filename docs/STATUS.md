@@ -6,8 +6,9 @@ The Louie branch starts at published main `9ceb220` and adds only Louie
 improvements plus release metadata. The in-development Super Bomberman 4
 characters, external ROM loader, abilities and package are excluded. Existing
 framework pins remain unchanged; local dirty submodules are not released.
-The eleven activation packages are default-disabled. Optional Black Louie
-WAVs remain local and are excluded from Git and both platform packages.
+The eleven activation packages are default-disabled. The two Black Louie WAVs are included as additional resources explicitly
+authorized by the maintainer, with provenance and SHA-256 checks. This release decision supersedes the
+ignored-local-audio arrangement described in the earlier development notes below.
 
 All eleven native test binaries and the Python publication/encoding tests
 passed locally (two Linux AppRun tests skipped on Windows). Windows/LLE
@@ -20,8 +21,8 @@ A branch dos Louies parte da main publicada `9ceb220` e acrescenta somente
 as melhorias dos Louies e metadados da release. Personagens do Super Bomberman
 4, carregador de ROM externa, habilidades e pacote ainda em desenvolvimento
 ficam de fora. Pins dos frameworks preservados; alterações locais dos
-submódulos não são publicadas. Onze pacotes desligados por padrão; WAVs
-opcionais do Black ficam locais. Os onze testes nativos e os testes Python
+submódulos não são publicadas. Onze pacotes desligados por padrão; os dois WAVs adicionais do Black
+estão incluídos com autorização expressa, origem e hashes documentados. Os onze testes nativos e os testes Python
 passaram (dois testes Linux pulados no Windows). Rotas e limites abaixo;
 builds de setup usam checkouts CI limpos e dependências fixadas.
 
