@@ -18,6 +18,10 @@ typedef struct {
     unsigned slot, count, x, y, guard;
     const char *text;
 } PtbrObjectLabel;
+typedef struct {
+    uint16_t guard[24];
+    const char *title, *tips[3];
+} PtbrEnding;
 #include "ptbr_labels.h"
 
 #include "menu_font.h"
@@ -52,7 +56,7 @@ static void render_text(uint8_t pixels[32][224], const PtbrLabel *label) {
     const unsigned char *at = (const unsigned char *)label->text;
     unsigned count=0;
     while(*at) { next_character(&at); ++count; }
-    unsigned stride=label->style==1?8:7;
+    unsigned stride=label->style==1?8:label->style==5?6:7;
     if(label->style==2 || label->style==4) {
         stride=width/count;
         if(stride>11) stride=11;
@@ -63,7 +67,7 @@ static void render_text(uint8_t pixels[32][224], const PtbrLabel *label) {
         stride=18;
         for(unsigned y=24;y<label->height;++y) for(unsigned b=0;b<width;++b) pixels[y][b]=12;
     }
-    unsigned glyph_width=label->style==0?5:stride-2;
+    unsigned glyph_width=label->style==0 || label->style==5?5:stride-2;
     unsigned x=(label->style>=2 || (label->style==1 && label->ink==3))?(width-count*stride)/2:0;
     at=(const unsigned char *)label->text;
     while (*at) {
@@ -80,7 +84,8 @@ static void render_text(uint8_t pixels[32][224], const PtbrLabel *label) {
         else if (c == 0xCA) { c = 'E'; accent = 4; }
         else if (c == 0xD4) { c = 'O'; accent = 4; }
         static const uint8_t arrow[7]={8,4,2,1,2,4,8};
-        const uint8_t *glyph=c>='A'&&c<='Z'?kMenuLetters[c-'A']:c>='0'&&c<='9'?kMenuDigits[c-'0']:c=='>'?arrow:NULL;
+        static const uint8_t punctuation[3][7]={{14,17,1,2,4,0,4},{4,4,4,4,4,0,4},{25,25,2,4,8,19,19}};
+        const uint8_t *glyph=c>='A'&&c<='Z'?kMenuLetters[c-'A']:c>='0'&&c<='9'?kMenuDigits[c-'0']:c=='>'?arrow:c=='?'?punctuation[0]:c=='!'?punctuation[1]:c=='%'?punctuation[2]:NULL;
         unsigned top=label->style==1?4:accent && accent!=2?2:0, height=(label->height==32?28:14)-top;
         uint8_t mask[32][20]={{0}};
         if(glyph) {
@@ -115,6 +120,133 @@ static void save_write(Ppu *ppu, unsigned address, uint16_t value) {
     address &= 0x7FFF;
     s_saved[s_saved_count++] = (SavedWord){(uint16_t)address, ppu->vram[address]};
     ppu->vram[address] = value;
+}
+
+/* Certificates share an authored character atlas instead of reserving a tile
+ * for every letter position. This keeps long pages below the BG tile budget.
+ * Recognition uses the complete native rank row, never the percentage alone:
+ * the game also distinguishes boss routes, endings and secret-stage progress. */
+typedef struct { uint16_t tiles[256]; unsigned next; bool opaque; } EndingFont;
+static void ending_clear(Ppu *ppu, unsigned row, unsigned column, unsigned width, unsigned height) {
+    for(unsigned y=0;y<height;++y) for(unsigned x=0;x<width;++x)
+        save_write(ppu,0x3000+(row+y)*32+column+x,0x20cd);
+}
+static void ending_text(Ppu *ppu, EndingFont *font, unsigned row, unsigned column, unsigned width, const char *text) {
+    const unsigned char *at=(const unsigned char *)text;
+    unsigned count=0;
+    while(*at) { next_character(&at);++count; }
+    if(count>width) return;
+    if(font->opaque) {
+        for(unsigned y=0;y<2;++y) for(unsigned x=0;x<width;++x)
+            save_write(ppu,0x3000+(row+y)*32+column+x,0x22fe);
+    } else ending_clear(ppu,row,column,width,2);
+    column+=(width-count)/2;
+    at=(const unsigned char *)text;
+    for(unsigned x=0;*at;++x) {
+        const unsigned char *begin=at;
+        unsigned c=next_character(&at);
+        if(c==' ') continue;
+        if(c>=256) return;
+        if(!font->tiles[c]) {
+            char letter[3]={0};memcpy(letter,begin,(size_t)(at-begin));
+            PtbrLabel label={.width=1,.height=16,.ink=2,.text=letter};
+            uint8_t pixels[32][224];render_text(pixels,&label);
+            if(font->opaque) for(unsigned y=0;y<16;++y) for(unsigned b=0;b<8;++b)
+                if(!pixels[y][b]) pixels[y][b]=1;
+            unsigned tile=font->next;font->next+=2;font->tiles[c]=(uint16_t)tile;
+            for(unsigned y=0;y<16;++y) {
+                uint16_t planes[2]={0};
+                for(unsigned b=0;b<8;++b) for(unsigned plane=0;plane<4;++plane)
+                    if(pixels[y][b]&(1u<<plane)) planes[plane/2]|=(uint16_t)(1u<<(7-b+(plane%2)*8));
+                unsigned address=(tile+y/8)*16+y%8;
+                save_write(ppu,address,planes[0]);save_write(ppu,address+8,planes[1]);
+            }
+        }
+        for(unsigned y=0;y<2;++y)
+            save_write(ppu,0x3000+(row+y)*32+column+x,(uint16_t)(0x2000|font->tiles[c]+y));
+    }
+}
+static void apply_endings(Ppu *ppu) {
+    if((ppu->bgmode&7)!=1 || PPU_bgTilemapAdr(ppu,0)!=0x3000 || PPU_bgTileAdr(ppu,0)!=0) return;
+    bool certificate=ppu->vram[0x3144]==0x2107 && ppu->vram[0x3145]==0x2108;
+    bool tips=ppu->vram[0x30ae]==0x21e8 && ppu->vram[0x32c6]==0x21e9;
+    if(!certificate && !tips) return;
+    const PtbrEnding *ending=NULL;
+    unsigned rank_row=certificate?19:8;
+    for(unsigned n=0;n<sizeof(kEndings)/sizeof(kEndings[0]);++n) {
+        bool matched=true;
+        for(unsigned x=0;x<24;++x)
+            if((ppu->vram[0x3000+rank_row*32+4+x]&1023)!=kEndings[n].guard[x]) {matched=false;break;}
+        if(matched) {ending=&kEndings[n];break;}
+    }
+    if(!ending || s_saved_count || sizeof(s_saved)/sizeof(s_saved[0])<4096) return;
+    EndingFont font={.next=0x220};
+    if(certificate) {
+        ending_clear(ppu,4,3,26,6);
+        ending_text(ppu,&font,6,4,24,kCompletion_certificate);
+        ending_text(ppu,&font,10,4,24,kCompletion_cleared);
+        /* Preserve the three native digits and percent sign at columns 4-10. */
+        ending_text(ppu,&font,13,11,17,kCompletion_rank_intro);
+        ending_text(ppu,&font,16,4,24,kCompletion_rank_award);
+        ending_text(ppu,&font,19,4,24,ending->title);
+        /* The signature is baked into BG2's parchment. Cover only its paper
+         * rectangle with the matching native palette entry, keeping the seal
+         * and border intact. Other page text remains transparent. */
+        memset(font.tiles,0,sizeof(font.tiles));font.next=0x2a0;font.opaque=true;
+        for(unsigned y=0;y<8;++y) {save_write(ppu,0x2fe0+y,0x00ff);save_write(ppu,0x2fe8+y,0);}
+        ending_text(ppu,&font,24,9,20,kCompletion_signature);
+    } else {
+        ending_text(ppu,&font,5,4,24,kCompletion_tips);
+        ending_text(ppu,&font,8,4,24,ending->title);
+        ending_clear(ppu,12,4,24,8);
+        for(unsigned i=0;i<3;++i) ending_text(ppu,&font,12+i*3,4,24,ending->tips[i]);
+        /* Native digits, percent sign and punctuation remain at 19-27. */
+        ending_text(ppu,&font,22,6,13,kCompletion_progress);
+    }
+    ++ppu->vramWriteCount;
+}
+
+/* Defeat is Mode 7 with OBJ lettering. Match every piece of each native
+ * strip, including palette, position and size, before replacing its unique
+ * tiles. Both halves of the large title retain the native inter-word gap. */
+static bool defeat_strip(Ppu *ppu, unsigned x, unsigned y, unsigned columns,
+                         unsigned rows, unsigned first, const char *text) {
+    unsigned slots[16],found=0;
+    for(unsigned row=0;row<rows;++row) for(unsigned col=0;col<columns;++col) {
+        unsigned tile=first+row*32+col*2,slot=128;
+        for(unsigned i=0;i<128;++i) {
+            if(ppu->oam[i*2+1]!=(0x2400|tile) || (ppu->oam[i*2]>>8)>=224) continue;
+            if(slot!=128 || ppu->oam[i*2]!=((x+col*16)|((y+row*16)<<8)) ||
+               ((ppu->highOam[i/4]>>(i%4*2))&3)!=2) return false;
+            slot=i;
+        }
+        if(slot==128) return false;
+        slots[found++]=slot;
+    }
+    if(s_saved_count+found*64>sizeof(s_saved)/sizeof(s_saved[0])) return false;
+    PtbrLabel label={.width=columns*2,.height=rows*16,.style=rows==2?4:0,.ink=12,.text=text};
+    uint8_t pixels[32][224];render_text(pixels,&label);
+    for(unsigned i=0;i<found;++i) {
+        unsigned tile=ppu->oam[slots[i]*2+1]&255;
+        for(unsigned dy=0;dy<16;++dy) for(unsigned tx=0;tx<2;++tx) {
+            uint16_t planes[2]={0};
+            for(unsigned dx=0;dx<8;++dx) for(unsigned plane=0;plane<4;++plane)
+                if(pixels[i/columns*16+dy][i%columns*16+tx*8+dx]&(1u<<plane))
+                    planes[plane/2]|=(uint16_t)(1u<<(7-dx+plane%2*8));
+            unsigned address=PPU_objTileAdr1(ppu)+(tile+dy/8*16+tx)*16+dy%8;
+            save_write(ppu,address,planes[0]);save_write(ppu,address+8,planes[1]);
+        }
+    }
+    return true;
+}
+static void apply_defeat(Ppu *ppu) {
+    if((ppu->bgmode&7)!=7 || PPU_objSize(ppu)!=0 || PPU_bgTilemapAdr(ppu,0)!=0x3000) return;
+    unsigned before=s_saved_count;
+    defeat_strip(ppu,62,23,4,2,0x00,kCompletion_defeat_left);
+    defeat_strip(ppu,134,23,4,2,0x08,kCompletion_defeat_right);
+    defeat_strip(ppu,98,159,4,1,0x40,kCompletion_continue);
+    defeat_strip(ppu,98,183,2,1,0x48,kCompletion_end);
+    if(s_saved_count!=before) ++ppu->vramWriteCount;
 }
 
 /* Stage selection's blue heading is a strip of 16x16 OBJ tiles. Its
@@ -152,6 +284,8 @@ static void apply_object_labels(Ppu *ppu) {
 }
 
 static void apply_labels(Ppu *ppu) {
+    apply_defeat(ppu);
+    apply_endings(ppu);
     if ((ppu->bgmode & 7) != 1) return;
     enum { count=sizeof(kLabels)/sizeof(kLabels[0]) };
     bool matched[count];

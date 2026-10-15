@@ -10,7 +10,7 @@ parser.add_argument('--header', type=Path)
 parser.add_argument('--mod-out', type=Path)
 args = parser.parse_args()
 data = json.loads((ROOT / 'translations/ptbr/labels.json').read_text(encoding='utf-8'))
-allowed = set('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ÇÃÕÉÁÍÓÚÂÊÔ')
+allowed = set('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ÇÃÕÉÁÍÓÚÂÊÔ!?%')
 offsets = {}
 slots = {}
 slot_sizes = {}
@@ -23,7 +23,7 @@ lines = ['/* Generated from authored labels.json; no ROM is read. */',
          'static const PtbrLabel kLabels[] = {']
 for label in data['labels']:
     text = label['text']
-    if not text or set(text) - allowed or len(text)*(8 if label['style']=='title' else 18 if label['style']=='poster' else 7)-1 > label['width']*8:
+    if not text or set(text) - allowed or len(text)*(8 if label['style']=='title' else 18 if label['style']=='poster' else 6 if label['style']=='compact' else 7)-1 > label['width']*8:
         raise SystemExit('Unsupported glyph or overflowing label: ' + label['id'])
     if (label['layer'] not in (0,1,2) or label['height'] not in (16,32)
         or not 1 <= label['width'] <= 28 or not 0 <= label['column'] <= 32-label['width']
@@ -33,7 +33,7 @@ for label in data['labels']:
     context = label.get('context', [0,0,0])
     if (len(context)!=3 or not 0 <= context[0] < 28 or not 0 <= context[1] < 32
         or not 0 <= context[2] < 1024
-        or label['style'] not in ('body','title','banner','poster')
+        or label['style'] not in ('body','title','banner','poster','compact')
         or (label['style']=='poster') != (label['height']==32)):
         raise SystemExit('Invalid label style/context: ' + label['id'])
     ink = label.get('ink', 4 if label['layer']!=2 else 3 if label['id']=='press_start' else 2)
@@ -46,9 +46,27 @@ for label in data['labels']:
         slots[slot] = (0x220 if label['layer']!=2 else 0x140) + offset
         offsets[key] = offset + slot_sizes[slot]
     tile = slots[slot]
-    style = {'body':0, 'title':1, 'banner':2, 'poster':3}[label['style']]
+    style = {'body':0, 'title':1, 'banner':2, 'poster':3, 'compact':5}[label['style']]
     fields = [label['layer'], label['row'], label['column'], label['width'], label['height'], *label['guard'], ink, tile, style, *context]
     lines.append('  {' + ', '.join(str(v) for v in fields) + ', ' + json.dumps(text, ensure_ascii=False) + '},')
+lines.append('};')
+for key, text in data['completion_text'].items():
+    if not key.isidentifier() or not text or set(text)-allowed or len(text)>24:
+        raise SystemExit('Invalid completion text: ' + key)
+    lines.append('static const char kCompletion_' + key + '[] = ' + json.dumps(text, ensure_ascii=False) + ';')
+lines.append('static const PtbrEnding kEndings[] = {')
+endings = data.get('endings', [])
+if len(endings) != 33 or [e['id'] for e in endings] != list(range(33)):
+    raise SystemExit('Expected all 33 ordered completion results')
+for ending in endings:
+    if (len(ending['guard']) != 24 or any(not 0 <= v < 1024 for v in ending['guard'])
+        or not 1 <= len(ending['tips']) <= 3
+        or any(not t or set(t)-allowed or len(t)>24 for t in [ending['title'], *ending['tips']])):
+        raise SystemExit('Invalid completion result: ' + str(ending['id']))
+    tips = ending['tips'] + [''] * (3-len(ending['tips']))
+    lines.append('  {{' + ','.join(map(str, ending['guard'])) + '}, ' +
+                 json.dumps(ending['title'], ensure_ascii=False) + ', {' +
+                 ','.join(json.dumps(t, ensure_ascii=False) for t in tips) + '}},')
 lines.append('};')
 lines.append('static const PtbrObjectLabel kObjectLabels[] = {')
 for label in data.get('objects',[]):

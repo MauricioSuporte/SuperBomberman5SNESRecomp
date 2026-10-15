@@ -315,3 +315,17 @@ Picker grid palettes (2026-10-15): `$C2:1301` gives destinations 38/48/58/68/78
 with the lower figure at BG index 8. White records can contain a nonzero first
 color. Verified from `$C2:12A1` and Normal/Battle CGRAM six-color column routes.
 Portrait OBJ uploads still need nine colors.
+
+
+PT-BR completion research (2026-10-15): native `$C6:E120-$E449` selects
+33 rank/tip variants (0–32), using percentage, boss/ending flags and secret
+stages. Layout group 4 `$66-$86` contains their 24-tile title rows and
+`$89-$A9` their tips. Certificates identify BG1 rank row 19, column 4;
+tips use row 8, column 4. The signature is baked into BG2, covered only
+during drawing with native parchment color index 1. Game Over is Mode 7
+OBJ: title x=62/134, y=23/39, tiles `$00-$3F`; choices x=98, y=159/183,
+tiles `$40-$4B`, palette 2. HUD routine `$C5:073A` selects group-4 `$DD/$DE`
+(Push Start/Game Over) at BG3 row 0, columns 3/21, and blinks every 32 frames.
+Verified by JPN disassembly/layout audit, isolated Normal end/reward routes
+and P1/P2 missing-actor fixtures. Script flag storage `$2900`, helper
+`$C2:0372`: native completion count (`$C2:0E06`) counts flags 16–115.

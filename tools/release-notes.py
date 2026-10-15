@@ -332,6 +332,72 @@ assets extraídos, saves ou dumps. Recompilação parcial, com a maior parte da
 lógica no interpretador. Veja README.md e docs/STATUS.md. Sem netplay/macOS.
 '''
 
+if tuple(int(n) for n in version.split('.')) >= (0,8,2):
+    notes = f'''# Super Bomberman 5 v{version} — PT-BR completion and HUD fixes
+
+## English
+
+- Translated Continue/Erase file headings and Normal Game Over title/choices.
+- HUD prompts now read **APERTE START** and **FIM DE JOGO** on either side;
+  compact spacing fits the original strip and preserves its native blinking.
+- Translated the 100% password reward, certificate heading/signature, all
+  **33 ranks and tips**, including secret-stage variants. Percentages and
+  the native password remain unchanged.
+
+Confirmed by the maintainer. Native tests cover all 33 ranks on both pages.
+Isolated Windows/LLE fixtures exercise 0%/100% completion, file headings,
+HUD prompts and blink-off frames; translated/original native memory matches.
+The 100% and HUD fixtures were checked with both LLE compositors. These are
+forced death/progress fixtures, not full natural playthroughs for every rank.
+Full campaign and physical multiplayer remain unqualified; Linux is experimental.
+
+Download **superbomberman5-{version}-windows-x64.zip** or
+**superbomberman5-{version}-linux-x86_64.AppImage** and verify **SHA256SUMS**.
+Extract Windows into a new writable folder. On Linux, chmod +x and run the
+AppImage (without FUSE use --appimage-extract-and-run). Supply your own
+compatible JPN ROM and use **Generate & rebuild**, including when upgrading;
+an old generated executable does not receive native changes automatically.
+Rust is not required. Internet is needed for the initial portable tool download.
+
+All eight existing optional mods remain included, disabled by default, at
+package version 0.1.0. Honey/Kotetsu and unrelated local work are excluded.
+No ROM, generated game code, ROM-derived playable executable, extracted
+assets, saves or raw dumps are distributed. Partial recompilation: most
+logic still runs on the interpreter. See README.md and docs/STATUS.md.
+
+## Português
+
+- Traduzidos os cabeçalhos de continuar/apagar arquivos e a tela Fim de Jogo
+  do Normal, incluindo as opções **CONTINUAR** e **SAIR**.
+- HUD: **APERTE START** e **FIM DE JOGO** nos dois lados, com espaçamento
+  ajustado à faixa original e preservando o piscar nativo.
+- Traduzidos o aviso da senha de 100%, cabeçalho/assinatura dos certificados
+  e todas as **33 classificações e dicas**, incluindo fases secretas.
+  Porcentagem e senha nativas permanecem intactas.
+
+Confirmado pelo mantenedor. Testes nativos cobrem os 33 resultados nas duas
+páginas. Fixtures isoladas Windows/LLE exercitam 0%/100%, arquivos e HUD,
+com memória nativa idêntica entre tradução ligada/desligada. As rotas de
+100% e HUD foram verificadas nos dois compositores LLE. São cenários com
+morte/progresso forçados, sem qualificar campanhas completas naturais para
+cada título. Campanha completa e multiplayer físico seguem sem qualificação;
+Linux continua experimental.
+
+Baixe **superbomberman5-{version}-windows-x64.zip** ou
+**superbomberman5-{version}-linux-x86_64.AppImage** e confira **SHA256SUMS**.
+Extraia o Windows numa pasta nova e gravável. No Linux, use chmod +x e execute
+(sem FUSE: --appimage-extract-and-run). Forneça sua ROM JPN compatível e use
+**Generate & rebuild**, inclusive ao atualizar: o executável antigo não recebe
+as mudanças nativas automaticamente. Rust não é necessário; o primeiro
+download das ferramentas exige internet.
+
+Os oito mods opcionais existentes permanecem incluídos, desligados por padrão,
+com versão de pacote 0.1.0. Honey/Kotetsu e outros trabalhos locais ficam fora.
+Sem ROM, código gerado, executável jogável derivado dela, assets extraídos,
+saves ou dumps. Recompilação parcial: a maior parte da lógica usa o interpretador.
+Veja README.md e docs/STATUS.md para evidências e limites.
+'''
+
 if args.output:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(notes, encoding='utf-8', newline='\n')

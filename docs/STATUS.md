@@ -1,5 +1,46 @@
 # Super Bomberman 5: estado do protótipo
 
+
+## v0.8.2 PT-BR completion coverage / Telas de conclusão — 2026-10-15
+
+Expanded the same default-disabled PT-BR plugin: Continue/Erase headings,
+Normal Game Over title/choices, HUD APERTE START / FIM DE JOGO on either
+side, the 100% password reward, and all 33 certificate ranks and tips.
+Native rank selection and layout guards were audited from the local JPN ROM,
+including secret stages. Text and glyphs are authored; native percentages,
+passwords and blink timing are preserved. Package version remains 0.1.0;
+Generate & rebuild with host v0.8.2 is required to install the native change.
+
+The maintainer confirmed the translated screens and APERTE START wording.
+Local Windows development checks passed all nine native tests (the release
+retains its existing eight; unrelated Honey/Kotetsu source is excluded),
+seven Python tests and publication audit. PT-BR native regression covers
+all 33 ranks on both pages, negative guards, digit preservation, the opaque
+parchment signature, shared-sprite rejection, both HUD positions and VRAM
+restoration. Isolated LLE death/progress fixtures exercise 0% Game Over →
+certificate → tips (5,347 frames), 100% Game Over → password reward →
+Perfect Bomber certificate → tips (5,952 frames), Continue/Erase headings
+and both HUD messages/blink-off frames (3,725 frames). The 100% and HUD
+routes passed both compositors; all four 100% framebuffers match. Native
+WRAM/VRAM/OAM/CGRAM/SRAM are identical between translated/original runs.
+Reward differences stay in its three text lines; the password is unchanged.
+The later APERTE START wording uses compact spacing and passed native tests
+and maintainer runtime confirmation. Clean v0.8.2 setup-host Windows compilation/linking and all eight release
+native tests also passed with the unchanged v0.8.1 dependency pins.
+Release package checks follow below.
+
+This release is based on v0.8.1, retaining its framework pins and eight mods.
+No other local gameplay work is included. Full natural campaign routes for
+every rank, physical multiplayer and HLE remain unqualified. Raw evidence is
+local under `.bootstrap/ptbr-completion-validation/` and `ptbr-completion-fast/`.
+
+PT-BR ampliado para arquivos, Fim de Jogo/Continuar/Sair, HUD dos dois lados
+com APERTE START, recompensa com senha e todas as 33 classificações/dicas,
+incluindo fases secretas. Confirmado pelo mantenedor. Porcentagem, senha,
+piscar e memória nativa são preservados; rotas de 0%/100% e HUD passaram
+nos dois compositores LLE. É preciso gerar/recompilar com o host v0.8.2.
+Campanha completa e os demais limites acima continuam sem qualificação.
+
 ## v0.8.1 published / Publicada — 2026-10-15
 
 Published prerelease:

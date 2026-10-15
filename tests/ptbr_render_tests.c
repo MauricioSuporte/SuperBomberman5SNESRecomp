@@ -15,6 +15,57 @@ static unsigned changed, draws;
 static uint16_t normal_tile;
 static uint16_t normal_pixels[16];
 static int inspect_title;
+static int completion_tests(void) {
+    for(unsigned rank=0;rank<33;++rank) for(unsigned page=0;page<2;++page) {
+        memset(&fixture,0,sizeof(fixture));fixture.bgmode=9;fixture.bgXsc[0]=0x31;
+        unsigned row=page?8:19;
+        if(page) {fixture.vram[0x30ae]=0x21e8;fixture.vram[0x32c6]=0x21e9;}
+        else {fixture.vram[0x3144]=0x2107;fixture.vram[0x3145]=0x2108;}
+        for(unsigned x=0;x<24;++x) fixture.vram[0x3000+row*32+4+x]=0x2000|kEndings[rank].guard[x];
+        unsigned digits=page?0x32d3:0x31a4;
+        for(unsigned x=0;x<7;++x) fixture.vram[digits+x]=(uint16_t)(0x20b0+x);
+        memcpy(original,fixture.vram,sizeof(original));
+        apply_endings(&fixture);
+        if(!s_saved_count || memcmp(original+digits,fixture.vram+digits,14)) return 30;
+        if(!page && (fixture.vram[0x3309]!=0x22fe || fixture.vram[0x2fe0]!=0x00ff)) return 37;
+        restore_labels(&fixture);
+        if(memcmp(original,fixture.vram,sizeof(original))) return 31;
+        fixture.vram[0x3000+row*32+4]^=1;
+        apply_endings(&fixture);
+        if(s_saved_count) return 32;
+    }
+    memset(&fixture,0,sizeof(fixture));fixture.bgmode=15;fixture.bgXsc[0]=0x31;
+    for(unsigned row=0;row<2;++row) for(unsigned col=0;col<4;++col) {
+        unsigned slot=row*4+col;
+        fixture.oam[slot*2]=(uint16_t)((23+row*16)*256+62+col*16);
+        fixture.oam[slot*2+1]=(uint16_t)(0x2400+row*32+col*2);
+        fixture.highOam[slot/4]|=(uint8_t)(2u<<((slot%4)*2));
+    }
+    uint16_t saved_oam[256];memcpy(saved_oam,fixture.oam,sizeof(saved_oam));
+    memcpy(original,fixture.vram,sizeof(original));apply_defeat(&fixture);
+    if(!s_saved_count || memcmp(saved_oam,fixture.oam,sizeof(saved_oam))) return 33;
+    restore_labels(&fixture);if(memcmp(original,fixture.vram,sizeof(original))) return 34;
+    /* A shared visible tile or one misplaced piece rejects the entire strip. */
+    fixture.oam[16]=0x1000;fixture.oam[17]=0x2400;
+    apply_defeat(&fixture);if(s_saved_count) return 35;
+    fixture.oam[17]=0;fixture.oam[0]++;
+    apply_defeat(&fixture);if(s_saved_count) return 36;
+    /* HUD variants must translate independently on either side, retaining
+     * blink-off frames and restoring the shared BG3 character memory. */
+    for(unsigned n=0;n<sizeof(kLabels)/sizeof(kLabels[0]);++n) {
+        const PtbrLabel *label=&kLabels[n];
+        if(label->layer!=2 || label->row!=0) continue;
+        memset(&fixture,0,sizeof(fixture));fixture.bgmode=9;fixture.bgXsc[2]=0x42;fixture.bgTileAdr=0x500;
+        unsigned address=0x4000+label->column;
+        fixture.vram[address]=0x2000|label->guard0;fixture.vram[address+1]=0x2000|label->guard1;
+        fixture.vram[0x4020+label->column]=0x2000|label->context_tile;
+        memcpy(original,fixture.vram,sizeof(original));apply_labels(&fixture);
+        if(!s_saved_count) return 38;
+        restore_labels(&fixture);if(memcmp(original,fixture.vram,sizeof(original))) return 39;
+        fixture.vram[address]=0;apply_labels(&fixture);if(s_saved_count) return 40;
+    }
+    return 0;
+}
 void snes_beam_frame_driver_draw_ppu_frame(void) { ++draws; }
 void snes_beam_frame_driver_draw_ppu_frame_observed(SnesBeamRasterObserver *fn, void *ctx) {
     ++draws;
@@ -133,6 +184,7 @@ int main(void) {
     if(fixture.oam[0]!=(175u<<8|48u)) return 20;
     observe_line(&fixture,224,NULL);
     coop_fixture=false;
+    int completion=completion_tests();if(completion) return completion;
     puts("PT-BR overlay: guards, restoration, disable, blink alignment, stable tiles, extended palettes, screen contexts and sprite heading passed.");
     return 0;
 }
