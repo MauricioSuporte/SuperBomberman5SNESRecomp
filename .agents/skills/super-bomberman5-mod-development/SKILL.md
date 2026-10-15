@@ -264,7 +264,7 @@ second copy of the picker/skin code.
 1. **Second ROM, requested by the launcher.** Declare it in the manifest as
    `[[external_rom]]` (`feature`, `id`, `label`, `format = "snes"`,
    `normalized_sha256` — header-stripped digest, so `.smc` copies pass —,
-   `file_patterns = "*.sfc,*.smc"`, `required = true`). The Mods page then
+   `file_patterns = "*.sfc,*.smc,*"` — the trailing `*` lists every file, so a ROM with an unusual extension can still be picked; the hash decides —, `required = true`). The Mods page then
    shows a file picker under the feature, verifies the file ("ROM verified")
    and refuses Play until it is selected; the selection is saved in
    `state.toml` as `[[resource]]`. The plugin reads the path with
