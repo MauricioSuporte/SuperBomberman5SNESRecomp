@@ -1,5 +1,27 @@
 # Super Bomberman 5: estado do protótipo
 
+## v0.8.1 color correction / Correção de cores — 2026-10-15
+
+P1 starts white, P2 black, P3 red, P4 blue and P5 green, including CPU seat
+handoff. Grid palette changes preserve the upper strip's shared index 8,
+preventing the figure below from becoming brighter. Native tests cover five
+defaults and all six variants across five upper strips. Save-state size and
+mod package version 0.1.0 remain unchanged; rebuilding host v0.8.1 is required.
+
+Maintainer confirmed the fix in the local Windows game. Fresh-SRAM Windows/LLE
+Normal (3,636 frames) and Battle (4,750 frames) routes with PT-BR capture all
+six colors across five stock columns, verify seat colors 00/01/02/03/04 and
+unchanged lower palette strips. No interpreter cap, unresolved abandonment,
+architectural BRK or fatal. Local evidence: `.bootstrap/selection-color-fix/`.
+The release branch excludes unrelated local Honey/Kotetsu development and
+keeps the v0.8.0 framework pins. Release package checks are recorded below
+when completed. Full campaign and physical five-controller play remain unqualified.
+
+P1–P5 começam em branco, preto, vermelho, azul e verde. Corrigido o brilho
+indevido no personagem abaixo, confirmado pelo mantenedor e por rotas com
+PT-BR no Normal/Battle. Exige gerar/recompilar o jogo com o novo host.
+
+
 ## v0.8.0 published / Publicada — 2026-10-15
 
 Published prerelease: https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.8.0

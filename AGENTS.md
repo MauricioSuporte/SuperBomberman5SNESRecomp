@@ -309,3 +309,9 @@ Framework references: `snesrecomp/docs/MOD_PACKAGES.md`, `FRAME_MODEL_HOSTS.md`,
 Gameplay screenshots are authorized for README/docs/releases under `docs/images/`.
 Gameplay screenshots are optional; no per-mod image is required. Extracted assets, ROM,
 generated code, saves and memory/audio dumps remain prohibited.
+
+Picker grid palettes (2026-10-15): `$C2:1301` gives destinations 38/48/58/68/78
+(top), 30/40/50/60/70 (bottom). Preserve the upper strip first entry: shared
+with the lower figure at BG index 8. White records can contain a nonzero first
+color. Verified from `$C2:12A1` and Normal/Battle CGRAM six-color column routes.
+Portrait OBJ uploads still need nine colors.

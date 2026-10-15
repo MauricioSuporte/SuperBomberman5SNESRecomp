@@ -88,7 +88,13 @@ static void apply_color(unsigned player) {
         /* Subordinate Bomber has no grid strip; its overlay reads $62D3. */
         if(character==10) break;
         unsigned id=g_rom[0x2130b+(character-1)*7+color];
-        upload_palette(palette_source(id),g_rom[0x21301+cell],8);
+        unsigned destination=g_rom[0x21301+cell];
+        /* Upper-row strips share a 16-color BG palette with the lower row.
+         * Their entry zero is the lower figure's common color at index 8;
+         * white variants may put an opaque color there. Preserve that entry. */
+        unsigned skip=(destination&8)?1:0;
+        unsigned grid_source=palette_source(id);
+        if(grid_source) upload_palette(grid_source+skip*2,destination+skip,8-skip);
         break;
     }
 }
@@ -132,7 +138,8 @@ void SelectionColorAfterFrame(void) {
         return;
     }
     if(!live && picker_pc()==0xc68e68) {
-        live=true;pending=false;memset(colors,0,sizeof(colors));
+        live=true;pending=false;
+        for(unsigned i=0;i<5;++i) colors[i]=(uint8_t)i;
     }
     if(live) {
         isolate_portrait_palettes();

@@ -6,7 +6,8 @@ Em **Mods**, ative **Choose character colors with L and R** e inicie o jogo.
 Na seleção de personagens, R avança na sequência **branco, preto, vermelho,
 azul, verde e amarelo**; L percorre o sentido contrário. A sequência dá a volta
 nas extremidades. Todos os nove personagens jogáveis usam as seis paletas.
-Cada jogador começa no branco e escolhe sua cor antes de confirmar com A.
+P1 começa em branco, P2 em preto, P3 em vermelho, P4 em azul e P5 em verde.
+A cor inicial acompanha o assento atual, inclusive na passagem do controle para CPUs.
 Como no seletor original, humanos usam seus próprios controles e, após
 confirmar, passam a escolher os CPUs pendentes. L/R acompanha o cursor
 associado a cada controle e preserva as escolhas já confirmadas.
@@ -33,8 +34,8 @@ python tools/package-selection-colors.py
 Enable **Choose character colors with L and R** in **Mods**, then launch.
 During character selection, R cycles **white, black, red, blue, green, yellow**;
 L cycles backward. Both directions wrap. All nine playable characters support
-the six palettes. Each player starts in white and chooses a color before
-confirming with A. As in the original picker, humans use their own controllers
+the six palettes. P1 starts white, P2 black, P3 red, P4 blue and P5 green.
+Defaults follow the current seat, including controller handoff to CPUs. As in the original picker, humans use their own controllers
 and take over pending CPU selections after confirming. L/R follows the cursor
 assigned to each controller and preserves confirmed choices.
 The cursor displays **L + R** above and the player number
@@ -68,3 +69,28 @@ and chosen palettes in Zone 1-1.
 Five-seat
 cursor rendering is covered with synthetic font data; full multiplayer
 gameplay remains unvalidated. No ROM graphics or palette bytes are packaged.
+
+## Shared grid palette correction / Correção da paleta compartilhada
+
+Upper-row BG strips begin at index 8 within a shared 16-color palette.
+Their first entry is also used by the figure below. Color changes preserve
+that entry and update only the remaining seven entries; OBJ portraits retain
+all nine cartridge colors. This prevents white (and other variants) from
+recoloring the lower figure. No save-state format change.
+
+As faixas da primeira fila começam no índice 8 de uma paleta BG compartilhada.
+A troca de cor preserva essa entrada, também usada pelo personagem abaixo,
+e atualiza as outras sete; os retratos OBJ mantêm as nove cores do cartucho.
+O formato de save states permanece igual.
+
+2026-10-15: Windows/LLE isolated fresh-SRAM Normal and Battle routes with PT-BR,
+all six colors across the five stock columns, initial seat colors 00/01/02/03/04,
+and shared-entry CGRAM checks passed. Evidence is local under
+`.bootstrap/selection-color-fix/`. Physical five-controller play and a full
+campaign were not exercised by this check.
+
+Repeat the isolated regression with:
+
+```powershell
+python tests/selection_color_runtime.py --exe build-lle/SuperBomberman5SNESRecomp.exe --rom 'Super Bomberman 5 (USA).sfc'
+```

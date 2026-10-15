@@ -275,6 +275,63 @@ o primeiro download das ferramentas exige internet. Linux segue experimental.
 Nenhuma ROM, código gerado, assets extraídos, saves ou dumps brutos são empacotados.
 '''
 
+if tuple(int(n) for n in version.split('.')) >= (0,8,1):
+    notes = f'''# Super Bomberman 5 v{version} — Character selection color fixes
+
+## English
+
+- Initial colors follow the current seat: P1 white, P2 black, P3 red, P4 blue,
+  P5 green, including controller handoff to CPU seats.
+- Fixed palette changes in the top row brightening the character below,
+  especially white on the second and fourth characters. The shared BG palette
+  entry is preserved; L/R cycling and confirmed colors remain available.
+
+The maintainer confirmed the correction. Windows/LLE Normal (3,636 frames)
+and Battle (4,750 frames) fixtures with PT-BR exercise six colors across five
+columns and verify initial seat colors and unchanged lower palette strips.
+Full campaign and physical five-controller play remain unqualified.
+
+Download **superbomberman5-{version}-windows-x64.zip** or experimental
+**superbomberman5-{version}-linux-x86_64.AppImage**; verify **SHA256SUMS**.
+Extract Windows into a new writable folder. On Linux, chmod +x and run the
+AppImage (without FUSE use --appimage-extract-and-run). Supply your own
+compatible JPN ROM and choose **Generate & rebuild**, including when upgrading:
+existing generated games need recompiling to receive the fix. Rust is not
+required; internet is needed for the initial portable tool download.
+
+All eight existing optional mods are included, disabled by default, at package
+version 0.1.0. No ROM, generated game code, playable ROM-derived executable,
+extracted assets, saves or raw dumps are distributed. Partial recompilation:
+most logic uses the interpreter. See README.md and docs/STATUS.md for evidence
+and platform limits. No netplay or macOS package.
+
+## Português
+
+- Cores iniciais por assento: P1 branco, P2 preto, P3 vermelho, P4 azul e P5
+  verde, inclusive quando o controle passa a selecionar um CPU.
+- Corrigida a troca de paleta da primeira fila clareando o personagem abaixo,
+  especialmente branco no segundo e quarto personagens. A entrada BG
+  compartilhada é preservada; L/R e as cores confirmadas continuam disponíveis.
+
+Correção confirmada pelo mantenedor. Fixtures Windows/LLE Normal (3.636
+quadros) e Battle (4.750 quadros), com PT-BR, percorrem seis cores nas cinco
+colunas e verificam cores iniciais e paletas inferiores intactas. Campanha
+completa e cinco controles físicos permanecem não qualificados.
+
+Baixe **superbomberman5-{version}-windows-x64.zip** ou
+**superbomberman5-{version}-linux-x86_64.AppImage** experimental e confira
+**SHA256SUMS**. Extraia o Windows numa pasta nova e gravável. No Linux, use
+chmod +x e execute (sem FUSE: --appimage-extract-and-run). Forneça sua ROM JPN
+compatível e use **Generate & rebuild**, inclusive ao atualizar: o jogo já
+gerado precisa ser recompilado para receber a correção. Rust não é necessário;
+o primeiro download das ferramentas exige internet.
+
+Os oito mods opcionais existentes continuam incluídos, desligados por padrão,
+com versão de pacote 0.1.0. Sem ROM, código gerado, executável derivado dela,
+assets extraídos, saves ou dumps. Recompilação parcial, com a maior parte da
+lógica no interpretador. Veja README.md e docs/STATUS.md. Sem netplay/macOS.
+'''
+
 if args.output:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(notes, encoding='utf-8', newline='\n')

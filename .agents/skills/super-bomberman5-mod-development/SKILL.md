@@ -77,6 +77,9 @@ Create `src/<name>_mod.c` + `src/<name>_mod.h`, then:
   derived at runtime from cartridge VRAM — no extracted assets in source.
   Menu translation text goes in `translations/ptbr/labels.json` (with tile
   guards and screen context) rather than C.
+- **Picker grid palettes**: preserve the upper BG strip first entry, shared
+  with the lower figure at index 8; upload the other seven colors. Portrait
+  OBJ palettes still need nine colors. See `docs/SELECTION_COLORS.md`.
 - **Save-state extension**: magic + version-tolerant load
   (`RtlStateBytesRemaining(sli)==0` ⇒ older state), validate every field and
   call `RtlStateStreamFail` on bad input, keep a constant size per build.

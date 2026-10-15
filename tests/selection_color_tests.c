@@ -65,6 +65,18 @@ static void native_glyph(Ppu *ppu,unsigned tile,unsigned ink) {
 int main(void) {
     fixture();press(0,0x800);CHECK(!live && g_ram[0x6264]==0);
     activation();SelectionColorAfterFrame();CHECK(live && g_ram[0x6264]==0);
+    for(unsigned i=0;i<5;++i) CHECK(colors[i]==i && g_ram[0x6264+i]==i);
+    /* Upper strips must preserve the lower figure's shared index 8. */
+    for(unsigned cell=0;cell<5;++cell) {
+        rom[0x21301+cell]=0x38+cell*16;
+        unsigned shared=0x2910+rom[0x21301+cell]*2;
+        g_ram[shared]=0x66;g_ram[shared+1]=0x14;
+        for(unsigned c=0;c<6;++c) {
+            colors[cell]=c;SelectionColorAfterFrame();
+            CHECK(g_ram[shared]==0x66 && g_ram[shared+1]==0x14);
+        }
+    }
+    for(unsigned i=0;i<5;++i) colors[i]=0; /* Remaining cycle fixtures start at white. */
     for(unsigned c=1;c<=6;++c) { press(0,0x800);CHECK(g_ram[0x6264]==c%6); }
     press(0,0x400);CHECK(g_ram[0x6264]==5);
     press(0,0xc00);CHECK(g_ram[0x6264]==5); /* Both shoulders cancel. */
@@ -116,6 +128,7 @@ int main(void) {
     state.at=state.end;SelectionColorLoad(&state.base,10);CHECK(!live); /* Old snapshot, no chunk. */
     state.at=0;state.bytes[5]=6;SelectionColorLoad(&state.base,10);CHECK(failed);
     fixture();activation();SelectionColorAfterFrame();
+    memset(colors,0,sizeof(colors));
     memset(g_ram+0x62ab,0xff,5);memset(g_ram+0x62b5,0xff,5);
     g_ram[0x62ab]=3;g_ram[0x62ac]=2;g_ram[0x62b7]=g_ram[0x62b8]=1;
     press(1,0x800);CHECK(colors[2]==1 && colors[3]==0 && colors[0]==0);
