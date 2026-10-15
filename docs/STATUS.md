@@ -1,5 +1,49 @@
 # Super Bomberman 5: estado do protótipo
 
+## v0.11.0 published / Publicada — 2026-10-15
+
+[Prerelease v0.11.0](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.11.0)
+targets `17e97f6c742630dbc4f45c9ef339fb868cb3c62d`.
+[Clean Release workflow 38819354429](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/actions/runs/38819354429)
+passed Windows and Ubuntu 22.04 builds, native/Python tests, dependency-pin
+checks, publication audits and setup/analyzer smoke tests. Both downloaded
+artifacts matched GitHub's SHA-256. Their payload checksums cover every file;
+eleven manifests are default-disabled. Both approved Black Louie WAVs match
+the documented hashes. No SB4 character implementation/package, generated
+game code, ROM, local preferences or captures are included.
+
+Extracted Windows setup and Linux AppImage (Ubuntu 24.04/WSL) each generated
+and rebuilt using the local JPN ROM, passed all eleven native binaries and
+the 3,628-frame LLE first-stage route with dummy video/audio. Windows setup
+launcher startup passed twice; both analyzers passed the synthetic-ROM test.
+Linux AppImage first/repeat writable setup launches and subsequent generated
+game launch passed. A separate local fixture build from the Windows package
+passed Red (3,813 frames, native hit SFX command once and enemy freeze/resume),
+Black (3,642 frames, egg/protected push), Yellow chain (3,724 frames) and
+P5/co-op/PT-BR (3,756 frames). The fixture is OFF in public setup builds;
+fixture game builds and captures stay ignored. Physical audio latency,
+controllers, full campaign and every mod combination remain unqualified.
+
+Public assets verified by size and SHA-256:
+- Windows ZIP: 17,015,993 bytes,
+  `9c9f7565e61f3485f4ecde0ba2d5a515dc360eb41a8db2c7987baf7007349fcb`.
+- Linux AppImage: 13,658,616 bytes,
+  `b80138be830b1fde6fc097e0fb255751d682497d944135be0a7c5850e2f52c5a`.
+- SHA256SUMS covers both. The published bilingual UTF-8 body matches the
+  generated notes exactly, without replacement characters; prerelease=true.
+
+Pré-release v0.11.0 publicada com ZIP Windows, AppImage Linux e checksums.
+Builds CI limpos, pins, testes, auditorias, onze mods desligados por padrão e
+hashes dos arquivos conferidos. Os dois WAVs adicionais autorizados do Black
+estão incluídos; personagens do SB4 em desenvolvimento ficam de fora.
+Os pacotes geraram/recompilaram o jogo com a ROM local, passaram nos onze
+testes nativos e na rota de 3.628 frames em Windows e Ubuntu 24.04/WSL.
+Fixtures separadas do pacote Windows confirmaram Red/SFX, Black, cadeia do
+Yellow e P5 com co-op/PT-BR. Fixture desligada nos setups públicos. Áudio
+físico, controles, campanha completa e todas as combinações de mods não foram
+qualificados. Notas bilíngues e hashes remotos verificados.
+
+
 ## v0.11.0 release scope / Escopo da release — 2026-10-15
 
 The Louie branch starts at published main `9ceb220` and adds only Louie
@@ -80,8 +124,8 @@ Normal enemies with the native Clock helper for 180 simulation frames; Black
 and Normal enemies. The maintainer selected the SB6 `MountBlackLouie.wav`;
 it is loaded from an ignored local resource, never committed or packaged.
 Native cartridge graphics, allocation and mount-loss/death sounds are retained.
-No version bump or publication is part of this change. v0.10.0 packages lack
-this native plugin. See [LOUIE_IMPROVEMENTS.md](LOUIE_IMPROVEMENTS.md).
+These development notes preceded release preparation; v0.11.0 now includes
+the plugin and approved additional WAVs. Earlier hosts lack this native plugin. See [LOUIE_IMPROVEMENTS.md](LOUIE_IMPROVEMENTS.md).
 
 Evidence (Windows x64, LLE, local JPN image, SDL dummy video/audio):
 - Build and eleven native test executables pass. New `louie_tests` covers
