@@ -8,7 +8,7 @@ An unofficial, noncommercial **Super Bomberman 5** PC port prototype built with 
 
 <p align="center"><img src="docs/images/five-player-showcase.png" width="820" alt="Five-player title menu, six-column character selection with Honey, Kotetsu, Subordinate Bomber and colors, Zone 1-1 with five different characters and Battle Mode stage 1 with five characters and palettes"></p>
 
-<p align="center"><b>Fixed in v0.11.1:</b> player-count digits now match the original white title font in the PT-BR Normal Game menu.<br><b>Correção da v0.11.1:</b> números da quantidade de jogadores com o traço original da fonte branca no menu Normal em PT-BR.</p>
+<p align="center"><b>Fixed in v0.11.1:</b> player-count digits match the original white title font, with the cursor beside the selected PT-BR option.<br><b>Correção da v0.11.1:</b> números com a fonte branca original e cursor próximo da opção selecionada no menu Normal em PT-BR.</p>
 
 ## English
 
@@ -88,7 +88,7 @@ The **v0.11.1 setup packs** include the eleven optional mods below, each at mod 
 
 ZONE1-1: left **Z1-2**, center **Z1-5**, right **Z1-7**. Hints appear only with each visible portal.
 
-v0.11.1 fixes player-count digits in the PT-BR Normal Game menu: 1/2 use original cartridge glyphs and 3–5 use authored extensions matching their weight and outline. Rebuild with this host to apply the fix; the mod package remains 0.1.0.
+v0.11.1 fixes player-count digits in the PT-BR Normal Game menu: 1/2 use original cartridge glyphs and 3–5 use authored extensions matching their weight and outline. The cursor follows the selected row with the native eight-pixel gap. Rebuild with this host to apply the fix; the mod package remains 0.1.0.
 
 The launcher categories use English, including **Translation**. The PT-BR mod's name and descriptions remain in Brazilian Portuguese. All eleven can be enabled together; their full combination has not been qualified. Full campaign and multiplayer coverage remain unqualified.
 
@@ -207,7 +207,7 @@ Os **pacotes Windows e Linux v0.11.1** incluem os onze mods opcionais abaixo, to
 
 ZONE1-1: esquerda **Z1-2**, centro **Z1-5**, direita **Z1-7**. Cada dica aparece somente com o respectivo portal visível.
 
-A v0.11.1 corrige os números no menu Normal em PT-BR: 1/2 usam a fonte original da ROM; 3–5 são extensões autorais com o mesmo peso e contorno. Faça Generate & rebuild com este host; o pacote do mod continua 0.1.0.
+A v0.11.1 corrige os números no menu Normal em PT-BR: 1/2 usam a fonte original da ROM; 3–5 são extensões autorais com o mesmo peso e contorno. O cursor acompanha a linha selecionada, com o espaçamento original de oito pixels. Faça Generate & rebuild com este host; o pacote do mod continua 0.1.0.
 
 As categorias do launcher ficam em inglês, incluindo **Translation**. O nome e as descrições do mod PT-BR continuam em português brasileiro. Os onze podem ser ativados juntos; a combinação completa ainda não foi qualificada. Campanha e multiplayer completos ainda não foram qualificados.
 

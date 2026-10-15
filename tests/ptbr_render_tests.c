@@ -10,7 +10,8 @@ const uint8_t *g_rom;
 #include "../src/ptbr_mod.c"
 static bool coop_fixture;
 bool NormalCoopPlayerMenu(void) { return coop_fixture; }
-unsigned NormalCoopPlayerCount(void) { return 5; }
+static unsigned coop_count_fixture=5;
+unsigned NormalCoopPlayerCount(void) { return coop_count_fixture; }
 
 static Ppu fixture;
 static uint16_t original[0x8000];
@@ -280,7 +281,7 @@ int main(int argc,char **argv) {
         fixture.renderFlags=kPpuRenderFlags_NewRenderer;
         observe_line(&fixture,1,NULL);
         if(fixture.renderFlags&kPpuRenderFlags_NewRenderer) return 15;
-        if(fixture.screenWindowed[0]&4 || fixture.oam[0]!=(175u<<8|48u) ||
+        if(fixture.screenWindowed[0]&4 || fixture.oam[0]!=(175u<<8|(language?68u:48u)) ||
            fixture.vram[0x4348]!=0x2132 || !s_saved_count ||
            fixture.vram[0x5000+0x132*8]!=0x7e5a ||
            memcmp(fixture.vram+0x6000,original+0x6000,0x2000*sizeof(uint16_t))) return 12;
@@ -295,15 +296,27 @@ int main(int argc,char **argv) {
     /* The confirmation bounce (tiles $1EA-$1EE, y $8A-$90) keeps its offset
      * on the selected row instead of jumping back to the stock 2P row. */
     fixture.oam[0]=0x8b40;fixture.oam[1]=0x2bee;observe_line(&fixture,1,NULL);
-    if(fixture.oam[0]!=(171u<<8|48u)) return 17;
+    if(fixture.oam[0]!=(171u<<8|68u)) return 17;
     observe_line(&fixture,224,NULL);if(fixture.oam[0]!=0x8b40) return 18;
     fixture.oam[0]=0x7a40;observe_line(&fixture,1,NULL); /* 1P row bounce */
-    if(fixture.oam[0]!=(170u<<8|48u)) return 19;
+    if(fixture.oam[0]!=(170u<<8|68u)) return 19;
     observe_line(&fixture,224,NULL);
     /* An idle cursor stays on the selected row whatever stock row Up/Down left. */
     fixture.oam[0]=0x7f40;fixture.oam[1]=0x2be8;observe_line(&fixture,1,NULL);
-    if(fixture.oam[0]!=(175u<<8|48u)) return 20;
+    if(fixture.oam[0]!=(175u<<8|68u)) return 20;
     observe_line(&fixture,224,NULL);
+    /* Every selected translated row keeps an eight-pixel cursor/text gap;
+     * the singular row is shorter. English positioning stays unchanged. */
+    for(unsigned language=0;language<2;++language) for(unsigned seat=1;seat<=5;++seat) {
+        s_enabled=language!=0;coop_count_fixture=seat;
+        fixture.oam[0]=0x7f40;fixture.oam[1]=0x2be8;
+        observe_line(&fixture,1,NULL);
+        unsigned expected_x=language?(seat==1?76:68):48;
+        if(fixture.oam[0]!=((12+seat*2)*8-1)*256+expected_x) return 85;
+        observe_line(&fixture,224,NULL);
+        if(fixture.oam[0]!=0x7f40 || memcmp(original,fixture.vram,sizeof(original))) return 86;
+    }
+    coop_count_fixture=5;s_enabled=true;
     coop_fixture=false;
     int completion=completion_tests();if(completion) return completion;
     gold_fixture=true;

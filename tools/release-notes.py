@@ -665,6 +665,8 @@ if tuple(int(n) for n in version.split('.')) >= (0,11,1):
 Corrects player-count digits in the PT-BR Normal Game title menu. Counts 1/2
 use the original cartridge title glyphs; 3–5 use authored extensions matching
 the native weight and full outline, consistent with the copyright lettering.
+The Bomberman face cursor now sits beside the selected Portuguese option,
+retaining the native eight-pixel cell gap and confirmation bounce.
 The eleven optional mods and framework pins from v0.11.0 remain unchanged.
 Mods are disabled by default; their package versions remain 0.1.0.
 
@@ -696,7 +698,9 @@ Super Bomberman 4 development is excluded. Supported ROM SHA-256:
 Corrige a fonte dos números da quantidade de jogadores no menu Normal em
 PT-BR. Os algarismos 1/2 usam os desenhos originais da ROM; 3–5 são extensões
 autorais com o mesmo peso e contorno completo da fonte branca do título e
-do copyright. Mantém os onze mods opcionais e os pins da v0.11.0. Mods
+do copyright. O cursor do rosto agora fica junto da opção selecionada, com
+o espaçamento original de oito pixels e a animação de confirmação.
+Mantém os onze mods opcionais e os pins da v0.11.0. Mods
 desligados por padrão; versões dos pacotes continuam 0.1.0.
 
 Baixe o **ZIP Windows x64** ou **AppImage Linux x86_64 experimental** acima e

@@ -2,15 +2,29 @@
 
 ## v0.11.1 release candidate / Candidata — 2026-10-15
 
-Patch scope: PT-BR title player-count glyphs only, plus version/release docs.
+Patch scope: PT-BR title player-count glyphs and cursor spacing, plus release docs.
 Framework gitlinks and eleven default-disabled mod packages stay at v0.11.0.
 Local Windows build, native tests, Python tests (two Linux-only skips) and
 whitespace checks passed. The development checkout has unrelated submodule
 changes; clean CI packages use the committed pins instead. Package builds
 and extraction/runtime checks are recorded separately after completion.
-Correção limitada à fonte dos números no menu PT-BR e documentação de versão.
+Correção limitada à fonte dos números e ao espaçamento do cursor no menu PT-BR.
 Pins e onze pacotes mantidos; alterações locais dos submódulos ficam fora.
 Build/testes locais passaram; pacotes limpos serão validados separadamente.
+
+## PT-BR cursor spacing / Espaçamento do cursor — 2026-10-15
+
+The translated five-player menu aligns the face to the selected row's text:
+x=76 for 1 JOGADOR, x=68 for 2–5 JOGADORES, with an eight-pixel cell gap.
+English retains x=48. The confirmation bounce remains vertical and OAM is
+restored after drawing. Native tests cover all five selections/languages,
+bounce and exact restoration. Paired Windows/LLE routes (1,766 frames each)
+visited all five rows with PT-BR off/on, confirmation and file-menu entry;
+captures were inspected, with identical WRAM/VRAM/OAM/CGRAM/SRAM in all
+seven paired dumps. No interpreter errors; full campaign unqualified.
+Menu PT-BR com cursor junto da opção atual, inclusive a linha singular.
+Rotas pareadas de 1.766 frames conferiram as cinco opções, confirmação e
+entrada nos arquivos, com tradução ligada/desligada e sem erros.
 
 ## PT-BR player-count font / Fonte da quantidade de jogadores — 2026-10-15
 
