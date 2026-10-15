@@ -1,5 +1,38 @@
 # Super Bomberman 5: estado do protótipo
 
+## v0.7.0 published / Publicada — 2026-10-15
+
+Published prerelease: https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.7.0
+Tag targets `0a3aa0a97908b4b8d8f12908fc8463ecf11706c3`, matching both packages'
+SOURCE_REVISIONS. Release workflow run `38685519146` passed Windows and Linux
+builds, native/Python tests, audits, analyzer/setup smoke and AppImage first/
+repeat launch checks. Uploaded Windows ZIP, Linux AppImage and SHA256SUMS
+were verified against local sizes/SHA-256; bilingual release body matches UTF-8.
+
+Local package checks: pristine Windows setup launcher and rebuilt launcher
+opened; bundled analyzers passed synthetic-ROM checks. Both extracted
+packages generated code from the user's ROM and rebuilt locally. Seven native
+tests passed in Windows and Ubuntu/WSL. The Windows rebuilt package passed
+all four pause routes (Normal 1P/2P/PT-BR/5P, Battle 2 humans/3 CPUs), including
+map/arena return and reentry, Draw/restart, Start/B, SFX and opaque text/glove
+pixels. Linux AppRun launched the rebuilt game and completed the 3,628-frame
+first-stage route with no interpreter cap, unresolved abandonment or fatal.
+The local Linux build used the existing portable OpenGL sysroot; no system
+packages were installed. Full campaign, all arenas, physical controllers and
+rewind across transitions remain unqualified; Linux remains experimental.
+
+README retains its pre-existing showcase and adds bilingual pause-mod details;
+the per-mod gallery request was cancelled and no future screenshot requirement
+was retained. Gameplay screenshots remain permitted, optional documentation.
+No old tag/asset was replaced and no shared history was rewritten.
+
+Pré-release v0.7.0 publicada com ZIP Windows, AppImage Linux e checksums.
+Geração/compilação pelos dois pacotes, sete testes nativos, rotas do mod no
+Windows e entrada na primeira fase no Linux passaram. O README mantém a
+imagem anterior e acrescenta as informações do mod de pausa nos dois idiomas.
+Capturas por mod não são obrigatórias. As limitações acima permanecem.
+
+
 ## v0.7.0 preparation / Preparação — 2026-10-15
 
 Adds Pause — exit & draw and its bilingual README instructions. The requested
