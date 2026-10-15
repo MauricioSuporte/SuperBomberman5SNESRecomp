@@ -212,6 +212,19 @@ When you identify a new address, document it here (and optionally name it in
 
 Timer research: `$0E1C/$0E1D/$0E1E` hold frames/seconds/minutes. Seconds >=60 skip countdown at `$C5:046B`; native 99/9 gives the dash HUD at `$C5:0C00`. Verified by JPN disassembly and Zone 1-1 forced expiration tests.
 
+Portal labels research (2026-10-15): `$C6:0000 + (stage-1)*3` points to the
+native per-stage script list (`$C2:0008`); gate entries use handlers 13/11/12,
+with `$11` creation coordinates (`$C2:0C38`), `$0F` destination (`$C2:0C20`)
+and `$12` contact (`$C2:0C67`). Boss route flags 7–9 select A1/A2/A3,
+10–11 B1/B2, 12–13 E1/E2, 14–15 J1/J2. Verified by disassembly and a local
+ROM audit of all 192 gate entries. `$049F+object` is the native animation
+frame (`$C0:11F8`); gate object signature is `$03D7=38/$04A0=26/$04FF=06`.
+Palette slots remain at `$06DF+object`. Gate positions follow `$C0:1F78`:
+x = tile*16 − signed16(`$1D3B`) − 8; y = tile*16 − signed16(`$1D3D`) + 8.
+Verified against hidden/revealed Zone 1-1 gate objects and native OAM dumps;
+zero animation frames are deliberately invisible, even with an allocated object.
+
+
 ## 7. Workflow for a change
 
 1. Read `docs/STATUS.md`, the relevant `docs/*.md`, and `git status`.

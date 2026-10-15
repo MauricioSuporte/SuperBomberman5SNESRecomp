@@ -1,5 +1,46 @@
 # Super Bomberman 5: estado do protótipo
 
+## v0.8.0 portal destinations / Destinos dos portais — 2026-10-15
+
+Added optional **Gameplay → Normal Game — portal destinations → Show portal
+destinations**, default-disabled, in the v0.8.0 release candidate. Previous v0.7.0 packages lack this native
+plugin. Release setup-package checks are being performed in a clean checkout.
+The read-only presentation plugin resolves exits from cartridge scripts and
+checks each live gate's native frame, palette and raster OAM before drawing.
+Covered/queued gates and invisible animation frames do not reveal hints;
+pause suppresses the labels. The labels share the authored PT-BR title font
+via `menu_font.h`, with full-width strokes, 14px height and a dark outline
+(10px on the bottom row to fit below the gate). All boss letters use the same
+font, independently of whether translation is enabled. Labels
+are centered below each gate: Z1-2/Z1-5/Z1-7, Z1-S and Z1-A1/A2/A3, with
+map letters and native route flags for other bosses. See PORTAL_LABELS.md
+for the shared title font and full naming scheme.
+
+Windows incremental LLE build and eight native test executables pass. The
+optional real-ROM native test audits all 192 exit scripts across 90 numbered
+and three special stages, including coordinate/destination samples in all
+five zones and A1/A2/A3 flags. This audits data, not combat or every route.
+Fresh-SRAM runtime fixtures force enemy completion and clear covering blocks
+in Zone 1-1; enabled/disabled runs have identical WRAM, restored VRAM, OAM,
+CGRAM and SRAM. Hidden/queued gates have no label, the three revealed labels
+match the supplied reference, hiding the left gate suppresses its label and
+pause suppresses hints. Optimized/accurate PPU and combined PT-BR/pause yield
+the same revealed frame. A separate run reveals only the left portal while
+the other two remain covered; only Z1-2 appears. The final shared title font
+passes all six runs. Bottom-row rendering/restoration is covered natively.
+Local evidence: `.bootstrap/portal-labels-validation/` and
+`.bootstrap/portal-runtime-title.log`. Seven Python tests, source/history
+publication audit and the manifest+LICENSE-only package audit also pass.
+
+Mod e documentação preparados para a v0.8.0, com a captura fornecida pelo mantenedor no README bilíngue. Os 192 portais
+passaram na auditoria dos scripts da ROM local. A fixture Windows/LLE da
+ZONE1-1 cobre revelação/ocultação e preservação do estado, com os dois PPUs e
+PT-BR/pausa. A conclusão dos inimigos e remoção dos blocos são forçadas pelo
+teste, nunca pelo mod. Campanha completa, combate natural até cada saída,
+todos os chefes, cinco jogadores, controles físicos e Linux ainda não foram
+qualificados para este overlay. Nenhum dado extraído ou executável foi adicionado.
+
+
 ## v0.7.0 published / Publicada — 2026-10-15
 
 Published prerelease: https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.7.0

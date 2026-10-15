@@ -219,6 +219,62 @@ Rotas Windows/LLE validaram Normal com 1/2/5 jogadores e Battle com 2 humanos/3 
 Os pacotes contêm instalador independente da ROM, fontes, analisador, licenças, manifestos e documentação. Não incluem ROM, código gerado, executável jogável derivado da ROM, sprites/áudio extraídos, saves ou dumps. Confira a identidade da ROM acima e docs/STATUS.md.
 '''
 
+if tuple(int(n) for n in version.split('.')) >= (0,8,0):
+    notes = f'''# Super Bomberman 5 v{version} — Normal portal destinations
+
+## English
+
+New optional Gameplay mod: Normal Game — portal destinations → Show portal destinations.
+Title-screen-font hints appear below each visible portal, with Z1-2 style stage names,
+special Z1-S names and boss variants such as Z1-A1/Z1-A2/Z1-A3. Covered portals
+remain undisclosed. The presentation plugin reads native exit scripts and changes
+no campaign state. It is disabled by default and requires rebuilding this host;
+the published v0.7.0 executable does not contain the plugin.
+
+Local data audit covers all 192 native exits. Windows/LLE fixture checks cover
+hidden/revealed exits, individual visibility, pause and native-state restoration,
+including both PPUs and PT-BR/pause integration. This is not full-campaign or
+natural-combat qualification. See docs/PORTAL_LABELS.md and docs/STATUS.md.
+All eight optional mods are preinstalled at package version 0.1.0, disabled by
+default. Previous character, color, co-op, translation, infinite-time, Subordinate
+Bomber and pause features remain included. The README includes the supplied
+gameplay screenshot in both languages.
+
+Download superbomberman5-{version}-windows-x64.zip or
+superbomberman5-{version}-linux-x86_64.AppImage and verify SHA256SUMS.
+Extract Windows into a new writable folder; on Linux chmod +x and run the
+AppImage (without FUSE use --appimage-extract-and-run). Supply your own
+compatible JPN ROM and choose Generate & rebuild. Rust is not required;
+internet is needed for the initial tool download. Linux remains experimental.
+No ROM, generated code, extracted assets, saves or raw dumps are packaged.
+
+## Português
+
+Novo mod opcional em Gameplay: Normal Game — portal destinations → Show portal destinations.
+Dicas com a fonte da tela de título aparecem sob cada portal visível, no padrão Z1-2,
+especiais Z1-S e variantes de chefe Z1-A1/Z1-A2/Z1-A3. Portais cobertos
+continuam ocultos. O plugin de apresentação lê os scripts nativos sem alterar
+a campanha. Vem desativado e exige recompilar este host; o executável v0.7.0
+publicado não contém o plugin.
+
+Auditoria local dos 192 destinos nativos. Fixture Windows/LLE cobre saídas
+ocultas/reveladas, visibilidade individual, pausa e restauração do estado nativo,
+incluindo os dois PPUs e integração PT-BR/pausa. Não equivale a qualificar
+campanha inteira ou combate natural. Veja docs/PORTAL_LABELS.md e docs/STATUS.md.
+Os oito mods opcionais vêm pré-instalados na versão de pacote 0.1.0, desligados
+por padrão. Personagens, cores, co-op, tradução, tempo infinito, Subordinate
+Bomber e pausa continuam incluídos. O README inclui a captura fornecida pelo
+mantenedor na explicação do mod nos dois idiomas.
+
+Baixe superbomberman5-{version}-windows-x64.zip ou
+superbomberman5-{version}-linux-x86_64.AppImage e confira SHA256SUMS.
+No Windows, extraia tudo numa pasta nova e gravável; no Linux, use chmod +x e
+execute o AppImage (sem FUSE use --appimage-extract-and-run). Forneça sua
+ROM JPN compatível e escolha Generate & rebuild. Rust não é necessário;
+o primeiro download das ferramentas exige internet. Linux segue experimental.
+Nenhuma ROM, código gerado, assets extraídos, saves ou dumps brutos são empacotados.
+'''
+
 if args.output:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(notes, encoding='utf-8', newline='\n')

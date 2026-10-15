@@ -20,18 +20,7 @@ typedef struct {
 } PtbrObjectLabel;
 #include "ptbr_labels.h"
 
-/* Five-column, seven-row uppercase alphabet authored for this overlay. */
-static const uint8_t kFont[26][7] = {
- {14,17,17,31,17,17,17},{30,17,17,30,17,17,30},{14,17,16,16,16,17,14},
- {30,17,17,17,17,17,30},{31,16,16,30,16,16,31},{31,16,16,30,16,16,16},
- {14,17,16,23,17,17,15},{17,17,17,31,17,17,17},{14,4,4,4,4,4,14},
- {7,2,2,2,18,18,12},{17,18,20,24,20,18,17},{16,16,16,16,16,16,31},
- {17,27,21,21,17,17,17},{17,25,21,19,17,17,17},{14,17,17,17,17,17,14},
- {30,17,17,30,16,16,16},{14,17,17,17,21,18,13},{30,17,17,30,20,18,17},
- {15,16,16,14,1,1,30},{31,4,4,4,4,4,4},{17,17,17,17,17,17,14},
- {17,17,17,17,17,10,4},{17,17,17,21,21,21,10},{17,17,10,4,10,17,17},
- {17,17,10,4,4,4,4},{31,1,2,4,8,16,31}
-};
+#include "menu_font.h"
 static bool s_enabled;
 typedef struct { uint16_t address, original; } SavedWord;
 static SavedWord s_saved[8192];
@@ -53,12 +42,7 @@ static unsigned next_character(const unsigned char **at) {
     return c;
 }
 
-static const uint8_t kDigits[10][7] = {
- {14,17,19,21,25,17,14},{4,12,4,4,4,4,14},{14,17,1,2,4,8,31},
- {30,1,1,14,1,1,30},{2,6,10,18,31,2,2},{31,16,16,30,1,1,30},
- {14,16,16,30,17,17,14},{31,1,2,4,8,8,8},{14,17,17,14,17,17,14},
- {14,17,17,15,1,1,14}
-};
+
 
 /* Own glyphs with the original menu's proportions, weight, shadow and palette.
  * Banners use a wider face and a blue bevel. No extracted pixels are stored. */
@@ -96,7 +80,7 @@ static void render_text(uint8_t pixels[32][224], const PtbrLabel *label) {
         else if (c == 0xCA) { c = 'E'; accent = 4; }
         else if (c == 0xD4) { c = 'O'; accent = 4; }
         static const uint8_t arrow[7]={8,4,2,1,2,4,8};
-        const uint8_t *glyph=c>='A'&&c<='Z'?kFont[c-'A']:c>='0'&&c<='9'?kDigits[c-'0']:c=='>'?arrow:NULL;
+        const uint8_t *glyph=c>='A'&&c<='Z'?kMenuLetters[c-'A']:c>='0'&&c<='9'?kMenuDigits[c-'0']:c=='>'?arrow:NULL;
         unsigned top=label->style==1?4:accent && accent!=2?2:0, height=(label->height==32?28:14)-top;
         uint8_t mask[32][20]={{0}};
         if(glyph) {

@@ -41,6 +41,7 @@
 #include "normal_coop_mod.h"
 #include "infinite_time_mod.h"
 #include "pause_menu_mod.h"
+#include "portal_labels_mod.h"
 #include "selection_color_mod.h"
 #include "subordinate_mod.h"
 #include <stdbool.h>
@@ -78,18 +79,20 @@ static void ObserveOverlays(const struct Ppu *ppu, unsigned line, void *context)
 {
     if (line == 224) {
         PauseMenuObserve(ppu, line, context);
+        PortalLabelsObserve(ppu, line, context);
         SubordinateObserve(ppu, line, context);
         SelectionColorObserve(ppu, line, context);
     } else {
         SelectionColorObserve(ppu, line, context);
         SubordinateObserve(ppu, line, context);
+        PortalLabelsObserve(ppu, line, context);
         PauseMenuObserve(ppu, line, context);
     }
 }
 
 void GameDrawPpuFrame(void)
 {
-    bool overlays = SelectionColorEnabled() || SubordinateEnabled() || PauseMenuEnabled();
+    bool overlays = SelectionColorEnabled() || SubordinateEnabled() || PauseMenuEnabled() || PortalLabelsEnabled();
     PtbrDrawPpuFrameObserved(overlays ? ObserveOverlays : NULL, NULL);
 }
 

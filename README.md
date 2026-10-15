@@ -8,7 +8,7 @@ An unofficial, noncommercial **Super Bomberman 5** PC port prototype built with 
 
 <p align="center"><img src="docs/images/five-player-showcase.png" width="820" alt="Five-player title menu, character selection with Subordinate Bomber and colors, Zone 1-1 with five players and Battle Mode stage 1"></p>
 
-<p align="center"><b>New in v0.7.0:</b> Pause — exit &amp; draw: return to the Normal world map, restart a Battle round as a draw or return to arena selection.<br><b>Novidade da v0.7.0:</b> retorne ao mapa no Normal, empate e reinicie a rodada do Battle ou volte à seleção de arenas pelo menu de pausa.</p>
+<p align="center"><b>New in v0.8.0:</b> readable destinations below revealed Normal Game portals.<br><b>Novidade da v0.8.0:</b> dicas legíveis de destino sob os portais revelados do Normal Game.</p>
 
 ## English
 
@@ -27,6 +27,7 @@ An unofficial, noncommercial **Super Bomberman 5** PC port prototype built with 
 | Character selection colors (v0.4.0) | Six palettes with L/R for all nine characters; Normal and Battle stage routes verified |
 | Subordinate Bomber (v0.6.0) | Optional tenth character in the X cell with six colors, authored portraits and HUD faces; Battle, Normal and Zone 3-D scripted routes verified on Linux LLE |
 | Pause — exit & draw (v0.7.0) | Normal map return, Battle Draw/restart and arena return; Windows LLE routes with 1/2/5 campaign seats and 2-human/3-CPU Battle |
+| Portal destinations (v0.8.0) | Optional hints from native exit scripts; all 192 destinations audited; Windows/LLE visibility, both PPUs and PT-BR/pause fixtures passed |
 | Netplay / widescreen enhancements | Not implemented for this title |
 | Linux / macOS | Experimental x86_64 AppImage: Ubuntu 22.04 CI; Ubuntu 24.04/WSL local rebuild and 3,628-frame LLE route; macOS unavailable |
 
@@ -42,9 +43,9 @@ Requires Windows 10 or newer, x64. Leave several GB free for extraction, tools a
 
 ### Linux AppImage
 
-Download **superbomberman5-0.7.0-linux-x86_64.AppImage** from [v0.7.0](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.7.0), make it executable (`chmod +x superbomberman5-0.7.0-linux-x86_64.AppImage`) and run it. The AppImage copies its ROM-free setup into `${XDG_DATA_HOME:-~/.local/share}/superbomberman5/0.7.0` on first launch. Select your own supported ROM and use **Generate & rebuild**; subsequent launches open the locally rebuilt game. Rust is not required. Internet is needed for the first portable tool download. Linux x86_64, glibc 2.35+ (Ubuntu 22.04 baseline), desktop graphics/audio libraries and several GB free are required. If FUSE is unavailable, run with `--appimage-extract-and-run`. Keep the writable version folder to retain local builds and settings; ROM and generated game data are never part of the download. Linux distribution and full-campaign coverage remain limited; see [validation](docs/STATUS.md).
+Download **superbomberman5-0.8.0-linux-x86_64.AppImage** from [v0.8.0](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.8.0), make it executable (`chmod +x superbomberman5-0.8.0-linux-x86_64.AppImage`) and run it. The AppImage copies its ROM-free setup into `${XDG_DATA_HOME:-~/.local/share}/superbomberman5/0.8.0` on first launch. Select your own supported ROM and use **Generate & rebuild**; subsequent launches open the locally rebuilt game. Rust is not required. Internet is needed for the first portable tool download. Linux x86_64, glibc 2.35+ (Ubuntu 22.04 baseline), desktop graphics/audio libraries and several GB free are required. If FUSE is unavailable, run with `--appimage-extract-and-run`. Keep the writable version folder to retain local builds and settings; ROM and generated game data are never part of the download. Linux distribution and full-campaign coverage remain limited; see [validation](docs/STATUS.md).
 
-Windows users download the **superbomberman5-0.7.0-windows-x64.zip** setup pack. Both formats include the same seven optional mods, disabled by default. Upgrading from an earlier version: extract v0.7.0 into a new folder (or the AppImage creates a new 0.7.0 folder) and run **Generate & rebuild** again so the new native plugins are compiled. Check the release's **SHA256SUMS** before use.
+Windows users download the **superbomberman5-0.8.0-windows-x64.zip** setup pack. Both formats include the same eight optional mods, disabled by default. Upgrading from an earlier version: extract v0.8.0 into a new folder (or the AppImage creates a new 0.8.0 folder) and run **Generate & rebuild** again so the new native plugins are compiled. Check the release's **SHA256SUMS** before use.
 
 ### Supported ROM
 
@@ -62,7 +63,7 @@ The developer's local filename is `Super Bomberman 5 (USA).sfc`, but its header 
 
 ### Included mods
 
-The **v0.7.0 setup packs** include all seven mods below, each at mod version **0.1.0** and disabled by default. Complete **Generate & rebuild**, open **Mods**, enable the desired features and select Play. Each setup package contains the executable, launcher resources, analyzer, source and all seven preinstalled mods; no separate mod download or import is needed. `FILE_SHA256SUMS` inside each setup payload covers its packaged files. They require the corresponding native plugins in the host; importing a package cannot update an older executable.
+The **v0.8.0 setup packs** include all eight mods below, each at mod version **0.1.0** and disabled by default. Complete **Generate & rebuild**, open **Mods**, enable the desired features and select Play. Each setup package contains the executable, launcher resources, analyzer, source and all eight preinstalled mods; no separate mod download or import is needed. `FILE_SHA256SUMS` inside each setup payload covers its packaged files. They require the corresponding native plugins in the host; importing a package cannot update an older executable.
 
 | Mod / category | Feature and use |
 |---|---|
@@ -73,8 +74,13 @@ The **v0.7.0 setup packs** include all seven mods below, each at mod version **0
 | **Normal Game — five players** / **Gameplay** | Enable **Play Normal Game with up to five players** and choose 1–5 PLAYER GAME on the title. Shared lives start at players + 2 (3–7); a dead player presses Start to spend a life and rejoin while a teammate is alive. Any player finishes a stage through an exit, items carry over for every seat, P3–P5 spawn on safe floor and take enemy contact damage. Boss stages with rival bombers seat up to four players (three with two rivals); the others return in the next stage. With the character and color mods, each seat picks its own character and color from New Game or Continue. Requires host v0.5.0 or newer. [Instructions, tests and limits](docs/NORMAL_COOP.md). |
 | **Subordinate Bomber — playable character** / **Gameplay** | Enable **Play as Subordinate Bomber** to pick the Zone 3-D rival from the X cell (bottom right) of the character selection, in Battle and, with the Normal character selection mod, in Normal Game. With the color controls mod, L/R choose its six palettes from the cartridge; its portrait and Battle HUD faces (alive and defeated) follow the chosen color. Requires host v0.6.0 or newer. [Instructions, tests and limits](docs/SUBORDINATE_BOMBER.md). |
 | **Pause — exit & draw** / **Gameplay** | Enable **Stage exits and Battle Draw**. Normal: Resume / Return to world map. Battle: Resume / Force Draw (round restart) / Return to stage select. Start confirms; B goes back. Menus start on Resume and exit confirmations on No. Compact panel, opaque text/glove and native menu sounds. Requires host v0.7.0. [Controls and validation](docs/PAUSE_MENU.md). |
+| **Normal Game — portal destinations** / **Gameplay** | Enable **Show portal destinations** for readable title-screen-font hints beneath each visible gate: `Z1-2`, `Z1-5`, `Z1-7`, special `Z1-S` and boss variants `Z1-A1`–`Z1-A3`. Covered exits remain hidden. Requires host v0.8.0; importing a manifest cannot update an older host. [Instructions and validation](docs/PORTAL_LABELS.md). |
 
-The launcher categories use English, including **Translation**. The PT-BR mod's name and descriptions remain in Brazilian Portuguese. All seven can be enabled together. Full campaign and multiplayer coverage remain unqualified.
+![Normal Game portal destination hints](docs/images/portal-destinations.png)
+
+ZONE1-1: left **Z1-2**, center **Z1-5**, right **Z1-7**. Hints appear only with each visible portal.
+
+The launcher categories use English, including **Translation**. The PT-BR mod's name and descriptions remain in Brazilian Portuguese. All eight can be enabled together. Full campaign and multiplayer coverage remain unqualified.
 
 v0.4.1 also embeds the supplied application icon with ten sizes from 16 to 256 pixels, preserving the whole drawing and transparency for Windows display scaling.
 
@@ -161,13 +167,13 @@ Requer Windows 10 ou superior, x64, e alguns GB livres. **Nenhuma ROM, código g
 
 Build CI Ubuntu 22.04 e geração/rebuild local no Ubuntu 24.04/WSL passaram; a rota de 3.628 frames LLE até a primeira fase terminou com vídeo/áudio dummy. Launcher inicializado em modo offscreen. Dispositivos físicos e outras distribuições seguem não qualificados.
 
-Baixe **superbomberman5-0.7.0-linux-x86_64.AppImage** na [v0.7.0](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.7.0), dê permissão de execução e execute. Sem FUSE, use --appimage-extract-and-run. O setup é copiado para a pasta XDG de dados da versão (padrão ~/.local/share/superbomberman5/0.7.0), onde você fornece sua ROM e usa **Generate & rebuild**. Nas próximas aberturas, o AppImage usa o jogo gerado localmente. Requer Linux x86_64 com glibc 2.35+, bibliotecas de vídeo/áudio do desktop, internet para as primeiras ferramentas e alguns GB livres. Rust não é necessário. Preserve a pasta gravável para manter builds e configurações. Confira SHA256SUMS na release. Compatibilidade ampla e campanha completa continuam não qualificadas.
+Baixe **superbomberman5-0.8.0-linux-x86_64.AppImage** na [v0.8.0](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.8.0), dê permissão de execução e execute. Sem FUSE, use --appimage-extract-and-run. O setup é copiado para a pasta XDG de dados da versão (padrão ~/.local/share/superbomberman5/0.8.0), onde você fornece sua ROM e usa **Generate & rebuild**. Nas próximas aberturas, o AppImage usa o jogo gerado localmente. Requer Linux x86_64 com glibc 2.35+, bibliotecas de vídeo/áudio do desktop, internet para as primeiras ferramentas e alguns GB livres. Rust não é necessário. Preserve a pasta gravável para manter builds e configurações. Confira SHA256SUMS na release. Compatibilidade ampla e campanha completa continuam não qualificadas.
 
-No Windows, baixe **superbomberman5-0.7.0-windows-x64.zip**. Para atualizar de uma versão anterior, extraia a v0.7.0 numa pasta nova (o AppImage cria a pasta 0.7.0) e use **Generate & rebuild** de novo para compilar os novos plugins nativos.
+No Windows, baixe **superbomberman5-0.8.0-windows-x64.zip**. Para atualizar de uma versão anterior, extraia a v0.8.0 numa pasta nova (o AppImage cria a pasta 0.8.0) e use **Generate & rebuild** de novo para compilar os novos plugins nativos.
 
 ### Mods incluídos
 
-Os **pacotes Windows e Linux v0.7.0** incluem os sete mods abaixo, todos na versão de mod **0.1.0** e desabilitados por padrão. Conclua **Generate & rebuild**, abra **Mods**, ative as funções desejadas e selecione Play. Cada pacote inclui executável, recursos do launcher, analisador, fontes e os sete mods pré-instalados; não é necessário baixar nem importar mods separados. O arquivo `FILE_SHA256SUMS` dentro do setup cobre os arquivos do pacote. Eles contêm apenas dados e dependem dos plugins nativos do host; importar um pacote não atualiza um executável antigo.
+Os **pacotes Windows e Linux v0.8.0** incluem os oito mods abaixo, todos na versão de mod **0.1.0** e desabilitados por padrão. Conclua **Generate & rebuild**, abra **Mods**, ative as funções desejadas e selecione Play. Cada pacote inclui executável, recursos do launcher, analisador, fontes e os oito mods pré-instalados; não é necessário baixar nem importar mods separados. O arquivo `FILE_SHA256SUMS` dentro do setup cobre os arquivos do pacote. Eles contêm apenas dados e dependem dos plugins nativos do host; importar um pacote não atualiza um executável antigo.
 
 | Mod / categoria | Função e uso |
 |---|---|
@@ -178,8 +184,13 @@ Os **pacotes Windows e Linux v0.7.0** incluem os sete mods abaixo, todos na vers
 | **Normal Game — five players** / **Gameplay** | Ative **Play Normal Game with up to five players** e escolha de 1 a 5 jogadores no título. As vidas compartilhadas começam em jogadores + 2 (3–7); quem morre aperta Start para gastar uma vida e voltar, se houver alguém vivo. Qualquer jogador conclui a fase pelo portal, os itens seguem para a próxima fase em todos os assentos, P3–P5 nascem em chão seguro e tomam dano dos inimigos. Fases de chefe com rivais Bomber aceitam até quatro jogadores (três com dois rivais); os demais voltam na fase seguinte. Com os mods de personagem e cor, cada jogador escolhe os seus em New Game ou Continue. Requer host v0.5.0 ou superior. [Instruções, testes e limites](docs/NORMAL_COOP.md). |
 | **Subordinate Bomber — playable character** / **Gameplay** | Ative **Play as Subordinate Bomber** para escolher o rival do ZONE3-D na célula do X (canto inferior direito) da seleção de personagens, no Battle e, com o mod de seleção no Normal, no Normal Game. Com o mod de cores, L/R escolhem as seis paletas dele que já existem no cartucho; o retrato e os rostos do HUD do Battle (vivo e derrotado) acompanham a cor escolhida. Requer host v0.6.0 ou superior. [Instruções, testes e limites](docs/SUBORDINATE_BOMBER.md). |
 | **Pause — exit & draw** / **Gameplay** | Ative **Stage exits and Battle Draw**. Normal: retomar ou voltar ao mapa. Battle: retomar, empatar/reiniciar a rodada ou voltar às arenas. Start confirma; B volta. Cursor inicial em Resume e confirmação de saída em No. Painel compacto, texto/mão opacos e sons nativos. Exige host v0.7.0. [Controles e validação](docs/PAUSE_MENU.md). |
+| **Normal Game — portal destinations** / **Gameplay** | Ative **Show portal destinations** para mostrar dicas legíveis com a fonte da tela de título sob cada portal visível: `Z1-2`, `Z1-5`, `Z1-7`, especial `Z1-S` e variantes `Z1-A1`–`Z1-A3`. Saídas cobertas continuam ocultas. Exige host v0.8.0; importar o manifesto não atualiza um executável antigo. [Instruções e validação](docs/PORTAL_LABELS.md). |
 
-As categorias do launcher ficam em inglês, incluindo **Translation**. O nome e as descrições do mod PT-BR continuam em português brasileiro. Os sete podem ser ativados juntos. Campanha e multiplayer completos ainda não foram qualificados.
+![Dicas de destino dos portais do Normal Game](docs/images/portal-destinations.png)
+
+ZONE1-1: esquerda **Z1-2**, centro **Z1-5**, direita **Z1-7**. Cada dica aparece somente com o respectivo portal visível.
+
+As categorias do launcher ficam em inglês, incluindo **Translation**. O nome e as descrições do mod PT-BR continuam em português brasileiro. Os oito podem ser ativados juntos. Campanha e multiplayer completos ainda não foram qualificados.
 
 A v0.4.1 também incorpora o ícone fornecido em dez tamanhos, de 16 a 256 pixels, preservando o desenho inteiro e a transparência para escalas de exibição do Windows.
 
