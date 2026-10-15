@@ -1,5 +1,41 @@
 # Super Bomberman 5: estado do protótipo
 
+## v0.8.1 published / Publicada — 2026-10-15
+
+Published prerelease:
+https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.8.1
+Tag and both packages' SOURCE_REVISIONS target
+`01ea6aa51751ef63f743abdf2cf4739d26828e85`. Release workflow `38720100087`
+passed Windows/Ubuntu builds, all eight native tests, Python checks,
+source/package audits, analyzer smoke and AppImage first/repeat startup.
+The eight existing mods remain default-disabled; unrelated Honey/Kotetsu
+work was excluded. Framework pins are unchanged from v0.8.0.
+
+Both downloaded workflow archives match their GitHub artifact SHA-256.
+Extracted Windows/Linux setup packages passed bundled-analyzer smoke, local
+ROM generation/rebuild and all eight native tests. Windows setup launcher
+remained running normally during a startup smoke test. Linux rebuilt AppImage
+completed the 3,628-frame first-stage route. On both OSes, the packaged
+selection-color regression completed Normal (3,636 frames) and Battle
+(4,750 frames) with PT-BR, covering six colors across five columns, initial
+seat colors 00/01/02/03/04 and byte-identical lower palette strips. No
+interpreter cap, unresolved abandonment, architectural BRK or fatal.
+The maintainer also confirmed the original local Windows correction.
+
+Public asset sizes/SHA-256 digests, three-asset prerelease state, tag target,
+default branch and exact UTF-8 bilingual release body were verified through
+the GitHub API. Evidence stays local under `.bootstrap/v081-*`.
+No ROM or ROM-derived executable was published. Full campaign, physical
+five-controller play and broader Linux distributions remain unqualified.
+
+Pré-release v0.8.1 publicada com ZIP Windows, AppImage Linux e checksums.
+Os pacotes extraídos geraram/recompilaram o jogo e passaram nos oito testes
+nativos nos dois sistemas. A regressão Normal/Battle com PT-BR passou nos
+dois pacotes; cores iniciais e paletas inferiores foram verificadas nas seis
+cores das cinco colunas. Notas UTF-8, tag, assets e hashes conferidos no GitHub.
+Nenhuma tag ou asset anterior foi substituído; o trabalho local foi preservado.
+
+
 ## v0.8.1 color correction / Correção de cores — 2026-10-15
 
 P1 starts white, P2 black, P3 red, P4 blue and P5 green, including CPU seat
@@ -14,8 +50,7 @@ six colors across five stock columns, verify seat colors 00/01/02/03/04 and
 unchanged lower palette strips. No interpreter cap, unresolved abandonment,
 architectural BRK or fatal. Local evidence: `.bootstrap/selection-color-fix/`.
 The release branch excludes unrelated local Honey/Kotetsu development and
-keeps the v0.8.0 framework pins. Release package checks are recorded below
-when completed. Full campaign and physical five-controller play remain unqualified.
+keeps the v0.8.0 framework pins. Release package checks are recorded in the publication section above. Full campaign and physical five-controller play remain unqualified.
 
 P1–P5 começam em branco, preto, vermelho, azul e verde. Corrigido o brilho
 indevido no personagem abaixo, confirmado pelo mantenedor e por rotas com
