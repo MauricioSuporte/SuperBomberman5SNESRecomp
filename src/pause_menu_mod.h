@@ -9,4 +9,3 @@ bool PauseMenuEnabled(void);
 void PauseMenuObserve(const struct Ppu *, unsigned, void *);
 void PauseMenuSave(struct SaveLoadInfo *);
 void PauseMenuLoad(struct SaveLoadInfo *, unsigned);
-
