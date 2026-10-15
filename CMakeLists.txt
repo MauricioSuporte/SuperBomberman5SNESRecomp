@@ -50,6 +50,7 @@ add_executable(SuperBomberman5SNESRecomp
     # Register infinite-time cleanup before coop; its hook wraps the coop hook.
     # Hook reset callbacks follow this order, opposite to frame installation.
     src/portal_labels_mod.c
+    src/louie_mod.c
     src/gold_battle_mod.c
     src/pause_menu_mod.c
     src/infinite_time_mod.c
@@ -79,7 +80,7 @@ target_include_directories(SuperBomberman5SNESRecomp PRIVATE "${CMAKE_CURRENT_BI
 include(CTest)
 option(SB5_COOP_INPUT_FIXTURE "Test-only WRAM input mailbox for seats 3–5" OFF)
 if(SB5_COOP_INPUT_FIXTURE)
-    target_sources(SuperBomberman5SNESRecomp PRIVATE tests/coop_input_fixture.c)
+    target_sources(SuperBomberman5SNESRecomp PRIVATE tests/coop_input_fixture.c tests/louie_fixture.c)
     target_compile_definitions(SuperBomberman5SNESRecomp PRIVATE SB5_COOP_INPUT_FIXTURE=1)
 endif()
 if(BUILD_TESTING)
@@ -94,6 +95,9 @@ if(BUILD_TESTING)
     add_executable(portal_labels_tests tests/portal_labels_tests.c)
     target_include_directories(portal_labels_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src")
     add_test(NAME normal_portal_labels COMMAND portal_labels_tests)
+    add_executable(louie_tests tests/louie_tests.c)
+    target_include_directories(louie_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src")
+    add_test(NAME louie_improvements COMMAND louie_tests)
     add_executable(gold_battle_tests tests/gold_battle_tests.c)
     target_include_directories(gold_battle_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src")
     add_test(NAME gold_battle_rules COMMAND gold_battle_tests)

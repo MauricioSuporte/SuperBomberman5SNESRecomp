@@ -2,7 +2,9 @@
  * Input scripts can poke these mailboxes to drive the three extra devices
  * through the real multitap and NMI input path. This is not gameplay state. */
 #include "common_rtl.h"
+extern void LouieFixture(void);
 void CoopInputFixture(void) {
+    LouieFixture();
     for(unsigned seat=2;seat<5;++seat) {
         unsigned at=0x1ffe0+(seat-2)*2;
         RtlSetPadState((int)seat,(uint16)(g_ram[at]|g_ram[at+1]<<8));
