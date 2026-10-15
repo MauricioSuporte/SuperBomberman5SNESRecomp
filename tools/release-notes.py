@@ -149,6 +149,38 @@ Os cinco mods opcionais vêm pré-instalados e desativados: menus PT-BR, persona
 
 Validação: testes nativos de todos os mods, testes Python e auditorias; rotas Linux LLE com cinco jogadores na Zone 1-1, portal para a próxima fase com itens, Zone 1-A e a fase com dois rivais via Continue, spawns na Zone 2-4 e Zone 3-D/E, dano de inimigo no P3, retorno com Start, Game Over e Continue. Não qualificados: derrotar cada chefe, campanha completa, cenas dos chefes com assentos de fora e cinco controles físicos. Voltar com B na seleção de personagens do Normal pode deixar a tela preta; isso já existia e continua aberto. Recompilação parcial: a maior parte da lógica ainda usa o interpretador.
 '''
+if tuple(int(n) for n in version.split('.')) >= (0,6,0):
+    notes = f'''# Super Bomberman 5 v{version} — Subordinate Bomber playable
+
+## English
+
+New optional mod: **Subordinate Bomber — playable character**. After Generate & rebuild, enable **Play as Subordinate Bomber** in **Mods → Gameplay**. The Zone 3-D rival takes the X cell (bottom right) of the character selection in Battle Mode and, with **Choose a character in Normal Game**, in Normal Game after choosing a save.
+
+- Gameplay, animations, score board and its six palettes (white, black, red, blue, green, yellow) come from your cartridge, where it is character index 9. With **Choose character colors with L and R**, L/R cycle those six colors like the other characters.
+- The cartridge has no grid figure, portrait or HUD face for it: the grid figure and alive HUD face are drawn at render time from its own sprite tiles; the seat portraits (one per color) and the defeated HUD face are maintainer-authored art that follows the selected color.
+- In-memory cartridge patches only, restored when the mod is disabled; the ROM file and SRAM layout are untouched. If your save already unlocked the secret character of the X cell, that cell keeps it.
+
+All six optional mods are preinstalled and disabled by default: PT-BR menus, Normal character selection, L/R colors, infinite Normal timer, five-player Normal Game and Subordinate Bomber. Mod packages remain 0.1.0; Subordinate Bomber requires host v0.6.0 or newer. Download **superbomberman5-{version}-windows-x64.zip** (extract all, run SuperBomberman5SNESRecomp.exe) or **superbomberman5-{version}-linux-x86_64.AppImage** (chmod +x and run; without FUSE use --appimage-extract-and-run), supply your own ROM and use **Generate & rebuild**. Upgrading: use a new folder and rebuild so the new native plugin is compiled.
+
+Validation: six native test executables (new subordinate_tests) and Python publication tests; Linux LLE scripted runs: Battle picker with colors and PT-BR, five-seat Battle through the score board, several seats on Subordinate Bomber next to Bomberman, defeated HUD faces, Normal Zone 1-1 with five players and Zone 3-D beside the rival Subordinate Bomber. Not qualified: physical controllers, full campaign, unlocked secret slot. Partial recompilation: most game logic remains interpreted.
+
+Supported ROM: JPN header; CRC32 c25ab56a; SHA-256 5251e6491872dc51879b630a34d76a92e29ea0c39026c4f8773c1fe006d047c4. The downloads contain no ROM, generated game code, playable ROM-derived executable, extracted graphics/audio, saves or captures. SHA256SUMS covers both packages.
+
+## Português
+
+Novo mod opcional: **Subordinate Bomber — playable character**. Depois de Generate & rebuild, ative **Play as Subordinate Bomber** em **Mods → Gameplay**. O rival do ZONE3-D ocupa a célula do X (canto inferior direito) da seleção de personagens no Battle Mode e, com **Choose a character in Normal Game**, no Normal Game, depois de escolher o save.
+
+- Jogabilidade, animações, placar e as seis paletas dele (branco, preto, vermelho, azul, verde, amarelo) vêm do seu cartucho, onde ele é o personagem índice 9. Com **Choose character colors with L and R**, L/R alternam essas seis cores como nos outros personagens.
+- O cartucho não tem figura na grade, retrato nem rosto de HUD para ele: a figura e o rosto vivo são desenhados a partir do próprio sprite dele; os retratos (um por cor) e o rosto triste de derrotado são arte do mantenedor e acompanham a cor escolhida.
+- Somente patches em memória, desfeitos ao desativar o mod; a ROM e o SRAM não mudam. Se o seu save já desbloqueou o personagem secreto da célula do X, a célula continua com ele.
+
+Os seis mods opcionais vêm pré-instalados e desativados: menus PT-BR, personagens no Normal, cores com L/R, tempo infinito, Normal com cinco jogadores e Subordinate Bomber. Os pacotes de mod seguem em 0.1.0; o Subordinate Bomber exige host v0.6.0 ou superior. Baixe o ZIP Windows (extraia tudo e abra SuperBomberman5SNESRecomp.exe) ou o AppImage Linux (chmod +x; sem FUSE use --appimage-extract-and-run), forneça sua ROM e use **Generate & rebuild**. Para atualizar, use uma pasta nova e recompile.
+
+Validação: seis executáveis de teste nativos (novo subordinate_tests) e testes Python de publicação; rotas roteirizadas Linux LLE: seleção do Battle com cores e PT-BR, Battle com cinco assentos até o placar, vários assentos no Subordinate ao lado do Bomberman, rostos de derrotado no HUD, Normal na Zone 1-1 com cinco jogadores e ZONE3-D ao lado do Subordinate rival. Não qualificados: controles físicos, campanha completa, célula secreta desbloqueada. Recompilação parcial: a maior parte da lógica continua interpretada.
+
+ROM suportada: cabeçalho JPN; CRC32 c25ab56a; SHA-256 5251e6491872dc51879b630a34d76a92e29ea0c39026c4f8773c1fe006d047c4. Os downloads não contêm ROM, código gerado, executável derivado da ROM, gráficos/áudio extraídos, saves ou capturas. SHA256SUMS cobre os dois pacotes.
+'''
+
 if args.output:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(notes, encoding='utf-8', newline='\n')

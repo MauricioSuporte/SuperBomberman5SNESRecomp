@@ -78,6 +78,7 @@ before changing code, docs or releases. Humans: see README.md and CONTRIBUTING.m
 | `src/ptbr_mod.c` | PT-BR menu overlay (presentation plugin). Labels come from `translations/ptbr/labels.json` → generated header `ptbr_labels.h` via `tools/generate-ptbr.py`. Also owns the final PPU draw and an observer chain. |
 | `src/normal_character_mod.c` | Opens Battle's character picker after Normal file confirmation using an in-memory snapshot of the suspended campaign. |
 | `src/selection_color_mod.c` | L/R palette cycling in the picker + authored "L+R" cursor hint drawn into borrowed OBJ tiles, restored at line 224. |
+| `src/subordinate_mod.c` | Subordinate Bomber (index 9) in the picker's X cell: in-memory patches + render-only grid figure/HUD alive face from its ROM sprite tiles, authored per-color seat portraits and a palette-indexed defeated HUD face, all in borrowed OBJ tiles. Overlays chain after the color hint (`ObserveOverlays` in `game_rtl.c`). |
 | `src/normal_coop_mod.c` | 1–5 player Normal Game: 65816 trampolines in unused ROM space, interpreter PC hook, safe-spawn search, shared lives, Start rejoin. |
 | `src/host_contract.c`, `src/gen_stubs.c`, `src/variables.h` | Framework contract placeholders (trace hooks, stubs, WRAM names). |
 | `recomp/` | Analysis inputs: `symbols.toml` (source of truth), `bank00.cfg`. `funcs.h` is generated. |
@@ -109,7 +110,7 @@ git submodule update --init --recursive
 - Output: `build-lle/SuperBomberman5SNESRecomp.exe` (contains ROM-derived code — local only).
 - Native tests (built with `BUILD_TESTING`, default ON):
   `./build-lle/normal_coop_tests.exe`, `normal_character_tests.exe`,
-  `selection_color_tests.exe`, `ptbr_render_tests.exe`
+  `selection_color_tests.exe`, `ptbr_render_tests.exe`, `infinite_time_tests.exe`, `subordinate_tests.exe`
   (run each one; the portable toolchain has no ctest.exe).
 - Before any commit:
   ```powershell
@@ -150,7 +151,7 @@ File 1 (A = keyboard X) → Start on Zone 1 map.
 - Frame order in `GameRunOneFrame` matters:
   `NormalCharacterBeforeFrame → SelectionColorBeforeFrame → NormalCoopBeforeFrame →
   snes_beam_frame_driver_run_frame → NormalCoopAfterFrame → SelectionColorAfterFrame →
-  NormalCharacterFrame`. Draw: `SelectionColorDrawPpuFrame → PtbrDrawPpuFrameObserved(observer)`.
+  NormalCharacterFrame` (`SubordinateBeforeFrame` installs its patches first). Draw: `GameDrawPpuFrame → PtbrDrawPpuFrameObserved(ObserveOverlays)`, which runs the color hint then the Subordinate overlays on line 1 and restores them in reverse order on line 224.
 - Pads: `RtlGetPadState(slot)` uses the runtime bit layout used across the mods:
   B `0x0001`, Start `0x0008`, Left `0x0040`, Right `0x0080`, A `0x0100`,
   L `0x0400`, R `0x0800`. Five seats: P1 port 1, P2–P5 multitap port 2.
@@ -175,7 +176,7 @@ File 1 (A = keyboard X) → Start on Zone 1 map.
 | `$2000-$2008` | Script return addresses (menu/file confirm detection) |
 | `$1038` | **Count** of confirmed picker seats (not a bit mask); reused during picker init |
 | `$103A` | Number of picker seats |
-| `$625F+i` / `$6264+i` | Chosen character 1–9 / palette 0–5 per seat |
+| `$625F+i` / `$6264+i` | Chosen character 1–9 (10 = Subordinate Bomber with its mod) / palette 0–5 per seat |
 | `$6269+i` | Seat kind for picker (1 human, 2 CPU/off as used by mods) |
 | `$62AB+pad` | Controller → current seat (CPU hand-off after confirm) |
 | `$62B5+i` | Seat state: `0` pending CPU, `1` active, `FF` confirmed |
@@ -190,6 +191,10 @@ File 1 (A = keyboard X) → Start on Zone 1 map.
 | `$0349`, `$06DF`, `$2B10/$2B18` | Palette slot refcounts, object→slot, slot palette id / owner |
 | `$C6:8E68` | Picker ready (accepting A) · `$C6:89CF` picker init · `$C7:1257` Normal file-confirm fade · `$C7:1014` file menu init |
 | `$C4:2A69` | Player actor spawn allocator · free in-memory patch areas used by coop: `$C2:4300`, `$C2:4340`, `$C4:5B00`, `$C5:7000`, `$C5:7100` |
+| `$C0:BB30/BB3A/BB44/BB4E` | Per-character tables, 10 entries (index 9 = Subordinate Bomber: sprite set `$19`, palettes `$48-$4D` colors, `$4E` effect, `$4F` rival). Palette block per character: base+0..5 colors, +6 effect (`$C4:46AD`, 90 frames), +7 rival (`$C4:3CCF`); Bomberman has no +7. `$C4:3CB5` creates rivals; Zone 3-D (`$6A`) uses types 4 and 9. Verified by Zone 3-D dumps and stage runs as index 9 |
+| `$C6:8AF4-$8B2E` / `$C2:122A` | Picker script fills grid cell 9: X (char 0) when the secret slot is locked (`$C6:8B17`), char 1 color 5 when unlocked. Grid drawer: BG arrangements (set 6) only for chars 1-9, X = `$90`; figure at BG1 tile (`$C2:12D2[cell]+$C2:12E6[c]`, `$C2:12DC[cell]+$C2:12EF[c]`) |
+| `$C2:1470` / `$C5:12FE` | HUD face animation ids (set 6) normal / defeated, 9 entries each (index 9 reads code). Face object per seat at `$7E35C5+i`, 16x16 sprite 17 lines above it, player's palette. Battle Time Over pose of a bomber: its own set, anim `$1F` |
+| `$C2:4207-$7FFF` | `$FF` padding in bank C2; Subordinate mod uses `$C2:6000-$603F`, coop `$C2:4300-$434B` |
 | `$0348` | OBJ palette-slot request mask for the next allocation (`$C0:028F`); players use `2<<player` (set at `$C4:2AD8/$C4:2B8D`), enemies `$38` |
 | `$1D00-$1D0F`, `$1D10` | Sprite page owners (object id, `$FF` free, `$7F` pending free, `$7E` static) for 1 KiB VRAM pages at `$6000+$200*i`; `$1D10` = pool size (5 in campaign stages; `$C5:6A00` sets 8). Allocator `$C5:6AF5`, upload `$C5:6B77`, request queue `$1CCC-$1CF4` |
 | `$0E1C/$0E1D/$0E1E` | Timer frames/seconds/minutes; seconds >=60 skip countdown at `$C5:046B`. Native 99/9 selects dash HUD at `$C5:0C00`. Verified by JPN disassembly and Windows/LLE Zone 1-1 forced-deadline runs. |
@@ -237,6 +242,11 @@ Timer research: `$0E1C/$0E1D/$0E1E` hold frames/seconds/minutes. Seconds >=60 sk
   confirmations after `$C6:8E68` is reached.
 - Picker previews of the same character share a palette slot; isolate the
   five portrait slots without stealing other owners' refcounts.
+- Objects on the same animation frame show the same VRAM tiles (two seats on
+  one character; index 9 even reuses Bomberman's portrait/HUD frames). Never
+  repaint native tiles for one seat: draw into borrowed free OBJ tiles and
+  repoint only your own sprites (`subordinate_mod.c`).
+- `0x...e+N` in C parses as a float exponent: write `g_rom[0xbb4e + i]`.
 - Final picker cleanup restores stock CPU colors; keep choices pending until
   the stage initializer consumes them (`$16C2/$16DA` match).
 - P1/P2 mount backup actor slots overlapped P3/P4; coop moves mounts to 5–9

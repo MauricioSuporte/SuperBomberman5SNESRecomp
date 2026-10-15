@@ -7,6 +7,8 @@
 static SNESModActivationCallback activation,reset_callback;
 int snes_mod_register_reset_callback(SNESModActivationCallback fn) { reset_callback=fn;return 1; }
 int snes_mod_register_activation_plugin(const char *id,SNESModActivationCallback fn) { (void)id;activation=fn;return 1; }
+static bool subordinate;
+bool SubordinateEnabled(void) { return subordinate; }
 #include "../src/selection_color_mod.c"
 uint8 g_ram[0x20000];
 static uint8 rom[0x400000];
@@ -31,7 +33,7 @@ static void rom_word(unsigned a,unsigned v) { rom[a]=v;rom[a+1]=v>>8; }
 static void fixture(void) {
     SelectionColorReset();memset(g_ram,0,sizeof(g_ram));memset(pads,0,sizeof(pads));
     g_ram[0x1031]=4;set_pc(0xc68e68);rom_word(0x379,0x8000);
-    for(unsigned id=1;id<=0x47;++id) {
+    for(unsigned id=1;id<=0x4f;++id) {
         unsigned record=0x8100+id*32;rom_word(0x18000+(id-1)*2,record);
         for(unsigned c=0;c<9;++c) rom_word(0x10000+record+4+c*2,id*16+c);
     }
@@ -152,14 +154,24 @@ int main(void) {
     uint16 *vram_copy=malloc(sizeof(ppu->vram));CHECK(vram_copy);
     uint16 oam_copy[256];uint8 high_copy[32];
     memcpy(vram_copy,ppu->vram,sizeof(ppu->vram));memcpy(oam_copy,ppu->oam,sizeof(oam_copy));memcpy(high_copy,ppu->highOam,sizeof(high_copy));
-    cursor_overlay(ppu,1,NULL);CHECK(drawn && saved_vram_count==240);
+    SelectionColorObserve(ppu,1,NULL);CHECK(drawn && saved_vram_count==240);
     for(unsigned p=0;p<5;++p) CHECK((ppu->oam[p*4]>>8)==(p==4?215:151));
     CHECK(pixel(ppu,tile_address(ppu,0x1f0),2,6)==15);
-    cursor_overlay(ppu,224,NULL);
+    SelectionColorObserve(ppu,224,NULL);
     CHECK(!drawn && !memcmp(vram_copy,ppu->vram,sizeof(ppu->vram)) && !memcmp(oam_copy,ppu->oam,sizeof(oam_copy)) && !memcmp(high_copy,ppu->highOam,sizeof(high_copy)));
     ppu->oam[30*2]=100<<8;ppu->oam[30*2+1]=0x1f0;
-    cursor_overlay(ppu,1,NULL);CHECK(!drawn && !saved_vram_count); /* Occupied spare tile. */
+    SelectionColorObserve(ppu,1,NULL);CHECK(!drawn && !saved_vram_count); /* Occupied spare tile. */
+    /* Subordinate Bomber (character 10, palettes $48-$4D) with its mod on. */
+    fixture();rom[0xbb4e + 9]=0x48;g_ram[0x62c9+9]=10;activation();SelectionColorAfterFrame();
+    for(unsigned p=1;p<5;++p) g_ram[0x625f+p]=0;
+    g_ram[0x625f]=10;subordinate=true;
+    for(unsigned c=0;c<6;++c) {
+        colors[0]=c;SelectionColorAfterFrame();
+        CHECK(g_ram[0x6264]==c && g_ram[0x62d3+9]==c && g_ram[0x2b10]==0x48+c);
+        unsigned dest=0x2910+0x80*2;CHECK((g_ram[dest]|g_ram[dest+1]<<8)==(0x48+c)*16);
+    }
+    subordinate=false;colors[0]=1;g_ram[0x2b10]=0;SelectionColorAfterFrame();CHECK(g_ram[0x2b10]==0);
     reset_callback();CHECK(!enabled);free(vram_copy);free(ppu);
-    puts("Selection colors: six-color cycle, nine characters, independent seats, confirmation, state loading and cursor restoration passed.");
+    puts("Selection colors: six-color cycle, nine characters (plus Subordinate Bomber), independent seats, confirmation, state loading and cursor restoration passed.");
     return 0;
 }

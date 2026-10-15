@@ -120,6 +120,58 @@ Create `src/<name>_mod.c` + `src/<name>_mod.h`, then:
   existing one and read them only when `RtlStateBytesRemaining` says they are
   present, so older save states still load.
 
+### Adding a playable character (Subordinate Bomber, v0.6.0)
+
+The game already carries more bombers than the picker offers. Recipe used for
+character 10 (`src/subordinate_mod.c`), reusable for the next ones:
+
+1. **Find the character index.** Player chars are `$625F` 1-9 → `$16C2` 0-8.
+   Rivals are created by `$C4:3CB5` with `$16C2 = type` and `$16DA =
+   BB4E[type]+7`. Force a boss stage (Normal route, `until 0x1031 == 0d`, then
+   `poke 0x1031 <stage>`; `$6A` = Zone 3-D) and read `$16C2/$16DA` of the rival
+   slots. Subordinate Bomber is index 9.
+2. **Audit every table read through `$16C2`.** Search the ROM for
+   `LDA $16C2,X` (`BD C2 16`) and check each table's length: `$C0:BB30/BB3A/
+   BB44/BB4E`, `B9C0/B9CA`, `BB66`, `$C4:551B`, `$C5:242C` have 10 entries
+   (gameplay works as is); HUD faces `$C2:1470` / `$C5:12FE` have 9 (the 10th
+   reads code). Tables indexed with `+$1CBF` (`BB58/BB5F`) are mounts, not
+   players. Relocate short tables to free ROM (`$C2:4207-$7FFF` padding) and
+   repoint the long operand.
+3. **Palettes.** Each character has a block at `BB4E[c]`: +0..5 the six L/R
+   colors, +6 an effect palette, +7 the rival palette (Bomberman has 7 slots,
+   no rival). Palette records live through the table at `g_rom[0x379]`
+   (bank C1), nine colors each. Raise any `id <= 0x47` guard.
+4. **Put it in the picker.** The picker is a bytecode script (task 9,
+   `$0C90/$0CB8/$0CE0`): `4F nn 59 FF 51 <addr> 7E 4F vv 4A` stores `vv` at
+   `<addr>[nn]`. Cell 9 is filled at `$C6:8B17` (X) / `$C6:8AF9` (unlocked
+   secret). Patch the stored value, not the script flow. The grid drawer
+   `$C2:122A` only has BG arrangements for chars 1-9, so skip its X for the new
+   char (trampoline) and draw the figure as an overlay.
+5. **Missing art.** Nothing exists for grid figure, seat portrait (index 9
+   shows Bomberman's frame) or HUD faces. Build what you can at render time
+   from the character's own sprite tiles in ROM (find them by matching a stage
+   OAM/VRAM dump against the ROM; the standing frame is three 8x8 rows,
+   mirrored); maintainer-authored art goes in source as palette indices plus,
+   when its colors differ from the cartridge, one authored color set per
+   selectable color. Ask the maintainer for art provenance; never paste
+   cartridge pixels (AGENTS.md rule 4).
+6. **Overlay mechanics that bit us.** Seat portraits are four 16x16 OBJ at
+   (objX-8, objY-25), face at (4..27, 4..27); the frame and per-player
+   background are BG, keep them. HUD faces are one 16x16 OBJ 17 lines above
+   the face object `$7E35C5+i` (anims: alive table, defeated table; Time Over
+   is the bomber's own anim `$1F`). Objects on the same frame share VRAM
+   tiles, including across characters, so draw into borrowed free OBJ tile
+   blocks and repoint only your sprites; write palettes render-only into the
+   seat's slot only when no other visible sprite uses it.
+7. **Integrate.** Let `selection_color_mod.c` accept the new character
+   (`last_character()`), let `normal_character_mod.c` accept the choice, chain
+   the overlay in `ObserveOverlays` (draw after the color hint, restore
+   before it), and test: patch bytes/restore, every pixel, shared tiles with
+   Bomberman, two seats on the new char, palette conflicts, exact
+   VRAM/OAM/CGRAM restoration. Runtime: picker cycling all colors (PT-BR on),
+   Battle through the score board, a defeated HUD face (`poke 0x1ffe7 <mask>`
+   with the fixture), Normal Zone 1-1 and the character's boss stage.
+
 ### Research toolbox that paid off
 
 - Lab harness (kept outside the repo or under ignored `.bootstrap/`): build the

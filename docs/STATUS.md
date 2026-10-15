@@ -1,5 +1,42 @@
 # Super Bomberman 5: estado do protótipo
 
+## v0.6.0 Subordinate Bomber playable / Subordinate Bomber jogável — 2026-10-14
+
+Release scope: the optional **Subordinate Bomber — playable character** mod
+(`superbomberman5.subordinate-bomber` 0.1.0, host v0.6.0+), default-disabled.
+The Zone 3-D rival is cartridge character index 9: every per-character table
+read through `$16C2` has a tenth entry, its sprite set is `$19`, palettes
+`$48-$4D` are its six colors, `$4E` the shared effect palette and `$4F` the
+rival palette (`$C4:3CCF` uses base + 7). In-memory patches: `$C6:8B20/$8B2E`
+(the picker script's locked X cell becomes character 10 in the rival color; the
+unlocked secret-character branch is untouched), `$C2:1276` → `$C2:6000` (no X
+arrangement for it) and ten-entry HUD face tables at `$C2:6020/$6030`.
+Render-only overlays: grid figure from its standing-frame tiles, authored seat
+portraits (one shape, nine colors per selectable color) and HUD faces (alive
+from the standing frame, defeated from an authored palette-indexed sad face).
+Native portrait/HUD frames for index 9 are Bomberman's, and the object system
+shares VRAM tiles between objects on the same frame, so overlays draw into
+borrowed free OBJ tile blocks and repoint only their own sprites. Selection
+colors (palettes up to `$4F`) and the Normal picker hand-off accept character 10.
+
+Evidence (Linux LLE build of these sources, JPN ROM): six native test
+executables pass (new `subordinate_tests`: patch bytes and restore, refusal on
+unexpected bytes, grid figure, every portrait pixel and color set, shared tiles
+with Bomberman, palette conflicts, HUD alive/defeated faces, exact
+VRAM/OAM/CGRAM restoration). Scripted routes: Battle picker cycling the six
+portraits with PT-BR; P1 Bomberman with P2-P5 on Subordinate Bomber in four
+colors (picker and Battle HUD); defeated HUD faces for P3-P5; five-seat Battle
+through the score board; Battle without the colors mod; Normal Zone 1-1 with
+five players (Subordinate red as P1); Normal Zone 3-D next to the rival
+Subordinate Bomber. Logs had no BRK, `interp_cap`, unresolved abandon or fatal.
+Not qualified: Windows runtime (CI builds/tests only), physical controllers,
+full campaign, a save with the secret X-cell character unlocked, Continue path.
+The README showcase was recaptured for v0.6.0 (see `docs/images/README.md`).
+
+O Subordinate Bomber pode ser escolhido no lugar do X, no Battle e no Normal,
+com as seis cores do cartucho via L/R. Figura, retratos e rostos do HUD (vivo e
+derrotado) acompanham a cor; tudo é desfeito ao desativar o mod.
+
 ## v0.5.0 five-player Normal Game demo / Demo com cinco jogadores — 2026-10-14
 
 Release scope: the optional **Normal Game — five players** mod (package 0.1.0,

@@ -67,7 +67,7 @@ static void finish_picker(bool cancel) {
     } else {
         chosen=true;
         for(unsigned i=0;i<count;++i) {
-            g_ram[0x625f+i]=choices[i]>=1 && choices[i]<=9?choices[i]:1;
+            g_ram[0x625f+i]=choices[i]>=1 && choices[i]<=10?choices[i]:1; /* 10: Subordinate mod */
             g_ram[0x6264+i]=palettes[i];
             /* Normal initializes these before showing the file menu, while
              * Battle derives them after the picker. Apply that same mapping

@@ -3,6 +3,7 @@
 #include "common_rtl.h"
 #include "mod_runtime.h"
 #include "ptbr_mod.h"
+#include "subordinate_mod.h"
 #include "snes/ppu.h"
 #include "snes/saveload.h"
 #include <stdbool.h>
@@ -30,8 +31,9 @@ SNES_MOD_CONSTRUCTOR(register_selection_colors) {
     snes_mod_register_activation_plugin("superbomberman5.selection.colors",activate);
 }
 static unsigned word(unsigned offset) { return g_rom[offset]|g_rom[offset+1]<<8; }
+/* Palettes $48-$4F belong to Subordinate Bomber (character 10). */
 static unsigned palette_source(unsigned id) {
-    if(!id || id>0x47) return 0;
+    if(!id || id>0x4f) return 0;
     unsigned table=word(0x379);
     unsigned entry=0x10000+table+(id-1)*2;
     return 0x10000+word(entry)+4;
@@ -63,9 +65,10 @@ static void isolate_portrait_palettes(void) {
     }
     memcpy(g_ram+0x349,refs,sizeof(refs));
 }
+static unsigned last_character(void) { return SubordinateEnabled()?10:9; }
 static void apply_color(unsigned player) {
     unsigned character=g_ram[0x625f+player];
-    if(character<1 || character>9) return; /* The native random/exit cell. */
+    if(character<1 || character>last_character()) return; /* The native random/exit cell. */
     unsigned color=colors[player];
     g_ram[0x6264+player]=(uint8_t)color;
     unsigned source=palette_source(g_rom[0xbb4e + character-1]+color);
@@ -80,8 +83,10 @@ static void apply_color(unsigned player) {
     }
     /* Native grid entries use eight-color strips in the BG palette. The
      * cartridge lookup also handles each villain's original palette layout. */
-    for(unsigned cell=0;g_ram[0x62b5+player]==1 && cell<9;++cell) if(g_ram[0x62c9+cell]==character) {
+    for(unsigned cell=0;g_ram[0x62b5+player]==1 && cell<10;++cell) if(g_ram[0x62c9+cell]==character) {
         g_ram[0x62d3+cell]=(uint8_t)color;
+        /* Subordinate Bomber has no grid strip; its overlay reads $62D3. */
+        if(character==10) break;
         unsigned id=g_rom[0x2130b+(character-1)*7+color];
         upload_palette(palette_source(id),g_rom[0x21301+cell],8);
         break;
@@ -119,7 +124,7 @@ void SelectionColorAfterFrame(void) {
             for(unsigned i=0;i<5;++i) {
                 g_ram[0x6264+i]=colors[i];
                 unsigned character=g_ram[0x625f+i];
-                if(character<1 || character>9 || g_ram[0x16c2+i]!=character-1 ||
+                if(character<1 || character>last_character() || g_ram[0x16c2+i]!=character-1 ||
                    g_ram[0x16da+i]!=g_rom[0xbb4e + character-1]+colors[i]) consumed=false;
             }
             if(consumed) pending=false;
@@ -189,7 +194,7 @@ static void hint_tile(Ppu *ppu,unsigned tile,unsigned glyph,unsigned native_p) {
         ppu->vram[a]=value;
     }
 }
-static void cursor_overlay(const Ppu *view,unsigned line,void *unused) {
+void SelectionColorObserve(const Ppu *view,unsigned line,void *unused) {
     (void)unused;Ppu *ppu=(Ppu *)view;
     if(line==224 && drawn) {
         memcpy(ppu->oam,saved_oam,sizeof(saved_oam));memcpy(ppu->highOam,saved_high,sizeof(saved_high));
@@ -234,8 +239,9 @@ static void cursor_overlay(const Ppu *view,unsigned line,void *unused) {
     }
     if(drawn) { ++ppu->vramWriteCount;++ppu->oamWriteCount; }
 }
+bool SelectionColorEnabled(void) { return enabled; }
 void SelectionColorDrawPpuFrame(void) {
-    PtbrDrawPpuFrameObserved(enabled?cursor_overlay:NULL,NULL);
+    PtbrDrawPpuFrameObserved(enabled?SelectionColorObserve:NULL,NULL);
 }
 void SelectionColorSave(SaveLoadInfo *sli) {
     uint32_t magic=0x314c4353;uint8_t flag=(live?1:0)|(pending?2:0);

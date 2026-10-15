@@ -96,6 +96,10 @@ int main(void) {
     NormalCharacterLoad(&s->base,10);NormalCharacterLoaded(10);CHECK(!failed && picking && from_continue);
     g_ram[0x625f]=4;set_picker_pc(0xc68e68);g_ram[0x1038]=1;NormalCharacterFrame();
     CHECK(!picking && chosen && g_ram[0x16c2]==3);
+    /* Character 10 (Subordinate Bomber mod) is cartridge index 9. */
+    rom[0xbb4e + 9]=0x48;NormalCharacterReset();file_ready(1);NormalCharacterFrame();CHECK(picking);
+    g_ram[0x625f]=10;g_ram[0x6264]=3;set_picker_pc(0xc68e68);g_ram[0x1038]=1;NormalCharacterFrame();
+    CHECK(!picking && chosen && g_ram[0x625f]==10 && g_ram[0x16c2]==9 && g_ram[0x16da]==0x4b);
     NormalCharacterReset();file_ready(1);
     g_ram[0x2003]=0xea;g_ram[0x2006]=0x2b;g_ram[0x2007]=0x0e;NormalCharacterFrame();
     set_picker_pc(0xc68e68);pad=0x0001;NormalCharacterBeforeFrame();

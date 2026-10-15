@@ -41,6 +41,8 @@
 #include "normal_coop_mod.h"
 #include "infinite_time_mod.h"
 #include "selection_color_mod.h"
+#include "subordinate_mod.h"
+#include <stdbool.h>
 
 static void GameInitialize(void)
 {
@@ -56,6 +58,7 @@ void GameRunOneFrame(void)
     extern void CoopInputFixture(void);
     CoopInputFixture();
 #endif
+    SubordinateBeforeFrame();
     NormalCharacterBeforeFrame();
     SelectionColorBeforeFrame();
     NormalCoopBeforeFrame();
@@ -66,9 +69,23 @@ void GameRunOneFrame(void)
     NormalCharacterFrame();
 }
 
+/* Render-only overlays draw in this order on line 1 and restore in the
+ * reverse order on line 224, so each one puts back exactly what it saw. */
+static void ObserveOverlays(const struct Ppu *ppu, unsigned line, void *context)
+{
+    if (line == 224) {
+        SubordinateObserve(ppu, line, context);
+        SelectionColorObserve(ppu, line, context);
+    } else {
+        SelectionColorObserve(ppu, line, context);
+        SubordinateObserve(ppu, line, context);
+    }
+}
+
 void GameDrawPpuFrame(void)
 {
-    SelectionColorDrawPpuFrame();
+    bool overlays = SelectionColorEnabled() || SubordinateEnabled();
+    PtbrDrawPpuFrameObserved(overlays ? ObserveOverlays : NULL, NULL);
 }
 
 void GameSessionReset(void)
