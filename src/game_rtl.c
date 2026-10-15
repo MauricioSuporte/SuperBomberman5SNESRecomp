@@ -40,6 +40,7 @@
 #include "normal_character_mod.h"
 #include "normal_coop_mod.h"
 #include "infinite_time_mod.h"
+#include "pause_menu_mod.h"
 #include "selection_color_mod.h"
 #include "subordinate_mod.h"
 #include <stdbool.h>
@@ -63,7 +64,9 @@ void GameRunOneFrame(void)
     SelectionColorBeforeFrame();
     NormalCoopBeforeFrame();
     InfiniteTimeBeforeFrame();
+    PauseMenuBeforeFrame();
     snes_beam_frame_driver_run_frame();
+    PauseMenuAfterFrame();
     NormalCoopAfterFrame();
     SelectionColorAfterFrame();
     NormalCharacterFrame();
@@ -74,17 +77,19 @@ void GameRunOneFrame(void)
 static void ObserveOverlays(const struct Ppu *ppu, unsigned line, void *context)
 {
     if (line == 224) {
+        PauseMenuObserve(ppu, line, context);
         SubordinateObserve(ppu, line, context);
         SelectionColorObserve(ppu, line, context);
     } else {
         SelectionColorObserve(ppu, line, context);
         SubordinateObserve(ppu, line, context);
+        PauseMenuObserve(ppu, line, context);
     }
 }
 
 void GameDrawPpuFrame(void)
 {
-    bool overlays = SelectionColorEnabled() || SubordinateEnabled();
+    bool overlays = SelectionColorEnabled() || SubordinateEnabled() || PauseMenuEnabled();
     PtbrDrawPpuFrameObserved(overlays ? ObserveOverlays : NULL, NULL);
 }
 
@@ -95,6 +100,7 @@ void GameSessionReset(void)
      * been fine" is the usual desync culprit, because single-player never
      * re-enters the boot path twice in one process. */
     snes_beam_frame_driver_reset();
+    PauseMenuReset();
     NormalCharacterReset();
     InfiniteTimeReset();
     NormalCoopReset();
@@ -104,6 +110,7 @@ void GameSessionReset(void)
 static void GameHardwareReset(void)
 {
     snes_beam_frame_driver_reset();
+    PauseMenuReset();
     NormalCharacterReset();
     InfiniteTimeReset();
     NormalCoopReset();
@@ -111,10 +118,10 @@ static void GameHardwareReset(void)
 }
 
 static void GameSaveExtra(struct SaveLoadInfo *sli) {
-    NormalCharacterSave(sli);SelectionColorSave(sli);NormalCoopSave(sli);
+    NormalCharacterSave(sli);SelectionColorSave(sli);NormalCoopSave(sli);PauseMenuSave(sli);
 }
 static void GameLoadExtra(struct SaveLoadInfo *sli,uint32_t version) {
-    NormalCharacterLoad(sli,version);SelectionColorLoad(sli,version);NormalCoopLoad(sli,version);
+    NormalCharacterLoad(sli,version);SelectionColorLoad(sli,version);NormalCoopLoad(sli,version);PauseMenuLoad(sli,version);
 }
 
 const RtlGameInfo kGameInfo = {

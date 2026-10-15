@@ -9,3 +9,6 @@ void NormalCoopSave(struct SaveLoadInfo *sli);
 void NormalCoopLoad(struct SaveLoadInfo *sli, uint32_t version);
 unsigned NormalCoopPlayerCount(void);
 bool NormalCoopPlayerMenu(void);
+
+/* Restore benched campaign seats before leaving a boss for the map. */
+void NormalCoopPrepareWorldMapReturn(void);

@@ -15,7 +15,7 @@ RESTRICTED = {'.sfc', '.smc', '.fig', '.swc', '.rom', '.bin', '.spc', '.brr',
 LOCAL_DIRS = {'.bootstrap', '.tools', '.cache', 'roms', 'extracted', 'captures',
               'screenshots', 'audio-dumps', 'profiles', 'coverage', 'saves',
               'logs', 'dist'}
-MEDIA = {'.ico', '.png', '.bmp', '.jpg', '.jpeg', '.gif', '.tga', '.wav', '.mp3', '.ogg',
+MEDIA = {'.ico', '.png', '.bmp', '.jpg', '.jpeg', '.webp', '.gif', '.tga', '.wav', '.mp3', '.ogg',
          '.flac', '.mp4', '.webm'}
 BINARIES = {'.exe', '.dll', '.obj', '.o', '.a', '.lib', '.pdb', '.zip', '.snesmod', '.7z',
             '.rar', '.tar', '.gz', '.appimage'}
@@ -47,9 +47,9 @@ def forbidden(path: str, release: bool = False) -> str | None:
     # recorded in assets/README.md. Other media still require separate review.
     if not release and path == 'assets/app.ico':
         return None
-    # Maintainer-requested README showcase captured from the project's own
-    # build; provenance in docs/images/README.md. Never part of release ZIPs.
-    if not release and path == 'docs/images/five-player-showcase.png':
+    # Maintainer authorized documentation gameplay screenshots on 2026-10-15.
+    # This path permission does not authorize extracted cartridge assets.
+    if len(parts) == 3 and parts[:2] == ['docs', 'images'] and p.suffix.lower() in {'.png', '.jpg', '.jpeg', '.webp'}:
         return None
     if not release and p.suffix.lower() in MEDIA | BINARIES:
         return 'binary/media asset requires an explicit provenance review'
@@ -103,8 +103,6 @@ def audit_zip(path: pathlib.Path) -> list[str]:
                 errors.append(f'archive {item.filename}: reference ROM bytes')
             if '/docs/assets/games/' in item.filename or '/test_data/' in item.filename:
                 errors.append(f'archive {item.filename}: dependency screenshot or test fixture')
-            if '/docs/images/' in item.filename:
-                errors.append(f'archive {item.filename}: README screenshot')
     return sorted(set(errors))
 
 

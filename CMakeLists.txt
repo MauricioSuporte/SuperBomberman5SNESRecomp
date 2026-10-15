@@ -48,6 +48,8 @@ add_executable(SuperBomberman5SNESRecomp
     src/ptbr_mod.c
     src/normal_character_mod.c
     # Register infinite-time cleanup before coop; its hook wraps the coop hook.
+    # Hook reset callbacks follow this order, opposite to frame installation.
+    src/pause_menu_mod.c
     src/infinite_time_mod.c
     src/normal_coop_mod.c
     src/selection_color_mod.c
@@ -86,6 +88,9 @@ if(BUILD_TESTING)
     target_include_directories(normal_character_tests PRIVATE
         "${SNESRECOMP_ROOT}/runner/src")
     add_test(NAME normal_character_selection COMMAND normal_character_tests)
+    add_executable(pause_menu_tests tests/pause_menu_tests.c)
+    target_include_directories(pause_menu_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src")
+    add_test(NAME pause_menu_actions COMMAND pause_menu_tests)
     add_executable(infinite_time_tests tests/infinite_time_tests.c)
     target_include_directories(infinite_time_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src")
     add_test(NAME normal_infinite_time COMMAND infinite_time_tests)

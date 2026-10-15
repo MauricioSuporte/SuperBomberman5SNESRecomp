@@ -1,5 +1,130 @@
 # Super Bomberman 5: estado do protótipo
 
+## v0.7.0 preparation / Preparação — 2026-10-15
+
+Adds Pause — exit & draw and its bilingual README instructions. The requested
+per-mod gallery was cancelled; the existing showcase is preserved and future
+mods do not require a screenshot. Gameplay screenshots are authorized
+under docs/images; no history rewriting was needed. The existing README showcase is kept; no new images are added. Source uses the published v0.6.0 dependency pins;
+local uncommitted framework edits are not packaged. Publication pending CI.
+
+## Opaque pause text / Textos opacos na pausa — 2026-10-15
+
+The compact panel now dims the field through a bounded color-math window,
+with BG3 excluded from color math. Native PAUSE/ZONE artwork, authored menu
+options and glove retain their original opaque colors; only the background
+is transparent. Scenes already using color math or layer windows retain the
+solid-fill fallback. All borrowed window/fixed-color registers are restored
+at the panel bottom and after rendering, alongside VRAM/screen state.
+
+PAUSE, ZONE, opções e cursor agora são opacos; somente o fundo mantém a fase
+visível e escurecida. Start/B e as seleções iniciais continuam iguais.
+
+Validation: incremental Windows/LLE build and seven native test executables
+passed; unit coverage checks BG3 exclusion, transparent fill and restoration
+of window/fixed-color registers. Runtime framebuffer assertions check exact
+white glyph/glove pixels in main and confirmation menus, preventing blended
+text from passing unnoticed. Isolated Normal 1P, combined Normal 2P/PT-BR,
+Normal 5P co-op and Battle 2 humans/3 CPUs passed with the optimized PPU;
+Normal 1P also passed with the accurate PPU, including the opaque-pixel
+assertions. Six Python tests and tracked-source audit passed. History audit
+still reports the pre-existing `docs/images/five-player-showcase.png`
+provenance issue documented below. Captures remain local in `.bootstrap/pause-menu-validation/`; no game assets are added.
+Full campaign/all arenas, physical controls and rewind remain unqualified.
+
+## Compact pause panel / Painel compacto de pausa — 2026-10-15
+
+Pause menu controls now use Start to accept the selected action, including
+No/Yes; A is ignored and B retains back/resume behavior. Held Start cannot
+accept the next screen. Resume and No remain the initial selections.
+A compact panel preserves the native PAUSE heading and paused field, with
+options immediately below the heading. Authored BG3 glyphs use unused tiles
+before live OBJ pages; CGRAM and sprite tiles are untouched. VRAM/screen
+registers are restored after drawing. Background blending is enabled only
+when the scene has no native color math; other scenes use a solid fill.
+This supersedes the Start-ignored confirmation behavior recorded below.
+
+Controles: Start confirma a opção selecionada, A é ignorado e B mantém
+voltar/retomar. O painel compacto preserva PAUSE e a fase ao redor, com as
+opções abaixo do título. Resume e No continuam sendo as seleções iniciais.
+
+Validation: Windows x64/LLE/JPN, optimized PPU, the four isolated routes in
+`tests/pause_menu_runtime.py --case all --new-renderer` exercise Normal 1P,
+Normal 2P with PT-BR and other mods, Normal 5P co-op and Battle 2 humans/3 CPUs.
+They check Start acceptance, ignored A on confirmation, cancel, map return,
+Draw/restart, arena return/reentry and native sound commands. Native tests
+also check held Start, preserved heading/outside-panel map, unchanged CGRAM
+and OBJ tiles, and restoration of VRAM/screen registers. Captures reviewed
+for the compact panel in Normal and Battle remain local under `.bootstrap/`.
+All four routes passed, as did the incremental build, seven native test
+executables, six Python tests, tracked-source/package publication audits and
+`git diff --check`. Full campaign/all arenas, physical controls and rewind
+transitions remain unqualified; the earlier limits below still apply.
+
+## Pause actions / Ações no menu de pausa — 2026-10-15
+
+Optional, default-disabled `superbomberman5.pause-menu` 0.1.0 adds Resume and
+Return to world map in Normal, and Resume / Force Draw / Return to stage select
+in Battle. Main menus start on Resume; exit confirmations start on No and
+ignore Start. An authored right-pointing glove and alphabet draw render-only
+on BG3. Cursor/accept/back use native Battle setup SFX ids 1/4/3, observed as
+cartridge-derived CPU-to-APU commands. The stock unpause beep is suppressed.
+
+Normal uses native teardown and the Normal actor's direct map entry state 4,
+without setting cleared-stage flags; the success completion permission bit is
+cleared before teardown. Campaign characters, palettes, equipment and shared
+lives survive the native menu's player reset, with benched co-op seats restored
+before capture. Native saving can normalize a new file's count/checksum;
+SRAM layout stays unchanged. Battle arena return uses `$35B2=1`, mode 4, as
+`$C0:3D8E`; zero survivor statuses (including Revenge flags) take the original
+Draw result and round restart. ROM patches are reserved/signature-checked and
+restored on reset/disable; a constant-size validated save extension follows
+co-op. See `docs/PAUSE_MENU.md` for hooks, controls and reproducible commands.
+
+Evidence (Windows x64, LLE, JPN ROM, optimized PPU `NewRenderer=1`):
+`tests/pause_menu_runtime.py --case all --new-renderer` passed Normal 1P
+through frame 5,303, Normal 2P with PT-BR/characters/colors/Subordinate/
+infinite time/co-op through frame 6,717 (script timeline 5,631 after private
+picker restore), Normal 5P co-op through frame 5,415, and Battle 2 humans +
+3 CPUs with PT-BR/colors/Subordinate through frame 9,268. Each checks pause,
+Resume, No/cancel, B/back, Start ignored on confirmation, exit, reentry and
+native APU commands for all three sounds; Normal also checks unchanged
+WRAM/SRAM cleared-stage masks and retained characters/palettes/lives. Battle
+reaches Draw Game, restarts the round, returns to the native interactive arena
+selector `$C6:A28D` and starts another round. No `interp_cap`, unresolved
+abandon, architectural BRK or fatal in these runs. Earlier accurate-PPU
+checks also exercised Normal map return and Battle Draw/arena return.
+
+An additional run of the final `build-lle` executable through frame 5,303
+forced shared lives to 1 and non-default equipment bytes `$17CA=5` /
+`$4EBD=4` before pausing; all three survived map return and stage reentry.
+Evidence remains in `.bootstrap/pause-menu-validation/preservation-hkwyz4pa`.
+
+Incremental Windows build and all seven native test executables pass. Native
+tests cover held input, safe cursor defaults, guards, pending actions, campaign
+restoration, benched seats, save/load/corrupt-state rejection, older states,
+ROM/hook reset and VRAM/CGRAM/screen-register restoration. Six Python tests and
+`git diff --check` pass. Tracked-source and data-only `.snesmod` publication
+audits pass. The separate `--history` audit reports the pre-existing
+`docs/images/five-player-showcase.png` media asset without provenance review;
+no allowlist change, commit, version bump or release was made here.
+
+Not qualified: full campaign, every arena, real boss transitions, Super/Tag
+Battle, physical controller input, save/load or rewind across a live native
+transition. Save/load state is covered by native tests, not an interactive
+rewind qualification. The package cannot add this plugin to an older host.
+
+O mod opcional inclui as opções solicitadas nos dois modos, com a mão,
+confirmações inicialmente em Não e sons nativos. Voltar ao mapa não libera
+fases nem repõe vidas; mantém personagens, cores e equipamentos. O Battle
+usa o Draw original e a volta nativa às arenas. Build, sete testes nativos,
+seis testes Python e as rotas Windows passaram, incluindo um teste adicional
+com uma vida e equipamentos diferentes dos padrões. A auditoria do histórico
+ainda aponta uma imagem preexistente sem revisão de proveniência; nada foi
+publicado. Chefes reais, campanha completa, Super/Tag Battle, controles físicos
+e rewind durante a transição continuam sem qualificação.
+
+
 ## v0.6.0 Subordinate Bomber playable / Subordinate Bomber jogável — 2026-10-14
 
 Release scope: the optional **Subordinate Bomber — playable character** mod

@@ -1,0 +1,25 @@
+format_version = 1
+id = "superbomberman5.pause-menu"
+version = "0.1.0"
+name = "Pause — exit & draw"
+author = "MauricioSuporte"
+description = "Resume play, return to the world map in Normal Game, force a Draw to restart a Battle round, or return to Battle stage selection. Exits require confirmation. Start selects; B goes back. Requires host v0.7.0 or newer."
+license = "PolyForm-Noncommercial-1.0.0"
+resolver = "declarative"
+save_compatibility = "shared"
+
+[[target]]
+game_id = "superbomberman5-jpn"
+rom_sha256 = "5251e6491872dc51879b630a34d76a92e29ea0c39026c4f8773c1fe006d047c4"
+
+[[feature]]
+id = "pause_menu"
+name = "Stage exits and Battle Draw"
+description = "Resume play, return to the world map in Normal Game, force a Draw to restart a Battle round, or return to Battle stage selection. Exits require confirmation. Start selects; B goes back. Requires host v0.7.0 or newer."
+group = "Gameplay"
+default_enabled = false
+presentation_only = false
+
+[[plugin]]
+feature = "pause_menu"
+id = "superbomberman5.pause.menu"

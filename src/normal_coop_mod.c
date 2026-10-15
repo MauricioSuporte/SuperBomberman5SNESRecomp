@@ -546,3 +546,10 @@ void NormalCoopLoad(SaveLoadInfo *sli,uint32_t version) {
     }
     if(installed) { configure();build_spawn();build_rejoin(); }
 }
+
+void NormalCoopPrepareWorldMapReturn(void) {
+    if(!enabled || !campaign()) return;
+    for(unsigned i=0;i<5;++i) if(benched_mask&(1u<<i))
+        for(unsigned f=0;f<SEAT_FIELDS;++f) g_ram[seat_fields[f]+i]=benched[i][f];
+    benched_mask=0;
+}

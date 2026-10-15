@@ -181,6 +181,44 @@ Validação: seis executáveis de teste nativos (novo subordinate_tests) e teste
 ROM suportada: cabeçalho JPN; CRC32 c25ab56a; SHA-256 5251e6491872dc51879b630a34d76a92e29ea0c39026c4f8773c1fe006d047c4. Os downloads não contêm ROM, código gerado, executável derivado da ROM, gráficos/áudio extraídos, saves ou capturas. SHA256SUMS cobre os dois pacotes.
 '''
 
+if tuple(int(n) for n in version.split('.')) >= (0,7,0):
+    notes = f'''# Super Bomberman 5 v{version} — Pause — exit & draw
+
+## English
+
+New optional mod **Pause — exit & draw**: enable **Stage exits and Battle Draw** under Mods → Gameplay after Generate & rebuild.
+
+- Normal Game: Resume or Return to world map, preserving characters, colors, equipment and shared lives without awarding a cleared stage.
+- Battle: Resume, Force Draw (native draw result and round restart), or Return to stage select through the native arena-selection flow.
+- Start accepts the highlighted option; B goes back. The initial selection is Resume; exit confirmation starts on No. Held buttons do not repeat actions.
+- Compact pause panel keeps gameplay visible, with fully opaque PAUSE/ZONE headings, text and pointing glove. Move/accept/back use native Battle menu sounds.
+
+The bilingual README documents all seven optional mods: PT-BR menus, Normal character selection, L/R colors, infinite Normal time, five-player Normal Game, Subordinate Bomber and Pause — exit & draw. All mod packages remain 0.1.0 and default-disabled. The new pause plugin requires host v0.7.0; importing its data-only manifest cannot update an older host.
+
+Download **superbomberman5-{version}-windows-x64.zip** or **superbomberman5-{version}-linux-x86_64.AppImage**, plus **SHA256SUMS**. Windows: extract the entire ZIP into a writable folder and launch SuperBomberman5SNESRecomp.exe. Linux: chmod +x the AppImage and run it; without FUSE use --appimage-extract-and-run. AppRun creates a versioned writable setup directory. Supply your own compatible ROM and choose Generate & rebuild. For upgrades, use the new version folder and rebuild the game. The native analyzer is included; Rust is not required. First tool download needs internet.
+
+Windows x64/LLE runtime evidence: Normal 1P, 2P with PT-BR/other mods, 5P co-op and Battle 2 humans/3 CPUs; map return/reentry, Draw/restart, arena return/reentry, safe defaults, Start/B, SFX and opaque glyph/glove pixels. Normal 1P was also checked with the accurate PPU. Seven native test executables cover the mods. Linux packaging/native tests are checked by CI; this does not establish full-campaign Linux accuracy. Physical controllers, all arenas, full campaign and rewind across transitions remain unqualified. Partial recompilation: most game logic remains interpreted.
+
+ROM-independent setup downloads contain source, launcher resources, analyzer, licenses, mod manifests and documentation; no ROM, generated game code, ROM-derived playable executable, extracted sprites/audio, saves or raw dumps. Supported ROM: JPN header; CRC32 c25ab56a; SHA-256 5251e6491872dc51879b630a34d76a92e29ea0c39026c4f8773c1fe006d047c4.
+
+## Português
+
+Novo mod opcional **Pause — exit & draw**: depois de Generate & rebuild, ative **Stage exits and Battle Draw** em Mods → Gameplay.
+
+- Normal: retomar ou voltar ao mapa, preservando personagens, cores, itens e vidas compartilhadas, sem registrar a fase como concluída.
+- Battle: retomar, forçar empate e reiniciar a rodada pelo fluxo nativo, ou retornar à seleção de arenas.
+- Start confirma; B volta. O cursor começa em Resume e a confirmação de saída em No. Segurar o botão não repete a ação.
+- Painel compacto com a fase visível; PAUSE/ZONE, opções e mão são opacos. Sons de mover, confirmar e voltar vêm do menu Battle.
+
+O README bilíngue documenta os sete mods: menus PT-BR, personagens no Normal, cores com L/R, tempo infinito, Normal com cinco jogadores, Subordinate Bomber e pausa. Todos seguem em 0.1.0, desativados por padrão. O mod de pausa exige host v0.7.0; importar seu manifesto não atualiza executáveis antigos.
+
+Baixe o ZIP Windows ou AppImage Linux e confira SHA256SUMS. No Windows, extraia tudo numa pasta gravável e abra SuperBomberman5SNESRecomp.exe. No Linux, use chmod +x; sem FUSE, --appimage-extract-and-run. Forneça sua ROM e use Generate & rebuild. Para atualizar, use a pasta da nova versão e gere o jogo novamente. O analisador está incluído; Rust não é necessário. O primeiro download das ferramentas exige internet.
+
+Rotas Windows/LLE validaram Normal com 1/2/5 jogadores e Battle com 2 humanos/3 CPUs, retorno ao mapa, empate/reinício, retorno às arenas, reentrada, controles, sons e pixels opacos do texto/cursor. Normal 1P também passou no PPU preciso. Há sete executáveis de teste nativos. CI verifica build/pacote e testes Linux; isso não comprova a campanha inteira. Controles físicos, todas as arenas, campanha completa e rewind nas transições continuam não qualificados. A recompilação permanece parcial.
+
+Os pacotes contêm instalador independente da ROM, fontes, analisador, licenças, manifestos e documentação. Não incluem ROM, código gerado, executável jogável derivado da ROM, sprites/áudio extraídos, saves ou dumps. Confira a identidade da ROM acima e docs/STATUS.md.
+'''
+
 if args.output:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(notes, encoding='utf-8', newline='\n')

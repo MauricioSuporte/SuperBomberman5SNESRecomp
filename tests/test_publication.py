@@ -16,7 +16,7 @@ class PublicationGuardTests(unittest.TestCase):
     def test_rejects_dumps_generated_code_and_secrets(self):
         for path in ['game.SFC', 'renamed.rom', 'audio/song.spc', 'other/src/gen/bank00.c',
                      'copied/bankC0_v2.c', 'recomp/funcs.h', '.env', 'secret.pem',
-                     '.tools/tool.exe', 'captures/image.png', 'assets/game.AppImage']:
+                     '.tools/tool.exe', 'captures/image.png']:
             with self.subTest(path=path):
                 self.assertIsNotNone(audit.forbidden(path))
 
@@ -27,16 +27,21 @@ class PublicationGuardTests(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertIsNone(audit.forbidden(path))
 
-    def test_icon_exception_is_limited_to_reviewed_asset(self):
-        self.assertIsNone(audit.forbidden('assets/app.ico'))
-        for path in ['assets/other.ico', 'other/assets/app.ico', 'assets/app.png']:
+    def test_allows_documentation_gameplay_images_without_allowing_extracts(self):
+        for path in ['docs/images/five-player-showcase.png', 'docs/images/pause.jpg',
+                     'docs/images/battle.jpeg', 'docs/images/menu.webp']:
+            with self.subTest(path=path):
+                self.assertIsNone(audit.forbidden(path))
+                self.assertIsNone(audit.forbidden(path, release=True))
+        for path in ['assets/sprites.png', 'docs/images/rom.bin',
+                     'docs/images/audio.spc', 'docs/images/extracted/tiles.png',
+                     '.bootstrap/docs/images/capture.png', 'captures/frame.png']:
             with self.subTest(path=path):
                 self.assertIsNotNone(audit.forbidden(path))
 
-    def test_showcase_exception_is_limited_to_reviewed_image(self):
-        self.assertIsNone(audit.forbidden('docs/images/five-player-showcase.png'))
-        for path in ['docs/images/other.png', 'docs/five-player-showcase.png',
-                     'screenshots/five-player-showcase.png']:
+    def test_icon_exception_is_limited_to_reviewed_asset(self):
+        self.assertIsNone(audit.forbidden('assets/app.ico'))
+        for path in ['assets/other.ico', 'other/assets/app.ico', 'assets/app.png']:
             with self.subTest(path=path):
                 self.assertIsNotNone(audit.forbidden(path))
 
@@ -51,13 +56,11 @@ class PublicationGuardTests(unittest.TestCase):
                 archive.writestr('setup/data.dat', synthetic)
                 archive.writestr('../escape.txt', 'synthetic')
                 archive.writestr('setup/snesrecomp/docs/assets/games/game.png', 'synthetic')
-                archive.writestr('setup/docs/images/five-player-showcase.png', 'synthetic')
             with patch.object(audit, 'rom_digest', return_value=hashlib.sha256(synthetic).hexdigest()):
                 errors = audit.audit_zip(archive_path)
             self.assertTrue(any('reference ROM bytes' in e for e in errors))
             self.assertTrue(any('path traversal' in e for e in errors))
             self.assertTrue(any('dependency screenshot' in e for e in errors))
-            self.assertTrue(any('README screenshot' in e for e in errors))
 
 
 if __name__ == '__main__':

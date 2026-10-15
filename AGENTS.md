@@ -35,7 +35,7 @@ before changing code, docs or releases. Humans: see README.md and CONTRIBUTING.m
 1. **No game data in Git or releases.** Never commit or package the ROM,
    `src/gen/`, `recomp/funcs.h`, `bank*_v2.c`, executables built with generated
    code (`build-*/`), extracted graphics/audio/text, saves (`saves/`, `*.srm`),
-   save states, memory dumps, screenshots/captures, `rom.cfg`,
+   save states, memory dumps, raw diagnostic captures, `rom.cfg`,
    `last_run_report.json` or crash reports. `.gitignore` plus
    `tools/audit-publication.py` enforce this; never bypass with `git add -f`
    or by widening the allowlist without a documented provenance review.
@@ -290,3 +290,9 @@ Timer research: `$0E1C/$0E1D/$0E1E` hold frames/seconds/minutes. Seconds >=60 sk
 
 Framework references: `snesrecomp/docs/MOD_PACKAGES.md`, `FRAME_MODEL_HOSTS.md`,
 `MULTITAP.md`, `LLE_FIRST_ANALYSIS.md`, `MULTI_TIER.md`, `GAME_PROJECT_SETUP.md`.
+
+## Gameplay screenshot policy — 2026-10-15
+
+Gameplay screenshots are authorized for README/docs/releases under `docs/images/`.
+Gameplay screenshots are optional; no per-mod image is required. Extracted assets, ROM,
+generated code, saves and memory/audio dumps remain prohibited.
