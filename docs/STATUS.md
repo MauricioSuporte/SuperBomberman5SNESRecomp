@@ -1,6 +1,51 @@
 # Super Bomberman 5: estado do protótipo
 
 
+## v0.8.2 published / Publicada — 2026-10-15
+
+Published prerelease:
+https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.8.2
+Tag targets `fc66241464a23ed4d8749da7a726df2ad6e34616`, matching both
+packages' SOURCE_REVISIONS. Release workflow `38728341451` passed both
+Windows and Ubuntu builds, native/Python checks, publication audits, analyzer
+smokes and AppImage writable first/repeat-launch checks. Existing tags/assets
+were preserved. The same eight mods remain preinstalled/default-disabled;
+only PT-BR coverage, tests and release documentation changed from v0.8.1.
+
+Downloaded CI archives matched GitHub artifact digests. Both inner setup ZIPs
+passed publication audit, eight-mod/source-revision checks and payload
+FILE_SHA256SUMS verification. Public Windows ZIP (16,685,351 bytes), Linux
+AppImage (13,363,704 bytes) and SHA256SUMS (216 bytes) were verified against
+each uploaded asset's size and SHA-256 digest. The published UTF-8 title/body
+match their local source exactly without replacement characters.
+
+Extracted Windows setup launcher startup passed. Both packages' bundled
+analyzers ran, then generated/rebuilt the game locally using the user ROM;
+all eight native tests passed on each OS. The rebuilt Linux AppImage also
+completed the 3,628-frame first-stage route. On both OSes, packaged
+`ptbr_completion_runtime.py` passed Continue/Erase headings, 0% Game Over →
+certificate → tips (5,347 frames), 100% Game Over → password reward →
+Perfect Bomber certificate → tips (5,952 frames), and both HUD messages on
+both sides with blink-off frames (3,725 frames). Additional HUD runs passed
+with NewRenderer=1 on each OS, including final APERTE START wording.
+Translated/original WRAM, VRAM, OAM, CGRAM and SRAM match byte-for-byte;
+reward changes stay within its three text lines, preserving the password.
+No interpreter cap, unresolved abandonment, architectural BRK or fatal.
+Raw local evidence: `.bootstrap/v082-{windows,linux}-ptbr[-fast]/` and
+`.bootstrap/v082-*-{build,generate,runtime}.log`. These forced progress/death
+fixtures do not qualify natural playthroughs for all ranks, full campaign,
+physical multiplayer, other Linux distributions, macOS or HLE.
+
+Pré-release v0.8.2 publicada com ZIP Windows, AppImage Linux experimental e
+checksums. Título/notas bilíngues UTF-8, tag, workflow, tamanho e hash de cada
+asset foram confirmados. Os dois pacotes extraídos geraram/recompilaram o
+jogo; oito testes nativos passaram em cada sistema. Rotas PT-BR de arquivos,
+0%/100%, senha e HUD passaram nos dois sistemas, com memória nativa intacta;
+APERTE START também passou nos dois compositores LLE. Linux completou a
+rota inicial de 3.628 quadros. Campanha completa e demais limites acima
+permanecem. Importar só o .snesmod não atualiza o código: use Generate & rebuild.
+
+
 ## v0.8.2 PT-BR completion coverage / Telas de conclusão — 2026-10-15
 
 Expanded the same default-disabled PT-BR plugin: Continue/Erase headings,
