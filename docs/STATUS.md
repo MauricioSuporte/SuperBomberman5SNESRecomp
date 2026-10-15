@@ -1,5 +1,44 @@
 # Super Bomberman 5: estado do protótipo
 
+## v0.10.0 package/publication verification — 2026-10-15
+
+Published prerelease: [v0.10.0](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.10.0),
+tag `a1f2eae6d4b24371147909ca0af396c5a107c82b`.
+[Release run 38781163438](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/actions/runs/38781163438)
+and source checks passed. Public Windows ZIP: 16,809,231 bytes; Linux AppImage:
+13,466,104 bytes; SHA256SUMS: 218 bytes. Uploaded sizes/digests, annotated tag,
+prerelease state, exact UTF-8 notes and public checksum download were verified.
+Both payloads match the release commit/pins and contain ten default-disabled
+mods. ZIP audits and every internal FILE_SHA256SUMS entry passed.
+
+The extracted Windows ZIP generated/rebuilt using the user's ROM and bundled
+analyzer; all ten native tests and optional cartridge-font checks passed.
+The root setup handed off to the rebuilt launcher on first/repeat hidden
+startup smoke tests. The AppImage passed first/repeat writable installation
+and bundled synthetic-ROM analyzer checks under WSL Ubuntu. These Linux setup
+checks do not qualify gameplay of the new Gold/PT-BR changes.
+
+The executable rebuilt from the downloaded Windows ZIP passed arena 1/13
+confirmation (74 translated samples plus original controls, native blink,
+Portuguese names, exact guest-memory restoration and identical gameplay after
+the overlay ended), controlled Hyper cart knockout/reentry with enabled and
+disabled controls, equipment transfer and combined pause Draw/restart.
+Pause routes passed for Normal 1/2/5 seats and Battle, including native SFX
+commands, safe defaults, confirmations, exits and reentry. Subordinate routes
+passed for locked/unlocked Battle, unlocked Normal with Honey/Kotetsu and
+an unlocked disabled-mod control, including standard Bomberman yellow L/R.
+
+Raw captures, generated code, saves and package tests remain in ignored
+`.bootstrap/v0100-*`. No full-campaign, physical-multiplayer or HLE claim.
+
+Publicada a pré-release v0.10.0 com ZIP Windows, AppImage Linux e SHA256SUMS.
+Tag, notas UTF-8, arquivos e hashes foram confirmados no GitHub; auditorias e
+checksums internos passaram. O ZIP extraído gerou/recompilou o jogo e passou
+as rotas Windows de Gold/Hiper, confirmação PT-BR, pause/áudio e Subordinado
+acima. O AppImage passou instalação/reabertura e analisador no WSL; gameplay
+Linux novo continua sem qualificação específica. Dados locais ficam ignorados.
+
+
 ## v0.10.0 release source / Fontes da release v0.10.0 — 2026-10-15
 
 Release scope: Gold Battle (arenas 11–13 / Hyper Revenge), native-style PT-BR
