@@ -1,6 +1,36 @@
 # Super Bomberman 5: estado do protótipo
 
 
+## v0.9.0 published / Publicada — 2026-10-15
+
+Published prerelease:
+https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.9.0
+Tag and both packages' SOURCE_REVISIONS target
+`271fc1963fbc0931be7b0afe30c8e71e3e5d9385`. Release workflow `38734943052`
+(and the preceding test run `38733401457`) passed Windows/Ubuntu builds, all
+nine native tests, Python checks, source/package audits, analyzer smoke and
+AppImage first/repeat startup. Framework pins are unchanged from v0.8.2.
+
+Public assets were downloaded and match SHA256SUMS: Windows ZIP
+`1b3fa772...f868` (16,743,922 bytes), AppImage `8203ec81...f748`
+(13,412,856 bytes). The ZIP passes the package audit, contains the Honey and
+Kotetsu source/manifest and no `docs/images`, generated code or ROM/save
+files. The extracted AppImage payload verified every FILE_SHA256SUMS entry and
+its bundled analyzer smoke; on Linux (cloud container, local SDL3) local ROM
+generation and rebuild from that payload passed all nine native tests, the
+3,628-frame first-stage route reached Zone 1-1, and a Battle route with PT-BR,
+colors, Subordinate and Honey/Kotetsu reached stage 1 with Honey (P1) and
+Kotetsu (seat 2) drawn. No interpreter cap, BRK or fatal. The release body
+matches `tools/release-notes.py` byte-for-byte (UTF-8, no U+FFFD); its title
+kept the workflow default because this session could not edit releases. The
+extracted Windows package was not run on Windows from this session.
+
+Pré-release v0.9.0 publicada com ZIP Windows, AppImage Linux e checksums.
+Hashes, auditoria do ZIP e integridade do AppImage conferidos; o pacote Linux
+gerou/recompilou o jogo com a ROM local, passou nos nove testes, na rota de
+3.628 quadros e numa rota de Battle com Honey e Kotetsu. O teste do pacote no
+Windows fica pendente.
+
 ## v0.9.0 preparation — Honey and Kotetsu / Preparação — 2026-10-15
 
 Release scope: v0.8.2 plus the optional **Honey and Kotetsu — playable
