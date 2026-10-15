@@ -71,7 +71,7 @@ SB5; Hammer e Lady causam dano em vez de derrubar o item do alvo. Jogadores da
 CPU não usam habilidades. Lady e Bazooka usam uma recarga (o Super Bomberman 4
 não aplica debuff a eles; o tempo de recarga foi escolhido para o SB5). A tela
 de campeão do Battle continua com o Bomberman. O mod vem desativado e exige host
-v0.10.0 ou superior. Pacote de dados:
+v0.11.0 ou superior. Pacote de dados:
 
 ```powershell
 python tools/package-bomber-kings.py
@@ -128,7 +128,7 @@ Great stands invulnerable for 3 s. Super Bomberman 4's Bomberman has none.
 
 Limits: Hammer and Lady deal damage instead of knocking the target's item off.
 CPU players do not use abilities. The Battle champion screen still shows
-Bomberman. Disabled by default; requires host v0.10.0 or newer.
+Bomberman. Disabled by default; requires host v0.11.0 or newer.
 
 ## Technical notes
 

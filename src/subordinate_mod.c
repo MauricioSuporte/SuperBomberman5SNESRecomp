@@ -14,7 +14,8 @@
  *  - $C6:8B20: the picker script stores character 0 (the X cell) in grid
  *    cell 9 when the secret slot is locked; store 10 instead. $C6:8B2E sets
  *    that cell's preview color to 6, the rival palette, like the villains.
- *    The unlocked branch ($C6:8AF9) is left as is.
+ *    The unlocked branch also stores 10/color 6 ($C6:8B02/$8B10),
+ *    replacing the redundant yellow Bomberman without changing unlock flags.
  *  - $C2:1276: the grid drawer ($C2:122A) draws arrangement $90 (the X) for
  *    any character above 9; skip it for character 10 (trampoline $C2:6000).
  *  - $C5:129B/$C5:1319/$C5:12EE: the HUD face tables $C2:1470/$C5:12FE have
@@ -67,12 +68,14 @@ static const uint8_t grid_x[]={
 static void install(void) {
     if(installed || !g_rom || !g_snes || !g_snes->cart) return;
     /* Only patch the verified image's expected bytes. */
-    static const uint8_t cell_store[]={0x4f,0x00,0x4a};
+    static const uint8_t cell_store[]={0x4f,0x00,0x4a},unlocked_store[]={0x4f,0x01,0x4a},unlocked_color[]={0x4f,0x05,0x4a};
     static const uint8_t x_draw[]={0xce,0x28,0x1d,0xa9,0x90,0x22,0x09,0x00,0xc0};
-    if(memcmp(rom(0xc68b1f),cell_store,3) || rom(0xc68b2e)[0]!=0 || memcmp(rom(0xc21276),x_draw,9) ||
+    if(memcmp(rom(0xc68b1f),cell_store,3) || rom(0xc68b2e)[0]!=0 ||
+       memcmp(rom(0xc68b01),unlocked_store,3) || memcmp(rom(0xc68b0f),unlocked_color,3) || memcmp(rom(0xc21276),x_draw,9) ||
        rom(0xc5129b)[0]!=0xbf || rom(0xc51319)[0]!=0xbf || rom(0xc512ee)[0]!=0xbf) { installed=true;return; }
     uint8_t cell=CHARACTER,color=6;
     patch(0xc68b20,&cell,1);patch(0xc68b2e,&color,1);
+    patch(0xc68b02,&cell,1);patch(0xc68b10,&color,1);
     patch(0xc26000,grid_x,sizeof(grid_x));patch(0xc21276,grid_skip,sizeof(grid_skip));
     uint8_t face[10],alt[10];
     memcpy(face,rom(0xc21470),9);face[INDEX]=FACE;
@@ -80,7 +83,7 @@ static void install(void) {
     patch(0xc26020,face,10);patch(0xc26030,alt,10);
     static const uint8_t face_table[]={0x20,0x60,0xc2},alt_table[]={0x30,0x60,0xc2};
     patch(0xc5129c,face_table,3);patch(0xc5131a,face_table,3);patch(0xc512ef,alt_table,3);
-    installed=true;patched=patch_count==9;
+    installed=true;patched=patch_count==11;
 }
 static void reset_plugin(void) { uninstall();enabled=false; }
 static void activate(void) { enabled=true; }

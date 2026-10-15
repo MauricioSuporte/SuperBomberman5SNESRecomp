@@ -24,7 +24,8 @@ O retorno ao mapa preserva personagens, paletas, equipamentos e vidas
 compartilhadas. Não concede uma fase concluída. O salvamento nativo continua
 ativo e pode normalizar contador/checksum de um arquivo novo; o layout do SRAM
 é o original. Seats guardados pelo co-op durante chefes são recuperados antes
-da saída. O menu novo está em inglês, inclusive com a tradução PT-BR ativa.
+da saída. As opções e a confirmação acompanham o mod PT-BR: Continuar,
+Empatar rodada, Voltar ao mapa, Escolher arena, Tem certeza, Não e Sim.
 Os efeitos de mover, confirmar e voltar são os comandos 1, 4 e 3 do grupo 2
 usados na configuração do Battle, executados pelo código/APU do cartucho.
 
@@ -34,8 +35,9 @@ A pausa e seu congelamento continuam nativos (`$1D1D`, tarefa em
 `$C5:009E`). O teste de Start em `$C5:00B7` passa por um pequeno trampoline
 próprio em padding `$C5:7180-$719A`; ele toca o SFX pendente preservando
 A/X/Y/P e retorna ao teste original. Em `$C5:00C8`, o hook permite retomar
-apenas após uma ação explícita. O beep padrão de despausa em `$C5:0096` é
-suprimido para não substituir o som escolhido. Bytes originais são guardados,
+apenas após uma ação explícita. As chamadas nativas de áudio em `$C5:0096` (entrada) e `$C5:0037`
+(saída) são preservadas. Retomar não enfileira o som de confirmar/voltar: cada
+transição usa a sequência original do cartucho. Bytes originais são guardados,
 assinaturas/padding são conferidos e tudo é restaurado no reset/desativação.
 As rotinas precisam continuar interpretadas; os hooks encadeiam o anterior.
 
@@ -83,7 +85,9 @@ importing it cannot update older hosts. Included in the v0.7.0 setup packages, d
 Start opens the native in-stage pause. Up/down move the authored right-pointing
 glove, Start accepts the selected option and B goes back. B on the main menu
 resumes play; A does not accept options.
-Held buttons never repeat an action. The new labels remain English with PT-BR.
+Held buttons never repeat an action. Labels and confirmation follow the PT-BR
+translation mod. Native pause-entry and resume audio calls remain intact;
+resuming does not queue an additional menu accept/back sound.
 
 - **Normal:** Resume / Return to world map, initially Resume. Return opens
   Are you sure / No / Yes, initially **No**. Start on No or B cancels; Start

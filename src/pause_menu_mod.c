@@ -4,6 +4,7 @@
 #include "common_cpu_infra.h"
 #include "mod_runtime.h"
 #include "normal_coop_mod.h"
+#include "ptbr_mod.h"
 #include "snes/interp_bridge.h"
 #include "snes/ppu.h"
 #include "snes/saveload.h"
@@ -16,7 +17,7 @@ static const uint16_t campaign_fields[]={0x16c2,0x16da,0x1662,0x167a,0x1782,0x15
 static uint8_t campaign_values[10][5],campaign_lives;
 static bool keep_campaign;
 static void (*previous_hook)(uint32_t, int, int);
-static uint8_t original_test[4], original_space[27], original_resume_call[4];
+static uint8_t original_test[4], original_space[27];
 static uint8_t *rom(uint32_t pc) { return SnesRomPtr(pc); }
 static bool battle(void) { return (g_ram[0x1d1a]&1)!=0; }
 static bool stage(void) {
@@ -52,7 +53,6 @@ static void instruction(uint32_t pc,int m,int x) {
 void PauseMenuReset(void) {
     if(installed) {
         memcpy(rom(0xc500b7),original_test,4);
-        memcpy(rom(0xc50096),original_resume_call,4);
         memcpy(rom(0xc57180),original_space,sizeof(original_space));
         if(g_interp_bridge_pc_hook==instruction) g_interp_bridge_pc_hook=previous_hook;
     }
@@ -76,9 +76,8 @@ static void install(void) {
     const uint8_t code[]={0x08,0x48,0xda,0x5a,0xa9,0x00,0xf0,0x08,
         0xeb,0xa9,0x02,0xeb,0x22,0xed,0x0c,0xc0,
         0x7a,0xfa,0x68,0x28,0x64,0xb1,0xa0,0x04,0x4c,0xbb,0x00};
-    memcpy(original_resume_call,rom(0xc50096),4);
-    /* The selected menu SFX replaces the stock unpause beep. */
-    memset(rom(0xc50096),0xea,4);
+    /* Keep both native pause/resume audio commands. The group-2 command
+     * at $C5:0096 enters pause; $C5:0037 leaves it. */
     memcpy(original_test,rom(0xc500b7),4);
     memcpy(original_space,rom(0xc57180),sizeof(original_space));
     memcpy(rom(0xc57180),code,sizeof(code));
@@ -128,7 +127,7 @@ void PauseMenuBeforeFrame(void) {
     if(pressed&1) {
         sound_pending=3;
         if(confirm_menu) { confirm_menu=false;selection=battle()?2:1; }
-        else resume_requested=true;
+        else { resume_requested=true;sound_pending=0; }
     } else if(pressed&0x30) {
         selection=(uint8_t)((selection+((pressed&0x10)?count-1:1))%count);sound_pending=1;
     } else if(pressed&8) {
@@ -136,7 +135,7 @@ void PauseMenuBeforeFrame(void) {
         if(confirm_menu) {
             if(selection==1) { selection=battle()?2:1;action_requested=true; }
             else { confirm_menu=false;selection=battle()?2:1; }
-        } else if(selection==0) resume_requested=true;
+        } else if(selection==0) { resume_requested=true;sound_pending=0; }
         else if(battle() && selection==1) action_requested=true;
         else { confirm_menu=true;selection=0; }
     }
@@ -176,7 +175,11 @@ static void write_word(Ppu *p,unsigned at,uint16_t value) {
 }
 static void text(Ppu *p,unsigned row,unsigned col,const char *s) {
     unsigned map=PPU_bgTilemapAdr(p,2);
-    for(;*s;++s,++col) write_word(p,map+row*32+col,0x2000+glyph_first+(*s>='A'&&*s<='Z'?*s-'A'+1:0));
+    for(;*s;++s,++col) {
+        unsigned glyph=*s>='A'&&*s<='Z'?*s-'A'+1:0;
+        if((unsigned char)s[0]==0xc3 && (unsigned char)s[1]==0x83) { glyph=39;++s; }
+        write_word(p,map+row*32+col,0x2000+glyph_first+glyph);
+    }
 }
 static void restore_panel_math(Ppu *p) {
     p->cgwsel=color_select;p->cgadsub=color_add;p->fixedColor=fixed_color;
@@ -211,9 +214,9 @@ void PauseMenuObserve(const struct Ppu *view,unsigned line,void *context) {
         if(tile<512) used[tile]=true;
     }
     glyph_first=0;
-    for(unsigned candidate=256;candidate+39<=512;++candidate) {
+    for(unsigned candidate=256;candidate+40<=512;++candidate) {
         bool free=true;
-        for(unsigned i=0;i<39;++i) if(used[candidate+i]) { free=false;break; }
+        for(unsigned i=0;i<40;++i) if(used[candidate+i]) { free=false;break; }
         if(free) { glyph_first=candidate;break; }
     }
     if(!glyph_first) return;
@@ -225,8 +228,9 @@ void PauseMenuObserve(const struct Ppu *view,unsigned line,void *context) {
     panel_top=battle()?13:10;panel_bottom=confirm_menu || battle()?24:22;
     p->screenEnabled[0]|=4;p->screenWindowed[0]&=(uint8_t)~4u;
     unsigned base=chars+glyph_first*8;
-    for(unsigned c=0;c<39;++c) for(unsigned y=0;y<8;++y) {
+    for(unsigned c=0;c<40;++c) for(unsigned y=0;y<8;++y) {
         unsigned bits=c>=1&&c<=26&&y<7?kFont[c-1][y]<<2:0;
+        if(c==39) { static const uint8_t a_tilde[8]={10,5,14,17,31,17,17,0};bits=a_tilde[y]<<2; }
         /* Opaque dark fill, white glyphs. */
         write_word(p,base+c*8+y,(uint16_t)((blend_panel?bits:0xff)|(bits<<8)));
     }
@@ -272,12 +276,12 @@ void PauseMenuObserve(const struct Ppu *view,unsigned line,void *context) {
     /* Preserve the cartridge's stage heading and PAUSE artwork above the rows. */
     unsigned label_col=battle()?7:8,cursor_col=label_col-3;
     if(confirm_menu) {
-        text(p,17,10,"ARE YOU SURE");text(p,19,16,"NO");text(p,21,16,"YES");
+        text(p,17,10,PtbrPauseLabel(0));text(p,19,16,PtbrPauseLabel(1));text(p,21,16,PtbrPauseLabel(2));
         label_col=16;cursor_col=13;
     } else {
-        text(p,17,label_col,"RESUME");
-        text(p,19,label_col,battle()?"FORCE DRAW":"RETURN TO WORLD MAP");
-        if(battle()) text(p,21,label_col,"RETURN TO STAGE SELECT");
+        text(p,17,label_col,PtbrPauseLabel(3));
+        text(p,19,label_col,PtbrPauseLabel(battle()?4:5));
+        if(battle()) text(p,21,label_col,PtbrPauseLabel(6));
     }
     unsigned cursor_row=(confirm_menu?19:17)+selection*2;
     for(unsigned y=0;y<2;++y) for(unsigned x=0;x<2;++x)

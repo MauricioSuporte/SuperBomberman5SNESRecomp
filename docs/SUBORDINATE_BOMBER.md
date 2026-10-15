@@ -4,7 +4,8 @@
 
 Em **Mods**, ative **Play as Subordinate Bomber** e inicie o jogo. Na seleção de
 personagens, o **Subordinate Bomber** (o rival do ZONE3-D) ocupa a célula do
-**X**, no canto inferior direito da grade. Escolha-o com o direcional e confirme
+**X** ou do Bomberman amarelo desbloqueado. Com Honey/Kotetsu, fica na
+quinta coluna da fileira inferior. Escolha-o com o direcional e confirme
 com A, como os outros nove personagens.
 
 - **Battle Mode:** funciona direto na seleção de personagens.
@@ -27,9 +28,10 @@ nem ícone de HUD para ele, o mod desenha a figura e o ícone durante a renderiz
 a partir dos tiles do próprio sprite dele, lidos da ROM, e usa os retratos
 autorais. Nenhum gráfico ou paleta do cartucho é embutido no código.
 
-Limitações: se o personagem secreto da célula do X já tiver sido desbloqueado no
-seu save, a célula continua mostrando esse personagem e o Subordinate Bomber não
-aparece. No HUD do Normal Game o ícone continua sendo o do Bomberman, como acontece
+Nas fontes atuais, a célula oferece o Subordinado mesmo com o secreto
+desbloqueado no save; o estado de desbloqueio não é alterado. O Bomberman
+amarelo continua acessível por L/R no Bomberman padrão com o mod de cores.
+No HUD do Normal Game o ícone continua sendo o do Bomberman, como acontece
 com os outros personagens escolhidos pelo mod. O mod é desativado por padrão,
 vem pré-instalado nos pacotes v0.6.0, exige host v0.6.0 ou superior e o pacote
 de dados pode ser gerado com:
@@ -41,8 +43,9 @@ python tools/package-subordinate-bomber.py
 ## English
 
 Enable **Play as Subordinate Bomber** in **Mods**, then launch. In character
-selection, **Subordinate Bomber** (the Zone 3-D rival) takes the **X** cell at the
-bottom right of the grid. Pick it with the D-pad and confirm with A like the
+selection, **Subordinate Bomber** (the Zone 3-D rival) replaces the **X** or the
+unlocked yellow Bomberman. With Honey/Kotetsu it occupies the fifth bottom-row
+column. Pick it with the D-pad and confirm with A like the
 other nine characters.
 
 - **Battle Mode:** available in the character picker.
@@ -64,8 +67,9 @@ or HUD face for it: the figure and face are built while rendering from its own
 sprite tiles read from the ROM, and the portraits are authored art. No
 cartridge graphics or palettes are embedded in source.
 
-Limits: if your save has already unlocked the secret character of the X cell,
-that cell keeps showing it and Subordinate Bomber does not appear. The Normal
+Current sources offer Subordinate even when the secret cell is unlocked,
+without changing the unlock flag. Yellow remains available through L/R on the
+standard Bomberman with the color mod. The Normal
 Game HUD keeps the Bomberman icon, as it does for every character chosen by the
 mod. The mod is disabled by default, is preinstalled in the v0.6.0 packages, needs
 host v0.6.0 or newer, and its data package can be built with
@@ -88,7 +92,8 @@ Research on the verified JPN image (Linux LLE build of the same sources):
   `$C5:12FE` (alternate), read at `$C5:129B/$C5:1319/$C5:12EE`; index 9 read code.
 
 In-memory patches (installed while enabled, restored on reset, guarded by the
-expected stock bytes): `$C6:8B20` = 10, `$C6:8B2E` = 6, `$C2:1276` JSR to
+expected stock bytes): both locked (`$C6:8B20/$8B2E`) and unlocked
+(`$C6:8B02/$8B10`) branches store character 10 / color 6, `$C2:1276` JSR to
 `$C2:6000` (skip the X for character 10), ten-entry face tables at
 `$C2:6020/$C2:6030` (index 9 → `$1D/$27`). The free area `$C2:6000-$603F` is
 inside the `$C2:4207-$7FFF` `$FF` padding, apart from co-op's `$C2:4300`.

@@ -34,8 +34,10 @@ static void put_bytes(uint32_t pc,const uint8_t *b,unsigned n) { memcpy(SnesRomP
 static void stock_cartridge(void) {
     memset(cartridge,0xff,sizeof(cartridge));
     static const uint8_t cell[]={0x4f,0x00,0x4a},color[]={0x00};
+    static const uint8_t unlocked[]={0x4f,0x01,0x4a},unlocked_color[]={0x4f,0x05,0x4a};
     static const uint8_t x_draw[]={0xce,0x28,0x1d,0xa9,0x90,0x22,0x09,0x00,0xc0};
     static const uint8_t lookup_face[]={0xbf,0x70,0x14,0xc2},lookup_alt[]={0xbf,0xfe,0x12,0xc5};
+    put_bytes(0xc68b01,unlocked,3);put_bytes(0xc68b0f,unlocked_color,3);
     put_bytes(0xc68b1f,cell,3);put_bytes(0xc68b2e,color,1);put_bytes(0xc21276,x_draw,9);
     put_bytes(0xc5129b,lookup_face,4);put_bytes(0xc51319,lookup_face,4);put_bytes(0xc512ee,lookup_alt,4);
     for(unsigned i=0;i<9;++i) { cartridge[0x21470+i]=(uint8)(0x14+i);cartridge[0x512fe + i]=(uint8)(0x1e + i); }
@@ -100,17 +102,22 @@ int main(void) {
     SubordinateBeforeFrame();CHECK(!memcmp(stock,cartridge,sizeof(stock)) && !SubordinateEnabled());
     activation();SubordinateBeforeFrame();CHECK(SubordinateEnabled() && installed && patched);
     CHECK(cartridge[0x68b20]==10 && cartridge[0x68b2e]==6);
+    CHECK(cartridge[0x68b02]==10 && cartridge[0x68b10]==6);
     CHECK(cartridge[0x21276]==0x20 && cartridge[0x21277]==0x00 && cartridge[0x21278]==0x60 && cartridge[0x21279]==0x80);
     CHECK(!memcmp(cartridge+0x26000,grid_x,sizeof(grid_x)));
     for(unsigned i=0;i<9;++i) CHECK(cartridge[0x26020+i]==0x14+i && cartridge[0x26030+i]==0x1e + i);
     CHECK(cartridge[0x26029]==FACE && cartridge[0x26039]==FACE_ALT);
     CHECK(cartridge[0x5129c]==0x20 && cartridge[0x5129d]==0x60 && cartridge[0x5129e]==0xc2);
     CHECK(cartridge[0x5131a]==0x20 && cartridge[0x512ef]==0x30);
-    SubordinateBeforeFrame();CHECK(patch_count==9); /* Installed once. */
+    SubordinateBeforeFrame();CHECK(patch_count==11); /* Installed once. */
     reset_callback();CHECK(!SubordinateEnabled() && !installed && !memcmp(stock,cartridge,sizeof(stock)));
     /* A different image (unexpected bytes) is left untouched. */
     cartridge[0x21276]=0xea;memcpy(stock,cartridge,sizeof(stock));
     activation();SubordinateBeforeFrame();CHECK(!memcmp(stock,cartridge,sizeof(stock)) && !patch_count && !patched);
+    reset_callback();stock_cartridge();memcpy(stock,cartridge,sizeof(stock));
+    /* Reject an unexpected unlocked branch without installing any patch. */
+    cartridge[0x68b02]=2;memcpy(stock,cartridge,sizeof(stock));
+    activation();SubordinateBeforeFrame();CHECK(!patched && !patch_count && !memcmp(stock,cartridge,sizeof(stock)));
     reset_callback();stock_cartridge();memcpy(stock,cartridge,sizeof(stock));
     activation();SubordinateBeforeFrame();
 

@@ -4,7 +4,7 @@ Pacote `superbomberman5.ptbr`, versão `0.1.0`, feature `menus_ptbr`, plugin nat
 
 ## Como testar
 
-Use a release v0.8.2 e conclua Generate & rebuild com sua ROM. Para compilar este checkout, use `./tools/build-windows.ps1` e abra `play.cmd`. No launcher, entre em **Mods**, encontre **Português brasileiro — menus (prévia)**, ative **Menus em português brasileiro** e selecione Play. Desative a feature para voltar aos textos originais. A release antiga do jogo **v0.1.0 não inclui este plugin**; instalar o pacote nela não adiciona código nativo.
+Use a release v0.10.0 e conclua Generate & rebuild com sua ROM. Para compilar este checkout, use `./tools/build-windows.ps1` e abra `play.cmd`. No launcher, entre em **Mods**, encontre **Português brasileiro — menus (prévia)**, ative **Menus em português brasileiro** e selecione Play. Desative a feature para voltar aos textos originais. A release antiga do jogo **v0.1.0 não inclui este plugin**; instalar o pacote nela não adiciona código nativo.
 
 Para gerar o arquivo instalável, sem ler a ROM:
 
@@ -24,66 +24,67 @@ A prévia foi ampliada para título, quantidade de jogadores, modo normal, arqui
 | NORMAL GAME | JOGO NORMAL |
 | BATTLE GAME | BATALHA |
 | OPTIONS | OPÇÕES |
-| New Game | NOVO JOGO |
-| Continue | CONTINUAR |
-| Erase File | APAGAR |
+| New Game | Novo jogo |
+| Continue | Continuar |
+| Erase File | Apagar |
 | 1 PLAYER GAME | 1 JOGADOR |
 | 2 PLAYER GAME | 2 JOGADORES |
 | NORMAL MODE | MODO NORMAL |
 | SELECT A FILE | ESCOLHA ARQUIVO |
-| File 1 | ARQUIVO 1 |
-| File 2 | ARQUIVO 2 |
-| File 3 | ARQUIVO 3 |
-| Password | SENHA |
-| Sound | SOM |
-| Sound Test | TESTE DE SOM |
-| Stereo | ESTÉREO |
+| File 1 | Arquivo 1 |
+| File 2 | Arquivo 2 |
+| File 3 | Arquivo 3 |
+| Password | Senha |
+| Sound | Som |
+| Sound Test | Teste de som |
+| Stereo | Estéreo |
 | BATTLE MODE | MODO BATALHA |
-| Battle Royale | BATALHA LIVRE |
-| Bombermania | BOMBERMANIA |
-| Config Battle Mode | CONFIGURAÇÃO |
+| Battle Royale | Batalha livre |
+| Bombermania | Bombermania |
+| Config Battle Mode | Configuração |
 | BATTLE TYPE | TIPO DE BATALHA |
-| Free-for-All | TODOS CONTRA TODOS |
-| Team Battle | POR EQUIPES |
-| 1 Player | JOGADOR 1 |
-| Human | HUMANO |
-| 2 Player | JOGADOR 2 |
-| 3 Player | JOGADOR 3 |
-| 4 Player | JOGADOR 4 |
-| 5 Player | JOGADOR 5 |
+| Free-for-All | Todos contra todos |
+| Team Battle | Por equipes |
+| 1 Player | Jogador 1 |
+| Human | Humano |
+| 2 Player | Jogador 2 |
+| 3 Player | Jogador 3 |
+| 4 Player | Jogador 4 |
+| 5 Player | Jogador 5 |
 | PLAYER SELECT | JOGADORES |
-| SOUND TEST | TESTE DE SOM |
-| Music | MÚSICA |
-| SFX | EFEITOS |
-| Narrator | NARRADOR |
+| SOUND TEST | Teste de som |
+| Music | Música |
+| SFX | Efeitos |
+| Narrator | Narrador |
 | CHARACTER SELECT | ESCOLHA O PERSONAGEM |
-| PASSWORD | SENHA |
+| PASSWORD | Senha |
 | RULE SETTINGS | REGRAS |
-| CPU Level | NÍVEL CPU |
-| Matches | RODADAS |
-| Time | TEMPO |
-| Sudden Death | MORTE SÚBITA |
-| Bad Bomber | REVANCHE |
-| Bowling Bomber | BOLICHE |
-| Low | BAIXO |
-| Random | ALEATÓRIO |
-| On | SIM |
-| Mono | MONO |
-| Super | SUPER |
-| Normal | NORMAL |
-| Strong | FORTE |
-| Off | NÃO |
+| CPU Level | Nível CPU |
+| Matches | Rodadas |
+| Time | Tempo |
+| Sudden Death | Morte súbita |
+| Bad Bomber | Revanche |
+| Bowling Bomber | Boliche |
+| Low | Baixo |
+| Random | Aleatório |
+| On | Sim |
+| Mono | Mono |
+| Super | Super |
+| Normal | Normal |
+| Strong | Forte |
+| Off | Não |
 | STAGE SELECT | ESCOLHA A FASE |
+| BATTLE START | INÍCIO DA BATALHA |
 
-Ainda é uma tradução parcial. Textos de telas não mapeadas, outras confirmações de arquivo, nomes/descritivos das arenas (Stage/The Classic etc.), telas ainda não verificadas de equipes/Bombermania e outras mensagens de fases/cenas podem permanecer originais. Tradução de menus não comprova a precisão de partidas de batalha ou multiplayer. Logo, retratos, áudio e mapas permanecem originais.
+Ainda é uma tradução parcial. Textos de telas não mapeadas, outras confirmações de arquivo, telas ainda não verificadas de equipes/Bombermania e outras mensagens de fases/cenas podem permanecer originais. Tradução de menus não comprova a precisão de partidas de batalha ou multiplayer. Logo, retratos, áudio e mapas permanecem originais.
 
 ## Implementação e dados
 
-A prévia contém 71 rótulos de background, um cabeçalho de sprites e 33 resultados de conclusão com título e até três linhas de dicas. Os rótulos de uma mesma tela são identificados antes de qualquer substituição, evitando que a alteração do primeiro texto invalide os demais. IDs reutilizados por telas de jogadores e regras recebem guardas adicionais de contexto. Variantes SIM/NÃO, NORMAL/FORTE e MONO/ESTÉREO compartilham slots temporários.
+A prévia contém 71 rótulos de background, dois cabeçalhos de sprites e 33 resultados de conclusão com título e até três linhas de dicas. Os rótulos de uma mesma tela são identificados antes de qualquer substituição, evitando que a alteração do primeiro texto invalide os demais. IDs reutilizados por telas de jogadores e regras recebem guardas adicionais de contexto. Variantes SIM/NÃO, NORMAL/FORTE e MONO/ESTÉREO compartilham slots temporários.
 
-`translations/ptbr/labels.json` contém texto e coordenadas/identificadores de tiles como metadados funcionais. Não contém bitmaps do jogo. `tools/generate-ptbr.py` valida limites e gera um header dentro da pasta de build. `src/ptbr_mod.c` contém um alfabeto próprio, algarismos, acentos portugueses e estilos de título, texto de menu, banner e senha, além do plugin de apresentação.
+`translations/ptbr/labels.json` contém texto e coordenadas/identificadores de tiles como metadados funcionais. Não contém bitmaps do jogo. `tools/generate-ptbr.py` valida limites e gera um header dentro da pasta de build. `src/ptbr_native_font.h` lê as fontes do cartucho durante a execução: cabeçalhos azuis, texto proporcional e letras brancas do título. `src/ptbr_font_locations.h` contém somente endereços e coordenadas funcionais, sem pixels extraídos. Acentos, extensões ausentes e o fallback são autorais. O plugin permanece em `src/ptbr_mod.c`.
 
-Durante o renderer LLE, o mod identifica rótulos por camada, posição e IDs esperados, desenha novos tiles temporários e restaura toda a VRAM antes de o driver reaplicar escritas pendentes do jogo. A fonte do título respeita os quatro pixels de margem superior do original, evitando que a janela HDMA usada para piscar Start corte JOGO NORMAL. Slots de tiles são estáveis por tela; textos que ocupam antigos espaços vazios mantêm a paleta do início do rótulo. As áreas reservadas ficam separadas dos tiles de texto originais. O cabeçalho de fases usa uma faixa de nove sprites de 16×16: o mod verifica posições, tamanho, atributos e tiles, substitui apenas os pixels exclusivos dessa faixa e restaura a VRAM. A OAM não é alterada. Não altera arquivo de ROM nem WRAM; o renderer HLE ainda não está qualificado para essa integração. Não há fallback que declare o jogo inteiro traduzido.
+Durante o renderer LLE, o mod identifica rótulos por camada, posição e IDs esperados, desenha novos tiles temporários e restaura toda a VRAM antes de o driver reaplicar escritas pendentes do jogo. A fonte branca nativa do título respeita a margem superior do original, evitando que a janela HDMA usada para piscar Start corte JOGO NORMAL. Slots de tiles são estáveis por tela; textos que ocupam antigos espaços vazios mantêm a paleta do início do rótulo. As áreas reservadas ficam separadas dos tiles de texto originais. O cabeçalho de fases usa uma faixa de nove sprites de 16×16: o mod verifica posições, tamanho, atributos e tiles, substitui apenas os pixels exclusivos dessa faixa e restaura a VRAM. A tradução dos nomes das arenas também empresta OBJ e restaura a OAM após desenhar. Não altera arquivo de ROM nem WRAM; o renderer HLE ainda não está qualificado para essa integração. Não há fallback que declare o jogo inteiro traduzido.
 
 As capturas de validação ficam em `.bootstrap/ptbr-shots/` e nunca são publicadas. O teste `ptbr_render_restore` verifica mod ativo/desativado, guardas, restauração integral da VRAM, margem do título, slots estáveis e paleta de textos maiores. Capturas consecutivas cobrem Start visível/apagado e as telas traduzidas; arquivos de captura ficam apenas em `.bootstrap/`. Execute `./build-lle/ptbr_render_tests.exe` após compilar. Se CTest estiver instalado, também pode usar `ctest --test-dir build-lle --output-on-failure`; o pacote portátil atual não inclui CTest.
 
@@ -142,3 +143,116 @@ The native test exercises both pages for all 33 ranks. The isolated runtime
 script above checks presentation against an untranslated run with identical
 native memory. Its death/progress fixtures do not establish full-campaign
 or physical multiplayer coverage.
+
+## Integrações das fontes atuais / Current-source integrations — 2026-10-15
+
+O menu de pausa acompanha o PT-BR: Continuar, Empatar rodada, Voltar ao mapa,
+Escolher arena e Tem certeza / Não / Sim. Gold Battle acrescenta Hiper
+à linha Revanche. A seleção traduz Fase e os nomes das arenas 1–13, inclusive
+as dez originais sem Gold Battle. Usa a fonte OBJ 8×16 da própria VRAM,
+com acentos autorais, preservando cores, contorno e sombra. O número nativo
+permanece. A tradução acompanha os sprites efetivamente exibidos durante a
+troca, sem depender do PC do script ou do índice antecipado na WRAM.
+OAM e tiles emprestados são restaurados após desenhar.
+
+Pause labels and confirmation follow PT-BR. Gold Battle adds HIPER to Revenge.
+Stage selection translates Fase and all 13 arena names, including the original
+ten without Gold Battle. Letters come from the native 8×16 OBJ font in live
+VRAM, with authored accents and native colors, outlines and shadows. The
+native number stays visible. Translation follows displayed sprites throughout
+transitions; borrowed OAM and VRAM are restored after drawing.
+
+Windows/LLE: `tests/battle_translation_runtime.py` compared the rendered pink
+letter pixels against the native-font translation for 109 captured frames
+across arenas 1–13 and 82 frames across arenas 1–10 without Gold. Eight
+consecutive frames per forward transition were checked; no original-language
+flash occurred in those samples. This does not qualify every possible input
+sequence or renderer. Native tests cover all numbers and exact restoration.
+
+## Fontes nativas nos menus / Native menu typography — 2026-10-15
+
+Os textos gerados pela tradução agora compartilham três famílias do próprio
+cartucho: o relevo azul dos cabeçalhos, as letras proporcionais 8×16 dos
+menus e a fonte branca do título. Opções e regras usam maiúsculas/minúsculas
+como no original (por exemplo, Nível CPU e Morte súbita). O título mantém
+sua margem e o piscar; senhas e títulos grandes mantêm a proporção ampliada.
+Textos longos são ajustados à largura disponível. Os nomes das arenas mantêm
+a implementação anterior, com fonte da VRAM e proteção das transições.
+
+Somente localizações funcionais dos glifos são versionadas. Pixels são lidos
+da ROM do usuário; acentos e as letras J/Q/V ausentes nos cabeçalhos são
+completados por desenhos autorais. O título compõe C/D/J/F/Q a partir de
+letras nativas quando necessário. Algarismos/sinais ausentes usam o fallback
+autoral. Nada altera a ROM, o progresso ou o áudio.
+
+Translated text now uses three cartridge font families: beveled blue headings,
+proportional 8×16 menu lettering and native white title lettering. Menu bodies
+follow native mixed case. Long labels fit their reserved width; large headings
+scale in both axes, and the title retains its original upper margin and blink.
+All translation render paths share the font renderer, including file headings,
+passwords, completion pages, HUD and Game Over. Battle names retain their
+separate native-VRAM renderer and transition guards.
+
+Only functional glyph addresses/crop coordinates are stored in source.
+Letters are read from the user's cartridge at runtime; accents, missing blue
+J/Q/V and missing digits/punctuation use authored extensions. Some missing
+white-title letters are composed from native pieces. Native tests use synthetic
+cartridge pixels to verify both glyph halves, white-title margins, proportional
+advances, banner-background removal and exact guest restoration. Runtime
+validation uses `tests/ptbr_typography_runtime.py` for paired translated/original
+menus and `tests/ptbr_completion_runtime.py` for completion/HUD fixtures.
+Raw captures stay in ignored `.bootstrap/`. These routes do not qualify HLE,
+every menu variant or a complete campaign.
+
+Final build: 22 paired menu frames covered 50 label contexts with identical
+native memory; ending/perfect completion fixtures passed. A further 109 arena
+name checks across arenas 1–13 passed, including transitions (5,932 frames).
+Build final: 22 quadros pareados cobriram 50 contextos de menu com memória
+nativa idêntica; conclusão/perfeito passaram. Mais 109 verificações dos nomes
+das arenas 1–13 passaram, incluindo transições (5.932 quadros simulados).
+
+## Traços dos cabeçalhos / Heading strokes — 2026-10-15
+
+A separação entre letras azuis e faixa de fundo mantém dois pixels de
+contorno em cada lado do recorte. Isso preserva as barras claras centrais de
+E/F/H (também usadas no título SENHA), mesmo quando compartilham a cor 11 com
+o fundo. Uma linha superior fica reservada ao contorno: ESCOLHA A FASE usa a
+mesma correção ao desenhar sobre fundo transparente. A alteração não muda o
+renderer separado dos nomes das arenas nem seus guardas de transição.
+
+Blue glyph isolation retains two outline columns on each side before removing
+banner backgrounds. This keeps bright E/F/H crossbars that share color 11
+with the banner. One row is reserved for the upper outline, including the
+transparent stage-selection heading. Native synthetic tests and optional
+cartridge checks cover these strokes and the OBJ palette mapping. Paired
+Windows/LLE validation passed on 22 frames / 50 label contexts with exact
+native-memory parity; the password, Battle type, character and stage headings
+were visually inspected. This qualifies those samples rather than every menu
+variant. Run `./build-lle/ptbr_render_tests.exe 'Super Bomberman 5 (USA).sfc'`
+for the optional local-ROM glyph check. No cartridge pixels are stored in tests.
+
+## Confirmação da arena / Arena confirmation — 2026-10-15
+
+BATTLE START agora aparece como INÍCIO DA BATALHA com o mod PT-BR. A faixa
+mantém a paleta rosa e o piscar nativos, com a mesma fonte de relevo dos
+cabeçalhos. Fase e o nome traduzido da arena permanecem em português durante
+os intervalos visíveis e apagados do aviso. A restauração após desenhar
+preserva a memória original e o início normal da partida.
+
+BATTLE START is translated as INÍCIO DA BATALHA with PT-BR enabled. The OBJ
+strip retains its native pink palette and blink. The translated arena label
+and name remain visible through both blink phases. Metadata supports a strip
+starting partway through an OBJ tile row and selects its native palette;
+all temporary glyph/OAM writes are restored after rendering. Native tests
+cover all 13 arena numbers in selection, visible confirmation and blink-off
+confirmation, plus wrong-palette rejection. Runtime checks use
+`tests/battle_start_runtime.py` against the user's cartridge, including
+arena 1 without Gold and arena 13 with Gold, with translation-off controls.
+
+Runtime evidence: 37 paired frames per arena (74 per language), including
+32 consecutive confirmation frames, passed for arenas 1 and 13. Pink-heading
+visible/blink-off phases and translated arena-name ink were checked, with exact
+guest-memory restoration and identical gameplay after the overlay ended.
+Evidência: 37 quadros pareados por arena, incluindo 32 consecutivos, passaram
+nas arenas 1 e 13; paleta rosa/piscar e nomes PT-BR preservados, memória
+idêntica e partida idêntica após o aviso.

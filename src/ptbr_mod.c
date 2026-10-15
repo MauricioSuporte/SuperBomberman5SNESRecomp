@@ -1,5 +1,7 @@
-/* Authored menu glyphs and translation metadata. No ROM assets are embedded. */
+/* Runtime cartridge fonts and authored translations. No ROM assets embedded. */
 #include "ptbr_mod.h"
+#include "common_rtl.h"
+#include "gold_battle_mod.h"
 #include "normal_coop_mod.h"
 #include "beam_frame_driver.h"
 #include "mod_runtime.h"
@@ -15,7 +17,7 @@ typedef struct {
     const char *text;
 } PtbrLabel;
 typedef struct {
-    unsigned slot, count, x, y, guard;
+    unsigned slot, count, x, y, guard, palette;
     const char *text;
 } PtbrObjectLabel;
 typedef struct {
@@ -26,6 +28,11 @@ typedef struct {
 
 #include "menu_font.h"
 static bool s_enabled;
+static uint16_t arena_oam[256];
+static uint8_t arena_high[32];
+static bool arena_drawn;
+static unsigned arena_last;
+
 typedef struct { uint16_t address, original; } SavedWord;
 static SavedWord s_saved[8192];
 static unsigned s_saved_count;
@@ -33,7 +40,7 @@ static bool coop_menu_applied,coop_cursor_moved;
 static uint8_t coop_windowed;
 static uint16_t coop_cursor;
 
-static void reset_ptbr(void) { s_enabled = false; s_saved_count = 0; }
+static void reset_ptbr(void) { s_enabled = false; s_saved_count = 0;arena_drawn=false;arena_last=0; }
 static void enable_ptbr(void) { s_enabled = true; }
 SNES_MOD_CONSTRUCTOR(register_ptbr) {
     snes_mod_register_reset_callback(reset_ptbr);
@@ -48,9 +55,9 @@ static unsigned next_character(const unsigned char **at) {
 
 
 
-/* Own glyphs with the original menu's proportions, weight, shadow and palette.
- * Banners use a wider face and a blue bevel. No extracted pixels are stored. */
-static void render_text(uint8_t pixels[32][224], const PtbrLabel *label) {
+/* Authored fallback for tests without a cartridge and missing signs.
+ * The runtime menu families are provided by ptbr_native_font.h below. */
+static void render_authored(uint8_t pixels[32][224], const PtbrLabel *label) {
     unsigned width = label->width*8;
     memset(pixels, 0, 32*224);
     const unsigned char *at = (const unsigned char *)label->text;
@@ -115,6 +122,8 @@ static void render_text(uint8_t pixels[32][224], const PtbrLabel *label) {
         x+=stride;
     }
 }
+
+#include "ptbr_native_font.h"
 
 static void save_write(Ppu *ppu, unsigned address, uint16_t value) {
     address &= 0x7FFF;
@@ -249,21 +258,26 @@ static void apply_defeat(Ppu *ppu) {
     if(s_saved_count!=before) ++ppu->vramWriteCount;
 }
 
-/* Stage selection's blue heading is a strip of 16x16 OBJ tiles. Its
- * tiles are unique to this strip, so replace their pixels in place only
- * during rendering, preserving OAM, priority and the original palette. */
+/* Both arena headings use unique 16x16 OBJ strips. The confirmation strip
+ * starts at A2 rather than a row boundary and uses the native pink palette. */
+static unsigned object_label_tile(const PtbrObjectLabel *label,unsigned i) {
+    unsigned n=(label->guard&15)/2+i;
+    return (label->guard&0xf0)+(n/8)*32+(n%8)*2;
+}
+static bool object_label_matches(const Ppu *ppu,const PtbrObjectLabel *label) {
+    for(unsigned i=0;i<label->count;++i) {
+        unsigned slot=label->slot+i,tile=object_label_tile(label,i);
+        if(ppu->oam[slot*2]!=(label->y*256+label->x+i*16) ||
+           ppu->oam[slot*2+1]!=(0x2000u|(label->palette<<9)|tile) ||
+           ((ppu->highOam[slot/4]>>((slot%4)*2))&3)!=2) return false;
+    }
+    return true;
+}
 static void apply_object_labels(Ppu *ppu) {
-    if(PPU_objSize(ppu)!=0 || PPU_bgTilemapAdr(ppu,0)!=0x3000u || ppu->vram[0x30C9]!=0x3092) return;
+    if(PPU_objSize(ppu)!=0 || PPU_bgTilemapAdr(ppu,0)!=0x3000u) return;
     for(size_t n=0;n<sizeof(kObjectLabels)/sizeof(kObjectLabels[0]);++n) {
         const PtbrObjectLabel *label=&kObjectLabels[n];
-        bool matched=true;
-        for(unsigned i=0;i<label->count;++i) {
-            unsigned slot=label->slot+i, word=ppu->oam[slot*2+1];
-            unsigned tile=((label->guard>>4)+(i/8)*2)*16+((label->guard+i*2)&15);
-            if(ppu->oam[slot*2] != (label->y*256+label->x+i*16) ||
-               word!=(0x2000u|tile) ||
-               ((ppu->highOam[slot/4]>>((slot%4)*2))&3)!=2) { matched=false;break; }
-        }
+        bool matched=object_label_matches(ppu,label);
         if(!matched || label->count*64 > sizeof(s_saved)/sizeof(s_saved[0])-s_saved_count) continue;
         PtbrLabel face={.width=label->count*2,.height=16,.style=4,.text=label->text};
         uint8_t pixels[32][224]; render_text(pixels,&face);
@@ -283,9 +297,147 @@ static void apply_object_labels(Ppu *ppu) {
     }
 }
 
+/* Battle names use the cartridge's own 8x16 proportional OBJ alphabet.
+ * Decode it before borrowing tiles, so shared native letters never change.
+ * Only accent marks and their outline are authored here. */
+static unsigned arena_glyph(Ppu *p,unsigned c,uint8_t pixels[16][8]) {
+    unsigned accent=0;
+    switch(c) {
+    case 0xe7:c='c';accent=1;break;
+    case 0xc7:c='C';accent=1;break;
+    case 0xe3:c='a';accent=2;break;
+    case 0xf5:c='o';accent=2;break;
+    case 0xe1:c='a';accent=3;break;
+    case 0xe9:c='e';accent=3;break;
+    case 0xed:c='i';accent=3;break;
+    case 0xf3:c='o';accent=3;break;
+    case 0xfa:c='u';accent=3;break;
+    case 0xe2:c='a';accent=4;break;
+    case 0xea:c='e';accent=4;break;
+    case 0xf4:c='o';accent=4;break;
+    }
+    memset(pixels,0,16*8);
+    if(c==' ') return 6;
+    unsigned tile=c>='A'&&c<='Z'?2+2*(c-'A'):
+                  c>='a'&&c<='z'?0x36+2*(c-'a'):
+                  c=='!'?0x6e:c=='?'?0x70:c=='-'?0x7c:0;
+    if(!tile) return 0;
+    unsigned base=PPU_objTileAdr1(p);
+    for(unsigned y=0;y<16;++y) for(unsigned x=0;x<8;++x)
+        for(unsigned plane=0;plane<4;++plane)
+            pixels[y][x]|=((p->vram[(base+(tile+y/8)*16+y%8+(plane/2)*8)&0x7fff]>>((7-x)+(plane%2)*8))&1u)<<plane;
+    unsigned ax[4],ay[4],count=0;
+    if(accent==1) { ax[0]=3;ay[0]=14;ax[1]=2;ay[1]=15;count=2; }
+    if(accent==2) { ax[0]=2;ay[0]=1;ax[1]=3;ay[1]=0;ax[2]=4;ay[2]=1;ax[3]=5;ay[3]=0;count=4; }
+    if(accent==3) { ax[0]=4;ay[0]=1;ax[1]=3;ay[1]=2;count=2; }
+    if(accent==4) { ax[0]=2;ay[0]=2;ax[1]=3;ay[1]=1;ax[2]=4;ay[2]=2;count=3; }
+    for(unsigned i=0;i<count;++i) for(int dy=-1;dy<=1;++dy) for(int dx=-1;dx<=1;++dx) {
+        int x=(int)ax[i]+dx,y=(int)ay[i]+dy;
+        if(x>=0 && x<8 && y>=0 && y<16 && !pixels[y][x]) pixels[y][x]=1;
+    }
+    for(unsigned i=0;i<count;++i) pixels[ay[i]][ax[i]]=4;
+    return c=='i'||c=='l'||c=='I'?4:c=='r'||c=='t'||c=='f'?6:c=='!'?3:c=='-'?6:7;
+}
+static unsigned arena_text(Ppu *p,const char *text,uint8_t canvas[16][208]) {
+    memset(canvas,0,16*208);
+    const unsigned char *at=(const unsigned char *)text;unsigned left=0;
+    while(*at) {
+        uint8_t glyph[16][8];unsigned width=arena_glyph(p,next_character(&at),glyph);
+        if(!width || left+8>208) return 0;
+        for(unsigned y=0;y<16;++y) for(unsigned x=0;x<8;++x)
+            if(!canvas[y][left+x]) canvas[y][left+x]=glyph[y][x];
+        left+=width;
+    }
+    return left;
+}
+static unsigned arena_number(const Ppu *p) {
+    /* Native 16x16 number art: CA/CC/CE, E0..EE, 100/102. It is the
+     * displayed arena, unlike live $625A which can lead OAM by a frame. */
+    /* Confirmation inserts one OBJ before the arena label. Match the native
+     * numeric sprite's position instead of assuming slot 12. */
+    static const unsigned digit_slots[3]={3,12,13};
+    for(unsigned index=0;index<3;++index) {
+        unsigned slot=digit_slots[index];
+        unsigned tile=p->oam[slot*2+1]&0x1ff;
+        if(p->oam[slot*2]!=(171u*256+138) ||
+           (p->oam[slot*2+1]&0xfe00)!=0x2000 ||
+           ((p->highOam[slot/4]>>((slot%4)*2))&3)!=2) continue;
+        for(unsigned arena=1;arena<=13;++arena) {
+            unsigned n=10+2*(arena-1),expected=0xc0+(n/16)*32+n%16;
+            if(tile==expected) return arena;
+        }
+    }
+    return 0;
+}
+static void arena_write_line(Ppu *p,uint8_t canvas[16][208],unsigned width,unsigned x,unsigned y,
+                             unsigned palette,unsigned *tile,unsigned slots[128],unsigned *slot_at) {
+    unsigned base=PPU_objTileAdr2(p),columns=(width+7)/8;
+    for(unsigned cy=0;cy<2;++cy) for(unsigned cx=0;cx<columns;++cx) {
+        unsigned t=(*tile)++,slot=slots[(*slot_at)++];
+        for(unsigned py=0;py<8;++py) {
+            uint16_t planes[2]={0};
+            for(unsigned px=0;px<8;++px) {
+                unsigned c=canvas[cy*8+py][cx*8+px];
+                for(unsigned plane=0;plane<4;++plane) if(c&(1u<<plane)) planes[plane/2]|=1u<<(7-px+(plane%2)*8);
+            }
+            save_write(p,(base+(t-256)*16+py)&0x7fff,planes[0]);
+            save_write(p,(base+(t-256)*16+py+8)&0x7fff,planes[1]);
+        }
+        p->oam[slot*2]=(uint16_t)(((y+cy*8)<<8)|(x+cx*8));
+        p->oam[slot*2+1]=(uint16_t)(0x2000|(palette<<9)|t);
+        p->highOam[slot/4]&=(uint8_t)~(3u<<((slot%4)*2));
+    }
+}
+static void apply_battle_arena(Ppu *p) {
+    if(PPU_objSize(p)!=0 || PPU_objTileAdr1(p)!=0x6000) { arena_last=0;return; }
+    bool matched=false;
+    for(unsigned n=0;n<sizeof(kObjectLabels)/sizeof(kObjectLabels[0]);++n)
+        if(object_label_matches(p,&kObjectLabels[n])) {matched=true;break;}
+    if(!matched) {
+        /* The confirmation heading blinks by removing its OBJ entirely.
+         * The remaining native Stage strip moves to slots 0-2. */
+        matched=true;
+        for(unsigned i=0;i<3;++i)
+            if(p->oam[i*2]!=(171u*256+90+i*16) || p->oam[i*2+1]!=(0x24c4+i*2) ||
+               ((p->highOam[i/4]>>((i%4)*2))&3)!=2) {matched=false;break;}
+    }
+    if(!matched) {arena_last=0;return;}
+    unsigned arena=arena_number(p);if(arena) arena_last=arena;else arena=arena_last;
+    bool replace[128]={0},used[512]={0};unsigned slots[128],slot_count=0;
+    for(unsigned slot=0;slot<128;++slot) {
+        unsigned xy=p->oam[slot*2],word=p->oam[slot*2+1],y=xy>>8,tile=word&0x1ff;
+        bool visible=y<224 || y>=240,big=(p->highOam[slot/4]>>((slot%4)*2+1))&1;
+        /* Hide every native name glyph, including transitional positions.
+         * Keep the native numeric sprite and the preview/cursor artwork. */
+        replace[slot]=(y==171 && (word==0x24c4 || word==0x24c6 || word==0x24c8) &&
+                       (xy&255)==90+((word-0x24c4)/2)*16) ||
+                      ((word&0xe00)==0x200 && tile<0x80 && visible);
+        if(replace[slot] || (slot>=9 && !visible)) slots[slot_count++]=slot;
+        if(visible) {
+            used[tile]=true;
+            if(big) { used[(tile+1)&511]=true;used[(tile+16)&511]=true;used[(tile+17)&511]=true; }
+        }
+    }
+    uint8_t name[16][208],stage[16][208];
+    unsigned nw=arena?arena_text(p,kBattleArenas[arena-1],name):0;
+    unsigned sw=arena_text(p,kBattleStage,stage),need=nw?2*((nw+7)/8+(sw+7)/8):0,first=0;
+    if(need && need<=slot_count) for(unsigned t=256;t+need<=496;++t) {
+        bool free=true;for(unsigned i=0;i<need;++i) if(used[t+i]) { free=false;break; }
+        if(free) { first=t;break; }
+    }
+    if(need*16>sizeof(s_saved)/sizeof(s_saved[0])-s_saved_count) return;
+    memcpy(arena_oam,p->oam,sizeof(arena_oam));memcpy(arena_high,p->highOam,sizeof(arena_high));arena_drawn=true;
+    for(unsigned slot=0;slot<128;++slot) if(replace[slot]) p->oam[slot*2]=(224u<<8)|(p->oam[slot*2]&255);
+    if(first) {
+        unsigned tile=first,slot_at=0;
+        arena_write_line(p,stage,sw,104,171,2,&tile,slots,&slot_at);
+        arena_write_line(p,name,nw,(256-nw)/2,195,1,&tile,slots,&slot_at);
+    }
+    ++p->oamWriteCount;
+}
+
 static void apply_labels(Ppu *ppu) {
-    apply_defeat(ppu);
-    apply_endings(ppu);
+    if(s_enabled) { apply_defeat(ppu);apply_endings(ppu); }
     if ((ppu->bgmode & 7) != 1) return;
     enum { count=sizeof(kLabels)/sizeof(kLabels[0]) };
     bool matched[count];
@@ -304,7 +456,11 @@ static void apply_labels(Ppu *ppu) {
     }
     for (size_t n=0;n<count;++n) {
         if(!matched[n]) continue;
-        const PtbrLabel *label=&kLabels[n];
+        PtbrLabel translated=kLabels[n];
+        bool hyper=GoldBattleHyper() && translated.row==18 && translated.column==22;
+        if(!s_enabled && !hyper) continue;
+        if(hyper) translated.text=s_enabled?kGoldHyper:"HYPER";
+        const PtbrLabel *label=&translated;
         unsigned map=PPU_bgTilemapAdr(ppu,label->layer), base=PPU_bgTileAdr(ppu,label->layer);
         unsigned start=map+label->row*32+label->column;
         uint8_t pixels[32][224];
@@ -328,12 +484,16 @@ static void apply_labels(Ppu *ppu) {
             }
         }
     }
-    apply_object_labels(ppu);
+    if(s_enabled) { apply_object_labels(ppu);apply_battle_arena(ppu); }
     if(s_saved_count) ++ppu->vramWriteCount;
 }
 
 static void restore_labels(Ppu *ppu) {
-    if(!s_saved_count) return;
+    if(!s_saved_count && !arena_drawn) return;
+    if(arena_drawn) {
+        memcpy(ppu->oam,arena_oam,sizeof(arena_oam));memcpy(ppu->highOam,arena_high,sizeof(arena_high));
+        ++ppu->oamWriteCount;arena_drawn=false;
+    }
     while(s_saved_count) { SavedWord w=s_saved[--s_saved_count]; ppu->vram[w.address]=w.original; }
     if(coop_menu_applied) {
         ppu->screenWindowed[0]=coop_windowed;
@@ -411,7 +571,7 @@ static void observe_line(const Ppu *view, unsigned line, void *unused) {
             coop_render_flags=ppu->renderFlags;
             ppu->renderFlags&=~kPpuRenderFlags_NewRenderer;
         }
-        if(s_enabled) apply_labels(ppu);apply_coop_menu(ppu);
+        if(s_enabled || GoldBattleHyper()) apply_labels(ppu);apply_coop_menu(ppu);
     }
     if(extra_observer) extra_observer(view,line,extra_context);
     /* Restore before the driver replays pending guest writes at RenderEnd. */
@@ -430,7 +590,12 @@ void PtbrDrawPpuFrameObserved(SnesBeamRasterObserver *observer,void *context) {
      * BG3 replacement correctly. Use the accurate compositor for this
      * menu only, keeping the user's renderer setting for every other screen. */
     extra_observer=observer;extra_context=context;
-    if(s_enabled || observer || NormalCoopPlayerMenu()) snes_beam_frame_driver_draw_ppu_frame_observed(observe_line,NULL);
+    if(s_enabled || GoldBattleHyper() || observer || NormalCoopPlayerMenu()) snes_beam_frame_driver_draw_ppu_frame_observed(observe_line,NULL);
     else snes_beam_frame_driver_draw_ppu_frame();
     extra_observer=NULL;extra_context=NULL;
+}
+
+const char *PtbrPauseLabel(unsigned index) {
+    static const char *const english[]={"ARE YOU SURE","NO","YES","RESUME","FORCE DRAW","RETURN TO WORLD MAP","RETURN TO STAGE SELECT"};
+    return index<7?(s_enabled?kPauseText[index]:english[index]):"";
 }

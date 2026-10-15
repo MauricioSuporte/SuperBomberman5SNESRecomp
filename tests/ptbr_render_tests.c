@@ -4,6 +4,9 @@
 static SNESModActivationCallback activation, reset;
 int snes_mod_register_reset_callback(SNESModActivationCallback fn) { reset=fn; return 1; }
 int snes_mod_register_presentation_plugin(const char *id, SNESModActivationCallback fn) { (void)id; activation=fn; return 1; }
+static bool gold_fixture;
+bool GoldBattleHyper(void) { return gold_fixture; }
+const uint8_t *g_rom;
 #include "../src/ptbr_mod.c"
 static bool coop_fixture;
 bool NormalCoopPlayerMenu(void) { return coop_fixture; }
@@ -78,7 +81,100 @@ void snes_beam_frame_driver_draw_ppu_frame_observed(SnesBeamRasterObserver *fn, 
     }
     fn(&fixture,224,ctx);
 }
-int main(void) {
+static uint8_t font_cartridge[0x400000];
+static void font_pixel(uint32_t tile,unsigned x,unsigned y,unsigned color) {
+    for(unsigned plane=0;plane<4;++plane) {
+        unsigned at=tile+(y&7)*2+(plane/2)*16+plane%2;
+        font_cartridge[at]=(uint8_t)((font_cartridge[at]&~(1u<<(7-x)))|((color>>plane&1u)<<(7-x)));
+    }
+}
+static int native_font_tests(void) {
+    /* Synthetic cartridge pixels deliberately differ from the authored face.
+     * Verify both source halves and proportional case without shipping art. */
+    g_rom=font_cartridge;
+    const PtbrNativeSmall *a=&kNativeSmall[0];
+    for(unsigned y=0;y<16;++y) font_pixel(a->tiles[y/8],y%7,y,4);
+    uint8_t glyph[16][24];
+    if(native_small('A',glyph)!=7) return 60;
+    for(unsigned y=0;y<16;++y) if(glyph[y][y%7]!=4) return 61;
+    if(native_small('i',glyph)!=4 || native_small('m',glyph)!=8) return 62;
+    const PtbrNativeBlue *b=NULL;
+    for(unsigned n=0;n<sizeof(kNativeBlue)/sizeof(kNativeBlue[0]);++n)
+        if(kNativeBlue[n].character=='A') b=&kNativeBlue[n];
+    if(!b || b->width>20) return 63;
+    /* A white bevel enclosed by native outline survives; the banner's white
+     * stripe connected to gray background is transparent in the glyph. */
+    for(unsigned y=0;y<16;++y) for(unsigned x=0;x<b->width+4;++x) {
+        unsigned sx=x+b->offset,color=y<2?10:11;
+        if(x==1 || x==5 || y==3 || y==8) color=6;
+        if(x>=2&&x<=4&&y>=4&&y<=7) color=11;
+        if(x==3&&y==9) color=4;
+        font_pixel(b->tiles[(y/8)*4+sx/8],sx%8,y,color);
+    }
+    if(native_blue('A',glyph)!=b->width+3 || glyph[6][2]!=11 || glyph[6][b->width+2]!=0) return 64;
+    uint8_t canvas[32][224];PtbrLabel label={.width=4,.height=16,.style=4,.text="A"};
+    render_text(canvas,&label);bool white=false;
+    for(unsigned y=0;y<16;++y) for(unsigned x=0;x<32;++x) if(canvas[y][x]==7) white=true;
+    if(!white) return 65;
+    for(unsigned n=0;n<sizeof(kNativeSmall)/sizeof(kNativeSmall[0]);++n)
+        for(unsigned y=0;y<2;++y) if(kNativeSmall[n].tiles[y]>sizeof(font_cartridge)-32) return 66;
+    for(unsigned n=0;n<sizeof(kNativeBlue)/sizeof(kNativeBlue[0]);++n)
+        for(unsigned y=0;y<8;++y) if(kNativeBlue[n].tiles[y]>sizeof(font_cartridge)-32) return 67;
+    /* Regression: a bright H crossbar touches both sides of the ink crop.
+     * The surrounding native outline must prevent background flood leakage. */
+    const PtbrNativeBlue *h=NULL;
+    for(unsigned n=0;n<sizeof(kNativeBlue)/sizeof(kNativeBlue[0]);++n)
+        if(kNativeBlue[n].character=='H') h=&kNativeBlue[n];
+    if(!h) return 71;
+    memset(font_cartridge,0,sizeof(font_cartridge));
+    for(unsigned y=0;y<16;++y) for(unsigned x=0;x<h->width+4;++x) {
+        unsigned color=(y==6||y==7)?11:10,sx=x+h->offset;
+        if((x==1||x==h->width+2)&&y>=5&&y<=8) color=6;
+        if((y==5||y==8)&&x>=1&&x<=h->width+2) color=6;
+        if(y==0&&x>=2&&x<h->width+2) color=3;
+        font_pixel(h->tiles[(y/8)*4+sx/8],sx%8,y,color);
+    }
+    native_blue('H',glyph);
+    for(unsigned x=1;x<=h->width;++x) if(glyph[7][x]!=11 || glyph[8][x]!=11) return 72;
+    if(glyph[0][h->width/2]!=6 || glyph[1][h->width/2]!=3) return 73;
+    const PtbrNativeWhite *white_a=&kNativeWhite[0];
+    for(unsigned y=4;y<14;++y) font_cartridge[white_a->tiles[y/8]+y%8*2+1]=0x40;
+    native_white('A',glyph);
+    for(unsigned y=0;y<3;++y) for(unsigned x=0;x<8;++x) if(glyph[y][x]) return 68;
+    if(glyph[4][1]!=2 || glyph[13][1]!=2) return 69;
+    label=(PtbrLabel){.width=1,.height=16,.style=1,.ink=2,.text="A"};
+    render_text(canvas,&label);if(canvas[4][1]!=2 || canvas[13][1]!=2) return 70;
+    g_rom=NULL;return 0;
+}
+/* Optional local cartridge check. Pixels are read only from the supplied ROM;
+ * no game data is embedded in tests or published artifacts. */
+static int cartridge_font_tests(const char *path) {
+    FILE *file=fopen(path,"rb");if(!file) return 74;
+    size_t size=fread(font_cartridge,1,sizeof(font_cartridge),file);
+    int trailing=fgetc(file);fclose(file);
+    if(size!=sizeof(font_cartridge) || trailing!=EOF) return 75;
+    g_rom=font_cartridge;native_font_rom=NULL;
+    for(const char *c="EFH";*c;++c) {
+        uint8_t glyph[16][24];unsigned width=native_blue(*c,glyph);
+        for(unsigned y=7;y<=8;++y) {
+            unsigned bevel=0;for(unsigned x=0;x<width;++x) bevel+=glyph[y][x]==11;
+            if(bevel<7) return 76;
+        }
+        if(glyph[0][1]!=6 || glyph[1][1]!=3) return 77;
+    }
+    uint8_t canvas[32][224];
+    PtbrLabel line={.width=6,.height=16,.style=4,.text="EFH"};render_text(canvas,&line);
+    unsigned top=0,middle=0;
+    for(unsigned x=0;x<48;++x) {
+        top+=canvas[0][x]==5;
+        middle+=canvas[7][x]==7;middle+=canvas[8][x]==7;
+    }
+    if(top<25 || middle<45) return 78;
+    g_rom=NULL;
+    puts("Cartridge E/F/H crossbars and upper outlines passed.");return 0;
+}
+int main(int argc,char **argv) {
+    int fonts=native_font_tests();if(fonts) return fonts;
     fixture.bgmode=9; fixture.bgXsc[0]=0x31;
     fixture.vram[0x314C]=0x313A; fixture.vram[0x314D]=0x313B;
     memcpy(original,fixture.vram,sizeof(original));
@@ -185,6 +281,59 @@ int main(void) {
     observe_line(&fixture,224,NULL);
     coop_fixture=false;
     int completion=completion_tests();if(completion) return completion;
+    gold_fixture=true;
+    for(unsigned language=0;language<2;++language) {
+        s_enabled=language!=0;
+        memset(&fixture,0,sizeof(fixture));fixture.bgmode=9;fixture.bgXsc[0]=0x31;
+        fixture.vram[0x3000+6*32+8]=308;
+        fixture.vram[0x3000+18*32+22]=342;fixture.vram[0x3000+18*32+23]=468;
+        memcpy(original,fixture.vram,sizeof(original));apply_labels(&fixture);
+        if(!s_saved_count) return 40;
+        restore_labels(&fixture);if(memcmp(original,fixture.vram,sizeof(original))) return 41;
+        if(strcmp(PtbrPauseLabel(1),language?"NÃO":"NO")) return 42;
+    }
+    gold_fixture=false;s_enabled=true;
+    for(unsigned confirmation=0;confirmation<3;++confirmation) for(unsigned arena=1;arena<=13;++arena) {
+        memset(&fixture,0,sizeof(fixture));fixture.bgmode=9;fixture.bgXsc[0]=0x31;
+        fixture.obsel=3;fixture.screenWindowed[0]=23;
+        for(unsigned i=0;i<128;++i) fixture.oam[i*2]=224u<<8;
+        for(unsigned i=0;i<(confirmation==2?0:9);++i) {
+            fixture.oam[i*2]=19u*256+56+i*16;
+            fixture.oam[i*2+1]=(uint16_t)(0x2000|(confirmation<<9)|object_label_tile(&kObjectLabels[confirmation],i));
+            fixture.highOam[i/4]|=2u<<((i%4)*2);
+        }
+        unsigned stage_slot=confirmation==2?0:9+confirmation;
+        for(unsigned i=0;i<3;++i) {
+            unsigned slot=stage_slot+i;
+            fixture.oam[slot*2]=171u*256+90+i*16;fixture.oam[slot*2+1]=0x24c4+i*2;
+            fixture.highOam[slot/4]|=2u<<((slot%4)*2);
+        }
+        unsigned n=10+2*(arena-1),digit=0xc0+(n/16)*32+n%16;
+        unsigned digit_slot=stage_slot+3,name_slot=digit_slot+1;
+        fixture.oam[digit_slot*2]=171u*256+138;fixture.oam[digit_slot*2+1]=0x2000|digit;
+        fixture.highOam[digit_slot/4]|=2u<<((digit_slot%4)*2);
+        fixture.oam[name_slot*2]=195u*256+92;fixture.oam[name_slot*2+1]=0x222e;
+        /* Synthetic native font; no cartridge glyphs in the test. */
+        for(unsigned tile=2;tile<128;++tile) for(unsigned y=0;y<8;++y)
+            fixture.vram[0x6000+tile*16+y+8]=0x00ff;
+        uint16_t before_oam[256];uint8_t before_high[32];
+        memcpy(before_oam,fixture.oam,sizeof(before_oam));memcpy(before_high,fixture.highOam,sizeof(before_high));
+        memcpy(original,fixture.vram,sizeof(original));apply_labels(&fixture);
+        if(!arena_drawn || arena_last!=arena || fixture.screenWindowed[0]!=23 || fixture.oam[digit_slot*2+1]!=before_oam[digit_slot*2+1]) return 43;
+        for(unsigned slot=13;slot<128;++slot) if((fixture.oam[slot*2]>>8)<224 && fixture.oam[slot*2+1]==0x222e) return 45;
+        if(!memcmp(original,fixture.vram,sizeof(original))) return 46;
+        restore_labels(&fixture);
+        if(memcmp(original,fixture.vram,sizeof(original)) || memcmp(before_oam,fixture.oam,sizeof(before_oam)) || memcmp(before_high,fixture.highOam,sizeof(before_high))) return 44;
+        /* A transient hidden digit must retain Portuguese, with no live RAM
+         * or task-PC dependency and no native glyph escaping the overlay. */
+        fixture.oam[digit_slot*2]=224u<<8;apply_labels(&fixture);
+        if(!arena_drawn || arena_last!=arena) return 47;
+        restore_labels(&fixture);
+        s_enabled=false;apply_labels(&fixture);if(arena_drawn || s_saved_count) return 48;s_enabled=true;
+        fixture.oam[1]^=0x200;apply_labels(&fixture);
+        if(arena_drawn || s_saved_count) return 79; /* wrong heading palette */
+    }
+    if(argc==2) {int cartridge=cartridge_font_tests(argv[1]);if(cartridge) return cartridge;}
     puts("PT-BR overlay: guards, restoration, disable, blink alignment, stable tiles, extended palettes, screen contexts and sprite heading passed.");
     return 0;
 }
