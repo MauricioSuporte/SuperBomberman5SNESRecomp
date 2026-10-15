@@ -469,3 +469,8 @@ commands; FFF2/FFF3 record acquisition cue / attachment frame counters.
 ## Additional Louie audio publication exception — 2026-10-15
 
 The maintainer explicitly authorized shipping MountBlackLouie.wav and BlackLouieDash.wav from the SB6 project as additional mod resources, clarifying they are not extractions of the original game. Only the two exact files under mods/preloaded/packages/superbomberman5.louie-improvements/0.1.0/audio/ are approved; see the sibling AUDIO_PROVENANCE.md for source paths, SHA-256 and licensing limits. Other extracted audio remains prohibited. The publication guard checks the approved paths and bytes.
+
+Title count font (2026-10-15): runtime 2bpp glyph halves 1 = ROM file
+`$23DC90/$23DC20`, 2 = `$23DB10/$23DD50`. Verified by exact tile-byte
+matching against Windows/LLE title BG3 VRAM `$12E/$127` and `$116/$13A`;
+the copyright uses the same font page. No extracted pixels stored in source.

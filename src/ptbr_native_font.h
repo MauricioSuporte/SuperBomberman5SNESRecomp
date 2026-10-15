@@ -69,6 +69,23 @@ static unsigned native_white(unsigned character,uint8_t p[16][24]) {
         }
         found=true;break;
     }
+    if(!found && c>='3' && c<='5') {
+        /* Authored extensions for the extra co-op rows. Match the native
+         * 1/2: six ink columns, ten rows, two-pixel stems, full outline.
+         * The original copyright digits share this title font page. */
+        static const uint8_t digits[3][10]={
+            {30,51,3,3,14,3,3,3,51,30},
+            {6,14,14,30,54,54,63,6,6,6},
+            {63,48,48,48,62,3,3,3,51,30}
+        };
+        for(unsigned y=0;y<10;++y) for(unsigned x=0;x<6;++x)
+            if(digits[c-'3'][y] & (1u<<(5-x)))
+                for(unsigned yy=y+3;yy<=y+5;++yy)
+                    for(unsigned xx=x;xx<=x+2;++xx) p[yy][xx]=1;
+        for(unsigned y=0;y<10;++y) for(unsigned x=0;x<6;++x)
+            if(digits[c-'3'][y] & (1u<<(5-x))) p[y+4][x+1]=2;
+        found=true;
+    }
     if(!found) {
         uint8_t small[16][24];native_small(c,small);
         for(unsigned y=4;y<14;++y) for(unsigned x=0;x<8;++x)

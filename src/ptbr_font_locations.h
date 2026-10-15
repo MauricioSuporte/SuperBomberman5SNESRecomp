@@ -84,6 +84,8 @@ static const PtbrNativeBlue kNativeBlue[] = {
 typedef struct { unsigned character; uint32_t tiles[2]; } PtbrNativeWhite;
 static const PtbrNativeWhite kNativeWhite[] = {
     {'A', {0x23da20,0x23dab0}},
+    {'1', {0x23dc90,0x23dc20}},
+    {'2', {0x23db10,0x23dd50}},
     {'B', {0x23d9d0,0x23dae0}},
     {'E', {0x23db70,0x23dbf0}},
     {'G', {0x23db60,0x23dbe0}},

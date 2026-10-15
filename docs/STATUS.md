@@ -1,5 +1,29 @@
 # Super Bomberman 5: estado do protótipo
 
+## v0.11.1 release candidate / Candidata — 2026-10-15
+
+Patch scope: PT-BR title player-count glyphs only, plus version/release docs.
+Framework gitlinks and eleven default-disabled mod packages stay at v0.11.0.
+Local Windows build, native tests, Python tests (two Linux-only skips) and
+whitespace checks passed. The development checkout has unrelated submodule
+changes; clean CI packages use the committed pins instead. Package builds
+and extraction/runtime checks are recorded separately after completion.
+Correção limitada à fonte dos números no menu PT-BR e documentação de versão.
+Pins e onze pacotes mantidos; alterações locais dos submódulos ficam fora.
+Build/testes locais passaram; pacotes limpos serão validados separadamente.
+
+## PT-BR player-count font / Fonte da quantidade de jogadores — 2026-10-15
+
+Player counts 1/2 now read the original title glyphs from the cartridge;
+3–5 use authored extensions with matching six-column, ten-row ink and full
+outline. This supersedes the earlier 5x7 approximation. Windows/LLE: 1,448
+frames to the five-player menu with PT-BR/co-op, inspected beside the native
+copyright digits. Native tests cover cartridge reads, digit weight/margins
+and render restoration. Full campaign is outside this check.
+Os algarismos 1/2 agora vêm da fonte original da ROM; 3–5 são extensões
+autorais com o mesmo traço e contorno completo. Substitui a aproximação 5x7.
+Menu conferido em Windows/LLE com PT-BR/co-op, junto dos números do copyright.
+
 ## v0.11.0 published / Publicada — 2026-10-15
 
 [Prerelease v0.11.0](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.11.0)

@@ -8,7 +8,7 @@ An unofficial, noncommercial **Super Bomberman 5** PC port prototype built with 
 
 <p align="center"><img src="docs/images/five-player-showcase.png" width="820" alt="Five-player title menu, six-column character selection with Honey, Kotetsu, Subordinate Bomber and colors, Zone 1-1 with five different characters and Battle Mode stage 1 with five characters and palettes"></p>
 
-<p align="center"><b>New in v0.11.0:</b> Yellow bomb kicks, Red enemy paralysis and Black Louie eggs with a protected pushing dash.<br><b>Novidades da v0.11.0:</b> chute de bombas do Yellow, paralisia de inimigos pelo Red e Black Louie nos ovos com arrancada protegida.</p>
+<p align="center"><b>Fixed in v0.11.1:</b> player-count digits now match the original white title font in the PT-BR Normal Game menu.<br><b>Correção da v0.11.1:</b> números da quantidade de jogadores com o traço original da fonte branca no menu Normal em PT-BR.</p>
 
 ## English
 
@@ -40,15 +40,15 @@ An unofficial, noncommercial **Super Bomberman 5** PC port prototype built with 
 4. Select **Generate & rebuild**. The native analyzer is included; installing Rust is unnecessary for release users. Game code is generated and compiled locally.
 5. Run the resulting game under `build/`; configure controls in the launcher.
 
-Upgrading: extract v0.11.0 into a new folder and run Generate & rebuild again with your own ROM; an older generated executable cannot load the new native mod code.
+Upgrading: extract v0.11.1 into a new folder and run Generate & rebuild again with your own ROM; an older generated executable cannot load the new native mod code.
 
 Requires Windows 10 or newer, x64. Leave several GB free for extraction, tools and build output. Open the root executable to start release setup; the repository's developer `play.cmd` is for local source builds.
 
 ### Linux AppImage
 
-Download **superbomberman5-0.11.0-linux-x86_64.AppImage** from [v0.11.0](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.11.0), make it executable (`chmod +x superbomberman5-0.11.0-linux-x86_64.AppImage`) and run it. The AppImage copies its ROM-free setup into `${XDG_DATA_HOME:-~/.local/share}/superbomberman5/0.11.0` on first launch. Select your own supported ROM and use **Generate & rebuild**; subsequent launches open the locally rebuilt game. Rust is not required. Internet is needed for the first portable tool download. Linux x86_64, glibc 2.35+ (Ubuntu 22.04 baseline), desktop graphics/audio libraries and several GB free are required. If FUSE is unavailable, run with `--appimage-extract-and-run`. Keep the writable version folder to retain local builds and settings; ROM and generated game data are never part of the download. Linux distribution and full-campaign coverage remain limited; see [validation](docs/STATUS.md).
+Download **superbomberman5-0.11.1-linux-x86_64.AppImage** from [v0.11.1](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.11.1), make it executable (`chmod +x superbomberman5-0.11.1-linux-x86_64.AppImage`) and run it. The AppImage copies its ROM-free setup into `${XDG_DATA_HOME:-~/.local/share}/superbomberman5/0.11.1` on first launch. Select your own supported ROM and use **Generate & rebuild**; subsequent launches open the locally rebuilt game. Rust is not required. Internet is needed for the first portable tool download. Linux x86_64, glibc 2.35+ (Ubuntu 22.04 baseline), desktop graphics/audio libraries and several GB free are required. If FUSE is unavailable, run with `--appimage-extract-and-run`. Keep the writable version folder to retain local builds and settings; ROM and generated game data are never part of the download. Linux distribution and full-campaign coverage remain limited; see [validation](docs/STATUS.md).
 
-Windows users download the **superbomberman5-0.11.0-windows-x64.zip** setup pack. Both formats include the same eleven optional mods, disabled by default. Upgrading from an earlier version: extract v0.11.0 into a new folder (or the AppImage creates a new 0.11.0 folder) and run **Generate & rebuild** again so the new native plugins are compiled. Check the release's **SHA256SUMS** before use.
+Windows users download the **superbomberman5-0.11.1-windows-x64.zip** setup pack. Both formats include the same eleven optional mods, disabled by default. Upgrading from an earlier version: extract v0.11.1 into a new folder (or the AppImage creates a new 0.11.1 folder) and run **Generate & rebuild** again so the new native plugins are compiled. Check the release's **SHA256SUMS** before use.
 
 ### Supported ROM
 
@@ -68,7 +68,7 @@ The developer's local filename is `Super Bomberman 5 (USA).sfc`, but its header 
 
 **Louie improvements (v0.11.0)** adds Yellow bomb kicks and chain transfers, a three-second Red punch freeze for Normal enemies, and Black eggs plus a protected pushing dash (Y). Red enemy hits use the native player-hit sound. Black acquisition/dash sounds are included as maintainer-supplied additional mod resources. [Controls, audio and validation](docs/LOUIE_IMPROVEMENTS.md).
 
-The **v0.11.0 setup packs** include the eleven optional mods below, each at mod version **0.1.0** and disabled by default. Complete **Generate & rebuild**, open **Mods**, enable the desired features and select Play. Each setup package contains the executable, launcher resources, analyzer, source and all eleven preinstalled mods; no separate mod download or import is needed. `FILE_SHA256SUMS` inside each setup payload covers its packaged files. They require the corresponding native plugins in the host; importing a package cannot update an older executable.
+The **v0.11.1 setup packs** include the eleven optional mods below, each at mod version **0.1.0** and disabled by default. Complete **Generate & rebuild**, open **Mods**, enable the desired features and select Play. Each setup package contains the executable, launcher resources, analyzer, source and all eleven preinstalled mods; no separate mod download or import is needed. `FILE_SHA256SUMS` inside each setup payload covers its packaged files. They require the corresponding native plugins in the host; importing a package cannot update an older executable.
 
 | Mod / category | Feature and use |
 |---|---|
@@ -87,6 +87,8 @@ The **v0.11.0 setup packs** include the eleven optional mods below, each at mod 
 ![Normal Game portal destination hints](docs/images/portal-destinations.png)
 
 ZONE1-1: left **Z1-2**, center **Z1-5**, right **Z1-7**. Hints appear only with each visible portal.
+
+v0.11.1 fixes player-count digits in the PT-BR Normal Game menu: 1/2 use original cartridge glyphs and 3–5 use authored extensions matching their weight and outline. Rebuild with this host to apply the fix; the mod package remains 0.1.0.
 
 The launcher categories use English, including **Translation**. The PT-BR mod's name and descriptions remain in Brazilian Portuguese. All eleven can be enabled together; their full combination has not been qualified. Full campaign and multiplayer coverage remain unqualified.
 
@@ -171,21 +173,21 @@ Protótipo não oficial e não comercial de port de **Super Bomberman 5** para P
 
 Requer Windows 10 ou superior, x64, e alguns GB livres. **Nenhuma ROM, código gerado da ROM ou recurso extraído acompanha o download.** O arquivo de desenvolvimento tem “USA” no nome, porém o cabeçalho indica **JPN**. Confira os hashes em [Supported ROM](#supported-rom); o nome do arquivo não garante compatibilidade.
 
-Ao atualizar para a v0.11.0, extraia numa pasta nova e faça **Generate & rebuild** novamente com sua ROM; o executável gerado da versão anterior não recebe o novo código nativo por meio de um manifesto.
+Ao atualizar para a v0.11.1, extraia numa pasta nova e faça **Generate & rebuild** novamente com sua ROM; o executável gerado da versão anterior não recebe o novo código nativo por meio de um manifesto.
 
 ### AppImage Linux
 
 Build CI Ubuntu 22.04 e geração/rebuild local no Ubuntu 24.04/WSL passaram; a rota de 3.628 frames LLE até a primeira fase terminou com vídeo/áudio dummy. Launcher inicializado em modo offscreen. Dispositivos físicos e outras distribuições seguem não qualificados.
 
-Baixe **superbomberman5-0.11.0-linux-x86_64.AppImage** na [v0.11.0](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.11.0), dê permissão de execução e execute. Sem FUSE, use --appimage-extract-and-run. O setup é copiado para a pasta XDG de dados da versão (padrão ~/.local/share/superbomberman5/0.11.0), onde você fornece sua ROM e usa **Generate & rebuild**. Nas próximas aberturas, o AppImage usa o jogo gerado localmente. Requer Linux x86_64 com glibc 2.35+, bibliotecas de vídeo/áudio do desktop, internet para as primeiras ferramentas e alguns GB livres. Rust não é necessário. Preserve a pasta gravável para manter builds e configurações. Confira SHA256SUMS na release. Compatibilidade ampla e campanha completa continuam não qualificadas.
+Baixe **superbomberman5-0.11.1-linux-x86_64.AppImage** na [v0.11.1](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.11.1), dê permissão de execução e execute. Sem FUSE, use --appimage-extract-and-run. O setup é copiado para a pasta XDG de dados da versão (padrão ~/.local/share/superbomberman5/0.11.1), onde você fornece sua ROM e usa **Generate & rebuild**. Nas próximas aberturas, o AppImage usa o jogo gerado localmente. Requer Linux x86_64 com glibc 2.35+, bibliotecas de vídeo/áudio do desktop, internet para as primeiras ferramentas e alguns GB livres. Rust não é necessário. Preserve a pasta gravável para manter builds e configurações. Confira SHA256SUMS na release. Compatibilidade ampla e campanha completa continuam não qualificadas.
 
-No Windows, baixe **superbomberman5-0.11.0-windows-x64.zip**. Para atualizar de uma versão anterior, extraia a v0.11.0 numa pasta nova (o AppImage cria a pasta 0.11.0) e use **Generate & rebuild** de novo para compilar os novos plugins nativos.
+No Windows, baixe **superbomberman5-0.11.1-windows-x64.zip**. Para atualizar de uma versão anterior, extraia a v0.11.1 numa pasta nova (o AppImage cria a pasta 0.11.1) e use **Generate & rebuild** de novo para compilar os novos plugins nativos.
 
 ### Mods incluídos
 
 **Louie improvements (v0.11.0)** adiciona chute de bombas e transferências em cadeia para Yellow, paralisia de três segundos nos inimigos do Normal pelo Red e Black nos ovos com arrancada protegida (Y). Red usa o SFX nativo de acerto. Os sons de aquisição/arrancada do Black acompanham os pacotes como recursos adicionais fornecidos pelo mantenedor. [Controles, áudio e validação](docs/LOUIE_IMPROVEMENTS.md).
 
-Os **pacotes Windows e Linux v0.11.0** incluem os onze mods opcionais abaixo, todos na versão de mod **0.1.0** e desabilitados por padrão. Conclua **Generate & rebuild**, abra **Mods**, ative as funções desejadas e selecione Play. Cada pacote inclui executável, recursos do launcher, analisador, fontes e os onze mods pré-instalados; não é necessário baixar nem importar mods separados. O arquivo `FILE_SHA256SUMS` dentro do setup cobre os arquivos do pacote. Eles contêm apenas dados e dependem dos plugins nativos do host; importar um pacote não atualiza um executável antigo.
+Os **pacotes Windows e Linux v0.11.1** incluem os onze mods opcionais abaixo, todos na versão de mod **0.1.0** e desabilitados por padrão. Conclua **Generate & rebuild**, abra **Mods**, ative as funções desejadas e selecione Play. Cada pacote inclui executável, recursos do launcher, analisador, fontes e os onze mods pré-instalados; não é necessário baixar nem importar mods separados. O arquivo `FILE_SHA256SUMS` dentro do setup cobre os arquivos do pacote. Eles contêm apenas dados e dependem dos plugins nativos do host; importar um pacote não atualiza um executável antigo.
 
 | Mod / categoria | Função e uso |
 |---|---|
@@ -204,6 +206,8 @@ Os **pacotes Windows e Linux v0.11.0** incluem os onze mods opcionais abaixo, to
 ![Dicas de destino dos portais do Normal Game](docs/images/portal-destinations.png)
 
 ZONE1-1: esquerda **Z1-2**, centro **Z1-5**, direita **Z1-7**. Cada dica aparece somente com o respectivo portal visível.
+
+A v0.11.1 corrige os números no menu Normal em PT-BR: 1/2 usam a fonte original da ROM; 3–5 são extensões autorais com o mesmo peso e contorno. Faça Generate & rebuild com este host; o pacote do mod continua 0.1.0.
 
 As categorias do launcher ficam em inglês, incluindo **Translation**. O nome e as descrições do mod PT-BR continuam em português brasileiro. Os onze podem ser ativados juntos; a combinação completa ainda não foi qualificada. Campanha e multiplayer completos ainda não foram qualificados.
 

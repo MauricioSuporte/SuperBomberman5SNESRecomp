@@ -98,6 +98,31 @@ static int native_font_tests(void) {
     if(native_small('A',glyph)!=7) return 60;
     for(unsigned y=0;y<16;++y) if(glyph[y][y%7]!=4) return 61;
     if(native_small('i',glyph)!=4 || native_small('m',glyph)!=8) return 62;
+    /* Player counts use the title face even with a cartridge loaded: full
+     * ten-row ink, bold stems, complete outline and empty top margin. */
+    for(unsigned n=0;n<sizeof(kNativeWhite)/sizeof(kNativeWhite[0]);++n)
+        if(kNativeWhite[n].character=='1' || kNativeWhite[n].character=='2') {
+            const PtbrNativeWhite *d=&kNativeWhite[n];
+            for(unsigned y=4;y<14;++y) {
+                font_cartridge[d->tiles[y/8]+y%8*2]=0x10;
+                font_cartridge[d->tiles[y/8]+y%8*2+1]=0x60;
+            }
+        }
+    for(unsigned c='1';c<='5';++c) {
+        if(native_white(c,glyph)!=8) return 80;
+        if(c<='2' && (glyph[4][1]!=2 || glyph[13][2]!=2 || glyph[4][3]!=1)) return 84;
+        unsigned rows=0,shadow=0;
+        for(unsigned y=0;y<16;++y) {
+            unsigned ink=0;
+            for(unsigned x=0;x<24;++x) {
+                ink+=glyph[y][x]==2;shadow+=glyph[y][x]==1;
+                if(y<3 && glyph[y][x]) return 81;
+            }
+            if(ink) {if(ink<2 || y<4 || y>13) return 82;++rows;}
+        }
+        if(rows!=10 || !shadow) return 83;
+    }
+
     const PtbrNativeBlue *b=NULL;
     for(unsigned n=0;n<sizeof(kNativeBlue)/sizeof(kNativeBlue[0]);++n)
         if(kNativeBlue[n].character=='A') b=&kNativeBlue[n];
