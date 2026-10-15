@@ -7,6 +7,8 @@
 enum { SB4_CHARACTERS = 6, SB4_COLORS = 5 };
 /* Character order: Bomberman, Hammer, Jet, Lady, Bazooka, Great. */
 const uint8_t *Sb4Rom(void);
+/* Loads a specific file (the launcher selection) when it is a verified image. */
+bool Sb4RomLoad(const char *path);
 const char *Sb4RomPath(void);
 bool Sb4RomAccept(const uint8_t *data,size_t size);
 /* Battle frame `frame` (0-63) of a character as 32x32 color indices. */

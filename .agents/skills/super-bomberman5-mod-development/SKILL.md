@@ -261,12 +261,17 @@ debuff (also for Honey/Kotetsu). `src/honey_kotetsu_mod.c` is now the
 **extra-character core**; add future characters there as new skins, not as a
 second copy of the picker/skin code.
 
-1. **Second ROM, read at runtime.** `src/sb4_rom.c` searches `$SB5_SB4_ROM`,
-   the working directory, `roms/` and the folder of the ROM named in `rom.cfg`
-   for `.sfc/.smc` files of the right size, skips a 512-byte header and
-   accepts only the verified SHA-256 (`sha256_compute` from the runner).
-   Without it the mod reports where to place the file and the picker keeps
-   its old layout. Never commit or package anything from that ROM.
+1. **Second ROM, requested by the launcher.** Declare it in the manifest as
+   `[[external_rom]]` (`feature`, `id`, `label`, `format = "snes"`,
+   `normalized_sha256` — header-stripped digest, so `.smc` copies pass —,
+   `file_patterns = "*.sfc,*.smc"`, `required = true`). The Mods page then
+   shows a file picker under the feature, verifies the file ("ROM verified")
+   and refuses Play until it is selected; the selection is saved in
+   `state.toml` as `[[resource]]`. The plugin reads the path with
+   `snes_mod_runtime_resource_path_c(package, feature, id, ...)` and
+   `src/sb4_rom.c` re-checks SHA-256 before using it. Headless tests add the
+   `[[resource]]` block to their `state.toml`. Never commit or package
+   anything from that ROM.
 2. **Research the other game in an emulator, not by guessing.** Build the
    libretro snes9x core locally with debug exports (RAM/VRAM/OAM/CGRAM, a DMA
    log, a write watch with PCs, PC breakpoints with registers) and drive it

@@ -16,12 +16,17 @@ static bool wanted,reported;
 bool BomberKingsWanted(void) { return wanted; }
 bool BomberKingsReady(void) {
     if(!wanted) return false;
+    /* The ROM the player selected for this mod on the launcher's Mods page
+     * (manifest [[external_rom]] "sb4-rom", hash checked by the engine). */
+    char path[1024];
+    if(snes_mod_runtime_resource_path_c("superbomberman5.bomber-kings","bomber_kings","sb4-rom",path,sizeof(path)))
+        Sb4RomLoad(path);
     bool ready=Sb4Rom()!=NULL;
     if(!reported) {
         reported=true;
         if(ready) fprintf(stderr,"[bomber-kings] Super Bomberman 4 image: %s\n",Sb4RomPath());
         else fprintf(stderr,"[bomber-kings] no verified Super Bomberman 4 image found; "
-                            "place your own copy next to the Super Bomberman 5 ROM or in roms/\n");
+                            "select it for Bomber Kings on the launcher's Mods page\n");
     }
     return ready;
 }

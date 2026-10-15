@@ -12,6 +12,11 @@ player's own ROM (`src/sb4_rom.c`, SHA-256 checked); nothing from it is in the
 repository. Research tools (snes9x libretro core with debug exports, Python
 frontend, captures) stayed local.
 
+The Super Bomberman 4 ROM is requested on the launcher's Mods page (manifest
+`[[external_rom]]` `sb4-rom`, `normalized_sha256`, `required`). Headless check:
+with the `[[resource]]` selection in `state.toml` the picker had 18 cells;
+without it the plan was rejected ("Resolve the highlighted mod conflicts").
+
 Evidence (Linux LLE headless, fixture build, SB4 ROM via `SB5_SB4_ROM`):
 - Native tests: all eleven pass, including new `special_abilities_tests`
   (input rule, remote detonation, riding, debuff speed and Z flag, Normal /

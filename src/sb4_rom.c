@@ -1,8 +1,10 @@
 /* The player's own Super Bomberman 4 cartridge image, read at runtime.
  *
  * Nothing from Super Bomberman 4 is stored in this repository: the Bomber
- * Kings mod draws its characters from this image. The file is searched for,
- * in order, at $SB5_SB4_ROM, then among the .sfc/.smc files of the working
+ * Kings mod draws its characters from this image. The launcher's Mods page
+ * asks for it (the package's [[external_rom]], verified by the engine) and
+ * the plugin passes that path to Sb4RomLoad(). Without a selection it is
+ * searched for, in order, at $SB5_SB4_ROM, then among the .sfc/.smc files of the working
  * directory, its roms/ folder and the folder of the Super Bomberman 5 ROM
  * named in rom.cfg. Only an image whose SHA-256 matches the verified
  * Japanese release is accepted (a 512-byte copier header is skipped). */
@@ -94,6 +96,10 @@ static void search(void) {
         while(end>line && end[-1]!='/' && end[-1]!='\\') --end;
         if(end>line) { end[-1]=0;scan_dir(line); }
     }
+}
+bool Sb4RomLoad(const char *path) {
+    if(image) return true;
+    return path && path[0] && try_file(path);
 }
 const uint8_t *Sb4Rom(void) {
     if(!searched) search();

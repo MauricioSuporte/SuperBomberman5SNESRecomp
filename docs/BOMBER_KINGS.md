@@ -2,13 +2,16 @@
 
 ## Português
 
-Em **Mods**, ative **Play as the Bomber Kings** e coloque a **sua própria ROM do
-Super Bomberman 4** (lançamento japonês, SHA-256
-`68df561dba2c47a2b743eb5f960530c7a587646d3e448f68f9937305815c9f44`) ao lado da
-ROM do Super Bomberman 5 ou numa pasta `roms` junto do executável. O nome do
-arquivo não importa (`.sfc` ou `.smc`, com ou sem cabeçalho de 512 bytes): o mod
-confere o hash. Os gráficos e as paletas do Super Bomberman 4 são lidos dessa
-ROM em tempo de execução; nada dela fica no projeto ou nos pacotes.
+Em **Mods**, ative **Play as the Bomber Kings**. Logo abaixo aparece o item
+**Super Bomberman 4 ROM**: clique para escolher a **sua própria ROM do Super
+Bomberman 4** (lançamento japonês, SHA-256
+`68df561dba2c47a2b743eb5f960530c7a587646d3e448f68f9937305815c9f44`), do mesmo
+jeito que outros recomps pedem uma segunda ROM para alguns mods. O launcher
+confere o hash (com ou sem cabeçalho de 512 bytes) e mostra **ROM verified**;
+enquanto ela não for escolhida, o Play pede para resolver o mod. O caminho fica
+salvo nas configurações de mods. Os gráficos e as paletas do Super Bomberman 4
+são lidos dessa ROM em tempo de execução; nada dela fica no projeto ou nos
+pacotes, e o arquivo nunca é copiado nem alterado.
 
 A seleção de personagens passa a ter **três fileiras de seis**:
 
@@ -19,9 +22,7 @@ A seleção de personagens passa a ter **três fileiras de seis**:
 ```
 
 As duas fileiras originais sobem e a nova fileira fica onde era a de baixo. O
-mod inclui a coluna da Honey e do Kotetsu (mesmo sem o mod deles ativo). Sem a
-ROM do Super Bomberman 4 a seleção continua com duas fileiras e uma mensagem no
-log diz onde colocar a ROM.
+mod inclui a coluna da Honey e do Kotetsu (mesmo sem o mod deles ativo).
 
 - **Cursor:** direita/esquerda dão a volta na fileira; cima/baixo passam pelas
   três fileiras (de cima vai para a de baixo e vice-versa).
@@ -79,19 +80,21 @@ python tools/package-bomber-kings.py
 
 ## English
 
-Enable **Play as the Bomber Kings** in **Mods** and place **your own Super
-Bomberman 4 ROM** (Japanese release, SHA-256
-`68df561dba2c47a2b743eb5f960530c7a587646d3e448f68f9937305815c9f44`) next to the
-Super Bomberman 5 ROM or in a `roms` folder next to the executable. The file
-name does not matter (`.sfc` or `.smc`, with or without a 512-byte header): the
-mod checks the hash. Super Bomberman 4 graphics and palettes are read from that
-ROM at runtime; nothing from it is stored in the project or its packages.
+Enable **Play as the Bomber Kings** in **Mods**. Its **Super Bomberman 4
+ROM** item appears below it: select **your own Super Bomberman 4 ROM**
+(Japanese release, SHA-256
+`68df561dba2c47a2b743eb5f960530c7a587646d3e448f68f9937305815c9f44`), the same
+way other recomps ask for a second ROM for some mods. The launcher checks the
+hash (with or without a 512-byte header) and shows **ROM verified**; until a ROM
+is selected, Play asks you to resolve the mod. The path is saved with the mod
+settings. Super Bomberman 4 graphics and palettes are read from that ROM at
+runtime; nothing from it is stored in the project or its packages, and the file
+is never copied or modified.
 
 The character selection gets **three rows of six**: the two stock rows move up,
 Honey/Kotetsu end them, and a new bottom row holds Super Bomberman 4's
 Bomberman, Hammer, Jet, Lady, Bazooka and Great Bomber. The mod includes the
-Honey/Kotetsu column. Without a Super Bomberman 4 ROM the picker keeps two rows
-and the log says where to place the ROM.
+Honey/Kotetsu column.
 
 - **Cursor:** left/right wrap inside a row; up/down cycle through the three rows.
 - **Colors:** with **Selection colors**, L/R choose among each character's five
@@ -132,8 +135,11 @@ Bomberman. Disabled by default; requires host v0.11.0 or newer.
 
 ## Technical notes
 
-- `src/sb4_rom.c`: finds the image (`$SB5_SB4_ROM`, working directory, `roms/`,
-  the folder of the ROM named in `rom.cfg`), checks SHA-256, decodes frames.
+- Manifest `[[external_rom]]` `sb4-rom` (`normalized_sha256`, `required = true`):
+  the launcher asks for the file and verifies it; the plugin reads the path with
+  `snes_mod_runtime_resource_path_c`. `src/sb4_rom.c` checks SHA-256 again and
+  decodes frames (development fallback without a launcher selection:
+  `$SB5_SB4_ROM`, working directory, `roms/`, the folder of the ROM in `rom.cfg`).
   Battle sheets: 64 frames of 32x32, frame `f` at `base + (f/4)*$800 +
   (f%4)*$80`, tile rows `$200` apart (bases: Bomberman `$D2:0000`, Hammer
   `$CB:0000`, Jet `$CC:0000`, Lady `$CB:8000`, Bazooka `$CC:8000`, Great
