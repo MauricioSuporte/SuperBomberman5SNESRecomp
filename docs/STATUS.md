@@ -1,5 +1,39 @@
 # Super Bomberman 5: estado do protótipo
 
+## v0.8.0 published / Publicada — 2026-10-15
+
+Published prerelease: https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.8.0
+Tag targets `34613f7a2c1825a906a751e465a1aa604a559d6c`, matching both setup
+packages' SOURCE_REVISIONS. Release workflow `38692068021` passed Windows
+and Ubuntu builds, all eight native tests, Python checks, source/package
+audits, native analyzer smoke and AppImage first/repeat launch checks.
+The eight game mods are preinstalled/default-disabled. Supplied screenshot
+`docs/images/portal-destinations.png` is byte-identical to the maintainer's
+attachment and appears in the English and Portuguese README explanations.
+
+Downloaded artifacts match GitHub Actions archive digests. Public Windows ZIP,
+Linux AppImage and SHA256SUMS asset sizes/digests were verified after upload;
+the bilingual UTF-8 release body matches its source without replacement chars.
+Pristine Windows setup launcher opened and closed normally. Both extracted
+packages passed bundled-analyzer smoke, local ROM generation/rebuild and
+all eight native test executables. The packaged Windows game passed all six
+portal fixtures, including independently revealed/hidden gates, both PPUs,
+PT-BR/pause integration and exact native-state parity. The Linux rebuilt
+AppImage completed the 3,628-frame first-stage route without interpreter cap,
+unresolved abandonment, BRK or fatal. Its portable toolchain has no ctest;
+all native test executables were run directly instead. No system packages
+were installed. Linux portal runtime, full campaign, all boss paths, physical
+controllers and rewind across transitions remain unqualified.
+
+Pré-release v0.8.0 publicada com ZIP Windows, AppImage Linux e checksums.
+O README bilíngue inclui exatamente a captura fornecida para o novo mod.
+Pacotes extraídos geraram/recompilaram o jogo, oito testes nativos passaram
+nos dois sistemas, seis rotas do mod passaram no Windows e a rota de 3.628
+quadros passou no AppImage recompilado. Campanha completa e os demais limites
+acima permanecem. Alterações locais do mod Honey/Kotetsu foram preservadas e
+não fazem parte desta release. Nenhuma tag/asset anterior foi substituída.
+
+
 ## v0.8.0 portal destinations / Destinos dos portais — 2026-10-15
 
 Added optional **Gameplay → Normal Game — portal destinations → Show portal
