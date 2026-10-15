@@ -1,16 +1,45 @@
 # Super Bomberman 5: estado do protótipo
 
-## v0.11.1 release candidate / Candidata — 2026-10-15
+## v0.11.1 published / Publicada — 2026-10-15
 
-Patch scope: PT-BR title player-count glyphs and cursor spacing, plus release docs.
-Framework gitlinks and eleven default-disabled mod packages stay at v0.11.0.
-Local Windows build, native tests, Python tests (two Linux-only skips) and
-whitespace checks passed. The development checkout has unrelated submodule
-changes; clean CI packages use the committed pins instead. Package builds
-and extraction/runtime checks are recorded separately after completion.
-Correção limitada à fonte dos números e ao espaçamento do cursor no menu PT-BR.
-Pins e onze pacotes mantidos; alterações locais dos submódulos ficam fora.
-Build/testes locais passaram; pacotes limpos serão validados separadamente.
+[Prerelease v0.11.1](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.11.1)
+targets `bdb50bedb28946551b7ecf1c5f150bcc4f8708c9`.
+[Clean Release workflow 38823031455](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/actions/runs/38823031455)
+passed Windows and Ubuntu 22.04 builds, native/Python tests, dependency-pin
+checks, history/package audits and setup/analyzer smoke tests. The release
+includes title digit and cursor spacing fixes. Framework pins and eleven
+default-disabled mod packages are unchanged from v0.11.0. No SB4 development,
+ROM, generated game code, saves or captures are included.
+
+Downloaded artifacts matched GitHub SHA-256; payload checksums cover all
+files and both approved Black Louie WAVs match their authorized hashes.
+Extracted Windows setup and Linux AppImage (Ubuntu 24.04/WSL) each generated
+and rebuilt using the local JPN ROM, passed all eleven native binaries and
+the 3,628-frame LLE first-stage route. Windows launcher startup passed twice;
+Linux first/repeat writable setup launches and generated-game launch passed.
+Both bundled analyzers passed synthetic-ROM checks. Both rebuilt packages
+also passed paired PT-BR off/on 1,766-frame routes through all five menu
+rows, confirmation and file entry, with identical WRAM/VRAM/OAM/CGRAM/SRAM
+in every paired dump. Menu captures were inspected on both platforms.
+Physical controllers, audio latency, full campaign and all mod combinations
+remain unqualified. Partial recompilation; most game logic is interpreted.
+
+Public assets verified by size and SHA-256:
+
+- `superbomberman5-0.11.1-windows-x64.zip`: 17,021,409 bytes, SHA-256
+  `3b0863351f865de0e07c4ed7435545cf36c976ba83dc843247ef3bff2cf48b76`.
+- `superbomberman5-0.11.1-linux-x86_64.AppImage`: 13,662,712 bytes, SHA-256
+  `de6ed7d6c000412e0896b32410fe7401b3cc3dee8ddbba8b02425d3be445124c`.
+- SHA256SUMS covers both public packages. Remote bilingual UTF-8 notes match
+  the generated file exactly, with no replacement characters.
+
+Pré-release v0.11.1 publicada com correções da fonte e da posição do cursor.
+ZIP Windows, AppImage Linux e SHA256SUMS conferidos. CI limpa e onze testes
+nativos passaram; os dois pacotes geraram/recompilaram e executaram a rota
+LLE de 3.628 frames. Rotas pareadas de 1.766 frames verificaram as cinco
+opções com PT-BR ligado/desligado e memória/saves idênticos. Pins e onze mods
+mantidos. Linux experimental; campanha completa, controles físicos e todas
+as combinações não qualificados. Alterações locais dos submódulos excluídas.
 
 ## PT-BR cursor spacing / Espaçamento do cursor — 2026-10-15
 
@@ -63,6 +92,7 @@ fixture game builds and captures stay ignored. Physical audio latency,
 controllers, full campaign and every mod combination remain unqualified.
 
 Public assets verified by size and SHA-256:
+
 - Windows ZIP: 17,015,993 bytes,
   `9c9f7565e61f3485f4ecde0ba2d5a515dc360eb41a8db2c7987baf7007349fcb`.
 - Linux AppImage: 13,658,616 bytes,
