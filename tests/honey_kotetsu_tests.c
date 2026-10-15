@@ -26,9 +26,18 @@ bool Sb4Frame(unsigned character,unsigned frame,uint8_t out[32][32]) {
     for(unsigned y=2;y<30;++y) for(unsigned x=6;x<26;++x) out[y][x]=(uint8_t)((frame+character)%15+1);
     return true;
 }
+uint32_t Sb4FramePc(unsigned character,unsigned frame) { return character<6 && frame<64?0xd00000|character<<8|frame:0; }
+bool Sb4FrameAt(uint32_t pc,uint8_t out[32][32]) { return Sb4Frame((pc>>8)&0xff,pc&0xff,out); }
 uint16_t Sb4Color(unsigned character,unsigned palette,unsigned index) { return (uint16_t)(0x4000+character*0x100+palette*0x10+index); }
-static int ability_pose=-1;
-int SpecialAbilityPose(unsigned seat) { (void)seat;return ability_pose; }
+/* Portraits: a 32x32 square of color 9; colors 0x2000 + ... */
+bool Sb4Portrait(unsigned character,uint8_t out[32][32]) {
+    if(!kings_ready || character>=6) return false;
+    memset(out,9,32*32);return true;
+}
+uint16_t Sb4PortraitColor(unsigned character,unsigned palette,unsigned index) { return (uint16_t)(0x2000+character*0x100+palette*0x10+index); }
+static int ability_pose=-1;static uint32_t ability_frame;
+int SpecialAbilityPose(unsigned seat,unsigned *step,uint32_t *sb4_frame) { (void)seat;*step=0;*sb4_frame=ability_frame;return ability_pose; }
+bool SpecialAbilityShown(unsigned seat) { (void)seat;return false; }
 void SpecialAbilitiesInstall(void) {}
 void SpecialAbilityDraw(void) {}
 int SelectionColorSeat(unsigned seat) { (void)seat;return -1; }
@@ -245,7 +254,7 @@ int main(void) {
      * frame of animation $1E step 1: frame (0x1e%32)*4+2 = 122, in the free
      * palette 7 (slot 1 keeps its colors for the mount and eggs). */
     unsigned expected_frame=(0x1e%32)*4+2;
-    CHECK(pose_frame(0,8,-1)==expected_frame);
+    CHECK(pose_frame(0,8,-1,0)==expected_frame);
     unsigned big_rows=0;
     for(unsigned s=10;s<=12;++s) if(visible(ppu,s)) {
         CHECK(big(ppu,s) && sprite_palette(ppu,s)==7 && sprite_x(ppu,s)==92);
@@ -378,7 +387,7 @@ int main(void) {
     hide_all(ppu);
     sprite(ppu,10,92,99,0x23,1,false);sprite(ppu,11,100,99,0x25,1,false);sprite(ppu,12,92,83,0x20,1,true);
     snap(before,ppu);
-    CHECK(sb4_pose_frame(8,-1,false)==3 && sb4_pose_frame(8,1,false)==22 && sb4_pose_frame(8,-1,true)==57);
+    CHECK(sb4_pose_frame(8,false)==3 && sb4_pose_frame(8,true)==57);
     HoneyKotetsuObserve(ppu,1,NULL);CHECK(drawn);
     unsigned shown_blocks=0;
     for(unsigned s=10;s<=12;++s) if(visible(ppu,s)) {
@@ -388,6 +397,25 @@ int main(void) {
     CHECK(shown_blocks>=2);
     for(unsigned c=1;c<16;++c) CHECK(ppu->cgram[0x80+7*16+c]==Sb4Color(1,2,c));
     HoneyKotetsuObserve(ppu,224,NULL);CHECK(same(before,ppu));
+    /* During an ability the frame the ability names is drawn instead. */
+    ability_pose=1;ability_frame=Sb4FramePc(1,22);
+    HoneyKotetsuObserve(ppu,1,NULL);CHECK(drawn);
+    for(unsigned s=10;s<=12;++s) if(visible(ppu,s)) CHECK(pixel(ppu,ppu->oam[s*2+1]&0x1ff,0,4)==(22+1)%15+1);
+    ability_pose=-1;ability_frame=0;
+    HoneyKotetsuObserve(ppu,224,NULL);CHECK(same(before,ppu));
+    /* Picker portrait of a Super Bomberman 4 seat: its own portrait and
+     * portrait palette (Hammer, color 2). */
+    g_ram[0x1031]=4;g_ram[0xc90]=0x68;g_ram[0xcb8]=0x8e;g_ram[0xce0]=0xc6;
+    g_ram[0x625f]=14;g_ram[0x62bf]=12;g_ram[0x6df+12]=0;g_ram[0x55f+12]=40;g_ram[0x5bf+12]=72;
+    hide_all(ppu);
+    sprite(ppu,4,48,47,0x106,0,true);sprite(ppu,5,32,47,0x104,0,true);
+    sprite(ppu,6,48,63,0x102,0,true);sprite(ppu,7,32,63,0x100,0,true);
+    snap(before,ppu);
+    saved_count=0;borrowed_count=0;memcpy(saved_high,ppu->highOam,sizeof(saved_high));
+    draw_portraits(ppu);drawn=true;
+    for(unsigned s=4;s<=7;++s) CHECK(pixel(ppu,ppu->oam[s*2+1]&0x1ff,3,3)==9);
+    for(unsigned c=1;c<16;++c) CHECK(ppu->cgram[0x80+c]==Sb4PortraitColor(1,2,c));
+    g_ram[0x1031]=0x74;
     memcpy(at(0xc4f000),stock_rom+file(0xc4f000),32);
     reset_callback();kings_wanted=kings_ready=false;CHECK(!memcmp(stock_rom,cartridge,sizeof(stock_rom)));
     free(before);free(ppu);

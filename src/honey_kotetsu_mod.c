@@ -92,6 +92,9 @@ void HoneyKotetsuSetSeatChoice(unsigned seat,unsigned choice) {
 unsigned ExtraCharacterSeatChoice(unsigned seat) {
     return seat<5 && HoneyKotetsuInstalled()?g_ram[SEAT_CHOICE+seat]:0;
 }
+unsigned ExtraCharacterSeatColor(unsigned seat) {
+    return seat<5 && HoneyKotetsuInstalled()?g_ram[SEAT_COLOR+seat]:0;
+}
 unsigned ExtraCharacterColorCount(unsigned choice) {
     if(choice==HK_CHOICE_HONEY || choice==HK_CHOICE_KOTETSU) return 1;
     if(choice>=KINGS_CHOICE_FIRST && choice<=EXTRA_CHOICE_LAST) return SB4_COLORS;
@@ -565,9 +568,9 @@ static unsigned walk_step(unsigned object) {
 /* Honey/Kotetsu: attack animations ($23-$26 Honey shooting, $30-$33
  * Kotetsu thrusting) and the victory frame (Honey's gun twirl, $24 step 4;
  * Kotetsu's raised weapon, $31 step 1). Carrying poses use the plain ones. */
-static unsigned pose_frame(unsigned skin,unsigned object,int ability) {
+static unsigned pose_frame(unsigned skin,unsigned object,int ability,unsigned step) {
     int direction;int pose=bomber_pose(g_ram[0x79f+object],&direction);
-    if(ability>=0) return anim_frame(kAttackBase[skin]+(unsigned)ability,kAttackStep[skin]);
+    if(ability>=0) return anim_frame(kAttackBase[skin]+(unsigned)ability,step<kAttackStep[skin]?step:kAttackStep[skin]);
     switch(pose) {
     case POSE_WALK: case POSE_CARRY_WALK: return anim_frame(kAnimBase[skin]+(unsigned)direction,walk_step(object));
     case POSE_ACTION: return anim_frame(kAttackBase[skin]+(unsigned)direction,kAttackStep[skin]);
@@ -584,11 +587,10 @@ static unsigned pose_frame(unsigned skin,unsigned object,int ability) {
  * 48-51 crouch (airborne), 56-59 riding, 60-63 kick/throw. SB5 directions
  * are right, down, left, up. */
 static unsigned sb4_direction(int direction) { return (unsigned)(direction+1)&3; }
-static unsigned sb4_pose_frame(unsigned object,int ability,bool rider) {
+static unsigned sb4_pose_frame(unsigned object,bool rider) {
     int direction;int pose=bomber_pose(g_ram[0x79f+object],&direction);
     unsigned d=sb4_direction(direction),step=walk_step(object);
     unsigned walk=step==1?1:step==3?2:0;
-    if(ability>=0) return 20+sb4_direction(ability);
     if(rider) return 56+d;
     switch(pose) {
     case POSE_WALK: return d*3+walk;
@@ -614,9 +616,9 @@ static bool sb4_box(const uint8_t px[32][32],int *cx,int *bottom) {
     if(r<0) return false;
     *cx=(l+r+1)/2;*bottom=b;return true;
 }
-static bool compose_sb4(unsigned character,unsigned frame,int cx,int bottom,bool own_anchor) {
+static bool compose_sb4_at(unsigned character,uint32_t frame_pc,int cx,int bottom,bool own_anchor) {
     uint8_t px[32][32],ref[32][32];int ax=16,ay=31;
-    if(!Sb4Frame(character,frame,px)) return false;
+    if(!Sb4FrameAt(frame_pc,px)) return false;
     if(own_anchor) { if(!sb4_box(px,&ax,&ay)) return false; }
     else if(!Sb4Frame(character,6,ref) || !sb4_box(ref,&ax,&ay)) return false;
     for(int y=0;y<32;++y) for(int x=0;x<32;++x) if(px[y][x]) {
@@ -624,6 +626,9 @@ static bool compose_sb4(unsigned character,unsigned frame,int cx,int bottom,bool
         if(X>=0 && X<CANVAS_W && Y>=0 && Y<CANVAS_H) canvas[Y][X]=px[y][x];
     }
     return true;
+}
+static bool compose_sb4(unsigned character,unsigned frame,int cx,int bottom,bool own_anchor) {
+    return compose_sb4_at(character,Sb4FramePc(character,frame),cx,bottom,own_anchor);
 }
 static bool stage(void) {
     unsigned mode=g_ram[0x1031];
@@ -729,29 +734,34 @@ static void draw_players(Ppu *ppu,bool *taken) {
         if(slot>=8) continue;
         unsigned mine[16];int ox=0,oy=0,bottom=0;
         unsigned count=match_native(ppu,object,slot,mine,&ox,&oy,&bottom);
-        if(!count) continue; /* Bomber not drawn (blinking, dead). */
+        /* Bomber not drawn (blinking, dead); Jet's flight keeps the native
+         * invulnerability timer fixed, so he is drawn at his object. */
+        bool forced=!count && SpecialAbilityShown(i);
+        if(!count && !forced) continue;
         /* Death ($16): the last step is the burnt-out debris; leave it native. */
         if(g_ram[0x79f+object]==0x16 && g_ram[0x7ff+object]/2>=4) continue;
-        unsigned priority=(ppu->oam[mine[0]*2+1]>>12)&3;
+        unsigned priority=forced?2:(ppu->oam[mine[0]*2+1]>>12)&3;
         /* $1782+seat: bit 7 riding a mount, bit 1 jumping onto it. A rider
          * stands with its feet where the native rider frame ends; neither
          * keeps the ground shadow (the jump has its own native one). */
         bool rider=g_ram[0x1782+i]&0x80,shadow=!(g_ram[0x1782+i]&0x82);
-        int ability=SpecialAbilityPose(i);
+        unsigned step;uint32_t sb4_frame;
+        int ability=SpecialAbilityPose(i,&step,&sb4_frame);
         int direction;unsigned key=(unsigned)skin*8;
         memset(canvas,0,sizeof(canvas));
         int lift=0;
         if(skin>=2) {
             key+=g_ram[SEAT_COLOR+i]%SB4_COLORS;
-            if(!compose_sb4((unsigned)skin-2,sb4_pose_frame(object,ability,rider),ORIGIN_X+bomber_cx,
-                            rider?ORIGIN_Y+bottom-1:ORIGIN_Y+bomber_bottom-1,rider)) continue;
+            uint32_t frame_pc=ability>=0 && sb4_frame?sb4_frame:Sb4FramePc((unsigned)skin-2,sb4_pose_frame(object,rider));
+            if(!compose_sb4_at((unsigned)skin-2,frame_pc,ORIGIN_X+bomber_cx,
+                               rider?ORIGIN_Y+bottom-1:ORIGIN_Y+bomber_bottom-1,rider)) continue;
         } else if(ability<0 && bomber_pose(g_ram[0x79f+object],&direction)==POSE_VICTORY && champion_ready && !rider) {
             /* Champion frames are anchored at their left edge with the feet
              * one line above the origin. */
             compose_data(set_frame_data(CHAMPION_SET,champion_frame((unsigned)skin)),champion,CHAMPION_SIZE,
                          ORIGIN_X-8,ORIGIN_Y,true);
         } else {
-            compose_data(frame_data(pose_frame((unsigned)skin,object,ability)),archive,ARCHIVE_SIZE,ORIGIN_X,ORIGIN_Y-2,shadow);
+            compose_data(frame_data(pose_frame((unsigned)skin,object,ability,step)),archive,ARCHIVE_SIZE,ORIGIN_X,ORIGIN_Y-2,shadow);
             lift=rider?bottom+1:0;
         }
         int palette=choose_palette(ppu,key,(int)slot);
@@ -918,17 +928,22 @@ static void draw_portraits(Ppu *ppu) {
         if(blocks[key][0]<0) {
             /* Honey/Kotetsu: head and shoulders of the front standing frame,
              * its top 24 lines centred in the 32x32 portrait (native faces sit
-             * at 4..27). Super Bomberman 4: the whole front standing frame,
-             * which is 32x32 already. */
+             * at 4..27). Super Bomberman 4: the character's own Battle picker
+             * portrait, with its palette for the player color. */
             for(unsigned q=0;q<4;++q) if((blocks[key][q]=borrow_block(ppu))<0) return;
             memset(canvas,0,sizeof(canvas));
             if(skin<2) {
                 compose(anim_frame(kAnimBase[skin]+1,0),16,4+22);
                 for(unsigned y=28;y<CANVAS_H;++y) memset(canvas[y],0,CANVAS_W);
-            } else if(!compose_sb4((unsigned)skin-2,6,16,29,false)) return;
+            } else {
+                uint8_t px[32][32];
+                if(!Sb4Portrait((unsigned)skin-2,px)) return;
+                for(unsigned y=0;y<32;++y) memcpy(canvas[y],px[y],32);
+            }
             for(unsigned q=0;q<4;++q) paint_block(ppu,(unsigned)blocks[key][q],(q&1)*16,(q>>1)*16);
         }
-        load_palette(ppu,slot,key);
+        if(skin<2) load_palette(ppu,slot,key);
+        else for(unsigned c=1;c<16;++c) put(&ppu->cgram[0x80+slot*16+c],Sb4PortraitColor((unsigned)skin-2,key%8,c));
         for(unsigned q=0;q<4;++q)
             put(&ppu->oam[quarter[q]*2+1],(uint16_t)((ppu->oam[quarter[q]*2+1]&~0x1ffu)|(unsigned)blocks[key][q]));
     }

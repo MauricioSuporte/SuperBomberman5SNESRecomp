@@ -318,11 +318,24 @@ second copy of the picker/skin code.
    `$170A`, also used for Jet/Great). Enemy: `$085F[object]` = 0 → `DEC
    $1662`; zero → `$15A2 |= $40`, else `$085F = $B4`. Normal: never a seat in
    `$1D25`. Battle: Team Battle `$625D` bit 0, teams `$15A2` bits 3-4.
-9. **State in free WRAM** (`$7F:F830-$F86B`) instead of C statics: save
+9. **State in free WRAM** (`$7F:F830-$F8D9`) instead of C statics: save
    states and rewind keep it without a new extension. Clear it whenever the
    game is outside a stage.
-10. **Effects** are authored shapes (filled circles) drawn through the core's
-    `ExtraEmitPixels()` with their own palette.
+10. **Port moves, don't reinvent them.** Capture the other game's ability
+    frame by frame (pose addresses from the DMA log, OBJ effect tiles, BG
+    fire tilemap phases, timings) and replay that timeline; draw its graphics
+    (decoded from the ROM's own tile streams) through the core's
+    `ExtraEmitPixels()`. Identify each character by its sheet in a capture
+    of a known seat before mapping it (Hammer and Bazooka were once swapped).
+11. **Native reactions over custom ones.** Stun + item loss = `$15BA |= $20`
+    (the cartridge's `$C4:4618`/`$C4:4631`). A routine that ends in `RTS`
+    can be called from the `$C0:0AF9` hook by pushing an `RTL` frame back to
+    `$C0:0AF9`, then an `RTS` frame to any `RTL` in the routine's bank
+    (`$C4:36D1`), and `interp_bridge_pre_opcode_redirect()`; the hook runs
+    again on return — skip the frame logic and restore A/X/Y/D/DB there.
+12. **Don't refresh the invulnerability timer every frame** if the native
+    sprite must stay visible: a fixed `$170A` freezes the blink (hidden);
+    draw the seat at its object instead (`SpecialAbilityShown`).
 
 ### Playable-character checklist (any new one)
 

@@ -23,6 +23,8 @@ unsigned HoneyKotetsuBaseChoice(unsigned choice);
 void HoneyKotetsuSetSeatChoice(unsigned seat,unsigned choice);
 /* Extra choice (11-18) a seat plays with in the current stage, else 0. */
 unsigned ExtraCharacterSeatChoice(unsigned seat);
+/* Player palette (0-4) a seat's Super Bomberman 4 character uses. */
+unsigned ExtraCharacterSeatColor(unsigned seat);
 /* L/R colors of an extra choice: 1 (Honey/Kotetsu), 5 (Super Bomberman 4),
  * 0 for a native choice. */
 unsigned ExtraCharacterColorCount(unsigned choice);

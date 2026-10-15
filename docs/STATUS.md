@@ -39,13 +39,36 @@ Evidence (Linux LLE headless, fixture build, SB4 ROM via `SB5_SB4_ROM`):
 - Normal Game (five-player coop, Zone 1-1): flames killed two enemies; no
   player was hit by an ability.
 
+SB4-faithful abilities (second pass, same day): the moves were ported from
+Super Bomberman 4 frame captures instead of SB5 approximations. Hammer and
+Bazooka sheets/palettes were swapped (fixed: Hammer `$CC:8000`/`$E2A0`,
+Bazooka `$CB:0000`/`$1601FA`). Native tests: twelve pass (new timeline, Jet
+flight, mace/laser stun and item-loss injection checks; SB4 fire/effect stream,
+portrait and frame-by-address decoding). Battle routes (five kings):
+- Bazooka: aiming pose turned through four directions, fire beam with SB4
+  explosion tiles frames 68-82 along 12 tiles, killed the player at the end
+  (`$15A2`=`$D9`), debuff after 98 frames.
+- Jet: wind-up poses, flight 4 px/frame from x `$D0` to `$10` with a two-tile
+  fire trail every 8 frames, killed the player in the row, drawn during the
+  held invulnerability; stopped at the wall, debuff after the trail.
+- Hammer: mace orbit (frames 29-106); the player it touched was dazed with the
+  SB4 electrocuted frame (`$164A`=50) and lost a bomb (`$17CA` 5 → 4, item
+  flew off). Lady: laser up the column, target dazed and lost two bombs
+  (5 → 3). Great: front pose, blinking 160 frames. Honey: shooting animation,
+  first player in the row killed.
+- Picker: each seat shows the SB4 Battle portrait of its Bomber King in the
+  chosen palette (Bazooka, Jet, Hammer, Lady with R, Great).
+
 Not verified: Windows build/run, physical controllers, every SB4 pose (stun,
 Time Up and Bad Bomber cart were not captured), boss stages, CPU seats with
 extra characters, save state/rewind during an ability (state lives in WRAM
-`$7F:F830-$F86B`, so it is included in snapshots).
+`$7F:F830-$F8D9`, so it is included in snapshots).
 
 Novo mod opcional dos Reis Bomber (lidos da ROM do Super Bomberman 4 do
-jogador) com habilidades B + direção também para Honey e Kotetsu. Testes
+jogador) com habilidades B + direção também para Honey e Kotetsu. Na segunda
+rodada as habilidades foram portadas do Super Bomberman 4 (tempos, poses,
+fogo, maça, laser e retratos lidos da ROM do SB4; atordoamento e perda de
+itens com as rotinas do próprio SB5). Testes
 nativos e rotas roteirizadas no Linux passaram (seleção, Battle Free-for-All e
 Team Battle, Normal com cinco jogadores); Windows ainda não foi testado.
 

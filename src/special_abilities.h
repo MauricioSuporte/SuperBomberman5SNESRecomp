@@ -3,9 +3,15 @@
 /* B + direction special abilities of the extra characters (Honey, Kotetsu
  * and the Super Bomberman 4 Bomber Kings), with Super Bomberman 4's debuff. */
 void SpecialAbilitiesInstall(void);
-/* Direction (0 right, 1 down, 2 left, 3 up) of the ability pose a seat
- * shows now, or -1. */
-int SpecialAbilityPose(unsigned seat);
+#include <stdint.h>
+/* Pose a seat shows now for its ability: -1 for none, else the direction
+ * (0 right, 1 down, 2 left, 3 up). Honey/Kotetsu: `step` of their attack
+ * animation; Super Bomberman 4 characters: `sb4_frame`, the CPU address of
+ * the 32x32 Super Bomberman 4 frame to draw (0 = the plain pose). */
+int SpecialAbilityPose(unsigned seat,unsigned *step,uint32_t *sb4_frame);
 bool SpecialAbilityDebuffed(unsigned seat);
+/* True while the seat must be drawn even when its native sprite is hidden
+ * (Jet's flight, during which the invulnerability blink is held). */
+bool SpecialAbilityShown(unsigned seat);
 /* Draws the active effects (called by the extra-character overlay). */
 void SpecialAbilityDraw(void);
