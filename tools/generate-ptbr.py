@@ -10,7 +10,7 @@ parser.add_argument('--header', type=Path)
 parser.add_argument('--mod-out', type=Path)
 args = parser.parse_args()
 data = json.loads((ROOT / 'translations/ptbr/labels.json').read_text(encoding='utf-8'))
-allowed = set('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ÇÃÕÉÁÍÓÚÂÊÔ!?%')
+allowed = set('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ÇÃÕÉÁÍÓÚÂÊÔçãõéáíóúâêô!?%')
 offsets = {}
 slots = {}
 slot_sizes = {}
@@ -54,6 +54,19 @@ for key, text in data['completion_text'].items():
     if not key.isidentifier() or not text or set(text)-allowed or len(text)>24:
         raise SystemExit('Invalid completion text: ' + key)
     lines.append('static const char kCompletion_' + key + '[] = ' + json.dumps(text, ensure_ascii=False) + ';')
+if not data['gold_hyper'] or set(data['gold_hyper'])-allowed or len(data['gold_hyper'])>8:
+    raise SystemExit('Invalid Hyper translation')
+lines.append('static const char kGoldHyper[] = ' + json.dumps(data['gold_hyper'],ensure_ascii=False) + ';')
+arenas = data['battle_arenas']
+arena_allowed = set('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ÇÃÕÉÁÍÓÚÂÊÔçãõéáíóúâêô!?-')
+if len(arenas)!=13 or any(not t or set(t)-arena_allowed or len(t)>28 for t in [data['battle_stage'],*arenas]):
+    raise SystemExit('Invalid Battle arena labels')
+lines.append('static const char kBattleStage[] = ' + json.dumps(data['battle_stage'],ensure_ascii=False) + ';')
+lines.append('static const char *const kBattleArenas[] = {' + ','.join(json.dumps(t,ensure_ascii=False) for t in arenas) + '};')
+pause = data['pause_text']
+if len(pause)!=7 or any(not t or set(t)-allowed or len(t)>21 for t in pause):
+    raise SystemExit('Invalid pause translation')
+lines.append('static const char *const kPauseText[] = {' + ','.join(json.dumps(t,ensure_ascii=False) for t in pause) + '};')
 lines.append('static const PtbrEnding kEndings[] = {')
 endings = data.get('endings', [])
 if len(endings) != 33 or [e['id'] for e in endings] != list(range(33)):
@@ -73,10 +86,11 @@ for label in data.get('objects',[]):
     if (not label['text'] or set(label['text'])-allowed or len(label['text'])*7-1 > label['count']*16
         or not 1 <= label['count'] <= 14 or not 0 <= label['slot'] <= 128-label['count']
         or not 0 <= label['x'] <= 256-label['count']*16 or not 0 <= label['y'] <= 208
-        or not 0 <= label['guard'] < 256 or label['guard']%16
-        or label['guard']+((label['count']-1)//8)*32+((label['count']-1)%8)*2+17 > 255):
+        or not 0 <= label['guard'] < 256 or label['guard']%2
+        or not 0 <= label.get('palette',0) <= 7
+        or (label['guard']&0xf0)+(((label['guard']&15)//2+label['count']-1)//8)*32+(((label['guard']&15)//2+label['count']-1)%8)*2+17 > 255):
         raise SystemExit('Invalid object label: ' + label['id'])
-    fields=[label['slot'],label['count'],label['x'],label['y'],label['guard']]
+    fields=[label['slot'],label['count'],label['x'],label['y'],label['guard'],label.get('palette',0)]
     lines.append('  {' + ', '.join(str(v) for v in fields) + ', ' + json.dumps(label['text'],ensure_ascii=False) + '},')
 lines.append('};')
 for (screen, layer), count in offsets.items():

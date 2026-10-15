@@ -1,5 +1,223 @@
 # Super Bomberman 5: estado do protótipo
 
+## v0.10.0 release source / Fontes da release v0.10.0 — 2026-10-15
+
+Release scope: Gold Battle (arenas 11–13 / Hyper Revenge), native-style PT-BR
+headings and arena names/confirmation, translated pause options and corrected
+entry/resume sounds, and Subordinate in both locked/unlocked secret-cell paths.
+The ten preloaded mod packages remain 0.1.0 and disabled by default. Versioned
+source and Windows/Linux setup artifacts use host version 0.10.0.
+
+A separate source checkout retained the published framework pins
+(snesrecomp 2c25f35, recomp-ui 7aa25f4), with no generated game sources.
+Windows x64 ROM-independent setup-host build, all ten native test executables,
+Python checks (two Linux-only skips on Windows) and setup `--help` passed.
+Feature runtime routes and their exact limits are recorded in the sections
+below. Package/CI verification is recorded after publication. This does not
+qualify full-game accuracy, physical multiplayer or broad Linux support.
+
+A release reúne Gold Battle, fontes/menu/arenas PT-BR, pause/áudio e correção
+da célula secreta do Subordinado. Checkout separado preservou os pins públicos,
+sem código gerado. Build Windows do setup sem ROM, dez testes nativos, testes
+Python e `--help` passaram. As evidências de gameplay e seus limites estão
+abaixo; Linux continua experimental e o jogo continua parcialmente interpretado.
+
+
+## Battle Start translation / Aviso de início da batalha — 2026-10-15
+
+Current sources translate BATTLE START as INÍCIO DA BATALHA. The nine native
+16×16 OBJ retain their pink palette, position and blink. Object metadata now
+supports a non-row-aligned first tile ($A2) and palette selection. Arena names
+and Fase also stay Portuguese through confirmation: native blink removes the
+heading, moving the Stage strip and number to earlier OAM slots. Recognition
+uses those complete native signatures rather than a fixed numeric slot.
+
+Native tests passed for all 13 numbers in selection, visible confirmation and
+blink-off confirmation, with exact restoration and wrong-palette rejection.
+Windows/LLE paired routes passed for arena 1 without Gold and arena 13 with
+Gold: 37 captured frames each (74 per language), including 32 consecutive
+confirmation frames. Native pink heading was visible in 17 samples per arena;
+blink-off samples remained blank. Arena names passed native-font pixel checks
+through both phases. WRAM/SRAM/VRAM/OAM/CGRAM matched translation-off controls,
+and the gameplay frame was identical after the overlay disappeared. Routes
+simulated 6,213 / 6,489 frames and reached default native modes $74 / $A4.
+Captures stay in `.bootstrap/battle-start-validation/`. Native/Python tests
+passed (two Linux-only skips); desktop-shortcut executable rebuilt.
+Evidence covers these routes and samples, not every Battle variant or HLE.
+
+BATTLE START agora aparece como INÍCIO DA BATALHA, com paleta rosa e piscar
+originais. Fase e nome da arena permanecem em PT-BR mesmo quando o aviso
+apaga. Testes nativos cobrem as 13 arenas nas três fases de apresentação;
+as rotas pareadas das arenas 1 e 13 passaram em 74 quadros por idioma, com
+memória nativa idêntica e imagem da partida idêntica após o fim do aviso.
+Executável do atalho recompilado. Cobertura limitada às rotas descritas.
+
+
+## Heading stroke restoration / Traços dos cabeçalhos — 2026-10-15
+
+Fixed blue E/F/H crossbars and large SENHA lettering: bright native fill
+uses palette index 11, also used by the banner background. Cropping to ink
+bounds exposed the crossbar to the background flood fill and removed it.
+Font metadata now includes two outline columns on each side (four source
+tile columns per row). Background removal runs on that padded crop before
+extracting the letter. Ink moves down one row before outlining so the upper
+edge fits the 16-pixel canvas, including the transparent arena-selection title.
+
+Native tests cover a synthetic white H crossbar touching both ink edges and
+its top outline. Optional `ptbr_render_tests.exe <reference-ROM>` also checks
+E/F/H bevel bars directly from the user's cartridge and after OBJ palette
+mapping. Both passed. Paired Windows/LLE routes passed on 22 captured frames,
+50 translated label contexts and 12,951 simulated frames per run, with exact
+WRAM/SRAM/VRAM/OAM/CGRAM parity. Visually inspected SENHA, TIPO DE BATALHA,
+ESCOLHA O PERSONAGEM and ESCOLHA A FASE. Captures remain ignored under
+`.bootstrap/heading-strokes-validation/`. All native and Python tests passed
+(two Linux-only skips). The desktop-shortcut executable was rebuilt.
+Evidence covers these routes and glyphs, not every font/input/renderer variant.
+
+Restauradas as barras de E/F/H, inclusive no título SENHA, e o contorno
+superior de ESCOLHA A FASE. A faixa clara dos glifos era confundida com o
+fundo porque faltava margem no recorte; agora a separação preserva o contorno
+nativo. Testes sintéticos e com a ROM local verificam esses traços. A rota
+pareada passou em 22 quadros e 50 contextos, com memória nativa idêntica;
+quatro cabeçalhos foram inspecionados visualmente. Executável recompilado.
+
+
+## Native translated menu fonts / Fontes nativas na tradução — 2026-10-15
+
+Current source builds use cartridge-derived beveled blue headings, proportional
+8×16 menu letters and native white title letters throughout the shared PT-BR
+renderer. Body labels follow native mixed case. Large password/Game Over
+lettering scales in both axes; title margins and blink remain native.
+Glyph locations/crop coordinates are metadata only; pixels come from the
+user's ROM at runtime. Accents, missing blue J/Q/V and fallback signs are
+authored; missing white letters can be composed from native pieces.
+
+Windows/LLE paired tests (`tests/ptbr_typography_runtime.py`) passed on 22
+captured frames and 50 recognized label contexts across title/player menus,
+Normal/file menus, options, password, sound test, Battle setup, character
+selection, rules and arena transitions. Translated/original runs had identical
+WRAM, SRAM, VRAM, OAM and CGRAM at every capture. The final build also passed
+109 arena-name pixel checks across arenas 1–13, including transition frames
+(`.bootstrap/native-arena-regression/gold-2u968x4f`, 5,932 simulated frames).
+Final ending/perfect fixtures
+also passed Game Over, reward, certificate and tips comparisons. HUD blink
+fixtures passed before the final change to large-letter scaling/cache; those
+changes do not affect the HUD path. Native tests cover synthetic font data,
+white-title margins, banner background removal and exact restoration; all
+native executables and Python tests passed (two Linux-only skips). Publication
+history audit passed. The desktop-shortcut executable was rebuilt.
+
+As fontes atuais usam o relevo azul, letras proporcionais e fonte branca
+nativos em todos os caminhos do renderer compartilhado da tradução, com
+acentos e complementos autorais. Foram comparados 22 quadros e 50 contextos
+com PT-BR ligado/desligado, mantendo toda a memória nativa idêntica. Senha,
+Fim de Jogo, recompensa, certificados e dicas foram inspecionados. O executável
+do atalho foi recompilado; testes e auditoria passaram. Capturas ficam em
+`.bootstrap/ptbr-typography-final/` e `.bootstrap/native-completion-final/`.
+A evidência cobre essas rotas Windows/LLE e os fixtures descritos; não comprova
+toda sequência de entrada, toda variante de menu, HLE ou campanha completa.
+
+
+## Battle arena translation / Tradução das arenas — 2026-10-15
+
+Current sources translate Fase and all 13 arena names with the native 8×16
+OBJ font read from live VRAM, adding authored accents. Original ten arenas
+work without Gold Battle. Displayed number sprites select the translation,
+avoiding WRAM/script timing flashes; all borrowed OAM/VRAM is restored.
+Windows/LLE pixel checks passed on 109 frames across 13 arenas and 82 frames
+across ten arenas without Gold, including eight consecutive frames per
+forward transition. Captures remain in `.bootstrap/battle-translation-validation/`.
+Native rendering tests cover all numbers, disabled behavior and restoration.
+This qualifies those routes and frames, not every input sequence or HLE.
+
+As fontes atuais traduzem Fase e os 13 nomes com a fonte OBJ nativa e acentos
+autorais. As dez arenas originais dispensam Gold Battle. A tradução segue o
+número exibido; os 109/82 quadros verificados, incluindo transições, não
+mostraram texto original. OAM/VRAM são restauradas. Evidência limitada às rotas
+Windows/LLE descritas, sem qualificação de HLE ou de toda sequência de entrada.
+
+
+
+## Subordinate secret-cell correction / Correção da célula secreta — 2026-10-15
+
+Current sources replace both native cell-9 branches with Subordinate Bomber
+when its mod is enabled. Previously only the locked X branch was replaced;
+a save with secret yellow Bomberman unlocked bypassed it. Both branches now
+store character 10 / default preview color 6, without changing the unlock flag.
+The standard Bomberman still cycles to yellow with L/R. With Subordinate off,
+the original unlocked yellow cell remains unchanged.
+
+Windows/LLE isolated runs passed: Battle locked (10-cell grid), Battle unlocked
+with Honey/Kotetsu (12-cell grid), Normal unlocked with Honey/Kotetsu, and
+unlocked Battle with Subordinate disabled as a control. Each enabled route
+selected cell 9 and reached gameplay as character index 9; the disabled control
+reached index 0. Each route also cycled the standard Bomberman to yellow first.
+SRAM unlock byte `$1E9` was preserved. Battle routes: 6,393 frames; Normal:
+4,847 frames. All ten native tests and Python tests passed (two Linux-only
+skips); publication audit passed. The desktop-shortcut executable was rebuilt.
+No full-campaign or physical-controller claim. Raw captures stay ignored.
+
+Corrigidos os dois caminhos da célula: X e Bomberman amarelo secreto. Com o
+mod ativo, o Subordinado continua disponível mesmo em saves desbloqueados,
+sem alterar o desbloqueio. Battle/Normal, Honey/Kotetsu, cores e controle com o
+mod desligado passaram nas rotas descritas acima.
+
+## Gold Battle and translated pause / Gold Battle e pausa traduzida — 2026-10-15
+
+Current-source feature, not part of the published v0.9.0 setup packs:
+optional, default-disabled `superbomberman5.gold-battle` 0.1.0 enables Battle
+arenas 11–13 and Hyper Revenge. Both user-supplied ROMs contain identical
+scripts for these arenas. No Gold ROM dependency or extracted game data is
+introduced. The regular cartridge supplies all arena resources. Authored
+in-memory VM code at `$C7:3000-$30FF` adds the fourth Revenge value; native
+Super handles reentry/survivors, with host-side capture/transfer of the defeated
+opponent's equipment. All patches are reserved/verified/restored; SRAM layout
+and ROM files stay unchanged. Fixed 35-byte validated state extension follows
+Pause and includes a pending item-drop decision. Details: `docs/GOLD_BATTLE.md`.
+
+Pause options and confirmation now follow PT-BR, including NÃO's authored
+accent. Native pause entry (`$C5:0096`) and resume (`$C5:0037`) audio calls are
+preserved; Resume/B do not queue an additional menu confirm/back sound. Native
+menu move/accept/back sounds remain for the other actions. Labels live in the
+authored translation JSON; Hyper/HIPER renders with and without PT-BR.
+
+Windows x64 LLE evidence, local JPN ROM, 2026-10-15:
+- Build and all ten native test executables passed; Gold tests cover all four
+  rules in both directions, preservation of other flags, all twenty ordered
+  seat pairs, equipment/state validation and patch/hook restoration. PT-BR
+  and pause tests cover new labels and exact draw restoration. Extra arena
+  names/numbers use authored BG3 labels, with native text OBJ temporarily
+  hidden/restored. The stage-selection banner no longer depends on an arena-1
+  preview tile signature.
+- Three isolated PT-BR Battle runs reached arenas 11/12/13, native default
+  modes `$9C/$A0/$A4`, after cycling every Revenge option. 7,016 / 7,039 /
+  7,062 frames; each arena observed for 900 frames after confirmation.
+  Another 6,786-frame run exercised arena 1 and HYPER with PT-BR disabled.
+- Controlled native P1 death/cart → owned-flame contact with P2 → native
+  reentry transferred bomb count 4, range 5, speed 3, glove bits `$0C` to P1.
+  The matched stock-Super control restored defaults 1/2/1/0. Both runs also
+  enable Pause and PT-BR; the native tests cover the other seat pairings.
+- `tests/pause_menu_runtime.py --case all --new-renderer` passed Normal 1P,
+  Normal 2P with other mods/PT-BR, Normal 5P and Battle: pause menu, safe
+  confirmation defaults, native SFX commands, draw/map/arena exits and reentry. APU timestamps
+  confirm the native pause command is sent inside the entry interval and again
+  inside the resume interval, rather than deferred until resuming. Gold + PT-BR
+  + Pause also passed Force Draw and native round restart after Hyper reentry.
+- Python tests: nine discovered, seven passed, two Linux-only tests skipped.
+  Publication source/history audit and `git diff --check` passed. The local
+  `.snesmod` contains only manifest/license. No release/version bump or commit.
+
+Limits: no claim of full arena-variant/team/Super Battle qualification, physical
+five-player controls, long matches or rewind during equipment transfer.
+Raw captures remain under ignored `.bootstrap/`. The existing dirty submodule
+checkouts were preserved; no framework changes were made for this feature.
+
+Nas fontes atuais, o novo mod opcional libera as arenas 11–13 e Hiper; não é
+necessário carregar a ROM Gold. Pausa e confirmação acompanham o PT-BR e os
+sons originais de pausar/retomar foram preservados. Build Windows, dez testes
+nativos, rotas das três arenas, ciclo de regras, transferência controlada de
+poderes e as quatro rotas de pausa passaram. Sem commit, release ou alteração
+do cartucho/SRAM. Ver os limites acima e `docs/GOLD_BATTLE.md`.
 
 ## v0.9.0 published / Publicada — 2026-10-15
 

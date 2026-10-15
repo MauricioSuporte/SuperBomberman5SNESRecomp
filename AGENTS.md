@@ -361,3 +361,71 @@ tiles `$40-$4B`, palette 2. HUD routine `$C5:073A` selects group-4 `$DD/$DE`
 Verified by JPN disassembly/layout audit, isolated Normal end/reward routes
 and P1/P2 missing-actor fixtures. Script flag storage `$2900`, helper
 `$C2:0372`: native completion count (`$C2:0E06`) counts flags 16–115.
+
+Gold Battle research (2026-10-15): `$6245` is the volatile arena count (10/13),
+loaded by `$C0:48B5`; arena id `$625A` selects native mode `$74+4*(arena-1)`
+for the default variant. Arena 11/12/13 scripts `$C6:0EE4/$0F9A/$10A8` match
+both supplied ROMs byte-for-byte. Verified by local comparison and isolated
+Windows/LLE selection + gameplay in all three. `$625D` mask `$18` selects
+Off/On/Super; Gold Battle adds `$40` and retains `$10` for Hyper. Authored VM
+programs reserve FF padding `$C7:3000-$30FF` (VM `$C2:0254` rejects banks below
+C6). Hooks: `$C4:365A` saves equipment after bomb cleanup; `$C4:3791` has victim
+in `$8D` and Revenge owner in `$A1`; `$C4:36E8` drops items; `$C4:2B37` ends
+reentry spawn. Gear is `$4EBD/$17CA/$15EA/$15D2/$4ED5 + seat`. Verified against
+Gold disassembly (`$C4:37F9/$3822`) and P1/P2 native contact/death/cart/reentry
+fixtures; all 20 ordered pairs covered by native tests. Gold's state extension
+is appended after Pause, with matching save/load order. Pause audio correction:
+`$C5:0096` sends the native entry command; `$C5:0037` sends its resume partner.
+Keep both; menu accept/back must not add another SFX when resuming.
+
+Battle arena selection text (2026-10-15): native Stage word uses OBJ slots
+9–11; number slot 12 (16x16) stays native. For arena a, n=10+2*(a-1), its tile
+is $C0+(n/16)*32+n%16. This displayed number can lag WRAM $625A by one frame.
+Native names use palette 1, top/bottom rows y=195/203; the 8x16 font has
+uppercase A at tile $02 and lowercase a at $36, increment 2 per letter.
+Glyph halves are consecutive tiles. Pink ink is CGRAM 148; indices 1/3/4
+are outline/shadow/ink. PT-BR derives letters from live VRAM and adds authored
+accents, borrows free OBJ tiles/slots, and restores OAM/VRAM after drawing.
+The nine-piece header is invariant; BG1 $30C9 is the changing preview and
+must not guard it. Verified with all 13 numbers and 109 transition/stable
+Windows/LLE frames, plus 82 frames without Gold Battle.
+
+Subordinate unlocked-cell correction (2026-10-15): `$C6:8B02/$8B10` are the
+unlocked cell-9 character/color immediates (stock 1/5), alongside the locked
+branch `$C6:8B20/$8B2E` (stock 0/0). Subordinate now patches both to 10/6,
+independent of the secret unlock; the operand addresses do not overlap
+Honey/Kotetsu's relocated array references at `$C6:8AFE/$8B0C`. The native
+FF.45 getter `$C0:4893` reads secret unlock SRAM `$1E9`; it is never changed
+by this mod. Verified by JPN script bytes/disassembly.
+
+Native PT-BR typography (2026-10-15): the arena alphabet's raw 4bpp halves
+are present in ROM (A top $C3:7920, bottom $C3:7900; subsequent references
+are deduplicated and not necessarily sequential). White title lettering is
+raw 2bpp at $E3:D9D0 onward, with shared top/bottom halves. Blue BG headings
+also have raw tiles; native colors 3/4/7/11 are bevel fill, 6 outline and
+1 shadow. Background colors 8/9/10 plus connected 11 must be removed before
+using letters on transparent OBJ. Stage-header palette maps BG 6/7/11 to
+OBJ 5/6/7. `src/ptbr_font_locations.h` stores addresses/crop metadata only;
+read pixels from the cartridge at runtime. Verify using native VRAM/ROM
+byte comparisons, multiple original headings and paired Windows/LLE routes.
+Do not replace these references with extracted bitmaps. Blue glyphs are
+cached by character and ROM pointer to avoid a per-frame background flood fill.
+
+Native heading crop correction (2026-10-15): palette index 11 is both the
+bright middle bevel and banner background. Never flood-fill a crop bounded
+by ink alone: E/F/H crossbars reach those edges. Preserve two native outline
+columns on either side, then remove background and extract the ink. Metadata
+uses four tiles per source row (eight references per glyph). Reserve the
+first output row for the upper outline, shifting ink one row down; otherwise
+transparent OBJ headings lose their top border. Verified with synthetic H,
+optional reference-ROM E/F/H/OBJ checks and paired Windows/LLE menu routes.
+
+Battle confirmation lettering (2026-10-15): BATTLE START is nine 16x16 OBJ
+at (56+16*i,19), palette 1, tiles $A2/$A4/.../$AE/$C0/$C2, in the same
+primary OBJ bank as STAGE SELECT. Tile wrapping must include the starting
+column, not assume a row-aligned first tile. Native blink removes the whole
+heading from OAM: Stage words shift to slots 0-2 and the numeric sprite to 3;
+with the heading visible the number is 12/13 depending on cursor presence.
+Native number position remains (138,171). Match the complete heading or
+blink-off Stage strip and retain translated names through confirmation.
+Verified from consecutive Windows/LLE OAM/VRAM/CGRAM captures; no ROM patch.

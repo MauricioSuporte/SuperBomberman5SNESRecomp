@@ -45,6 +45,7 @@
 #include "selection_color_mod.h"
 #include "subordinate_mod.h"
 #include "honey_kotetsu_mod.h"
+#include "gold_battle_mod.h"
 #include <stdbool.h>
 
 static void GameInitialize(void)
@@ -68,6 +69,7 @@ void GameRunOneFrame(void)
     NormalCoopBeforeFrame();
     InfiniteTimeBeforeFrame();
     PauseMenuBeforeFrame();
+    GoldBattleBeforeFrame();
     snes_beam_frame_driver_run_frame();
     PauseMenuAfterFrame();
     NormalCoopAfterFrame();
@@ -108,6 +110,7 @@ void GameSessionReset(void)
      * been fine" is the usual desync culprit, because single-player never
      * re-enters the boot path twice in one process. */
     snes_beam_frame_driver_reset();
+    GoldBattleReset();
     PauseMenuReset();
     NormalCharacterReset();
     InfiniteTimeReset();
@@ -118,6 +121,7 @@ void GameSessionReset(void)
 static void GameHardwareReset(void)
 {
     snes_beam_frame_driver_reset();
+    GoldBattleReset();
     PauseMenuReset();
     NormalCharacterReset();
     InfiniteTimeReset();
@@ -126,10 +130,10 @@ static void GameHardwareReset(void)
 }
 
 static void GameSaveExtra(struct SaveLoadInfo *sli) {
-    NormalCharacterSave(sli);SelectionColorSave(sli);NormalCoopSave(sli);PauseMenuSave(sli);
+    NormalCharacterSave(sli);SelectionColorSave(sli);NormalCoopSave(sli);PauseMenuSave(sli);GoldBattleSave(sli);
 }
 static void GameLoadExtra(struct SaveLoadInfo *sli,uint32_t version) {
-    NormalCharacterLoad(sli,version);SelectionColorLoad(sli,version);NormalCoopLoad(sli,version);PauseMenuLoad(sli,version);
+    NormalCharacterLoad(sli,version);SelectionColorLoad(sli,version);NormalCoopLoad(sli,version);PauseMenuLoad(sli,version);GoldBattleLoad(sli,version);
 }
 
 const RtlGameInfo kGameInfo = {

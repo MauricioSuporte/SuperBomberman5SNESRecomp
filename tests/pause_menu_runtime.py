@@ -3,6 +3,7 @@ All SRAM, dumps and local game copies remain under ignored .bootstrap/.
 """
 from __future__ import annotations
 import argparse
+import json
 from concurrent.futures import ThreadPoolExecutor
 import os
 from pathlib import Path
@@ -52,6 +53,20 @@ def pc(data: bytes) -> int:
     return data[0xc90] | data[0xcb8] << 8 | data[0xce0] << 16
 
 
+def check_pause_audio(folder: Path, cartridge: bytes, battle: bool) -> None:
+    intervals=[('default','battle' if battle else 'stage')]
+    if not battle:
+        intervals.append(('resumed','default'))
+    command=cartridge[0x86d0+5]
+    for tag,previous in intervals:
+        first=json.loads((folder/f'{previous}.info.json').read_text())['frame']
+        last=json.loads((folder/f'{tag}.info.json').read_text())['frame']
+        rows=[row.split('\t') for row in (folder/f'{tag}.apu.tsv').read_text().splitlines()[1:]]
+        assert any(len(row)==7 and row[3:5]==['cpu_wr','0'] and
+                   first<int(row[0])<=last and int(row[5],16)&0x7f==command
+                   for row in rows),(folder,tag,'native pause audio was not sent in this interval')
+
+
 def run(args, name: str, players: int, combined: bool) -> Path:
     folder = Path(tempfile.mkdtemp(prefix=name + '-', dir=args.out))
     shutil.copy2(args.exe, folder / 'game.exe')
@@ -92,15 +107,22 @@ def run(args, name: str, players: int, combined: bool) -> Path:
                                      4 if name == 'battle' else 5),
                                     ('confirm_no', 16, 19, 13)]:
         pixels = (folder / f'{tag}.fb.bgrx').read_bytes()
-        for x, y in [(col*8+1, row*8-1), (cursor_col*8+5, row*8)]:
+        for x, y in [(cursor_col*8+5, row*8)]:
             at = (y*256+x)*4
             assert pixels[at:at+3] == b'\xff\xff\xff', (name, tag, 'opaque glyph/glove', x, y)
+    # Labels differ with PT-BR. Check opaque white ink inside each text region
+    # without assuming that CONTINUAR has RESUME's first glyph.
+    for tag,row,col in [('default',17,7 if name=='battle' else 8),('confirm_no',19,16)]:
+        pixels=(folder/f'{tag}.fb.bgrx').read_bytes()
+        assert sum(pixels[(y*256+x)*4:(y*256+x)*4+3]==b'\xff\xff\xff'
+                   for y in range(row*8-1,row*8+7) for x in range(col*8,(col+3)*8))>8
     default, confirmation = ram('default'), ram('confirm_no')
     assert default[0x1d1d] == confirmation[0x1d1d] == ram('confirm_a')[0x1d1d] == 1
     assert ram('cancelled')[0x1031] == confirmation[0x1031]
     assert ram('back')[0x1d1d] == 1
     # Observe the native APU command, derived from this cartridge's SFX table.
     cartridge = args.rom.read_bytes()
+    check_pause_audio(folder,cartridge,name=='battle')
     for tag, effect in [('moved', 1), ('confirm_no', 4), ('back', 3)]:
         command = cartridge[0x86d0 + effect]
         rows = (folder / f'{tag}.apu.tsv').read_text().splitlines()[1:]

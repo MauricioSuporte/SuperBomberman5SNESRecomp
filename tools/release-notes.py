@@ -484,6 +484,93 @@ ROM. Recompilação parcial: a maior parte da lógica usa o interpretador. Veja
 README.md, docs/HONEY_KOTETSU.md e docs/STATUS.md.
 '''
 
+if tuple(int(n) for n in version.split('.')) >= (0,10,0):
+    notes = f'''# Super Bomberman 5 v{version} — Gold Battle and PT-BR improvements
+
+## English
+
+New optional **Gold Cartridge — Battle** mod: arenas **11–13** and **Hyper
+Revenge**. Hyper returns a Revenge-cart bomber after a knockout with the
+opponent's equipment. The regular supported ROM already contains the arena
+resources; no second ROM is required. Enable **Arenas 11–13 and Hyper Revenge**
+in **Mods → Gameplay** after Generate & rebuild.
+
+PT-BR now translates all 13 Battle arena names, **INÍCIO DA BATALHA**, and the
+pause options. Headings and menus use cartridge-derived fonts with authored
+accents, restored E/F/H crossbars and complete upper outlines. Arena names
+stay Portuguese while changing or confirming stages, including the native
+blink. Pause plays its native entry sound when pausing and its separate
+resume sound when resuming. Subordinate Bomber replaces the secret slot even
+when yellow Bomberman is unlocked; L/R still reaches yellow on standard
+Bomberman with the color-controls mod.
+
+Download **superbomberman5-{version}-windows-x64.zip** or
+**superbomberman5-{version}-linux-x86_64.AppImage** and verify **SHA256SUMS**.
+Both contain a ROM-independent setup host, analyzer, sources, notices and ten
+optional preinstalled mods, all disabled by default (package version 0.1.0).
+Extract Windows into a new writable folder; on Linux chmod +x and run the
+AppImage (without FUSE: --appimage-extract-and-run). Supply your own compatible
+JPN ROM and use **Generate & rebuild**, including when upgrading. An older
+generated executable cannot acquire these native changes from a manifest.
+Windows 10+ x64 or Linux x86_64/glibc 2.35+, several GB free and internet for
+the initial tool download are required; Rust is not required by players.
+
+Windows/LLE routes exercised arenas 11–13, controlled Hyper cart knockouts,
+pause/audio transitions, the unlocked Subordinate slot and paired PT-BR menu
+frames against untranslated controls. Native tests cover all 20 ordered
+Revenge seat pairs, all 13 arena numbers, save state/patch restoration and
+font strokes. Linux remains experimental; packaging and smoke checks do not
+establish these gameplay routes on Linux. Full campaign, physical-controller
+multiplayer and HLE remain unqualified. Partial recompilation: most game
+logic still runs on the interpreter. No netplay. See docs/STATUS.md for the
+precise routes and limitations.
+
+No ROM, generated game C, ROM-derived playable executable, extracted graphics
+or audio, saves or raw dumps are distributed. Cartridge pixels are read only
+from the player's own ROM at runtime. Supported ROM: JPN header, CRC32
+c25ab56a, SHA-256 5251e6491872dc51879b630a34d76a92e29ea0c39026c4f8773c1fe006d047c4.
+
+## Português
+
+Novo mod opcional **Gold Cartridge — Battle**: arenas **11–13** e **Revanche
+Hiper**. Ao eliminar alguém do carrinho de Revanche, o Hiper retorna à arena
+com os poderes do adversário. A ROM comum compatível já contém os recursos
+das arenas; não é necessário carregar outro cartucho. Depois de Generate &
+rebuild, ative **Arenas 11–13 and Hyper Revenge** em **Mods → Gameplay**.
+
+O PT-BR agora traduz os nomes das 13 arenas, **INÍCIO DA BATALHA** e as opções
+do pause. Cabeçalhos e menus usam fontes do cartucho com acentos autorais,
+barras de E/F/H e contornos superiores preservados. Os nomes permanecem em
+português ao trocar ou confirmar fases, inclusive durante o piscar nativo.
+O pause reproduz o som de entrada ao pausar e o som separado ao retomar.
+O Subordinado ocupa a célula secreta mesmo com o Bomberman amarelo liberado;
+o Bomberman padrão continua chegando ao amarelo com L/R no mod de cores.
+
+Baixe **superbomberman5-{version}-windows-x64.zip** ou
+**superbomberman5-{version}-linux-x86_64.AppImage** e confira **SHA256SUMS**.
+Os dois incluem setup sem ROM, analisador, fontes, licenças e dez mods
+opcionais pré-instalados, desligados por padrão (pacotes 0.1.0). Extraia o
+Windows numa pasta nova e gravável; no Linux, chmod +x e execute o AppImage
+(sem FUSE: --appimage-extract-and-run). Forneça sua ROM JPN compatível e faça
+**Generate & rebuild**, inclusive ao atualizar: um executável antigo não
+recebe código nativo novo ao importar um manifesto. Requer Windows 10+ x64
+ou Linux x86_64/glibc 2.35+, alguns GB livres e internet no primeiro download
+das ferramentas. O jogador não precisa instalar Rust.
+
+Rotas Windows/LLE verificaram as arenas extras, eliminações controladas com
+Hiper, pause/áudio, célula desbloqueada do Subordinado e menus PT-BR pareados
+com o original. Testes nativos cobrem os 20 pares ordenados da Revanche,
+13 números de arena, estados/restauração de patches e traços da fonte.
+Linux continua experimental; build e smoke test não comprovam essas rotas
+de gameplay no Linux. Campanha completa, controles físicos/multiplayer e HLE
+seguem sem qualificação. Recompilação parcial, principalmente interpretada;
+sem netplay. Evidências e limites em docs/STATUS.md.
+
+Sem ROM, C gerado, executável jogável derivado da ROM, gráficos/áudio
+extraídos, saves ou dumps. Os pixels são lidos da ROM do próprio jogador
+durante a execução. Confira a identidade acima e as licenças no pacote.
+'''
+
 if args.output:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(notes, encoding='utf-8', newline='\n')

@@ -50,6 +50,7 @@ add_executable(SuperBomberman5SNESRecomp
     # Register infinite-time cleanup before coop; its hook wraps the coop hook.
     # Hook reset callbacks follow this order, opposite to frame installation.
     src/portal_labels_mod.c
+    src/gold_battle_mod.c
     src/pause_menu_mod.c
     src/infinite_time_mod.c
     src/normal_coop_mod.c
@@ -93,6 +94,9 @@ if(BUILD_TESTING)
     add_executable(portal_labels_tests tests/portal_labels_tests.c)
     target_include_directories(portal_labels_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src")
     add_test(NAME normal_portal_labels COMMAND portal_labels_tests)
+    add_executable(gold_battle_tests tests/gold_battle_tests.c)
+    target_include_directories(gold_battle_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src")
+    add_test(NAME gold_battle_rules COMMAND gold_battle_tests)
     add_executable(pause_menu_tests tests/pause_menu_tests.c)
     target_include_directories(pause_menu_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src")
     add_test(NAME pause_menu_actions COMMAND pause_menu_tests)
