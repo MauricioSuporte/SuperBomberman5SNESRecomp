@@ -1,5 +1,45 @@
 # Super Bomberman 5: estado do protótipo
 
+## v0.12.1 published / Publicada - 2026-10-16
+
+[Prerelease v0.12.1](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.12.1),
+annotated tag at `7e9e631`. Release workflow 38851739281 passed Windows and
+Ubuntu 22.04 builds, thirteen native tests per platform, Python tests, source/
+history and package audits. Publication followed local extracted-package checks:
+
+- Windows: setup launcher first/repeat startup, bundled analyzer without Rust,
+  real-ROM generation/rebuild, all thirteen native tests, 3,628-frame LLE
+  first-stage route, and PT-BR/co-op title capture passed.
+- Linux AppImage on Ubuntu/WSL: first/repeat writable installation, bundled
+  analyzer, real-ROM generation/rebuild, thirteen native tests and the same
+  3,628-frame LLE route passed, using dummy video/audio. This does not qualify
+  physical Linux display/audio devices or other distributions.
+- Release-built Windows New Game/Continue picker cancellation: 1 and 5 seats,
+  PT-BR off/on (eight cases), two cancels/reentries, file navigation and Back
+  passed. Earlier 1/2/5-seat evidence remains below; synthetic Continue files
+  are fixtures rather than completed campaigns.
+- A private fixture executable linked from extracted Windows release objects
+  counted native Black Louie $022E acquisition and $0235 dash commands with
+  real egg pickup/attachment and enemy push, for P1 and P5/co-op/PT-BR. One
+  command per event, no dash repeat while active. Production package builds
+  retain SB5_COOP_INPUT_FIXTURE=OFF; no fixture executable is distributed.
+
+Assets verified against GitHub digests and SHA256SUMS: Windows ZIP 16,943,808
+bytes (`e11e9438...372a2e`), Linux AppImage 13,576,696 bytes
+(`19b726b4...db4fc8`), plus SHA256SUMS (218 bytes). Both setup payloads contain
+twelve default-disabled mods, complete per-file checksums and no WAVs, ROMs,
+generated game code or documentation screenshots. Remote notes exactly match
+the UTF-8 generator output; remote README and montage match local bytes.
+Raw evidence stays under ignored `.bootstrap/v0121-*`.
+
+Publicada com ZIP Windows, AppImage Linux experimental e SHA256SUMS. Pacotes
+extraídos passaram por geração/rebuild e entrada na primeira fase; retorno
+com B foi verificado em New Game/Continue com 1/5 jogadores nos dois idiomas.
+Montagem e arrancada do Black usam comandos nativos da ROM, sem WAVs. A nova
+imagem do menu está no README. Campanha completa, todas as combinações de mods
+e multiplayer físico continuam sem qualificação; releases anteriores intactas.
+
+
 ## v0.12.1 release candidate - 2026-10-16
 
 Based on published v0.12.0, preserving all twelve mods and pinned dependencies.
