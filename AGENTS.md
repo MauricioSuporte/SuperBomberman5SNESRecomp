@@ -252,6 +252,12 @@ Palette slots remain at `$06DF+object`. Gate positions follow `$C0:1F78`:
 x = tile*16 − signed16(`$1D3B`) − 8; y = tile*16 − signed16(`$1D3D`) + 8.
 Verified against hidden/revealed Zone 1-1 gate objects and native OAM dumps;
 zero animation frames are deliberately invisible, even with an allocated object.
+Boss stages (`$67-$70`) keep their lists in bank `$C7`; gate create/contact
+scripts there start with VM conditions: `$08 f` = route flag f (`$C2:0BDA` →
+`$C2:0372`, condition word `$0373`), `$83` negate (`$C2:1CBA`), `$5B lo hi`
+set (`$C2:1AC2`), `$49 n`/`$47 n` skip n bytes after the operand when
+false/true (`$C2:19B3/$19AA`). Flag 4 opens the next boss gate instead.
+Verified by disassembly, a 30-exit ROM audit and a Zone 1-A route-flag-7 run.
 
 
 ## 7. Workflow for a change

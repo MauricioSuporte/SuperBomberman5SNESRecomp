@@ -1,5 +1,24 @@
 # Super Bomberman 5: estado do protótipo
 
+## Portal destinations after bosses / Destinos dos portais após chefes - 2026-10-16
+
+The portal-labels plugin showed nothing on the gates a defeated boss opens:
+boss stage lists are in bank `$C7` (the parser accepted only `$C6`) and their
+create/contact scripts start with native route-flag conditions
+(`$08/$83/$5B/$49/$47`, handlers `$C2:0BDA`, `$C2:1CBA`, `$C2:1AC2`,
+`$C2:19B3/$19AA`). The parser now follows those conditions with the live
+flags at `$7E2900`. Native test: synthetic `$C7` gate (flag on/off,
+suppressing flag, contact mismatch, bank end) and the real-ROM audit (192
+numbered/special exits unchanged, 30 boss exits across 20 route cases).
+Linux LLE headless run: Zone 1-1 → forced stage `$67` with route flag 7,
+enemy completion forced; both native gates appear with `Z2-1` and `Z2-5`,
+no interpreter cap, abandonment, BRK or fatal. ZONE4-G gates were not opened
+at runtime (multi-part boss); they are covered only by the script audit.
+Windows was not built in this session.
+
+Os rótulos agora aparecem nos portais que o chefe abre; validado no Linux
+na ZONE1-A (rota A1). Falta conferir no Windows.
+
 ## v0.13.0 published / Publicada - 2026-10-16
 
 [Prerelease v0.13.0](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.13.0)
