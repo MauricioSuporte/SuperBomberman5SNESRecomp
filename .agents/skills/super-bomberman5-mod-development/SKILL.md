@@ -8,7 +8,9 @@ description: Create, extend, debug and validate native mods and gameplay/present
 Read `AGENTS.md` at the repository root first (hard rules, RAM map, build and
 pitfalls). This skill is the step-by-step recipe for a feature. Every existing
 mod (`ptbr`, `normal_character`, `selection_color`, `infinite_time`,
-`normal_coop`, `subordinate`, `honey_kotetsu`, `pause_menu`, `portal_labels`)
+`normal_coop`, `subordinate`, `honey_kotetsu` (extra-character core),
+`bomber_kings` + `special_abilities` + `sb4_rom`/`sb4_sound`, `pause_menu`,
+`portal_labels`, `gold_battle`, `louie`)
 is a worked example; copy their structure instead of inventing a new one. For a
 new playable character read both character sections below first.
 
@@ -344,6 +346,51 @@ second copy of the picker/skin code.
     into a private `Apu` (`apu_init`, the cartridge's own upload handshake),
     send the effect number, render the DSP output to PCM and play it with
     `snes_mod_audio_*` (`src/sb4_sound.c`). Never touch the game's APU.
+    Render each effect once (cache by id) and restart the same voice on a
+    repeat: the original driver restarts an effect on its own channel, so
+    stacking copies (Jet's trail every 8 frames) sounded wrong.
+15. **Generalize injected guest calls.** Keep a small queue of calls
+    (routine, A, X, ends in RTS?) and run them one per hook visit from
+    `$C0:0AF9`: an `RTL` routine (`$C5:441D` burns a soft block, A = cell)
+    needs only the return frame to `$C0:0AF9`; an `RTS` routine also needs
+    the frame to an `RTL` of its bank. Restore A/X/Y/D/DB only after the last
+    call returns.
+16. **Use native objects instead of drawing look-alikes.** Bombs: list head
+    `$0E2A`, next `$0EA4`, cell `$0E7C`, fuse `$0E40` (`$FF` = remote; set 1
+    to make it explode next frame). `$1052`: `$80` hard, `$40` bomb, `$20`
+    soft (`$30` with item), `$10` item. A beam that should "stop at" a soft
+    block includes that cell and burns it with the cartridge's routine.
+17. **Collision stops: watch the motion axis.** The walker slides around
+    corners, so "position unchanged" never fires while it slides. A flight
+    ends when the coordinate along its own direction stops changing; then
+    play the original game's landing time (SB4: crash frame 96, walks at 120).
+18. **Immunity needs the kill sites, not the invulnerability bit.** Enemy
+    contact (and several blasts) ignore `$15A2` bit 2. Scan the image for the
+    kill pattern (`LDA/ORA #$40` → `ORA $15A2,idx` → `STA $15A2,X/Y`; 22
+    sites), hook each `STA` with a pre-opcode hook that clears bit 6 in A for
+    the protected seat (index = X for `9D`, Y for `99`), and register a site
+    only when the image holds the expected `99/9D A2 15` bytes.
+19. **Rider and special-cart frames come from the other game too.** SB4
+    riding = sheet frames 16-19, mounting jump 20-23; Bad Bomber cart/throw
+    frames live in separate per-character sheets (see `docs/BOMBER_KINGS.md`).
+    Check the rider state (`$1782` bit 7 riding, bit 1 jumping) and Bad
+    Bomber (`$15A2` bit 7, anims `$42-$45`/`$3B-$3E`) before choosing a pose.
+20. **Boss attacks as abilities.** Reuse the boss's own animations from its
+    object set (Honey `$23-$26` attack, `$27-$2A` bullet; Kotetsu `$30-$33`)
+    with the native durations, and spawn the projectile/hit on the frame the
+    boss flashes (Honey: frame 32).
+21. **OAM runs out before tiles do.** A full five-seat picker (cursor boxes
+    are 8x8 sprites, "L+R" hints, Subordinate's figure) left too few idle
+    entries for six 32-line figures. The scanline renderer evaluates OAM line
+    by line, so a figure low on the screen may reuse the entry of a native
+    sprite that ends a few lines above it: write that entry when the observer
+    reaches the line (`late_places` in `honey_kotetsu_mod.c`), restore it on
+    line 224 with the rest. Always test the picker with **all** picker mods
+    enabled; a figure silently missing is the symptom.
+22. **Test damage in Normal with enemies placed on purpose.** `forcepoke`
+    enemy actors' `$182A/$1872` into each ability's path (Zone 1-1 actors
+    10-13), trigger the abilities on the same frame and read `$15A2` (`$C0` =
+    dead) for enemies and seats every few frames.
 
 ### Playable-character checklist (any new one)
 

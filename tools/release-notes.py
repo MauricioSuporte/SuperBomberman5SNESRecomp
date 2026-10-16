@@ -724,6 +724,116 @@ adicionais autorizados do Black Louie seguem incluídos com origem documentada.
 Desenvolvimento de personagens do Super Bomberman 4 fica fora da release.
 '''
 
+if tuple(int(n) for n in version.split('.')) >= (0,12,0):
+    notes = f'''# Super Bomberman 5 v{version} — Bomber Kings
+
+## English
+
+New optional **Bomber Kings — Super Bomberman 4 characters** mod. After
+Generate & rebuild, enable **Play as the Bomber Kings** in Mods → Gameplay and
+select **your own Super Bomberman 4 ROM** (Japanese release, SHA-256
+68df561dba2c47a2b743eb5f960530c7a587646d3e448f68f9937305815c9f44) in the
+mod's **Super Bomberman 4 ROM** item. Its graphics, palettes and sound driver
+are read from that file at runtime; nothing from Super Bomberman 4 is in the
+repository or in these downloads.
+
+- The character selection gets a third row: Super Bomberman 4's Bomberman,
+  Hammer, Jet, Lady, Bazooka and Great Bomber, with their own portraits and
+  five SB4 colors each (L/R with the color mod). Honey and Kotetsu end the
+  two stock rows.
+- Hold **B** and press a **direction** for the character's special ability,
+  ported from Super Bomberman 4 with its timings, poses, graphics and sound
+  effects: Hammer's mace swing (stuns, takes an item), Jet's flight with a
+  fire trail (immune to enemy contact), Lady's laser (stuns, takes items),
+  Bazooka's fire beam (burns the first soft block, sets off bombs) and
+  Great's invulnerability. Honey fires her boss bullet and Kotetsu uses his
+  sword thrust. Bazooka, Jet, Great, Honey and Kotetsu then move at half
+  speed for about 10.7 s, as in Super Bomberman 4.
+- Abilities hit enemies and bosses in Normal Game (never other players) and
+  other players or the other team in Battle. B alone still detonates remote
+  bombs; riding Louie keeps B native. Riding and Bad Bomber use SB4's poses.
+
+Download **superbomberman5-{version}-windows-x64.zip** or
+**superbomberman5-{version}-linux-x86_64.AppImage** and verify **SHA256SUMS**.
+Both include a ROM-independent setup host, analyzer, source, licenses and
+**twelve optional mods**, all disabled by default (package version 0.1.0).
+Extract Windows into a new writable folder. On Linux chmod +x and run the
+AppImage; without FUSE use --appimage-extract-and-run. Supply your own
+compatible JPN ROM and run **Generate & rebuild**, also when upgrading: an old
+generated executable cannot receive the new native code from a manifest.
+Requires Windows 10+ x64 or experimental Linux x86_64/glibc 2.35+, several GB
+free and internet for the first tool download. Players do not need Rust.
+
+Evidence: thirteen native test programs (including ability input, damage
+rules, timelines, picker layout and SB4 ROM reading) and scripted Linux LLE
+routes — three-row picker with all picker mods, Battle Free-for-All and Team
+Battle with five kings, Normal Game Zone 1-1 with five players where Jet,
+Bazooka, Honey and Kotetsu each killed an enemy. The maintainer also played
+the abilities in a local Windows build. CPU players do not use abilities;
+the Battle champion screen still shows Bomberman. Full campaign, every mod
+combination, physical-controller multiplayer and HLE remain unqualified;
+Linux gameplay coverage is limited. Partial recompilation: most game logic
+runs on the interpreter. No netplay.
+
+No ROM, generated game C, ROM-derived playable executable, extracted graphics
+or audio, saves or raw dumps are distributed. The two approved Black Louie
+add-on WAVs remain included with documented provenance. Supported SB5 ROM:
+JPN header, CRC32 c25ab56a, SHA-256
+5251e6491872dc51879b630a34d76a92e29ea0c39026c4f8773c1fe006d047c4.
+
+## Português
+
+Novo mod opcional **Bomber Kings — Super Bomberman 4 characters**. Depois de
+Generate & rebuild, ative **Play as the Bomber Kings** em Mods → Gameplay e
+escolha **a sua própria ROM do Super Bomberman 4** (lançamento japonês,
+SHA-256 acima) no item **Super Bomberman 4 ROM** do mod. Gráficos, paletas e
+driver de som são lidos desse arquivo durante o jogo; nada do Super
+Bomberman 4 fica no repositório ou nestes downloads.
+
+- A seleção de personagens ganha uma terceira fileira: o Bomberman, o
+  Hammer, o Jet, a Lady, o Bazooka e o Great Bomber do Super Bomberman 4, com
+  retratos próprios e cinco cores do SB4 cada (L/R com o mod de cores). Honey
+  e Kotetsu fecham as duas fileiras originais.
+- Segure **B** e aperte uma **direção** para a habilidade especial, portada
+  do Super Bomberman 4 com os mesmos tempos, poses, gráficos e efeitos
+  sonoros: maça do Hammer (atordoa e tira item), voo do Jet com rastro de
+  fogo (imune ao contato com inimigos), laser da Lady (atordoa e tira itens),
+  raio de fogo do Bazooka (queima o primeiro soft block e detona bombas) e
+  invencibilidade do Great. A Honey dispara o tiro da luta de chefe e o
+  Kotetsu dá a estocada de espada. Bazooka, Jet, Great, Honey e Kotetsu ficam
+  com metade da velocidade por cerca de 10,7 s, como no Super Bomberman 4.
+- As habilidades acertam inimigos e chefes no Normal Game (nunca outros
+  jogadores) e os outros jogadores ou o time adversário no Battle. B sozinho
+  continua detonando a bomba-controle; montado no Louie o B continua normal.
+  Montaria e Bad Bomber usam as poses do SB4.
+
+Baixe **superbomberman5-{version}-windows-x64.zip** ou
+**superbomberman5-{version}-linux-x86_64.AppImage** e confira **SHA256SUMS**.
+Ambos incluem setup sem ROM, analisador, fontes, licenças e **doze mods
+opcionais**, desligados por padrão (pacotes 0.1.0). Extraia o Windows numa
+pasta nova e gravável. No Linux, chmod +x e execute; sem FUSE use
+--appimage-extract-and-run. Forneça sua ROM JPN compatível e faça
+**Generate & rebuild**, inclusive ao atualizar. Requer Windows 10+ x64 ou
+Linux experimental x86_64/glibc 2.35+, alguns GB livres e internet no primeiro
+download das ferramentas. O jogador não precisa instalar Rust.
+
+Evidências: treze programas de testes nativos (entrada das habilidades,
+regras de dano, linhas do tempo, layout da seleção e leitura da ROM do SB4) e
+rotas roteirizadas no Linux LLE — seleção de três fileiras com todos os mods
+de seleção, Battle Free-for-All e Team Battle com cinco reis, Normal Game
+Zone 1-1 com cinco jogadores em que Jet, Bazooka, Honey e Kotetsu mataram um
+inimigo cada. O mantenedor também jogou as habilidades num build local no
+Windows. Jogadores da CPU não usam habilidades; a tela de campeão do Battle
+continua com o Bomberman. Campanha completa, todas as combinações de mods,
+controles físicos/multiplayer e HLE seguem sem qualificação. A cobertura
+Linux é limitada. Recompilação parcial, principalmente interpretada; sem
+netplay. Evidências em docs/STATUS.md.
+
+Sem ROM, código gerado, executável jogável derivado da ROM, gráficos/áudio
+extraídos, saves ou dumps. Os dois WAVs adicionais autorizados do Black Louie
+seguem incluídos com origem documentada.
+'''
+
 if args.output:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(notes, encoding='utf-8', newline='\n')

@@ -1,6 +1,24 @@
 # Super Bomberman 5: estado do protótipo
 
-## Bomber Kings and special abilities / Reis Bomber e habilidades — 2026-10-15 (unreleased, after v0.10.0)
+## v0.12.0 — Bomber Kings release preparation / preparação — 2026-10-16
+
+`bomber-kings` merged with `main` (v0.11.1: Louie improvements, PT-BR title
+font); no conflicts beyond this log. After the merge (Linux LLE, fixture build):
+thirteen native test programs pass; Normal Zone 1-1 ability route repeated
+(four enemies killed, Jet alive). New finding while capturing README frames:
+with Subordinate Bomber, colors and Bomber Kings all on, a five-seat picker
+left too few idle OAM entries and the third row's Bazooka/Great figures
+vanished (emit failed for lack of slots). Fixed by reusing entries of native
+sprites that end above the row, written on the row's first line by the raster
+observer and restored on line 224 (`late_places`; native test with only four
+idle entries). Rechecked: all six figures with all picker mods on.
+Showcase routes: title five-player menu; picker with Jet/Lady/Honey/Kotetsu/
+Great in changed colors; Normal Zone 1-1 with those five using abilities;
+Battle stage 1 with SB4 Bomberman, Hammer, Bazooka, Honey and Subordinate
+Bomber in changed colors. Windows: maintainer playtest of the abilities on a
+local build; release CI builds/tests both platforms.
+
+## Bomber Kings and special abilities / Reis Bomber e habilidades — 2026-10-15
 
 Scope: new optional mod **Bomber Kings — Super Bomberman 4 characters**
 (`superbomberman5.bomber-kings` 0.1.0, host v0.11.0+, default disabled) and B +
