@@ -1,5 +1,16 @@
 # Super Bomberman 5: estado do protótipo
 
+## v0.12.1 release candidate - 2026-10-16
+
+Based on published v0.12.0, preserving all twelve mods and pinned dependencies.
+Includes English/PT-BR player-menu typography/cursor corrections, New Game and
+Continue picker cancellation, and cartridge Black Louie SFX without bundled
+WAVs. The maintainer confirmed the audio fix in local gameplay. The top-left
+README frame was recaptured from actual Windows/LLE output; other frames are
+unchanged. Prior runtime evidence below predates integration with Bomber Kings;
+release package generation/rebuild evidence is recorded after package checks.
+
+
 ## v0.12.0 published / Publicada — 2026-10-16
 
 [Prerelease v0.12.0](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.12.0),

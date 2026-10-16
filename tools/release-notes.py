@@ -834,6 +834,80 @@ extraídos, saves ou dumps. Os dois WAVs adicionais autorizados do Black Louie
 seguem incluídos com origem documentada.
 '''
 
+
+if tuple(int(n) for n in version.split('.')) >= (0,12,1):
+    notes = f'''# Super Bomberman 5 v{version} - Normal menus, Back and native Louie audio
+
+## English
+
+- Normal Game's five-player menu uses **1 PLAYER / 2-5 PLAYERS**, the native
+  Y glyph and a corrected T outline in PUSH START BUTTON. The face cursor
+  follows the selected row in English and PT-BR. PT-BR digits retain the
+  original title-font weight and outline.
+- **B** from Normal character selection returns to the previous New Game or
+  Continue file list without freezing; repeated selection/cancel works.
+- Black Louie's egg/mount and dash sounds now use the cartridge SPC driver
+  (native commands $022E and $0235). Both external WAVs and their loader are
+  removed. No extracted audio is bundled.
+- The README's top-left screenshot now shows the corrected player menu.
+
+Includes all **twelve optional mods**, disabled by default, including Bomber
+Kings from v0.12.0. Bomber Kings requires your own supported Super Bomberman 4
+ROM selected on the Mods page; its graphics and sound data are read at runtime.
+Mod package versions remain 0.1.0; updating a manifest cannot update native code.
+
+Download **superbomberman5-{version}-windows-x64.zip** or experimental
+**superbomberman5-{version}-linux-x86_64.AppImage**, and verify **SHA256SUMS**.
+Extract Windows to a new writable folder. On Linux use chmod +x and run;
+without FUSE use --appimage-extract-and-run. Supply your own supported SB5 ROM
+and run **Generate & rebuild**, including when upgrading. Windows 10+ x64 or
+Linux x86_64/glibc 2.35+, several GB free and internet for initial tool downloads
+are required. Rust is not required by players.
+
+Windows/LLE regression routes covered New Game/Continue cancellation with
+1/2/5 seats, PT-BR on/off, repeated entry and stage confirmation. Black Louie
+egg/dash native commands and enemy push passed with P1 and P5/co-op/PT-BR;
+the maintainer confirmed the audio fix in gameplay. Native and Python tests
+and publication audits pass. Broader campaign, all mod combinations, physical
+multiplayer and Linux distributions remain unqualified. Partial recompilation:
+most logic uses the interpreter; no netplay. See docs/STATUS.md for evidence.
+
+Setup packs contain source, analyzer, launcher, licenses and manifests, never
+ROMs, generated game code, playable ROM-derived executables, extracted audio
+or graphics, saves or raw dumps. Supported SB5: JPN header, CRC32 c25ab56a,
+SHA-256 5251e6491872dc51879b630a34d76a92e29ea0c39026c4f8773c1fe006d047c4.
+
+## Português
+
+- Menu Normal de cinco jogadores com **1 PLAYER / 2-5 PLAYERS**, Y original,
+  contorno do T corrigido em PUSH START BUTTON e cursor junto da linha
+  selecionada, em inglês e PT-BR. Números PT-BR mantêm peso e contorno originais.
+- **B** na seleção de personagens do Normal retorna aos arquivos de New Game
+  ou Continue sem travar, inclusive ao entrar e cancelar repetidamente.
+- Montagem e arrancada do Black Louie usam os SFX nativos da ROM ($022E/$0235).
+  Os dois WAVs externos e o carregador foram removidos. Sem áudio extraído no pacote.
+- Nova captura da tela corrigida no quadro superior esquerdo do README.
+
+Mantém os **doze mods opcionais**, desligados por padrão, incluindo Bomber Kings
+  da v0.12.0. Esse mod usa sua própria ROM compatível do Super Bomberman 4,
+selecionada na página Mods; os dados são lidos durante a execução.
+
+Baixe o **ZIP Windows x64** ou **AppImage Linux x86_64 experimental** acima e
+confira **SHA256SUMS**. Extraia o Windows numa pasta nova e gravável. No Linux,
+chmod +x e execute; sem FUSE, --appimage-extract-and-run. Forneça sua ROM do SB5
+e faça **Generate & rebuild**, inclusive ao atualizar: o manifesto 0.1.0 não
+atualiza o código nativo. Requer Windows 10+ x64 ou Linux/glibc 2.35+, espaço
+livre e internet para as primeiras ferramentas; Rust não é necessário.
+
+Rotas Windows/LLE verificaram retorno de New Game/Continue com 1/2/5 jogadores,
+PT-BR ligado/desligado, reentrada e confirmação de fase. Ovo/arrancada/empurrão
+do Black foram verificados com P1 e P5/co-op/PT-BR, contando os comandos sonoros;
+o mantenedor confirmou o resultado no jogo. Campanha completa, todas as
+combinações, multiplayer físico e distribuições Linux seguem sem qualificação.
+Recompilação parcial, principalmente interpretada; sem netplay. Sem ROM, código
+ou executável gerado do jogo, gráficos/áudio extraídos, saves ou dumps.
+'''
+
 if args.output:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(notes, encoding='utf-8', newline='\n')

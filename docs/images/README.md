@@ -1,5 +1,15 @@
 # README images / Imagens do README
 
+The top-left frame was recaptured on Windows/LLE for v0.12.1 on 2026-10-16:
+corrected 1 PLAYER / 2-5 PLAYERS, native Y/T font and cursor next to row five.
+The other three frames below remain from v0.12.0. The montage uses only actual
+runtime screenshots, with nearest-neighbour scaling and no generated artwork.
+
+O quadro superior esquerdo foi recapturado no Windows/LLE para a v0.12.1,
+com singular/plural, fonte e cursor corrigidos. Os outros três quadros foram
+preservados da v0.12.0. São capturas reais da execucao do jogo.
+
+
 `five-player-showcase.png` (1028 × 900) combines four frames captured from
 this project's own Linux LLE builds on 2026-10-16 (v0.12.0 sources), at the
 maintainer's explicit request, to show the optional features on the
