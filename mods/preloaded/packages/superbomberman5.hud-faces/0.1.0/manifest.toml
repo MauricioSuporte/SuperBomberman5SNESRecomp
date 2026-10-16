@@ -1,0 +1,25 @@
+format_version = 1
+id = "superbomberman5.hud-faces"
+version = "0.1.0"
+name = "Normal Game — character HUD faces"
+author = "MauricioSuporte"
+description = "Shows the selected P1/P2 character faces in the Normal HUD. Requires a native host built with this mod."
+license = "PolyForm-Noncommercial-1.0.0"
+resolver = "declarative"
+save_compatibility = "shared"
+
+[[target]]
+game_id = "superbomberman5-jpn"
+rom_sha256 = "5251e6491872dc51879b630a34d76a92e29ea0c39026c4f8773c1fe006d047c4"
+
+[[feature]]
+id = "hud_faces"
+name = "Battle character faces in Normal HUD"
+description = "Shows the selected P1/P2 character faces in the Normal HUD. Requires a native host built with this mod."
+group = "Gameplay"
+default_enabled = false
+presentation_only = false
+
+[[plugin]]
+feature = "hud_faces"
+id = "superbomberman5.normal.hud-faces"

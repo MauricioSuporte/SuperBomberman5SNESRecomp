@@ -6,7 +6,7 @@ on:
       version:
         description: 'Version matching VERSION (without v)'
         type: string
-        default: '0.13.0'
+        default: '0.13.1'
       publish_release:
         description: 'Publish audited Linux AppImage and Windows ZIP'
         type: boolean
@@ -59,6 +59,7 @@ jobs:
           cmake --build build-ci --parallel 4
           ./build-ci/ptbr_render_tests.exe
           ./build-ci/normal_character_tests.exe
+          ./build-ci/normal_hud_tests.exe
           ./build-ci/selection_color_tests.exe
           ./build-ci/infinite_time_tests.exe
           ./build-ci/normal_coop_tests.exe
@@ -85,7 +86,8 @@ jobs:
       - name: Smoke test setup host and packaged analyzer
         run: |
           source "${TOOLCHAIN_DIR}/env.sh"
-          ./build-ci/SuperBomberman5SNESRecomp.exe --help
+          ./build-ci/SuperBomberman5Recomp.exe --help
+          python tests/windows_entry_runtime.py --entry build-ci/SuperBomberman5Recomp.exe --cc "${TOOLCHAIN_DIR}/bin/clang.exe"
           python -c 'import os,pathlib,subprocess,sys,zipfile; v=os.environ["RELEASE_VERSION"]; p=pathlib.Path(".bootstrap/package-smoke"); zipfile.ZipFile(f"dist/superbomberman5-{v}-windows-x64.zip").extractall(p); exe=next(p.rglob("snesrecomp-analyze.exe")); subprocess.run([sys.executable,"tools/smoke-analyzer.py","--analyzer",str(exe.resolve())],check=True)'
       - uses: actions/upload-artifact@v4
         with:

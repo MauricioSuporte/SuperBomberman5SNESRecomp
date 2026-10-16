@@ -75,6 +75,10 @@ def main() -> None:
             if '/docs/assets/games/' in item.filename or '/test_data/' in item.filename or '/docs/images/' in item.filename:
                 continue
             out.writestr(item, src.read(item))
+        entry = args.build_dir / 'SuperBomberman5Recomp.exe'
+        if not entry.is_file():
+            raise SystemExit('Missing native Windows entry point')
+        out.write(entry, root + '/SuperBomberman5Recomp.exe')
         analyzer_dir = root + '/snesrecomp/recompiler-rs/target/release/'
         out.write(args.analyzer, analyzer_dir + 'snesrecomp-analyze.exe')
         out.write(args.toolchain / 'bin/libunwind.dll', analyzer_dir + 'libunwind.dll')
@@ -99,7 +103,7 @@ def main() -> None:
             f'Super Bomberman 5 {version} — protótipo Windows x64\n\n'
             'Este pacote não contém a ROM nem código gerado a partir dela.\n'
             '1. Extraia todo o ZIP para uma pasta gravável.\n'
-            '2. Abra SuperBomberman5SNESRecomp.exe.\n'
+            '2. Abra SuperBomberman5Recomp.exe.\n'
             '3. Permita baixar as ferramentas oficiais e selecione sua própria ROM.\n'
             '4. Use Generate & rebuild para gerar, compilar e iniciar o jogo localmente.\n'
             'O analisador nativo está incluído; Rust não é necessário para usar este pacote.\n'

@@ -9,17 +9,22 @@ int snes_mod_register_reset_callback(SNESModActivationCallback fn) { reset_callb
 int snes_mod_register_activation_plugin(const char *id,SNESModActivationCallback fn) { (void)id;activation=fn;return 1; }
 #include "../src/normal_character_mod.c"
 uint8 g_ram[0x20000];
+void (*g_interp_bridge_pc_hook)(uint32_t,int,int);
 /* Honey/Kotetsu mod not linked: stock ten-cell picker arrays. */
 uint8_t *PickerCellCharacters(void) { return g_ram+0x62c9; }
 uint8_t *PickerCellColors(void) { return g_ram+0x62d3; }
 unsigned PickerCellCount(void) { return 10; }
-unsigned ExtraBaseChoice(unsigned choice) { return choice>=11 && choice<=18 ? 1 : choice; }
+unsigned ExtraBaseChoice(unsigned choice) { return choice>=11 && choice<=EXTRA_CHOICE_LAST ? 1 : choice; }
 unsigned hk_seat_choice[5];
 void ExtraSetSeatChoice(unsigned seat,unsigned choice) { if(seat<5) hk_seat_choice[seat]=choice; }
+unsigned ExtraCharacterSeatColor(unsigned seat) { return g_ram[0x1f82d+seat]; }
+void ExtraSetSeatColor(unsigned seat,unsigned color) { g_ram[0x1f82d+seat]=(uint8_t)color; }
 static uint8 rom[0x10000];
 const uint8 *g_rom=rom;
 Snes *g_snes;
 static uint16_t pad;
+static unsigned hook_calls;
+static void other_hook(uint32_t pc,int m,int x) {(void)pc;(void)m;(void)x;++hook_calls;}
 uint16 RtlGetPadState(int slot) { (void)slot;return pad; }
 unsigned NormalCoopPlayerCount(void) {
     unsigned count=0;for(unsigned i=0;i<5;++i) count+=(g_ram[0x1d25]>>i)&1;
@@ -59,6 +64,35 @@ static void file_ready(unsigned count) {
     set_picker_pc(0xc71257);
 }
 int main(void) {
+    activation();players=2;chosen=true;
+    g_ram[0x1031]=8;g_ram[0x625f]=2;g_ram[0x6260]=7;
+    g_ram[0x6264]=1;g_ram[0x6265]=2;
+    rom[0xbb4f]=8;rom[0xbb54]=48;
+    g_interp_bridge_pc_hook=other_hook;
+    NormalCharacterInstallHook();CHECK(g_interp_bridge_pc_hook==campaign_hook);
+    NormalCharacterFrame();CHECK(chosen);
+    campaign_hook(0xc428b4,1,1);
+    CHECK(g_ram[0x16c2]==1 && g_ram[0x16c3]==6);
+    CHECK(g_ram[0x16da]==9 && g_ram[0x16db]==50);
+    g_ram[0x1d24]=3;g_ram[0x1d25]=2;
+    g_ram[0x16c2]=0;campaign_hook(0xc21697,1,1);CHECK(g_ram[0x16c2]==1);
+    CHECK(g_ram[0x1d25]==3 && !restarting);
+    g_ram[0x1d25]=2;campaign_hook(0xc21697,1,1);CHECK(g_ram[0x1d25]==2);
+    CHECK(hook_calls==3);
+    for(unsigned count=1;count<=5;++count) {
+        players=count;
+        for(unsigned i=0;i<count;++i) {
+            g_ram[0x625f+i]=(uint8_t)(i+1);g_ram[0x6264+i]=(uint8_t)i;
+            rom[0xbb4e + i]=(uint8_t)(i*7);
+        }
+        campaign_hook(0xc21697,1,1);
+        for(unsigned i=0;i<count;++i) {
+            CHECK(g_ram[0x16c2+i]==i && g_ram[0x16da+i]==i*8);
+        }
+    }
+    g_ram[0x1d1a]=1;g_ram[0x16c2]=0;campaign_hook(0xc21697,1,1);CHECK(!g_ram[0x16c2]);
+    g_ram[0x1031]=2;NormalCharacterFrame();CHECK(!chosen);
+    reset_callback();CHECK(g_interp_bridge_pc_hook==other_hook);g_interp_bridge_pc_hook=NULL;
     for(unsigned i=0;i<9;++i) rom[0xbb4e + i]=(uint8_t)(i*7+1);
     file_ready(1);NormalCharacterFrame();CHECK(!picking);
     activation();NormalCharacterFrame();CHECK(picking && players==1);
@@ -79,6 +113,13 @@ int main(void) {
     CHECK(g_ram[0x16c2]==8 && g_ram[0x16da]==59);
     s->at=0;s->reading=false;NormalCharacterSave(&s->base);
     CHECK(s->at==picker_length); /* Rewind slots must fit every phase. */
+    NormalCharacterReset();s->at=0;s->reading=true;
+    NormalCharacterLoad(&s->base,10);NormalCharacterLoaded(10);
+    CHECK(chosen && !picking && players==1); /* Continue authorization survives load. */
+    restarting=true;s->at=0;s->reading=false;NormalCharacterSave(&s->base);
+    CHECK(s->at==picker_length);
+    NormalCharacterReset();s->at=0;s->reading=true;
+    NormalCharacterLoad(&s->base,10);NormalCharacterLoaded(10);CHECK(chosen && restarting);
     /* Both players must confirm before the Normal machine resumes. */
     NormalCharacterReset();file_ready(2);NormalCharacterFrame();CHECK(players==2);
     set_picker_pc(0xc68e68);g_ram[0x1038]=1;NormalCharacterFrame();CHECK(picking);
@@ -117,6 +158,15 @@ int main(void) {
     /* Back from the file list and other fades never open the picker. */
     pad=0;NormalCharacterReset();file_ready(1);g_ram[0x2006]=0x2b;NormalCharacterFrame();CHECK(!picking);
     pad=0;reset_callback();file_ready(1);NormalCharacterFrame();CHECK(!picking);
+    activation();
+    /* Snapshot restoration retains every extra choice and its independent color. */
+    for(unsigned c=11;c<=EXTRA_CHOICE_LAST;++c) {
+        NormalCharacterReset();file_ready(1);NormalCharacterFrame();
+        g_ram[0x625f]=(uint8_t)c;g_ram[0x6264]=2;g_ram[0x1f82d]=3;
+        set_picker_pc(0xc68e68);g_ram[0x1038]=1;NormalCharacterFrame();
+        CHECK(chosen && !picking && hk_seat_choice[0]==c && g_ram[0x625f]==1);
+        CHECK(g_ram[0x1f82d]==3);
+    }
     /* Reject corrupt lengths without allocating an unbounded buffer. */
     memset(s,0,sizeof(*s));s->base.func=transfer;s->reading=true;
     uint32_t bad[]={0x32434e42,1,1,RESUME_CAP+1,RESUME_CAP};memcpy(s->bytes,bad,sizeof(bad));

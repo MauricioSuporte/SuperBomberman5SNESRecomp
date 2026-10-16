@@ -24,6 +24,7 @@ unsigned PickerCellCount(void);
 unsigned ExtraBaseChoice(unsigned choice);
 /* Records the choice a campaign seat plays with (Normal picker hand-off). */
 void ExtraSetSeatChoice(unsigned seat,unsigned choice);
+void ExtraSetSeatColor(unsigned seat,unsigned color);
 /* Extra choice (11-19) a seat plays with in the current stage, else 0. */
 unsigned ExtraCharacterSeatChoice(unsigned seat);
 /* Player palette (0-4) a seat's Super Bomberman 4 character uses. */

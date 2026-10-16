@@ -1,10 +1,10 @@
 # Versions and publication / Versões e publicação
 
-Public repository: `MauricioSuporte/SuperBomberman5SNESRecomp`. VERSION is **0.13.0**. Publish prereleases while full-game accuracy remains unqualified. Preserve existing published tags and assets.
+Public repository: `MauricioSuporte/SuperBomberman5SNESRecomp`. VERSION is **0.13.1**. Publish prereleases while full-game accuracy remains unqualified. Preserve existing published tags and assets.
 
 ## Release contents
 
-Publish **superbomberman5-0.13.0-windows-x64.zip**, **superbomberman5-0.13.0-linux-x86_64.AppImage** and **SHA256SUMS**. Both are ROM-independent setup hosts with source, native analyzer, launcher resources, licenses and eleven optional, default-disabled mods: PT-BR menus and completion screens, Normal character selection, L/R colors, infinite Normal timer, five-player Normal Game, Super Bomberman 5 Extra Characters (Honey, Kotetsu, Subordinate Bomber and Emperor Terrorin; replaces the separate Honey and Kotetsu and Subordinate Bomber packages since v0.13.0), Pause — exit & draw, Normal portal destinations, Gold Battle, Louie improvements and Bomber Kings. Extra Characters renders Terrorin's barrier sound at runtime from the player's own SB5 ROM in a private APU; no audio is stored. Black Louie uses native cartridge sound effects; no external WAVs are included. Former audio hashes are grandfathered for auditing historical commits only, never current source or new packages. Bomber Kings reads Super Bomberman 4 graphics, palettes and sound driver at runtime from the player's own SB4 ROM (selected on the Mods page, SHA-256 checked); no SB4 data is in the repository or the packages — audit for it. The playable executable is generated only on the player's machine. Linux is experimental; see STATUS.md for exact evidence.
+Publish **superbomberman5-0.13.1-windows-x64.zip**, **superbomberman5-0.13.1-linux-x86_64.AppImage** and **SHA256SUMS**. Both are ROM-independent setup hosts with source, native analyzer, launcher resources, licenses and twelve optional, default-disabled mods: PT-BR menus and completion screens, Normal character selection, Normal HUD faces, L/R colors, infinite Normal timer, five-player Normal Game, Super Bomberman 5 Extra Characters (Honey, Kotetsu, Subordinate Bomber and Emperor Terrorin; replaces the separate Honey and Kotetsu and Subordinate Bomber packages since v0.13.0), Pause — exit & draw, Normal portal destinations, Gold Battle, Louie improvements and Bomber Kings. Extra Characters renders Terrorin's barrier sound at runtime from the player's own SB5 ROM in a private APU; no audio is stored. Black Louie uses native cartridge sound effects; no external WAVs are included. Former audio hashes are grandfathered for auditing historical commits only, never current source or new packages. Bomber Kings reads Super Bomberman 4 graphics, palettes and sound driver at runtime from the player's own SB4 ROM (selected on the Mods page, SHA-256 checked); no SB4 data is in the repository or the packages — audit for it. The playable executable is generated only on the player's machine. Linux is experimental; see STATUS.md for exact evidence.
 
 Build from a separate clean checkout with pinned submodules, no src/gen/*.c or recomp/funcs.h, `SNESRECOMP_SETUP_HOST=ON`, `SNESRECOMP_FRAME_IMPL=LLE` and the test input fixture OFF. Never package the development game executable or local ROM/save/capture data.
 
@@ -44,7 +44,7 @@ The Windows packager remains scripts/package_release.sh, followed by tools/final
 
 ```bash
 python3 tools/package-appimage.py \
-  --zip dist/superbomberman5-0.13.0-linux-x64.zip \
+  --zip dist/superbomberman5-0.13.1-linux-x64.zip \
   --build-dir build-ci \
   --analyzer snesrecomp/recompiler-rs/target/release/snesrecomp-analyze \
   --rust-sysroot "$(rustup run 1.97.1 rustc --print sysroot)" \
@@ -65,7 +65,7 @@ Verify the default branch, tag target, successful workflow, prerelease state, UT
 
 Toda nova release exige README.md atualizado nas duas línguas, com informações úteis: downloads, formatos, instalação/atualização, recursos, requisitos e limites reais de validação. Atualize VERSION, STATUS.md, este documento e o gerador de notas.
 
-A v0.13.0 distribui **ZIP Windows x64**, **AppImage Linux x86_64 experimental** e **SHA256SUMS**. Ambos incluem setup sem ROM, fontes, analisador, licenças e os onze mods opcionais desligados por padrão (incluindo Super Bomberman 5 Extra Characters, que substitui Honey and Kotetsu e Subordinate Bomber, e Bomber Kings, que lê o Super Bomberman 4 da ROM do próprio jogador; nada do SB4 entra nos pacotes). O jogo é gerado apenas na máquina do jogador. Use checkout limpo, LLE e setup host; nunca publique o executável de desenvolvimento, ROM, código gerado, saves ou capturas.
+A v0.13.1 distribui **ZIP Windows x64**, **AppImage Linux x86_64 experimental** e **SHA256SUMS**. Ambos incluem setup sem ROM, fontes, analisador, licenças e os onze mods opcionais desligados por padrão (incluindo Super Bomberman 5 Extra Characters, que substitui Honey and Kotetsu e Subordinate Bomber, e Bomber Kings, que lê o Super Bomberman 4 da ROM do próprio jogador; nada do SB4 entra nos pacotes). O jogo é gerado apenas na máquina do jogador. Use checkout limpo, LLE e setup host; nunca publique o executável de desenvolvimento, ROM, código gerado, saves ou capturas.
 
 A workflow Release é manual e só publica quando os dois builds e verificações passam. Valide os pacotes extraídos, analisador, primeira abertura/reabertura e geração/rebuild local. O AppImage copia o setup para a pasta XDG gravável da versão e reutiliza o jogo gerado; sem FUSE, use --appimage-extract-and-run. Registre plataforma, rota/frames e limitações no STATUS.md. Preserve fontes, licenças, revisões e checksums. Não reescreva tags ou assets públicos automaticamente. Confirme notas UTF-8, estado de pré-release e hashes dos arquivos no GitHub.
 
@@ -74,3 +74,7 @@ A skill instalada é `$super-bomberman5-repository`, com cópia versionada em `.
 Gameplay screenshots under `docs/images/` are authorized for README/docs/releases. Screenshots are optional; no per-mod image is required. This does not allow extracted sprites/tiles/audio or raw dumps.
 
 Capturas são opcionais; não é exigida uma imagem por mod.
+
+Windows v0.13.1 includes SuperBomberman5Recomp.exe, a ROM-independent entry with the existing “5” icon. It locates the sibling setup/game executable or the source tree build-lle executable, forwarding arguments and exit status. play.cmd remains a compatibility shortcut. The audited Windows ZIP includes this native entry.
+
+O Windows v0.13.1 inclui SuperBomberman5Recomp.exe com o ícone atual do “5”. A entrada localiza o setup/jogo ao lado ou o build local em build-lle e repassa argumentos e código de saída. play.cmd continua como atalho de compatibilidade.

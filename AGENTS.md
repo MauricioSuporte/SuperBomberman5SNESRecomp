@@ -504,3 +504,40 @@ file/picker/cancel dumps (depth 1/2/1, pointer 6/9/6), including reentry.
 White title Y halves: ROM file `$23DCB0/$23DD40`, matched to native title
 VRAM tiles `$130/$139`. T's source cell includes a neighboring U outline
 at column 7 below row 5; crop only that strip when isolating the glyph.
+
+Normal HUD faces research (2026-10-16): `$C5:1264` allocates only a face
+object (archive `$64`, set 6, `$04A0=F0`), guarded by Battle bit 0 at
+`$C5:126B`. Normal's lives refresh calls `$C5:0C86` at `$C5:05F1`.
+The optional HUD mod wraps it through verified FF padding `$C5:7200-$72FF`,
+creates at most two faces at x=24/160, object y=20 (drawn y=3), and clears
+BG2 HUD map `$3C00` columns 3–4/20–21 across rows 0–2 only while rendering.
+The fixed heads use tiles `$EE-$F3` / `$F4-$F9`; preserve scanlines 0–3 and
+21–23, fill 4–20 with native blue index 4 in borrowed 4bpp tiles. BG1/BG2
+share tile base 0; scan both maps before borrowing `$280-$2FF`. Verified by
+Windows/LLE VRAM, raster scroll writes (BG2 y=256 on HUD) and pixel captures. `$C4:36FF`
+precedes Battle's death notification; a width-preserving wrapper calls
+`$C5:12DD` for Normal P1/P2 without running Battle equipment/palette logic.
+Verified by JPN disassembly and local Windows/LLE 1P/2P stage captures.
+
+Normal Game Over Continue (2026-10-16): `$625F/$6264` and Honey/Kotetsu
+`$7F:F818` markers survive native Game Over, but `$C4:289D-$28B1` resets
+`$16C2/$16DA`. Continue can also leave `$1D25` with only the last dead seat.
+Normal-character hook restores choices after reset (`$C4:28B4`) and before
+actor creation (`$C2:1697`), with a one-shot one/two-seat roster reset.
+Install this hook last, reset it first. Existing extension state 6 stores
+selected+pending-restart without changing slot size; 0–3 remain readable.
+Verified by isolated Windows/LLE before/after WRAM, own-bomb Game Over and
+Continue routes, including Honey/Subordinate with co-op disabled.
+
+Normal co-op HUD isolation (2026-10-16): Native reentry calls `$C5:1307`
+from `$C4:2B33`, indexing the Battle face array even for co-op extra seats.
+Normal HUD mod wraps that call at `$C5:72A0` to permit only seats 0/1, and
+wraps `$C5:0608`'s score update through `$C5:72B0` to maintain just P1/P2
+faces every HUD task. Living animations are checked against the native
+lookup operand at `$C5:1319` (including relocated Subordinate table).
+Honey/Subordinate HUD overlay loops are also capped at two in Normal,
+retaining five in Battle. Verified by JPN disassembly, native context tests
+and 1/3/4/5-seat Windows/LLE/NewRenderer=1 fixtures, including stale-pointer/
+wrong-animation injection and extra-seat reentry. No new SRAM/state layout.
+
+Release 0.13.1 Windows entry: src/windows_entry.c is a ROM-independent WIN32 target named SuperBomberman5Recomp. Keep the main SuperBomberman5SNESRecomp target/name unchanged for framework local rebuild compatibility. tools/build-windows.ps1 copies the entry to the source root; tools/finalize-release.py adds it to the audited setup ZIP. Its child lookup/Unicode argument/working-directory/exit-code contract is tested by tests/windows_entry_runtime.py. Extra Characters choice/color arrays are $7F:F828/F82D; Normal picker snapshot restoration preserves both via ExtraSetSeatChoice/ExtraSetSeatColor.

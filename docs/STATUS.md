@@ -1,5 +1,152 @@
 # Super Bomberman 5: estado do protótipo
 
+## Release 0.13.1 integration / Integração da release — 2026-10-16
+
+Integrated on main 94eba67 with its pinned framework/UI dependencies and unified Extra Characters implementation. Windows LLE runtime passed two-player Game Over → Continue retention and the five-player HUD stale-pointer, death/reentry regression. All 14 native setup-host test binaries pass; Python discovery passes (10 tests, 2 conditional skips). The additional SB4 picker-color regression covers choices 11–19 across snapshot restoration.
+
+The ROM-independent Windows entry SuperBomberman5Recomp.exe uses the existing authored assets/app.ico, finds the sibling setup/game or build-lle executable, starts it without a console, forwards Unicode arguments and preserves its exit status. A synthetic child verified sibling/development lookup, spaces, accents, working directory, default --launcher and exit code 37. Source builds copy the entry to the repository root; the Windows finalizer includes it in the setup ZIP. Existing game target/binary name stays compatible.
+
+Integração sobre a main 94eba67, mantendo os pins e o Extra Characters unificado. Rotas Windows LLE de Continue em dois jogadores e HUD em cinco passaram. Os 14 testes nativos passam; os testes Python também (10, dois condicionais ignorados). A entrada nativa com o ícone atual do “5” localiza o setup/jogo ou build-lle, não abre console e preserva argumentos Unicode e código de saída; testes com processo filho sintético passaram. Campanha completa, controles físicos, todas as combinações e distribuições Linux não são qualificados por esses testes.
+
+## Co-op HUD limited to P1/P2 / HUD cooperativa somente P1/P2 — 2026-10-16
+
+Normal's HUD now isolates P1/P2 from extra seats in both native reentry
+updates and Honey/Subordinate overlays. The native HUD task maintains the
+two face objects after actor creation, without waiting for a life change,
+and repairs an unexpected living animation via the native character table.
+P3–P5 cannot repaint these portraits; a one-player game creates no P2 face.
+Battle overlay loops still accept five seats. All memory patches restore
+on reset; no SRAM, save-state size or cartridge-file changes.
+
+Windows/LLE NewRenderer=1 fixtures passed 3/4/5-player Normal Zone 1-1
+(4,643 / 4,955 / 5,297 simulated frames). They enable character/color/HUD,
+co-op, Honey/Subordinate, Gold, pause, Louie and infinite-time mods; the
+3-player route uses English, 4/5 use PT-BR. The regression deliberately
+aliases P3's old Battle face pointer to P1 and injects an incorrect P1 face
+animation, then checks repair, P3 death/reentry and P2 death/reentry. WRAM
+and OAM checks confirm the correct two faces, and resumed captures were
+inspected. A fixture-free 3,971-frame English one-player route checks the
+absence of a P2 portrait. Raw captures remain under ignored
+`.bootstrap/normal-hud-coop/`. `tests/normal_hud_coop_runtime.py` reproduces
+the scenarios (extra controls require a fixture host). Fresh control routes
+with five seats were also inspected; the injected stale-state regression
+models the reported failure rather than claiming every natural trigger was
+reproduced. Full campaign, every character/mount combination, physical
+controllers and Linux were not separately qualified.
+
+All native binaries and Python discovery passed (10 tests, 2 skipped).
+Native tests cover extra-seat reentry guards, both overlay contexts,
+living/dead animation repair and exact restoration. The developer executable
+is rebuilt with `SB5_COOP_INPUT_FIXTURE=OFF`; test executables/captures stay
+local. Existing releases and submodule work are unchanged.
+
+A HUD do Normal mantém somente os rostos de P1/P2, mesmo com três a cinco
+participantes. Jogadores extras não atualizam nem repintam esses retratos;
+sem participante P2, não é criado seu rosto. Rotas locais conferem 1/3/4/5
+jogadores, incluindo referência antiga de P3 sobre P1, reparo da animação,
+morte e retorno de P3/P2. Testes nativos/Python passaram e o executável do
+atalho foi recompilado com fixtures desativadas. Limites de cobertura acima.
+
+
+## Normal Game Over → Continue choices / Personagens no Continue — 2026-10-16
+
+The Normal character-selection mod now keeps its selected-campaign state
+through Game Over and restores native actor character/palette fields before
+the continued stage creates graphics. Choices `$625F/$6264` and Honey/Kotetsu
+skin markers already survive the native path; `$16C2/$16DA` were reset to
+stock white/black. A one-shot restart flag also restores the original one/
+two-seat roster: stock Continue could otherwise retain only the last dead
+seat. Larger rosters remain owned by co-op, including boss bench handling.
+No new ROM patches or SRAM layout changes. Existing fixed-size state header
+accepts state 6 for selected+pending restart; historical states 0–3 still load.
+
+Windows/LLE isolated routes passed own-bomb Game Over → Continue → live
+Zone 1-1: 6,919 frames for one player in English, 7,012 for two distinct
+characters/colors with PT-BR/co-op, and 7,201 for Honey plus Subordinate with
+co-op disabled. Compared characters, palette ids, picker choices, skin markers
+and living actors before/after; inspected resumed HUD/gameplay captures.
+All captures/saves remain ignored under `.bootstrap/normal-hud-runtime/`.
+`tests/normal_character_continue_runtime.py` reproduces these scenarios
+(`--single --english`, default, or `--skins`). One-seat New Game picker Back/
+reentry/navigation regressions also passed with PT-BR on/off. Native tests
+cover 1–5 choice mappings, hook chaining/reset and constant-size state/load
+round trips. All native binaries and Python discovery passed (10 tests,
+2 skipped). The developer executable is rebuilt with fixtures off. Full
+campaign, physical controls and Linux were not separately qualified.
+
+Após Game Over, Continue mantém os personagens e cores selecionados, inclusive
+Honey/Subordinate, e retoma os participantes da partida de um/dois jogadores.
+A correção foi conferida com e sem cooperativo, em inglês e PT-BR, incluindo
+os atores vivos e a HUD após continuar. Testes de Back/reentrada no seletor
+continuam passando. SRAM e seu formato permanecem originais; o executável do
+atalho já está recompilado. Evidências e limites acima.
+
+
+## Normal HUD fixed-head cleanup / Limpeza dos rostos fixos — 2026-10-16
+
+The first HUD-face implementation incorrectly masked BG3 text while the
+stock white/black heads remain in BG2's three-row strip. The corrected
+observer recognizes both native six-tile head signatures in map `$3C00`,
+borrows unused 4bpp tiles after scanning BG1/BG2, and fills only the head
+interior with native blue index 4. Original top/bottom frame rows remain.
+Every tile and map word is restored after drawing. Native regression tests
+check both seats, all 24 rows, border preservation and exact restoration.
+The developer executable is rebuilt with fixtures off. The 5,046-frame
+Windows/LLE PT-BR route with character/color selection and co-op passed P1/P2
+own-bomb deaths and P1 Start rejoin. Magnified before/after crops confirm
+both stock heads are gone, with the selected faces and HUD frame retained.
+Captures remain under ignored `.bootstrap/normal-hud-runtime/`
+(`two-color-ptbr-j6nf6wk0`). All native binaries and Python tests passed;
+the changed-source archive passed publication audit. Other stages/characters,
+Linux and physical controls were not separately qualified for this correction.
+
+A primeira implementação deixava os ícones branco/preto na camada BG2,
+atrás do retrato. A correção remove toda a área do rosto fixo nas três linhas
+de tiles, mantendo o azul e a moldura. Testes cobrem P1/P2 e restauração de
+VRAM; o executável do atalho foi recompilado. Capturas ampliadas conferem
+ambos os retratos sem o rosto antigo atrás; a rota com PT-BR, cores e
+cooperativo também passou mortes de P1/P2 e retorno de P1 com Start.
+
+
+## Normal HUD character faces / Rostos na HUD do Normal — 2026-10-16
+
+Current source adds the optional, default-disabled `superbomberman5.hud-faces`
+0.1.0 package. P1/P2 use native Battle face objects in the Normal HUD, sharing
+the current character palette and native defeated animation. Normal heart,
+lives, points and timer remain; no wins counters or extra P3–P5 HUD slots.
+The existing blinking rejoin prompt is fitted beside a defeated portrait by
+resampling its live BG3 pixels, including PT-BR, and restoring all VRAM after
+drawing. No extracted graphics, persistent campaign fields or SRAM changes.
+
+Windows/LLE isolated routes checked stock 1P/2P Zone 1-1 entry (3,817/3,880
+frames) and two different characters/colors with PT-BR, character selection,
+colors, co-op and the extra-character plugins enabled. A 5,046-frame route in both English and PT-BR
+covers own-bomb death of P1, the alive/defeated native face transition, Start
+rejoin restoring its living face, then own-bomb death of P2. Character ids
+1/6 and palette ids 9/50 are preserved. Captures and saves remain ignored
+under `.bootstrap/normal-hud/`; `tests/normal_hud_runtime.py` reproduces the
+combined route with a local executable and the user's ROM.
+
+Native tests cover patch guards/refusal, branch destinations, reset,
+Normal/Battle contexts, both dead prompts and exact VRAM restoration.
+All native test executables and Python discovery passed (10 tests, 2 skipped).
+Package/source/history publication audit and whitespace checks passed.
+The developer executable is rebuilt with fixtures off. Full campaign,
+physical controls, every character/color combination, save-state/rewind and
+Linux runtime were not separately qualified for this mod. Published releases
+and existing submodule working trees are unchanged.
+
+O novo mod opcional troca os ícones fixos de P1/P2 pelos rostos do Battle,
+seguindo personagem, cor e derrota, sem placar de vitórias. Start restaura o
+rosto vivo ao retornar; o aviso de retorno continua legível e piscando nos
+dois idiomas. As rotas locais incluem Normal 1P/2P e seleção de personagens
+e cores diferentes com PT-BR/cooperativo, morte por bomba de ambos e retorno
+de P1. Testes e auditoria passaram; campanha completa, todos os personagens,
+controles físicos, rewind/save states e Linux não foram qualificados nesta
+rodada. Ative **Battle character faces in Normal HUD** em Mods → Gameplay.
+[Instruções](NORMAL_HUD_FACES.md).
+
+
 ## v0.13.0 published / Publicada - 2026-10-16
 
 [Prerelease v0.13.0](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.13.0)

@@ -7,6 +7,7 @@
 #include "common_cpu_infra.h"
 #include "mod_runtime.h"
 #include "snes/snes.h"
+#include "snes/interp_bridge.h"
 #include "snes/saveload.h"
 #include <stdlib.h>
 #include <string.h>
@@ -16,6 +17,37 @@ static bool enabled, picking, picker_ready, chosen, loaded;
 static bool internal_snapshot;
 static bool from_continue;   /* picker opened from Continue -> File */
 static unsigned players;
+static bool hook_installed, restarting;
+static void (*previous_hook)(uint32_t,int,int);
+static void campaign_hook(uint32_t pc,int m,int x) {
+    if(previous_hook)previous_hook(pc,m,x);
+    unsigned mode=g_ram[0x1031];
+    if(!enabled || !chosen || picking || (g_ram[0x1d1a]&1) ||
+       !(mode==8 || (mode>=13 && mode<116)) ||
+       (pc!=0xc428b4 && pc!=0xc21697))return;
+    /* Game Over/Continue resets the actor fields, but retains the picker
+     * choices. Restore after reset and again before stage graphics load.
+     * Honey/Kotetsu use base choice 1; their WRAM skin markers remain intact. */
+    if(pc==0xc428b4)restarting=true;
+    if(pc==0xc21697 && restarting) {
+        /* Stock Continue keeps only the last survivor's participation bit.
+         * Restart the selected one/two-seat roster, once, not on stage exits.
+         * Larger rosters remain owned by the co-op boss/bench adapter. */
+        if(players<=2)g_ram[0x1d24]=g_ram[0x1d25]=(uint8_t)((1u<<players)-1);
+        restarting=false;
+    }
+    for(unsigned i=0;i<players;++i) {
+        unsigned c=g_ram[0x625f+i],color=g_ram[0x6264+i];
+        if(c<1 || c>10 || color>5)continue;
+        g_ram[0x16c2+i]=(uint8_t)(c-1);
+        g_ram[0x16da+i]=(uint8_t)(g_rom[0xbb4e + c-1]+color);
+    }
+}
+void NormalCharacterInstallHook(void) {
+    if(!enabled || hook_installed)return;
+    previous_hook=g_interp_bridge_pc_hook;g_interp_bridge_pc_hook=campaign_hook;
+    hook_installed=true;
+}
 static uint8_t *resume;
 static uint32_t resume_size;
 static uint16_t previous_pad;
@@ -28,6 +60,9 @@ static void set_picker_pc(uint32_t pc) {
     g_ram[0xc90]=(uint8_t)pc;g_ram[0xcb8]=(uint8_t)(pc>>8);g_ram[0xce0]=(uint8_t)(pc>>16);
 }
 void NormalCharacterReset(void) {
+    if(hook_installed && g_interp_bridge_pc_hook==campaign_hook)
+        g_interp_bridge_pc_hook=previous_hook;
+    hook_installed=false;previous_hook=NULL;restarting=false;
     free(resume);resume=NULL;resume_size=0;
     picking=picker_ready=chosen=loaded=from_continue=false;players=1;previous_pad=0;
 }
@@ -39,7 +74,8 @@ SNES_MOD_CONSTRUCTOR(register_normal_characters) {
 }
 
 static void finish_picker(bool cancel) {
-    uint8_t choices[5],palettes[5];
+    uint8_t choices[5],palettes[5],extra_colors[5];
+    for(unsigned i=0;i<5;++i)extra_colors[i]=(uint8_t)ExtraCharacterSeatColor(i);
     memcpy(choices,g_ram+0x625f,sizeof(choices));
     memcpy(palettes,g_ram+0x6264,sizeof(palettes));
     unsigned count=players;
@@ -68,10 +104,10 @@ static void finish_picker(bool cancel) {
     } else {
         chosen=true;
         for(unsigned i=0;i<count;++i) {
-            /* 10: Subordinate; 11/12: Honey/Kotetsu; 13-18: Bomber Kings; 19: Terrorin
-             * (all extra characters play as 1). */
+            /* Extra characters retain their skin and independent picker palette. */
             unsigned choice=choices[i]>=1 && choices[i]<=EXTRA_CHOICE_LAST?choices[i]:1;
             ExtraSetSeatChoice(i,choice);
+            ExtraSetSeatColor(i,extra_colors[i]);
             g_ram[0x625f+i]=(uint8_t)ExtraBaseChoice(choice);
             g_ram[0x6264+i]=palettes[i];
             /* Normal initializes these before showing the file menu, while
@@ -114,7 +150,12 @@ void NormalCharacterFrame(void) {
         if (picker_ready && g_ram[0x1038]>=players) finish_picker(false);
         return;
     }
-    if (g_ram[0x1031]!=3) { chosen=false;return; }
+    if (g_ram[0x1031]!=3) {
+        /* Game Over and its Continue map keep the current campaign choice. */
+        if(g_ram[0x1031]==2){chosen=false;restarting=false;}
+        return;
+    }
+    if(pc==0xc7100e || pc==0xc70d59){chosen=false;restarting=false;}
     /* This fade belongs to a confirmed file; Back/cancel uses another return
      * address. Intercept once, before the Zone map initializes gameplay. */
     if (!chosen && pc==0xc71257 && (confirmed_new_game() || confirmed_continue())) {
@@ -140,8 +181,9 @@ void NormalCharacterFrame(void) {
 void NormalCharacterSave(SaveLoadInfo *sli) {
     RtlSaveExecutionState(sli);
     uint32_t capacity=internal_snapshot?0:RESUME_CAP;
-    /* State 3: picking, opened from Continue (cancel rebuilds that list). */
-    uint32_t header[5]={0x32434e42, picking?(from_continue?3u:1u):chosen?2u:0u,players,resume_size,capacity};
+    /* State 3: picker from Continue. State 6: selected campaign awaiting
+     * its post-Continue spawn. The header and rewind slot sizes stay fixed. */
+    uint32_t header[5]={0x32434e42, picking?(from_continue?3u:1u):chosen?(restarting?6u:2u):0u,players,resume_size,capacity};
     sli->func(sli,header,sizeof(header));
     if(resume_size) sli->func(sli,resume,resume_size);
     /* The rewind ring sizes its slots from the first capture. Keep public
@@ -160,12 +202,12 @@ void NormalCharacterLoad(SaveLoadInfo *sli,uint32_t version) {
     uint32_t header[5]={0};
     sli->func(sli,header,sizeof(header));
     bool header_picking=header[1]==1 || header[1]==3;
-    if(header[0]!=0x32434e42 || header[1]>3 || header[2]<1 || header[2]>5 ||
+    if(header[0]!=0x32434e42 || (header[1]>3 && header[1]!=6) || header[2]<1 || header[2]>5 ||
        (header[4]!=0 && header[4]!=RESUME_CAP) || header[3]>header[4] ||
        (header_picking!=(header[3]>0))) {
         RtlStateStreamFail(sli);return;
     }
-    picking=header_picking;from_continue=header[1]==3;chosen=header[1]==2;players=header[2];
+    picking=header_picking;from_continue=header[1]==3;chosen=header[1]==2 || header[1]==6;restarting=header[1]==6;players=header[2];
     if(header[3]) {
         resume=malloc(header[3]);
         if(!resume) { RtlStateStreamFail(sli);return; }

@@ -114,6 +114,9 @@ unsigned ExtraBaseChoice(unsigned choice) {
 void ExtraSetSeatChoice(unsigned seat,unsigned choice) {
     if(seat<5 && ExtraCharactersInstalled()) g_ram[SEAT_CHOICE+seat]=(uint8_t)choice;
 }
+void ExtraSetSeatColor(unsigned seat,unsigned color) {
+    if(seat<5 && color<SB4_COLORS && ExtraCharactersInstalled()) g_ram[SEAT_COLOR+seat]=(uint8_t)color;
+}
 unsigned ExtraCharacterSeatChoice(unsigned seat) {
     return seat<5 && ExtraCharactersInstalled()?g_ram[SEAT_CHOICE+seat]:0;
 }
@@ -1080,10 +1083,15 @@ static bool compose_head(unsigned key) {
 /* HUD faces: one 16x16 sprite 17 lines above the face object ($7E35C5+i);
  * an extra character plays as Bomberman, so its face animation is
  * Bomberman's ($C2:1470[0], defeated $C5:12FE[0]). */
+/* Campaign HUD has only P1/P2. Extra seats may retain stale Battle pointers. */
+static unsigned face_seats(void) {
+    unsigned mode=g_ram[0x1031];
+    return !(g_ram[0x1d1a]&1) && (mode==8 || (mode>=13 && mode<116))?2:5;
+}
 static void draw_faces(Ppu *ppu) {
     unsigned face=rb(0xc21470),face_alt=rb(0xc512fe);
     int blocks[SKINS*8];memset(blocks,0xff,sizeof(blocks));
-    for(unsigned i=0;i<5;++i) {
+    for(unsigned i=0;i<face_seats();++i) {
         int skin=skin_of(g_ram[SEAT_CHOICE+i]);
         if(skin<0 || g_ram[0x16c2+i]!=0) continue;
         unsigned key=(unsigned)skin*8+(sb4_skin(skin)?g_ram[SEAT_COLOR+i]%SB4_COLORS:0);

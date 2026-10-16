@@ -36,6 +36,7 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'CMake configuration failed.' }
     & $cmakeExe --build $buildPath --parallel 4
     if ($LASTEXITCODE -ne 0) { throw 'Native build failed.' }
+    Copy-Item -LiteralPath (Join-Path $buildPath 'SuperBomberman5Recomp.exe') -Destination (Join-Path $projectRoot 'SuperBomberman5Recomp.exe') -Force
     if ($Run) {
         & (Join-Path $buildPath 'SuperBomberman5SNESRecomp.exe') $romPath
         if ($LASTEXITCODE -ne 0) { throw "Game exited with code $LASTEXITCODE." }

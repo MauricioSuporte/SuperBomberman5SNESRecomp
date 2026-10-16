@@ -50,6 +50,7 @@ add_executable(SuperBomberman5SNESRecomp
     # Register infinite-time cleanup before coop; its hook wraps the coop hook.
     # Hook reset callbacks follow this order, opposite to frame installation.
     src/portal_labels_mod.c
+    src/normal_hud_mod.c
     src/louie_mod.c
     src/gold_battle_mod.c
     src/pause_menu_mod.c
@@ -68,6 +69,9 @@ add_executable(SuperBomberman5SNESRecomp
 
 if(WIN32)
     enable_language(RC)
+    # ROM-independent Windows entry point for source and setup packages.
+    add_executable(SuperBomberman5Recomp WIN32 src/windows_entry.c assets/app.rc)
+    target_include_directories(SuperBomberman5Recomp PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/assets")
     target_sources(SuperBomberman5SNESRecomp PRIVATE assets/app.rc)
     set_source_files_properties(assets/app.rc PROPERTIES
         OBJECT_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/assets/app.ico")
@@ -109,6 +113,9 @@ if(BUILD_TESTING)
     add_executable(pause_menu_tests tests/pause_menu_tests.c)
     target_include_directories(pause_menu_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src")
     add_test(NAME pause_menu_actions COMMAND pause_menu_tests)
+    add_executable(normal_hud_tests tests/normal_hud_tests.c)
+    target_include_directories(normal_hud_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src")
+    add_test(NAME normal_hud_faces COMMAND normal_hud_tests)
     add_executable(infinite_time_tests tests/infinite_time_tests.c)
     target_include_directories(infinite_time_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src")
     add_test(NAME normal_infinite_time COMMAND infinite_time_tests)

@@ -15,6 +15,11 @@ reconstrói a lista e permite navegar, reabrir o seletor ou voltar ao menu anter
 paleta do jogador antes do carregamento das fases. A tela funciona também com
 o mod de tradução PT-BR habilitado.
 
+Após Game Over, **Continue** mantém os personagens e cores da campanha,
+incluindo Honey/Kotetsu e Subordinate. Partidas de um/dois jogadores retomam
+com os participantes escolhidos, sem exigir o mod de cooperativo. A escolha
+também continua nas transições normais; sair para o título encerra essa sessão.
+
 A seleção vale para a campanha atual; ao escolher um arquivo em outra sessão,
 escolha novamente. O formato do SRAM permanece original. Save states e rewind
 incluem a escolha e o estado do Normal Game suspenso durante a seleção. O mod
@@ -41,6 +46,11 @@ New Game or Continue, opens the original Battle character picker. Move with the 
 X), or return to file selection with B (keyboard Z). The selected character and
 palette are applied before stage graphics load. The PT-BR menu overlay can be
 enabled alongside this mod.
+
+After Game Over, **Continue** retains campaign characters/colors, including
+Honey/Kotetsu and Subordinate. One/two-player games restore the selected
+roster even without co-op enabled. Normal stage transitions retain their
+existing participation behavior; returning to the title ends the session.
 
 The choice lasts for the current campaign and is selected again in a new
 session. Battery SRAM retains the stock format. Save states and rewind include
@@ -102,3 +112,21 @@ Honey/Kotetsu and PT-BR on/off. Continue records are synthetic fixtures.
 A regressão atual usa SRAM isolado, entradas nativas, B/reentrada repetidos,
 navegação de arquivos e saída ao menu anterior, com os mods combinados.
 Os arquivos Continue são fixtures; não representam uma campanha completa.
+
+### Game Over continuation (2026-10-16)
+
+The outermost character interpreter hook restores `$16C2/$16DA` from the
+retained picker choices `$625F/$6264` at `$C4:28B4` and `$C2:1697`. Honey/
+Kotetsu keep their WRAM skin markers. A pending restart restores the original
+one/two-seat participation mask exactly once before native actor creation;
+co-op continues to own larger rosters and boss benches. The pending bit uses
+header state 6 in the existing constant-size extension; older states 0–3
+remain accepted. No ROM patches or SRAM layout changes are added.
+
+Regression: `python tests/normal_character_continue_runtime.py`, with optional
+`--single`, `--english`, `--skins` (Honey/Subordinate, co-op disabled). See
+[STATUS.md](STATUS.md) for routes actually exercised.
+
+From v0.13.1 the Normal picker also retains the independent Super Bomberman 4 palette across snapshot restoration (all extra choices 11–19 covered by the native regression).
+
+Desde a v0.13.1 a seleção do Normal também preserva a paleta independente do Super Bomberman 4 ao restaurar a campanha (escolhas extras 11–19 cobertas pelo teste nativo).

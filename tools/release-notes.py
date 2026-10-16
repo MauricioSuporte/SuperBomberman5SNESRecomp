@@ -1004,6 +1004,38 @@ netplay. Sem ROM, código ou executável gerado do jogo, gráficos/áudio
 extraídos, saves ou dumps.
 '''
 
+if version == '0.13.1':
+    notes = f'''# Super Bomberman 5 v{version}
+
+## English
+
+- Optional Normal HUD faces: selected characters/colors and native alive/defeated states, without the stock Bomberman behind them or Battle victory counters.
+- P1 and active P2 only, even with five Normal players; extra-seat death/reentry cannot overwrite their portraits.
+- Game Over → Continue retains characters, colors and the original one/two-player roster. Independent SB4 palettes survive leaving the Normal picker.
+- Open Windows through **SuperBomberman5Recomp.exe**, with the existing “5” icon. Extract the complete ZIP. play.cmd remains a compatibility shortcut.
+- Updated Normal gameplay README panel with five characters, abilities and green Subordinate Bomber riding Black Louie.
+
+Twelve optional mods, disabled by default. Extra Characters combines Honey, Kotetsu, Subordinate Bomber and Emperor Terrorin. Bomber Kings needs your own verified SB4 ROM. Mod packages remain 0.1.0; **Generate & rebuild** after upgrading.
+
+Download the Windows x64 ZIP or experimental Linux x86_64 AppImage and verify SHA256SUMS. Install in a new writable folder. Linux: chmod +x; without FUSE use --appimage-extract-and-run. Supply your own supported JPN SB5 ROM and run Generate & rebuild. Internet is needed for the first tools; Rust is not required.
+
+Evidence and runtime limits: docs/STATUS.md. Partial recompilation, mostly interpreted gameplay. Full campaign, all mod combinations, physical multiplayer and broad Linux compatibility remain unqualified; no netplay. Setup downloads contain no ROM, generated game code/binary, extracted cartridge assets, saves or raw captures.
+
+## Português
+
+- Mod opcional de rostos na HUD do Normal: personagem/cor selecionados e poses vivo/derrotado, sem o Bomberman original no fundo nem contadores de vitória.
+- Apenas P1 e P2 ativo, mesmo com cinco jogadores; morte/reentrada dos demais não sobrescreve seus retratos.
+- Game Over → Continue preserva personagens, cores e a formação original de um/dois jogadores. As paletas independentes do SB4 são mantidas ao sair da seleção do Normal.
+- No Windows, abra **SuperBomberman5Recomp.exe**, com o ícone atual do “5”. Extraia o ZIP completo. play.cmd continua como atalho de compatibilidade.
+- Quadro Normal do README atualizado com cinco personagens, habilidades e Subordinado verde montado no Black Louie.
+
+Doze mods opcionais, desligados por padrão. Extra Characters reúne Honey, Kotetsu, Subordinate Bomber e imperador Terrorin. Bomber Kings exige sua própria ROM conferida do SB4. Pacotes de mod em 0.1.0; faça **Generate & rebuild** ao atualizar.
+
+Baixe o ZIP Windows x64 ou AppImage Linux x86_64 experimental e confira SHA256SUMS. Instale em pasta nova e gravável. Linux: chmod +x; sem FUSE use --appimage-extract-and-run. Forneça a ROM JPN compatível do SB5 e faça Generate & rebuild. Internet para as primeiras ferramentas; Rust não é necessário.
+
+Evidências e limites em docs/STATUS.md. Recompilação parcial, principalmente interpretada. Campanha completa, todas as combinações, multiplayer físico e compatibilidade ampla no Linux não qualificados; sem netplay. Downloads de setup sem ROM, código/executável gerado do jogo, assets extraídos, saves ou capturas brutas.
+'''
+
 if args.output:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(notes, encoding='utf-8', newline='\n')

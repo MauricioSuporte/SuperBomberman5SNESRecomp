@@ -251,6 +251,8 @@ int main(void) {
     CHECK(ExtraBaseChoice(11)==1 && ExtraBaseChoice(12)==1 && ExtraBaseChoice(10)==10);
     CHECK(ExtraBaseChoice(18)==1 && ExtraBaseChoice(19)==1 && ExtraBaseChoice(20)==20);
     CHECK(ExtraCharacterColorCount(11)==1 && ExtraCharacterColorCount(19)==1 && ExtraCharacterColorCount(15)==5 && ExtraCharacterColorCount(3)==0);
+    ExtraSetSeatColor(3,4);CHECK(ExtraCharacterSeatColor(3)==4);
+    ExtraSetSeatColor(3,5);CHECK(ExtraCharacterSeatColor(3)==4);
     ExtraSetSeatChoice(3,12);CHECK(g_ram[0x1f82b]==12 && ExtraCharacterSeatChoice(3)==12);
     /* Reset restores every byte. */
     reset_callback();CHECK(!ExtraCharactersEnabled() && !installed && !memcmp(stock_rom,cartridge,sizeof(stock_rom)));
@@ -264,6 +266,9 @@ int main(void) {
     reset_callback();stock_cartridge();memcpy(stock_rom,cartridge,sizeof(stock_rom));
     activation();ExtraCharactersBeforeFrame();CHECK(patched);
 
+    g_ram[0x1031]=13;g_ram[0x1d1a]=0;CHECK(face_seats()==2);
+    g_ram[0x1031]=0x74;CHECK(face_seats()==5);
+    g_ram[0x1031]=13;g_ram[0x1d1a]=1;CHECK(face_seats()==5);
     Ppu *ppu=calloc(1,sizeof(Ppu));CHECK(ppu);ppu->obsel=3;
     Snapshot *before=malloc(sizeof(Snapshot));CHECK(before);
     for(unsigned i=0;i<0x8000;++i) ppu->vram[i]=(uint16)(i*7);

@@ -2,6 +2,7 @@
 #include <stdint.h>
 struct SaveLoadInfo;
 void NormalCharacterFrame(void);
+void NormalCharacterInstallHook(void);
 void NormalCharacterBeforeFrame(void);
 void NormalCharacterReset(void);
 void NormalCharacterSave(struct SaveLoadInfo *sli);

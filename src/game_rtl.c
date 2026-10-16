@@ -47,6 +47,7 @@
 #include "extra_characters_mod.h"
 #include "gold_battle_mod.h"
 #include "louie_mod.h"
+#include "normal_hud_mod.h"
 #include <stdbool.h>
 
 static void GameInitialize(void)
@@ -72,6 +73,8 @@ void GameRunOneFrame(void)
     PauseMenuBeforeFrame();
     GoldBattleBeforeFrame();
     LouieBeforeFrame();
+    NormalHudBeforeFrame();
+    NormalCharacterInstallHook(); /* Outermost hook: restore after co-op. */
     snes_beam_frame_driver_run_frame();
     LouieAfterFrame();
     PauseMenuAfterFrame();
@@ -85,6 +88,7 @@ void GameRunOneFrame(void)
 static void ObserveOverlays(const struct Ppu *ppu, unsigned line, void *context)
 {
     if (line == 224) {
+        NormalHudObserve(ppu, line, context);
         PauseMenuObserve(ppu, line, context);
         PortalLabelsObserve(ppu, line, context);
         ExtraCharactersObserve(ppu, line, context);
@@ -96,12 +100,13 @@ static void ObserveOverlays(const struct Ppu *ppu, unsigned line, void *context)
         ExtraCharactersObserve(ppu, line, context);
         PortalLabelsObserve(ppu, line, context);
         PauseMenuObserve(ppu, line, context);
+        NormalHudObserve(ppu, line, context);
     }
 }
 
 void GameDrawPpuFrame(void)
 {
-    bool overlays = SelectionColorEnabled() || SubordinateEnabled() || ExtraCharactersEnabled() ||
+    bool overlays = NormalHudEnabled() || SelectionColorEnabled() || SubordinateEnabled() || ExtraCharactersEnabled() ||
                     PauseMenuEnabled() || PortalLabelsEnabled();
     PtbrDrawPpuFrameObserved(overlays ? ObserveOverlays : NULL, NULL);
 }
@@ -113,10 +118,11 @@ void GameSessionReset(void)
      * been fine" is the usual desync culprit, because single-player never
      * re-enters the boot path twice in one process. */
     snes_beam_frame_driver_reset();
+    NormalHudReset();
+    NormalCharacterReset();
     LouieReset();
     GoldBattleReset();
     PauseMenuReset();
-    NormalCharacterReset();
     InfiniteTimeReset();
     NormalCoopReset();
     SelectionColorReset();
@@ -125,10 +131,11 @@ void GameSessionReset(void)
 static void GameHardwareReset(void)
 {
     snes_beam_frame_driver_reset();
+    NormalHudReset();
+    NormalCharacterReset();
     LouieReset();
     GoldBattleReset();
     PauseMenuReset();
-    NormalCharacterReset();
     InfiniteTimeReset();
     NormalCoopReset();
     SelectionColorReset();

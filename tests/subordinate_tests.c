@@ -225,6 +225,10 @@ int main(void) {
         CHECK(pixel(ppu,dead+(x>>3)+((y>>3)<<4),x&7,y&7)==(unsigned)(kDefeatedFace[y][x]-'0'));
     CHECK(!memcmp(ppu->vram+tile_address(ppu,0x160),before->vram+tile_address(ppu,0x160),0x20*2));
     SubordinateObserve(ppu,224,NULL);CHECK(same(before,ppu));
+    g_ram[0x1031]=13;SubordinateObserve(ppu,1,NULL);CHECK(drawn);
+    CHECK(tile_of(ppu,1)!=0x160 && tile_of(ppu,2)==0x160);
+    SubordinateObserve(ppu,224,NULL);CHECK(same(before,ppu));
+    g_ram[0x1031]=0x74;
     g_ram[0x79f+12]=g_ram[0x79f+14]=0x15;SubordinateObserve(ppu,1,NULL);CHECK(!drawn); /* Not our faces. */
     g_ram[0x79f+12]=FACE_ALT;g_ram[0x16c2+1]=g_ram[0x16c2+2]=3;SubordinateObserve(ppu,1,NULL);CHECK(!drawn);
     /* Disabled: overlay is inert and patches are gone. */

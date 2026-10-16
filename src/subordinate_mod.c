@@ -339,11 +339,16 @@ static const char kDefeatedFace[16][17]={
     "0888333333338880",
     "8684838338384868",
 };
+/* Campaign HUD has only P1/P2. Extra seats may retain stale Battle pointers. */
+static unsigned face_seats(void) {
+    unsigned mode=g_ram[0x1031];
+    return !(g_ram[0x1d1a]&1) && (mode==8 || (mode>=13 && mode<116))?2:5;
+}
 static void draw_faces(Ppu *ppu) {
     unsigned mode=g_ram[0x1031];
     if(mode==4 || mode<5) return;
     int blocks[2]={-1,-1};
-    for(unsigned i=0;i<5;++i) {
+    for(unsigned i=0;i<face_seats();++i) {
         if(g_ram[0x16c2+i]!=INDEX) continue;
         unsigned object=g_ram[0x35c5+i];
         if(object>=0x60 || g_ram[0x4ff+object]!=6) continue;
