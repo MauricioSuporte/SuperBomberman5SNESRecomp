@@ -26,14 +26,13 @@ in release downloads. No extracted graphics are tracked.
 
 `five-player-showcase.png` reúne quatro quadros reais da execução, a pedido do
 mantenedor. O quadro superior esquerdo (menu de cinco jogadores) vem da
-v0.12.1; os outros três foram capturados do build Linux LLE da v0.13.0:
-seleção de sete colunas com Terrorin, Honey, Jet, Lady e Great; ZONE1-1 com a
-barreira do Terrorin, o voo do Jet, a Honey, a Lady e o Great usando as
-habilidades; e Battle com a espada do Kotetsu, o raio do Bazooka, a maça do
-Hammer, a Honey e o Terrorin na barreira. Os personagens do SB4 vêm da ROM do
-SB4 do mantenedor durante a execução. A arte do jogo pertence aos respectivos
-detentores; a imagem não entra nos downloads de release e não é coberta pela
-licença do software.
+v0.12.1; seleção e Battle vêm do build Linux LLE da v0.13.0. O inferior
+esquerdo foi substituído na v0.13.1 por captura Windows LLE com Subordinado
+verde no Black Louie, Honey, Jet preto, Bazooka vermelho e Terrorin usando
+suas habilidades, com a HUD nova. Os personagens do SB4 vêm da ROM do SB4
+do mantenedor durante a execução. A arte pertence aos respectivos
+detentores; a imagem não entra nos downloads de release e não é coberta
+pela licença do software.
 
 `portal-destinations.png` (512 × 448) is the gameplay screenshot supplied by
 the maintainer on 2026-10-15 for the v0.8.0 portal-mod explanation. It shows

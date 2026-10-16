@@ -1,5 +1,45 @@
 # Super Bomberman 5: estado do protótipo
 
+## v0.13.1 published and package checks / Publicação e pacotes — 2026-10-16
+
+Published [v0.13.1](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.13.1)
+as a prerelease, tag/packaged sources at 735429343a9a985b6b9113ca460f03c79fa9aca5.
+[Release workflow 38971420388](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/actions/runs/38971420388)
+passed Windows and Linux source/history/package audits, dependency pins, Python
+discovery, all 14 native tests, setup-host builds, packaged-analyzer checks,
+native Windows entry tests and first/repeat AppImage setup launches.
+
+The exact downloaded CI Windows ZIP passed every FILE_SHA256SUMS entry,
+ROM-independent package metadata, twelve installed manifests, native-entry
+Unicode/space/precedence/exit-code tests and the bundled analyzer without Rust.
+Local generation/build from the user ROM then completed the 3,628-frame
+Normal Zone 1-1 route through SuperBomberman5Recomp.exe (exit 0, mode 13).
+The exact AppImage passed first/repeat launches, local cartridge generation,
+build and the same first-stage route on Ubuntu 24.04.4/WSL with portable
+Linux tools 1.0.14. These package routes use default-disabled mods; the new
+five-player HUD and Continue combinations have separate Windows runtime
+evidence below. This does not qualify the full campaign, physical controllers,
+all mod combinations or broad Linux distributions.
+
+Public downloads were fetched again and their sizes/SHA-256 matched GitHub
+asset digests and SHA256SUMS; release body matched the generated UTF-8 notes
+with no replacement characters. Existing tags/assets were preserved.
+
+| Public asset | Bytes | SHA-256 |
+|---|---:|---|
+| Windows x64 setup ZIP | 17177915 | b29168b7562dc019e817bf6c26d4efe05fc562d422a8a49f1d58c0e5b8d6515b |
+| Linux x86_64 AppImage | 13629944 | 8b20817624b53945115a977a8aec2513584ec1a1a42b84fc5bd43dfcb50bd48d |
+
+A v0.13.1 foi publicada como prévia com ZIP Windows, AppImage Linux e
+SHA256SUMS. As duas plataformas passaram nos builds, auditorias e 14 testes
+nativos. Os pacotes finais foram extraídos e geraram o jogo com a ROM local;
+a entrada nativa Windows completou a rota de 3.628 frames e o AppImage
+chegou à mesma primeira fase em Ubuntu 24.04.4/WSL. Esses testes de pacote
+usam os mods desativados; a HUD de cinco jogadores e Continue têm validação
+Windows específica abaixo. Downloads públicos, tamanhos, hashes, tag e notas
+UTF-8 foram reconferidos. Não há qualificação de campanha completa, controles
+físicos, todas as combinações ou distribuições Linux em geral.
+
 ## Release 0.13.1 integration / Integração da release — 2026-10-16
 
 Integrated on main 94eba67 with its pinned framework/UI dependencies and unified Extra Characters implementation. Windows LLE runtime passed two-player Game Over → Continue retention and the five-player HUD stale-pointer, death/reentry regression. All 14 native setup-host test binaries pass; Python discovery passes (10 tests, 2 conditional skips). The additional SB4 picker-color regression covers choices 11–19 across snapshot restoration.

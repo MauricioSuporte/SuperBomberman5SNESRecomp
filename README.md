@@ -105,9 +105,9 @@ v0.4.1 also embeds the supplied application icon with ten sizes from 16 to 256 p
 
 ### Controls and starting a game
 
-For a local source build, open `build-lle/SuperBomberman5SNESRecomp.exe`
-directly; it includes the game icon. `play.cmd` opens that same executable
-with the local ROM selected. The five-player menu recognizes the native
+After a Windows source build, open `SuperBomberman5Recomp.exe` at the
+repository root. It uses the existing “5” icon and locates the generated
+game automatically. `play.cmd` remains a compatibility shortcut. The five-player menu recognizes the native
 screen independently of script return history from the opening/demo.
 
 | Keyboard | SNES input |
@@ -231,9 +231,9 @@ A v0.4.1 também incorpora o ícone fornecido em dez tamanhos, de 16 a 256 pixel
 
 ### Controles e início de partida
 
-No build local de fonte, abra diretamente `build-lle/SuperBomberman5SNESRecomp.exe`,
-que inclui o ícone do jogo. O `play.cmd` abre esse mesmo executável com a ROM
-local selecionada. O menu de cinco jogadores reconhece a tela original sem
+Depois de compilar no Windows, abra `SuperBomberman5Recomp.exe` na raiz
+do repositório. Ele usa o ícone atual do “5” e localiza o jogo gerado
+automaticamente. O `play.cmd` continua como atalho de compatibilidade. O menu de cinco jogadores reconhece a tela original sem
 depender do histórico de retorno dos scripts da abertura/demonstração.
 
 **Setas** para direção, **Enter** para Start, **X/Z** para A/B e **Shift direito** para Select. Pressione Enter na abertura/título, escolha **Normal Game → 1 Player Game → New Game → File 1**, confirme com **X** e pressione **Enter** no mapa da Zone 1 para entrar na fase. Remapeie os controles no launcher se desejar. O launcher mostra as abas **PLAYER 1–5**: escolha Teclado ou Gamepad para cada jogador e use **Configure**. P3–P5 começam sem dispositivo e sem teclas; dê a cada um um controle ou teclas próprias (teclas iguais movem os dois jogadores).
