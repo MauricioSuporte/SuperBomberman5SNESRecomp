@@ -181,6 +181,13 @@ static const uint8_t bomber_slot[]={
     0x60,             /* 434B RTS                                   */
 };
 static const uint32_t bomber_ops[]={0xc216b8,0xc216ee};
+/* Boss start $C4:3C60 (Y = boss index, tables $C0:B9A5/$B9AE/$B9B7) sets
+ * $1CBF from $C0:B9AE (STA at $C4:3C78), gives the rivals equipment through
+ * $C4:2906 with literal slots 2/3 (operands $C4:3C83/$3C8C) and seats the
+ * mounted rival on its Louie ($C0:B9B7 type, ZONE3 - D's Black Louie) with
+ * literal slot 2 (operands $C4:3C98/$3C9F). Those literals follow the rival
+ * move, and $C4:3C75 loads the five-seat $1CBF instead of the table's. */
+static const uint32_t boss_rider_sites[]={0xc43c83,0xc43c8c,0xc43c98,0xc43c9f};
 /* Boss choreography at $C5:2600-$C5:39FF names the rival by literal slot:
  * LDX #2/#3 before the actor helpers $C4:3C24/$C4:3BDE, LDA #2/#3 before
  * $C4:2B3A/$C4:3BA3, and LDA $17FC/$17FD. Their operands follow the move. */
@@ -305,6 +312,8 @@ static void configure(void) {
     for(unsigned i=0;i<sizeof(seat_loops)/sizeof(*seat_loops);++i) restore(seat_loops[i]);
     restore(0xc0374d);restore(0xc24340);
     for(unsigned i=0;i<sizeof(bomber_ops)/sizeof(*bomber_ops);++i) restore(bomber_ops[i]);
+    for(unsigned i=0;i<sizeof(boss_rider_sites)/sizeof(*boss_rider_sites);++i) restore(boss_rider_sites[i]);
+    restore(0xc43c75);
     for(unsigned i=0;i<boss_site_count;++i) rom(boss_sites[i])[0]=boss_original[i];
     for(unsigned i=0;i<enemy_site_count;++i) rom(enemy_sites[i])[0]=enemy_original[i];
     for(unsigned i=0;i<sizeof(enemy_loops)/sizeof(*enemy_loops);++i) restore(enemy_loops[i]);
@@ -317,6 +326,8 @@ static void configure(void) {
      * never appeared, rider stuck). */
     if(!coop) { if(campaign() && g_ram[0x1cbf]==5) g_ram[0x1cbf]=2;return; }
     set_masks();g_ram[0x1cbf]=5;
+    { static const uint8_t keep[]={0xa9,0x05,0xea,0x8d,0xbf,0x1c}; /* LDA #5; NOP; STA $1CBF */
+      memcpy(rom(0xc43c75),keep,sizeof(keep)); }
     rom(0xc30458)[1]=10; /* 0–4 players, 5–9 mount companions, 10–23 enemies. */
     for(unsigned i=0;i<sizeof(mount_backups)/sizeof(*mount_backups);++i) rom(mount_backups[i])[1]+=3;
     /* Initialize all selected seats with the cartridge's equipment reset. */
@@ -350,6 +361,7 @@ static void configure(void) {
             uint8_t *op=rom(bomber_ops[i]);op[0]=0x20;op[1]=0x40;op[2]=0x43;op[3]=0xea;
         }
         for(unsigned i=0;i<boss_site_count;++i) rom(boss_sites[i])[0]=(uint8_t)(boss_original[i]+shift);
+        for(unsigned i=0;i<sizeof(boss_rider_sites)/sizeof(*boss_rider_sites);++i) rom(boss_rider_sites[i])[0]+=(uint8_t)shift;
     }
     rom(0xc0374d)[1]=10; /* Point damage: actors 5-9 are mount companions, not enemies. */
     /* Story scripts distinguish one/two-player choreography, not hardware
@@ -473,6 +485,8 @@ void NormalCoopBeforeFrame(void) {
         reserve(0xc34766,1);reserve(0xc34b8f,3);reserve(0xc3ff70,sizeof(enemy_distances));
         reserve(0xc21f2b,3);reserve(0xc0374d,2);reserve(0xc24340,sizeof(bomber_slot));
         for(unsigned i=0;i<sizeof(bomber_ops)/sizeof(*bomber_ops);++i) reserve(bomber_ops[i],4);
+        for(unsigned i=0;i<sizeof(boss_rider_sites)/sizeof(*boss_rider_sites);++i) reserve(boss_rider_sites[i],1);
+        reserve(0xc43c75,6);
         for(unsigned i=0;i<sizeof(seat_loops)/sizeof(*seat_loops);++i) reserve(seat_loops[i],2);
         reserve(0xc30458,2);
         for(unsigned i=0;i<sizeof(mount_backups)/sizeof(*mount_backups);++i) reserve(mount_backups[i],3);

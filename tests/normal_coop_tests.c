@@ -43,6 +43,12 @@ int main(void) {
     static const uint8_t choreography[]={0xa9,0x02,0x22,0x3a,0x2b,0xc4,0xa2,0x02,0xa9,0x08,0x22,0xde,0x3b,0xc4};
     memcpy(cartridge+0x526d7,choreography,sizeof(choreography));
     cartridge[0x526f3]=0xad;cartridge[0x526f4]=0xfd;cartridge[0x526f5]=0x17;
+    /* Boss start $C4:3C75-$3CA4 as in the cartridge: LDA $B9AE,Y; STA $1CBF
+     * ... LDA #2; JSR $2906 ... LDA #3 ... LDX #2 ... LDA #2; CLC; ADC $1CBF. */
+    static const uint8_t boss_start[]={0xb9,0xae,0xb9,0x8d,0xbf,0x1c,0x22,0x3f,0x00,0xc4,0x20,0x30,0x3d,
+        0xa9,0x02,0x20,0x06,0x29,0xc0,0x04,0xd0,0x05,0xa9,0x03,0x20,0x06,0x29,0xb9,0xb7,0xb9,0x30,0x15,
+        0x85,0x9f,0xa2,0x02,0xa9,0x80,0x9d,0x82,0x17,0xa9,0x02,0x18,0x6d,0xbf,0x1c};
+    memcpy(cartridge+0x43c75,boss_start,sizeof(boss_start));
     /* Enemy distance arrays: LDA $1FF6,Y and STA $1FFE,Y. */
     cartridge[0x31146]=0xb9;cartridge[0x31147]=0xf6;cartridge[0x31148]=0x1f;
     cartridge[0x34753]=0x99;cartridge[0x34754]=0xfe;cartridge[0x34755]=0x1f;
@@ -130,7 +136,7 @@ int main(void) {
     CHECK(rom(0xc5066c)[0]==0xff);
     CHECK(rom(0xc56af5)[0]==0x4c && rom(0xc56af5)[1]==0x00 && rom(0xc56af5)[2]==0x71);
     CHECK(!memcmp(rom(0xc57100),page_allocator,sizeof(page_allocator)));
-    count=2;configure();CHECK(rom(0xc56af5)[0]==0xff && g_ram[0x1cbf]==2);
+    count=2;configure();CHECK(rom(0xc56af5)[0]==0xff && g_ram[0x1cbf]==2 && rom(0xc43c75)[0]==0xb9);
     /* One/two players keep the boss stage's own mount offset ($C4:3C78:
      * rivals own slot 2), carried mounts included; only the five-seat
      * value is undone. */
@@ -156,9 +162,14 @@ int main(void) {
     CHECK(rom(0xc24300)[34]==0x7a);
     CHECK(rom(0xc347fb)[0]==4 && rom(0xc3ff77)[0]==4);
     g_ram[0x1031]=0x6a;configure();CHECK(seats()==3 && rom(0xc526de)[0]==3 && rom(0xc526f4)[0]==0xfe);
+    /* ZONE3 - D's rival rides its Black Louie from its moved slot, with the
+     * five-seat mount offset; P3 keeps its own seat. */
+    CHECK(rom(0xc43c83)[0]==3 && rom(0xc43c8c)[0]==4 && rom(0xc43c98)[0]==3 && rom(0xc43c9f)[0]==3);
+    CHECK(rom(0xc43c75)[0]==0xa9 && rom(0xc43c76)[0]==5 && rom(0xc43c78)[0]==0x8d);
     active_mask=16;CHECK(stage_mask()==1);
     count=3;g_ram[0x1031]=0x67;configure();CHECK(seats()==3 && rom(0xc24349)[0]==1 && rom(0xc526de)[0]==3);
     count=5;g_ram[0x1031]=13;active_mask=saved_active;configure();build_spawn();
+    CHECK(rom(0xc43c98)[0]==2 && rom(0xc43c9f)[0]==2 && rom(0xc43c83)[0]==2);
     CHECK(seats()==5 && rom(0xc216ee)[0]==0xff && rom(0xc526de)[0]==2 && rom(0xc526f4)[0]==0xfd);
     /* A seat benched for a boss keeps the character and items the rival's
      * creation overwrites, then returns with them on the next stage. */

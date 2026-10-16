@@ -68,6 +68,10 @@ o host v0.5.0 ou superior; importar em uma release antiga não atualiza o
 executável. O mod fica desabilitado
 por padrão. Para empacotar: `python tools/package-normal-coop.py`.
 
+Na ZONE3 - D com 3 a 5 jogadores, o Pirate Bomber volta a montar o Louie
+Preto; antes o P3 recebia um Louie Vermelho, o P1 voltava montado e travado
+depois do recomeço da fase e o jogo congelava quando ele morria.
+
 Com 1 ou 2 jogadores, entrar montado no Louie numa fase de chefe mantém o
 deslocamento de montaria do próprio jogo (`$1CBF`); antes o mod forçava o
 valor de fase comum e o Louie ocupava o lugar do chefe (na ZONE4 - G o chefe
@@ -145,6 +149,16 @@ to five-entry arrays at `$1FC0-$1FDD` (never written in any recorded campaign
 dump), the loops cover the roster and `$C3:FF70` fills seats 3-5 before the
 stock P1/P2 pass. The nearest-player chooser `$C3:4641` keeps its two-entry
 direct-page buffers, so enemies still steer toward P1/P2.
+
+Boss start `$C4:3C60` also names the rivals by literal slot: it gives them
+equipment through `$C4:2906` (slots 2/3, operands `$C4:3C83/$3C8C`) and seats
+ZONE3 - D's Pirate Bomber on its Black Louie (`$C0:B9B7` type 6) with slot 2
+(operands `$C4:3C98/$3C9F`), after loading `$1CBF` from `$C0:B9AE` at
+`$C4:3C75`. In co-op those literals now follow the rival move and `$C4:3C75`
+loads the five-seat 5. Before, P3 was marked as riding a Red Louie, the
+rival's Black Louie type landed in P2's mount slot, and the sprite object list
+lost its end marker (object `$62`), so the game froze in `$C0:12E3` when the next
+object was created (often P1's death after a stage restart).
 
 With one or two players the adapter leaves the mount offset `$1CBF`
 (mount actor = rider + `$1CBF`) to the cartridge: boss stages set 3 or 4

@@ -1,5 +1,24 @@
 # Super Bomberman 5: estado do protótipo
 
+## ZONE3 - D with co-op / ZONE3 - D no co-op - 2026-10-16
+
+Reported with five players: P3 got a Red Louie in ZONE3 - D instead of the
+Pirate Bomber riding the Black Louie; after everyone died P1 restarted on a
+Red Louie with frozen animations, and the game froze when he died. The
+maintainer's slot-3 state (frozen) shows the CPU looping in the object
+allocator `$C0:12E3`: the priority list (`$049B` head, `$043B` next) had lost
+its end marker `$62`. Cause: boss start `$C4:3C60` uses literal slots 2/3 for
+rival equipment and the mounted rival and loads `$1CBF` = 4, while co-op moves
+rivals to slots 3/4 and uses mount offset 5 (P3 marked riding, Black Louie type
+in P2's mount slot). Co-op now shifts the four operands and loads 5 at
+`$C4:3C75`. Linux LLE headless, five players, all gameplay defaults, forced
+stage `$6A` from Zone 1-1: Pirate Bomber (type 4, slot 3) rides the Black
+Louie (slot 8, type 6) as in the native one-player run; P3 is on foot; after
+all players died the stage restarted, P1 rejoined on foot and died twice more
+with the object list intact and no freeze, interpreter cap, BRK or fatal
+(7,179 frames). The existing frozen state stays frozen (its list is already
+broken). Native coop test covers the patched/restored operands.
+
 ## Retired mod packages in reused builds / Pacotes de mods antigos em builds reaproveitados - 2026-10-16
 
 v0.13.0 merged `superbomberman5.honey-kotetsu` and
