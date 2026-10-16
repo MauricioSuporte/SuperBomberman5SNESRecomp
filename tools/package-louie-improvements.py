@@ -1,0 +1,18 @@
+"""Package the ROM-free Louie improvements activation manifest."""
+import argparse
+from pathlib import Path
+import zipfile
+
+root = Path(__file__).resolve().parents[1]
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--out', type=Path, default=root / 'dist/superbomberman5-louie-improvements-0.1.0.snesmod')
+args = parser.parse_args()
+args.out.parent.mkdir(parents=True, exist_ok=True)
+with zipfile.ZipFile(args.out, 'w', zipfile.ZIP_DEFLATED) as archive:
+    archive.write(root / 'mods/preloaded/packages/superbomberman5.louie-improvements/0.1.0/manifest.toml', 'manifest.toml')
+    archive.write(root / 'LICENSE', 'LICENSE')
+    package = root / 'mods/preloaded/packages/superbomberman5.louie-improvements/0.1.0'
+    archive.write(package / 'AUDIO_PROVENANCE.md', 'AUDIO_PROVENANCE.md')
+    for name in ('MountBlackLouie.wav', 'BlackLouieDash.wav'):
+        archive.write(package / 'audio' / name, 'audio/' + name)
+print(args.out)

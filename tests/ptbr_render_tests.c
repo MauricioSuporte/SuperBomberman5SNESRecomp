@@ -10,7 +10,8 @@ const uint8_t *g_rom;
 #include "../src/ptbr_mod.c"
 static bool coop_fixture;
 bool NormalCoopPlayerMenu(void) { return coop_fixture; }
-unsigned NormalCoopPlayerCount(void) { return 5; }
+static unsigned coop_count_fixture=5;
+unsigned NormalCoopPlayerCount(void) { return coop_count_fixture; }
 
 static Ppu fixture;
 static uint16_t original[0x8000];
@@ -98,6 +99,31 @@ static int native_font_tests(void) {
     if(native_small('A',glyph)!=7) return 60;
     for(unsigned y=0;y<16;++y) if(glyph[y][y%7]!=4) return 61;
     if(native_small('i',glyph)!=4 || native_small('m',glyph)!=8) return 62;
+    /* Player counts use the title face even with a cartridge loaded: full
+     * ten-row ink, bold stems, complete outline and empty top margin. */
+    for(unsigned n=0;n<sizeof(kNativeWhite)/sizeof(kNativeWhite[0]);++n)
+        if(kNativeWhite[n].character=='1' || kNativeWhite[n].character=='2') {
+            const PtbrNativeWhite *d=&kNativeWhite[n];
+            for(unsigned y=4;y<14;++y) {
+                font_cartridge[d->tiles[y/8]+y%8*2]=0x10;
+                font_cartridge[d->tiles[y/8]+y%8*2+1]=0x60;
+            }
+        }
+    for(unsigned c='1';c<='5';++c) {
+        if(native_white(c,glyph)!=8) return 80;
+        if(c<='2' && (glyph[4][1]!=2 || glyph[13][2]!=2 || glyph[4][3]!=1)) return 84;
+        unsigned rows=0,shadow=0;
+        for(unsigned y=0;y<16;++y) {
+            unsigned ink=0;
+            for(unsigned x=0;x<24;++x) {
+                ink+=glyph[y][x]==2;shadow+=glyph[y][x]==1;
+                if(y<3 && glyph[y][x]) return 81;
+            }
+            if(ink) {if(ink<2 || y<4 || y>13) return 82;++rows;}
+        }
+        if(rows!=10 || !shadow) return 83;
+    }
+
     const PtbrNativeBlue *b=NULL;
     for(unsigned n=0;n<sizeof(kNativeBlue)/sizeof(kNativeBlue[0]);++n)
         if(kNativeBlue[n].character=='A') b=&kNativeBlue[n];
@@ -255,7 +281,7 @@ int main(int argc,char **argv) {
         fixture.renderFlags=kPpuRenderFlags_NewRenderer;
         observe_line(&fixture,1,NULL);
         if(fixture.renderFlags&kPpuRenderFlags_NewRenderer) return 15;
-        if(fixture.screenWindowed[0]&4 || fixture.oam[0]!=(175u<<8|48u) ||
+        if(fixture.screenWindowed[0]&4 || fixture.oam[0]!=(175u<<8|(language?68u:48u)) ||
            fixture.vram[0x4348]!=0x2132 || !s_saved_count ||
            fixture.vram[0x5000+0x132*8]!=0x7e5a ||
            memcmp(fixture.vram+0x6000,original+0x6000,0x2000*sizeof(uint16_t))) return 12;
@@ -270,15 +296,27 @@ int main(int argc,char **argv) {
     /* The confirmation bounce (tiles $1EA-$1EE, y $8A-$90) keeps its offset
      * on the selected row instead of jumping back to the stock 2P row. */
     fixture.oam[0]=0x8b40;fixture.oam[1]=0x2bee;observe_line(&fixture,1,NULL);
-    if(fixture.oam[0]!=(171u<<8|48u)) return 17;
+    if(fixture.oam[0]!=(171u<<8|68u)) return 17;
     observe_line(&fixture,224,NULL);if(fixture.oam[0]!=0x8b40) return 18;
     fixture.oam[0]=0x7a40;observe_line(&fixture,1,NULL); /* 1P row bounce */
-    if(fixture.oam[0]!=(170u<<8|48u)) return 19;
+    if(fixture.oam[0]!=(170u<<8|68u)) return 19;
     observe_line(&fixture,224,NULL);
     /* An idle cursor stays on the selected row whatever stock row Up/Down left. */
     fixture.oam[0]=0x7f40;fixture.oam[1]=0x2be8;observe_line(&fixture,1,NULL);
-    if(fixture.oam[0]!=(175u<<8|48u)) return 20;
+    if(fixture.oam[0]!=(175u<<8|68u)) return 20;
     observe_line(&fixture,224,NULL);
+    /* Every selected translated row keeps an eight-pixel cursor/text gap;
+     * the singular row is shorter. English positioning stays unchanged. */
+    for(unsigned language=0;language<2;++language) for(unsigned seat=1;seat<=5;++seat) {
+        s_enabled=language!=0;coop_count_fixture=seat;
+        fixture.oam[0]=0x7f40;fixture.oam[1]=0x2be8;
+        observe_line(&fixture,1,NULL);
+        unsigned expected_x=language?(seat==1?76:68):48;
+        if(fixture.oam[0]!=((12+seat*2)*8-1)*256+expected_x) return 85;
+        observe_line(&fixture,224,NULL);
+        if(fixture.oam[0]!=0x7f40 || memcmp(original,fixture.vram,sizeof(original))) return 86;
+    }
+    coop_count_fixture=5;s_enabled=true;
     coop_fixture=false;
     int completion=completion_tests();if(completion) return completion;
     gold_fixture=true;

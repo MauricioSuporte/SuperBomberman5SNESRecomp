@@ -438,3 +438,48 @@ with the heading visible the number is 12/13 depending on cursor presence.
 Native number position remains (138,171). Match the complete heading or
 blink-off Stage strip and retain translated names through confirmation.
 Verified from consecutive Windows/LLE OAM/VRAM/CGRAM captures; no ROM patch.
+
+
+Louie improvements research (2026-10-15): egg selection at `$C4:514F/$5157`
+passes inclusive maximum 5 to `$C0:1DEB`; selection is consumed at `$C4:515D`
+and attached at `$C4:519C`. Mount indices: Red 0, Yellow 3, Black 6. Native
+mount actor = rider + `$1CBF`, type at `$16C2`, tables `$C0:C3ED/$C3F7/$C401/$C40B`.
+Verified by JPN disassembly and Windows/LLE deterministic egg pickups of 0/3/6.
+`$C4:5560` passes the Red punch's facing cell to the player search `$5582`.
+`$C4:5797` tests Yellow's facing cell; moving-block contact is `$C4:5973`.
+Native ground bomb kick `$C5:2293` uses direction in A, origin cell `$8A`;
+bomb arrays (20 slots): `$0E40` fuse, `$0E7C` cell, `$0E90` movement,
+`$0F38` progress, `$0F4C` speed. Verified by disassembly, Yellow 0x33→0x36
+rolling-bomb route and native tests. Do not replace this with Blue's airborne
+kick `$C5:2500`. Clock helper `$C3:4C13` freezes one actor (X, object at `$52`)
+using global timer `$0E20/$0E21`; animation speed `$0800+object`. The mod borrows
+and restores the global timer within the helper's call, returning at `$C3:4C69`.
+Verified by disassembly and Red enemy held/resumed captures. Native actor
+dispatch `$C4:224F` has an existing long-call return frame; allocation `$C4:2266`
+clears inherited mod effects. Native player screen position + signed scroll
+`$1D3B/$1D3D` gives world position (`$C4:31BD`); Zone 1-1 scroll is -16/-28.
+Keep local test captures/audio under ignored directories. New authored native
+trampolines reserve `$C4:5B80-$5C1F`; fixture-only egg mailbox `$7F:FFF0` is not
+present in normal builds. See docs/LOUIE_IMPROVEMENTS.md.
+
+
+Louie audio cues (2026-10-15): Red's `$C4:5563` tests carry from the native
+player search. With only an enemy hit, redirect to `$C4:5576` to reuse the
+exact player-hit SFX (A=`$0238`, `$C0:0CED`); do not duplicate it when the native
+player path already succeeds. Black acquisition PCM plays at `$C4:5168`, the
+same native sound call used for other egg choices, rather than delayed
+attachment `$C4:519C`. Verified by JPN disassembly, native unit tests and
+Normal scripted audio-command/egg-phase fixtures. Local SB6 WAVs contain
+37.56 ms (mount) / 49.50 ms (dash) of initial digital silence; skip it only in
+the runtime PCM registration, leaving files untouched. Dash voices are per
+seat and stopped on reset/load. Fixture-only `$7F:FFF1` counts native `$0238`
+commands; FFF2/FFF3 record acquisition cue / attachment frame counters.
+
+## Additional Louie audio publication exception — 2026-10-15
+
+The maintainer explicitly authorized shipping MountBlackLouie.wav and BlackLouieDash.wav from the SB6 project as additional mod resources, clarifying they are not extractions of the original game. Only the two exact files under mods/preloaded/packages/superbomberman5.louie-improvements/0.1.0/audio/ are approved; see the sibling AUDIO_PROVENANCE.md for source paths, SHA-256 and licensing limits. Other extracted audio remains prohibited. The publication guard checks the approved paths and bytes.
+
+Title count font (2026-10-15): runtime 2bpp glyph halves 1 = ROM file
+`$23DC90/$23DC20`, 2 = `$23DB10/$23DD50`. Verified by exact tile-byte
+matching against Windows/LLE title BG3 VRAM `$12E/$127` and `$116/$13A`;
+the copyright uses the same font page. No extracted pixels stored in source.

@@ -100,3 +100,6 @@ funcs.h
 __pycache__/
 *.pyc
 
+
+# User-supplied local mod audio (never published)
+/mods/local/

@@ -256,3 +256,16 @@ guest-memory restoration and identical gameplay after the overlay ended.
 Evidência: 37 quadros pareados por arena, incluindo 32 consecutivos, passaram
 nas arenas 1 e 13; paleta rosa/piscar e nomes PT-BR preservados, memória
 idêntica e partida idêntica após o aviso.
+
+Os números da quantidade de jogadores usam a mesma altura, espessura e sombra
+das letras brancas do título: 1/2 vêm da ROM; 3–5 são extensões autorais.
+Player-count digits match the white title lettering height, weight and shadow
+using cartridge glyphs for 1/2 and authored extensions for 3–5.
+
+No menu de cinco jogadores, o rosto acompanha o início da opção selecionada
+em português, mantendo oito pixels entre a célula do cursor e a do número.
+A linha singular recebe seu próprio alinhamento; a animação de confirmação
+é preservada e OAM/VRAM são restaurados após desenhar.
+In the five-player menu, the face follows the selected Portuguese row with
+the native eight-pixel cursor/digit cell gap, including the shorter singular
+row. Confirmation bounce and exact OAM/VRAM restoration are preserved.

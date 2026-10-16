@@ -101,6 +101,259 @@ fogo, maça, laser e retratos lidos da ROM do SB4; atordoamento e perda de
 itens com as rotinas do próprio SB5). Testes
 nativos e rotas roteirizadas no Linux passaram (seleção, Battle Free-for-All e
 Team Battle, Normal com cinco jogadores); Windows ainda não foi testado.
+## v0.11.1 published / Publicada — 2026-10-15
+
+[Prerelease v0.11.1](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.11.1)
+targets `bdb50bedb28946551b7ecf1c5f150bcc4f8708c9`.
+[Clean Release workflow 38823031455](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/actions/runs/38823031455)
+passed Windows and Ubuntu 22.04 builds, native/Python tests, dependency-pin
+checks, history/package audits and setup/analyzer smoke tests. The release
+includes title digit and cursor spacing fixes. Framework pins and eleven
+default-disabled mod packages are unchanged from v0.11.0. No SB4 development,
+ROM, generated game code, saves or captures are included.
+
+Downloaded artifacts matched GitHub SHA-256; payload checksums cover all
+files and both approved Black Louie WAVs match their authorized hashes.
+Extracted Windows setup and Linux AppImage (Ubuntu 24.04/WSL) each generated
+and rebuilt using the local JPN ROM, passed all eleven native binaries and
+the 3,628-frame LLE first-stage route. Windows launcher startup passed twice;
+Linux first/repeat writable setup launches and generated-game launch passed.
+Both bundled analyzers passed synthetic-ROM checks. Both rebuilt packages
+also passed paired PT-BR off/on 1,766-frame routes through all five menu
+rows, confirmation and file entry, with identical WRAM/VRAM/OAM/CGRAM/SRAM
+in every paired dump. Menu captures were inspected on both platforms.
+Physical controllers, audio latency, full campaign and all mod combinations
+remain unqualified. Partial recompilation; most game logic is interpreted.
+
+Public assets verified by size and SHA-256:
+
+- `superbomberman5-0.11.1-windows-x64.zip`: 17,021,409 bytes, SHA-256
+  `3b0863351f865de0e07c4ed7435545cf36c976ba83dc843247ef3bff2cf48b76`.
+- `superbomberman5-0.11.1-linux-x86_64.AppImage`: 13,662,712 bytes, SHA-256
+  `de6ed7d6c000412e0896b32410fe7401b3cc3dee8ddbba8b02425d3be445124c`.
+- SHA256SUMS covers both public packages. Remote bilingual UTF-8 notes match
+  the generated file exactly, with no replacement characters.
+
+Pré-release v0.11.1 publicada com correções da fonte e da posição do cursor.
+ZIP Windows, AppImage Linux e SHA256SUMS conferidos. CI limpa e onze testes
+nativos passaram; os dois pacotes geraram/recompilaram e executaram a rota
+LLE de 3.628 frames. Rotas pareadas de 1.766 frames verificaram as cinco
+opções com PT-BR ligado/desligado e memória/saves idênticos. Pins e onze mods
+mantidos. Linux experimental; campanha completa, controles físicos e todas
+as combinações não qualificados. Alterações locais dos submódulos excluídas.
+
+## PT-BR cursor spacing / Espaçamento do cursor — 2026-10-15
+
+The translated five-player menu aligns the face to the selected row's text:
+x=76 for 1 JOGADOR, x=68 for 2–5 JOGADORES, with an eight-pixel cell gap.
+English retains x=48. The confirmation bounce remains vertical and OAM is
+restored after drawing. Native tests cover all five selections/languages,
+bounce and exact restoration. Paired Windows/LLE routes (1,766 frames each)
+visited all five rows with PT-BR off/on, confirmation and file-menu entry;
+captures were inspected, with identical WRAM/VRAM/OAM/CGRAM/SRAM in all
+seven paired dumps. No interpreter errors; full campaign unqualified.
+Menu PT-BR com cursor junto da opção atual, inclusive a linha singular.
+Rotas pareadas de 1.766 frames conferiram as cinco opções, confirmação e
+entrada nos arquivos, com tradução ligada/desligada e sem erros.
+
+## PT-BR player-count font / Fonte da quantidade de jogadores — 2026-10-15
+
+Player counts 1/2 now read the original title glyphs from the cartridge;
+3–5 use authored extensions with matching six-column, ten-row ink and full
+outline. This supersedes the earlier 5x7 approximation. Windows/LLE: 1,448
+frames to the five-player menu with PT-BR/co-op, inspected beside the native
+copyright digits. Native tests cover cartridge reads, digit weight/margins
+and render restoration. Full campaign is outside this check.
+Os algarismos 1/2 agora vêm da fonte original da ROM; 3–5 são extensões
+autorais com o mesmo traço e contorno completo. Substitui a aproximação 5x7.
+Menu conferido em Windows/LLE com PT-BR/co-op, junto dos números do copyright.
+
+## v0.11.0 published / Publicada — 2026-10-15
+
+[Prerelease v0.11.0](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.11.0)
+targets `17e97f6c742630dbc4f45c9ef339fb868cb3c62d`.
+[Clean Release workflow 38819354429](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/actions/runs/38819354429)
+passed Windows and Ubuntu 22.04 builds, native/Python tests, dependency-pin
+checks, publication audits and setup/analyzer smoke tests. Both downloaded
+artifacts matched GitHub's SHA-256. Their payload checksums cover every file;
+eleven manifests are default-disabled. Both approved Black Louie WAVs match
+the documented hashes. No SB4 character implementation/package, generated
+game code, ROM, local preferences or captures are included.
+
+Extracted Windows setup and Linux AppImage (Ubuntu 24.04/WSL) each generated
+and rebuilt using the local JPN ROM, passed all eleven native binaries and
+the 3,628-frame LLE first-stage route with dummy video/audio. Windows setup
+launcher startup passed twice; both analyzers passed the synthetic-ROM test.
+Linux AppImage first/repeat writable setup launches and subsequent generated
+game launch passed. A separate local fixture build from the Windows package
+passed Red (3,813 frames, native hit SFX command once and enemy freeze/resume),
+Black (3,642 frames, egg/protected push), Yellow chain (3,724 frames) and
+P5/co-op/PT-BR (3,756 frames). The fixture is OFF in public setup builds;
+fixture game builds and captures stay ignored. Physical audio latency,
+controllers, full campaign and every mod combination remain unqualified.
+
+Public assets verified by size and SHA-256:
+
+- Windows ZIP: 17,015,993 bytes,
+  `9c9f7565e61f3485f4ecde0ba2d5a515dc360eb41a8db2c7987baf7007349fcb`.
+- Linux AppImage: 13,658,616 bytes,
+  `b80138be830b1fde6fc097e0fb255751d682497d944135be0a7c5850e2f52c5a`.
+- SHA256SUMS covers both. The published bilingual UTF-8 body matches the
+  generated notes exactly, without replacement characters; prerelease=true.
+
+Pré-release v0.11.0 publicada com ZIP Windows, AppImage Linux e checksums.
+Builds CI limpos, pins, testes, auditorias, onze mods desligados por padrão e
+hashes dos arquivos conferidos. Os dois WAVs adicionais autorizados do Black
+estão incluídos; personagens do SB4 em desenvolvimento ficam de fora.
+Os pacotes geraram/recompilaram o jogo com a ROM local, passaram nos onze
+testes nativos e na rota de 3.628 frames em Windows e Ubuntu 24.04/WSL.
+Fixtures separadas do pacote Windows confirmaram Red/SFX, Black, cadeia do
+Yellow e P5 com co-op/PT-BR. Fixture desligada nos setups públicos. Áudio
+físico, controles, campanha completa e todas as combinações de mods não foram
+qualificados. Notas bilíngues e hashes remotos verificados.
+
+
+## v0.11.0 release scope / Escopo da release — 2026-10-15
+
+The Louie branch starts at published main `9ceb220` and adds only Louie
+improvements plus release metadata. The in-development Super Bomberman 4
+characters, external ROM loader, abilities and package are excluded. Existing
+framework pins remain unchanged; local dirty submodules are not released.
+The eleven activation packages are default-disabled. The two Black Louie WAVs are included as additional resources explicitly
+authorized by the maintainer, with provenance and SHA-256 checks. This release decision supersedes the
+ignored-local-audio arrangement described in the earlier development notes below.
+
+All eleven native test binaries and the Python publication/encoding tests
+passed locally (two Linux AppRun tests skipped on Windows). Windows/LLE
+feature routes and sound evidence are recorded below; the maintainer
+confirmed the final behavior. Release setup packages are built from clean CI
+checkouts using the pinned dependencies. Package smoke tests and Linux
+coverage do not establish full-campaign or all-mod-combination accuracy.
+
+A branch dos Louies parte da main publicada `9ceb220` e acrescenta somente
+as melhorias dos Louies e metadados da release. Personagens do Super Bomberman
+4, carregador de ROM externa, habilidades e pacote ainda em desenvolvimento
+ficam de fora. Pins dos frameworks preservados; alterações locais dos
+submódulos não são publicadas. Onze pacotes desligados por padrão; os dois WAVs adicionais do Black
+estão incluídos com autorização expressa, origem e hashes documentados. Os onze testes nativos e os testes Python
+passaram (dois testes Linux pulados no Windows). Rotas e limites abaixo;
+builds de setup usam checkouts CI limpos e dependências fixadas.
+
+
+## Louie sound feedback / Sons dos Louies — 2026-10-15 (v0.11.0)
+
+Red now reuses the exact native player-hit cue (group 2, command `$38`) when
+its Normal punch hits an enemy. The return from the native player search at
+`$C4:5563` redirects to the existing sound tail `$C4:5576` only if an enemy was
+hit and the player search missed. A native player hit keeps its original path,
+so mixed hits do not duplicate the sound; misses produce no hit cue.
+
+Black Y starts SB6's `Assets/Sounds/BlackLouieDash.wav` once per accepted dash,
+with separate host voices for P1–P5. Its acquisition PCM now starts at
+`$C4:5168`, the same native cue as the other Louies, instead of the later
+attachment handler `$C4:519C`. The local WAV loader skips initial digital zero
+samples (37.56 ms mount / 49.50 ms dash in the supplied files); original files
+are unchanged and remain ignored under `mods/local/` / `build-lle/mods/local/`.
+Both clips are stopped on reset/load and unregistered on plugin deactivation;
+no audio is embedded or packaged. Override dash path with
+`SB5_BLACK_LOUIE_DASH_SFX`; acquisition keeps `SB5_BLACK_LOUIE_SFX`.
+
+Evidence: all eleven Windows native test executables and strict warning checks
+pass. Python checks pass (seven tests, two Linux-only checks skipped on Windows).
+Louie coverage includes
+one native Red cue, no duplicate cue for native player hits, silent misses,
+P1–P5 dash one-shots/held Y, early acquisition dispatch, no replay on attachment,
+silent-prefix trimming and existing gameplay/state tests. Windows/LLE isolated
+Normal routes passed: Red 3,813 frames (fixture observed native `$0238` count
+0→1 at the enemy hit, enemy held/resumed); Black 3,642 frames (egg pickup,
+dash, protected enemy push/resume). Black's native cue/attachment frame counters
+were 54/101: the previous dispatch was 47 simulation frames later in this route.
+No interpreter caps, architectural BRKs, dispatch abandonment or fatal errors.
+Raw captures stay in `.bootstrap/louie-audio-validation/`. Production build
+returns to `SB5_COOP_INPUT_FIXTURE=OFF`. Dummy audio and command/timing tests
+are evidence of dispatch/mixing; audible device latency is not measured.
+
+Red passou a tocar uma vez o mesmo SFX nativo de acerto contra jogadores ao
+congelar um inimigo do Normal, sem duplicação quando a busca nativa já acerta
+um jogador. Black toca o som de arrancada do SB6 ao ativar Y; o som do ovo foi
+antecipado para o ponto nativo usado pelos demais Louies. O silêncio digital
+inicial dos WAVs é ignorado em memória, sem modificar os arquivos locais.
+Testes nativos e rotas Windows/LLE de Red/Black passaram; nessa rota, o som do
+ovo deixou de esperar os 47 frames até a montagem. Fixture desligada no build
+normal. A latência audível do dispositivo não foi medida com áudio dummy.
+
+
+## Louie improvements / Melhorias dos Louies — 2026-10-15 (v0.11.0)
+
+Branch `codex/louie-improvements` starts at local `main` (`9ceb220`). Adds the
+optional, default-disabled `superbomberman5.louie-improvements` 0.1.0 package:
+Yellow rolls bombs and transfers motion across bombs/soft blocks; Red freezes
+Normal enemies with the native Clock helper for 180 simulation frames; Black
+(type 6) joins the egg lottery and gains a protected Y dash that pushes players
+and Normal enemies. The maintainer selected the SB6 `MountBlackLouie.wav`;
+it is loaded from an ignored local resource, never committed or packaged.
+Native cartridge graphics, allocation and mount-loss/death sounds are retained.
+These development notes preceded release preparation; v0.11.0 now includes
+the plugin and approved additional WAVs. Earlier hosts lack this native plugin. See [LOUIE_IMPROVEMENTS.md](LOUIE_IMPROVEMENTS.md).
+
+Evidence (Windows x64, LLE, local JPN image, SDL dummy video/audio):
+- Build and eleven native test executables pass. New `louie_tests` covers
+  five seats, Battle/Normal player push, Normal-only enemy freeze, pause,
+  180-frame lifetime, dead-target cleanup, Clock timer restoration, own-cell
+  occupancy, bomb ownership, collision callback resumption, scheduler capacity,
+  WAV registration, old/disabled/corrupt state loading and ROM restoration.
+- Normal Zone 1-1, Red, 3,813-frame route: enemy world position (60,40) and
+  animation speed 0 stayed unchanged across the held capture; after the timer
+  the enemy moved to (51,40) with animation speed 1. Rider kept its mount.
+- Yellow, 3,636-frame route: native ground-motion flags `$11`; bomb moved from
+  cell `$33` through `$34` to `$36` without the Blue Louie's airborne throw.
+- Yellow mixed chain, 3,724 frames: three real native bombs plus a soft block
+  placed as fixtures; impulse went bomb → bomb → soft block → third bomb.
+  Assertions checked both transferred bombs moved and the original block cell
+  no longer held the block. One scheduler task per contact; no repeated
+  callback allocation. Raw captures stay local.
+- Black, 3,642 frames: deterministic native egg pickup of type 6, cartridge
+  graphics inspected; first hit held the dash and pushed an enemy from about
+  x=68 to x=96. Rider invulnerability bit was set during impact and expired
+  afterwards; enemy animation resumed. The 48-pixel maximum dash and obstacle
+  clipping also have native unit coverage.
+- Five-player Normal + PT-BR, 3,756 frames: P5 acquired type 6 in companion
+  actor 9, used Y through the real multitap/fixture input path and pushed enemy
+  actor 10. Final roster `$1D25=$1F`, mount boundary `$1CBF=5`; P5 stayed mounted.
+- Final production build has `SB5_COOP_INPUT_FIXTURE=OFF`; a separate
+  3,585-frame mod-disabled control reached Zone 1-1, collected a native egg
+  and accepted Y without guest errors. Strict `-Wall -Wextra -Werror` syntax
+  checks passed for the new module/tests. Publication history audit and
+  `git diff --check` passed; Python checks: seven pass, two Linux AppRun checks
+  skipped on Windows. The `.snesmod` contains only manifest + LICENSE.
+- `tests/louie_runtime.py` assertions passed for Red, the full mixed chain and
+  P5 + PT-BR. Isolated folders/fresh SRAM; opt-in `louie_fixture.c` chooses the
+  egg but leaves allocation/pickup/attachment to native code. No guest errors,
+  interpreter caps, architectural BRKs or dispatch abandonment in these logs.
+
+Limits: no full campaign/boss qualification, physical controllers, live
+save/rewind UI, Battle gameplay route, every stage gimmick or all other mod
+combinations. Player push in Battle and P1–P5 uses unit coverage; P5 enemy push
+has runtime evidence. Dummy audio verifies the code/mixer path, not subjective
+listening quality. The normal executable is rebuilt with
+`SB5_COOP_INPUT_FIXTURE=OFF`. The original local launcher configuration is
+backed up in `.bootstrap/`; only its old Bomber Kings feature (absent from this
+main-based branch) is disabled, and Louie improvements is enabled locally.
+The existing submodule working changes are preserved.
+
+Mod opcional dos Louies na branch `codex/louie-improvements`, baseada na
+`main`, sem release nem alteração de versão. Yellow chuta bombas e transmite
+movimento em cadeias mistas; Red congela inimigos do Normal por 180 frames;
+Black sai dos ovos e usa Y para uma arrancada protegida com empurrão. O áudio
+escolhido do SB6 fica em arquivo local ignorado. Build Windows e onze testes
+nativos passaram; rotas LLE confirmaram Red, Yellow, cadeia completa e P5
+montado no Black com co-op/PT-BR. Capturas brutas ficam em `.bootstrap/`.
+Não há validação de campanha completa, chefes, controles físicos, interface de
+save/rewind, gameplay Battle ou todas as combinações de mods. O executável
+normal é recompilado sem a fixture de teste. Configuração local anterior
+preservada em backup; Bomber Kings desativado só nessa configuração por não
+existir no código da `main` usada como base.
+
 
 ## v0.10.0 package/publication verification — 2026-10-15
 

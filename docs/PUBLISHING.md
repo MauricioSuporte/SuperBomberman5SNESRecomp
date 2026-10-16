@@ -1,10 +1,10 @@
 # Versions and publication / Versões e publicação
 
-Public repository: `MauricioSuporte/SuperBomberman5SNESRecomp`. VERSION is **0.10.0**. Publish prereleases while full-game accuracy remains unqualified. Preserve existing published tags and assets.
+Public repository: `MauricioSuporte/SuperBomberman5SNESRecomp`. VERSION is **0.11.1**. Publish prereleases while full-game accuracy remains unqualified. Preserve existing published tags and assets.
 
 ## Release contents
 
-Publish **superbomberman5-0.10.0-windows-x64.zip**, **superbomberman5-0.10.0-linux-x86_64.AppImage** and **SHA256SUMS**. Both are ROM-independent setup hosts with source, native analyzer, launcher resources, licenses and ten optional, default-disabled mods: PT-BR menus and completion screens, Normal character selection, L/R colors, infinite Normal timer, five-player Normal Game, Subordinate Bomber, Pause — exit & draw, Normal portal destinations Honey and Kotetsu, and Gold Battle. The playable executable is generated only on the player's machine. Linux is experimental; see STATUS.md for exact evidence.
+Publish **superbomberman5-0.11.1-windows-x64.zip**, **superbomberman5-0.11.1-linux-x86_64.AppImage** and **SHA256SUMS**. Both are ROM-independent setup hosts with source, native analyzer, launcher resources, licenses and eleven optional, default-disabled mods: PT-BR menus and completion screens, Normal character selection, L/R colors, infinite Normal timer, five-player Normal Game, Subordinate Bomber, Pause — exit & draw, Normal portal destinations Honey and Kotetsu, Gold Battle, and Louie improvements. The two additional Black Louie WAVs are included under the precise maintainer-authorized exception documented in AUDIO_PROVENANCE.md; audit their hashes. Super Bomberman 4 characters remain in development and are excluded from this release. The playable executable is generated only on the player's machine. Linux is experimental; see STATUS.md for exact evidence.
 
 Build from a separate clean checkout with pinned submodules, no src/gen/*.c or recomp/funcs.h, `SNESRECOMP_SETUP_HOST=ON`, `SNESRECOMP_FRAME_IMPL=LLE` and the test input fixture OFF. Never package the development game executable or local ROM/save/capture data.
 
@@ -34,7 +34,7 @@ python -m unittest discover -s tests -v
 git diff --check
 ```
 
-Run all ten native tests in the release source (`ptbr_render_tests`, `normal_character_tests`, `selection_color_tests`, `infinite_time_tests`, `normal_coop_tests`, `subordinate_tests`, `pause_menu_tests`, `portal_labels_tests`, `honey_kotetsu_tests`, `gold_battle_tests`). Test package extraction, the native analyzer, first/repeat launcher startup and local ROM generation/rebuild. Exercise a real-ROM route locally and record its platform/frames and limitations in STATUS.md. No ROM enters CI or public artifacts.
+Run all eleven native tests in the release source (`ptbr_render_tests`, `normal_character_tests`, `selection_color_tests`, `infinite_time_tests`, `normal_coop_tests`, `subordinate_tests`, `pause_menu_tests`, `portal_labels_tests`, `honey_kotetsu_tests`, `gold_battle_tests`, `louie_tests`). Test package extraction, the native analyzer, first/repeat launcher startup and local ROM generation/rebuild. Exercise a real-ROM route locally and record its platform/frames and limitations in STATUS.md. No ROM enters CI or public artifacts.
 
 ## Build and package
 
@@ -44,7 +44,7 @@ The Windows packager remains scripts/package_release.sh, followed by tools/final
 
 ```bash
 python3 tools/package-appimage.py \
-  --zip dist/superbomberman5-0.10.0-linux-x64.zip \
+  --zip dist/superbomberman5-0.11.1-linux-x64.zip \
   --build-dir build-ci \
   --analyzer snesrecomp/recompiler-rs/target/release/snesrecomp-analyze \
   --rust-sysroot "$(rustup run 1.97.1 rustc --print sysroot)" \
@@ -65,7 +65,7 @@ Verify the default branch, tag target, successful workflow, prerelease state, UT
 
 Toda nova release exige README.md atualizado nas duas línguas, com informações úteis: downloads, formatos, instalação/atualização, recursos, requisitos e limites reais de validação. Atualize VERSION, STATUS.md, este documento e o gerador de notas.
 
-A v0.10.0 distribui **ZIP Windows x64**, **AppImage Linux x86_64 experimental** e **SHA256SUMS**. Ambos incluem setup sem ROM, fontes, analisador, licenças e os dez mods opcionais desligados por padrão. O jogo é gerado apenas na máquina do jogador. Use checkout limpo, LLE e setup host; nunca publique o executável de desenvolvimento, ROM, código gerado, saves ou capturas.
+A v0.11.1 distribui **ZIP Windows x64**, **AppImage Linux x86_64 experimental** e **SHA256SUMS**. Ambos incluem setup sem ROM, fontes, analisador, licenças e os onze mods opcionais desligados por padrão. O jogo é gerado apenas na máquina do jogador. Use checkout limpo, LLE e setup host; nunca publique o executável de desenvolvimento, ROM, código gerado, saves ou capturas.
 
 A workflow Release é manual e só publica quando os dois builds e verificações passam. Valide os pacotes extraídos, analisador, primeira abertura/reabertura e geração/rebuild local. O AppImage copia o setup para a pasta XDG gravável da versão e reutiliza o jogo gerado; sem FUSE, use --appimage-extract-and-run. Registre plataforma, rota/frames e limitações no STATUS.md. Preserve fontes, licenças, revisões e checksums. Não reescreva tags ou assets públicos automaticamente. Confirme notas UTF-8, estado de pré-release e hashes dos arquivos no GitHub.
 

@@ -571,6 +571,159 @@ extraídos, saves ou dumps. Os pixels são lidos da ROM do próprio jogador
 durante a execução. Confira a identidade acima e as licenças no pacote.
 '''
 
+if tuple(int(n) for n in version.split('.')) >= (0,11,0):
+    notes = f'''# Super Bomberman 5 v{version} — Louie improvements
+
+## English
+
+New optional **Louie improvements** mod. Enable **Yellow, Red and Black Louies**
+in Mods → Gameplay after Generate & rebuild. Press Y while mounted:
+
+- Yellow kicks bombs; motion transfers between bombs and moving soft blocks.
+- Red freezes Normal Game enemies for 180 simulation frames (about three
+  seconds), with the native player-hit sound, while retaining its player punch.
+- Black can hatch from eggs and performs a protected dash that pushes players
+  and Normal enemies. It retains the native Louie death sound.
+
+Black acquisition/dash sounds include the maintainer-supplied additional
+resources MountBlackLouie.wav and BlackLouieDash.wav, explicitly authorized
+for distribution as non-extracted mod resources. See
+[audio details and provenance](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/blob/v{version}/docs/LOUIE_IMPROVEMENTS.md).
+The acquisition cue matches the native Louie timing; initial digital silence
+is skipped in memory. Super Bomberman 4 characters are still in development
+and are excluded from this release.
+
+Download **superbomberman5-{version}-windows-x64.zip** or
+**superbomberman5-{version}-linux-x86_64.AppImage**, and verify **SHA256SUMS**.
+Both include a ROM-independent setup host, analyzer, source, licenses and
+**eleven optional mods**, all disabled by default (package version 0.1.0).
+Extract Windows into a new writable folder. On Linux chmod +x and run the
+AppImage; without FUSE use --appimage-extract-and-run. Supply your own
+compatible JPN ROM and use **Generate & rebuild**, also when upgrading.
+Windows 10+ x64 or experimental Linux x86_64/glibc 2.35+, several GB free and
+internet for the first tool download are required. Players do not need Rust.
+
+Windows/LLE scripted routes cover Yellow bomb/block chains, Red freeze and
+native hit command, Black egg/dash/push and P5 with co-op/PT-BR. Native tests
+cover all five seats, state validation, patch restoration and audio dispatch.
+The maintainer also confirmed the gameplay and sound adjustments locally.
+Dummy-audio routes do not measure physical device latency. Full campaign,
+all mod combinations, physical-controller multiplayer and HLE remain
+unqualified; Linux gameplay coverage remains limited. Partial recompilation:
+most game logic runs on the interpreter. No netplay.
+
+No ROM, generated game C, ROM-derived playable executable, extracted graphics
+or audio, saves or raw dumps are distributed. Supported ROM: JPN header,
+CRC32 c25ab56a, SHA-256
+5251e6491872dc51879b630a34d76a92e29ea0c39026c4f8773c1fe006d047c4.
+
+## Português
+
+Novo mod opcional **Louie improvements**. Depois de Generate & rebuild, ative
+**Yellow, Red and Black Louies** em Mods → Gameplay. Pressione Y montado:
+
+- Yellow chuta bombas; o movimento passa entre bombas e soft blocks móveis.
+- Red paralisa inimigos do Normal por 180 frames de simulação (cerca de três
+  segundos), com o SFX nativo de acerto, mantendo o soco contra jogadores.
+- Black pode sair dos ovos e executa uma arrancada protegida que empurra
+  jogadores e inimigos do Normal. Mantém o som nativo de morte dos Louies.
+
+Os sons de aquisição/arrancada do Black incluem MountBlackLouie.wav e
+BlackLouieDash.wav como recursos adicionais fornecidos pelo mantenedor, que
+autorizou a publicação e esclareceu não serem extrações do jogo original.
+Veja os [detalhes e a origem do áudio](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/blob/v{version}/docs/LOUIE_IMPROVEMENTS.md).
+A aquisição usa o mesmo instante dos outros Louies e o silêncio digital
+inicial é ignorado em memória. Os personagens do Super Bomberman 4 continuam
+em desenvolvimento e ficam fora desta release.
+
+Baixe **superbomberman5-{version}-windows-x64.zip** ou
+**superbomberman5-{version}-linux-x86_64.AppImage** e confira **SHA256SUMS**.
+Ambos incluem setup sem ROM, analisador, fontes, licenças e **onze mods
+opcionais**, desligados por padrão (pacotes 0.1.0). Extraia o Windows numa
+pasta nova e gravável. No Linux, chmod +x e execute; sem FUSE use
+--appimage-extract-and-run. Forneça sua ROM JPN compatível e faça
+**Generate & rebuild**, inclusive ao atualizar. Requer Windows 10+ x64 ou
+Linux experimental x86_64/glibc 2.35+, alguns GB livres e internet no primeiro
+download das ferramentas. O jogador não precisa instalar Rust.
+
+Rotas Windows/LLE verificaram cadeias de bombas/blocos do Yellow, paralisia e
+comando sonoro do Red, ovo/arrancada/empurrão do Black e P5 com co-op/PT-BR.
+Testes nativos cobrem os cinco assentos, estados, restauração de patches e
+disparo de áudio. O mantenedor também confirmou gameplay e ajustes sonoros
+localmente. Áudio dummy não mede latência de dispositivos físicos. Campanha
+completa, todas as combinações de mods, controles físicos/multiplayer e HLE
+seguem sem qualificação. A cobertura Linux é limitada. Recompilação parcial,
+principalmente interpretada; sem netplay. Evidências em docs/STATUS.md.
+
+Sem ROM, código gerado, executável jogável derivado da ROM, gráficos/áudio
+extraídos, saves ou dumps. Confira a identidade acima e as licenças do pacote.
+'''
+
+if tuple(int(n) for n in version.split('.')) >= (0,11,1):
+    notes = f'''# Super Bomberman 5 v{version} — PT-BR title font fix
+
+Corrects player-count digits in the PT-BR Normal Game title menu. Counts 1/2
+use the original cartridge title glyphs; 3–5 use authored extensions matching
+the native weight and full outline, consistent with the copyright lettering.
+The Bomberman face cursor now sits beside the selected Portuguese option,
+retaining the native eight-pixel cell gap and confirmation bounce.
+The eleven optional mods and framework pins from v0.11.0 remain unchanged.
+Mods are disabled by default; their package versions remain 0.1.0.
+
+Download **superbomberman5-{version}-windows-x64.zip** or
+**superbomberman5-{version}-linux-x86_64.AppImage** and verify **SHA256SUMS**.
+Extract Windows into a new writable folder. On Linux, chmod +x and run;
+without FUSE use --appimage-extract-and-run. Supply your compatible JPN ROM
+and run **Generate & rebuild**, including when upgrading: an old generated
+executable cannot receive this native fix by importing a mod manifest.
+Requires Windows 10+ x64 or experimental Linux x86_64/glibc 2.35+, several GB
+free and internet for the first tool download. Players do not need Rust.
+
+Windows/LLE menu inspection exercised 1,448 frames with PT-BR/co-op enabled;
+regression tests cover original glyph reads, all five counts and restoration.
+CI builds/tests and package smoke checks cover Windows and Ubuntu 22.04.
+Full campaign, physical controllers, all mod combinations and broad Linux
+support remain unqualified. Partial recompilation: most game logic runs in
+the interpreter. No netplay. See docs/STATUS.md for concrete evidence.
+
+Both downloads are ROM-independent setup hosts with source, analyzer,
+licenses and eleven default-disabled mods. No ROM, generated game C,
+ROM-derived playable executable, extracted graphics, saves or raw dumps.
+The two approved Black Louie add-on WAVs remain included with provenance.
+Super Bomberman 4 development is excluded. Supported ROM SHA-256:
+5251e6491872dc51879b630a34d76a92e29ea0c39026c4f8773c1fe006d047c4.
+
+## Português
+
+Corrige a fonte dos números da quantidade de jogadores no menu Normal em
+PT-BR. Os algarismos 1/2 usam os desenhos originais da ROM; 3–5 são extensões
+autorais com o mesmo peso e contorno completo da fonte branca do título e
+do copyright. O cursor do rosto agora fica junto da opção selecionada, com
+o espaçamento original de oito pixels e a animação de confirmação.
+Mantém os onze mods opcionais e os pins da v0.11.0. Mods
+desligados por padrão; versões dos pacotes continuam 0.1.0.
+
+Baixe o **ZIP Windows x64** ou **AppImage Linux x86_64 experimental** acima e
+confira **SHA256SUMS**. Extraia o Windows numa pasta nova e gravável. No Linux,
+dê permissão de execução; sem FUSE, use --appimage-extract-and-run. Forneça
+sua ROM JPN compatível e faça **Generate & rebuild**, inclusive ao atualizar.
+Importar o manifesto do mod não atualiza o executável antigo. Requer Windows
+10+ x64 ou Linux experimental x86_64/glibc 2.35+, alguns GB livres e internet
+no primeiro download de ferramentas. Rust não é necessário para o jogador.
+
+Inspeção Windows/LLE chegou ao menu com PT-BR/co-op em 1.448 frames. Testes
+cobrem leitura dos glifos originais, os cinco números e restauração. CI
+verifica builds/testes e smoke dos pacotes Windows/Ubuntu 22.04. Campanha
+completa, controles físicos, todas as combinações de mods e suporte amplo a
+Linux permanecem não qualificados. Recompilação parcial, principalmente
+interpretada; sem netplay. Evidências em docs/STATUS.md.
+
+Pacotes de setup sem ROM, com fontes, analisador, licenças e onze mods.
+Sem código/jogo gerado, gráficos extraídos, saves ou dumps. Os dois WAVs
+adicionais autorizados do Black Louie seguem incluídos com origem documentada.
+Desenvolvimento de personagens do Super Bomberman 4 fica fora da release.
+'''
+
 if args.output:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(notes, encoding='utf-8', newline='\n')
