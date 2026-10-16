@@ -1,5 +1,31 @@
 # Super Bomberman 5: estado do protótipo
 
+## v0.13.0 published / Publicada - 2026-10-16
+
+[Prerelease v0.13.0](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.13.0)
+at `4a69471` (tag created by the release workflow; tag pushes and the Git
+tags API were refused by this session's proxy, so it is not annotated).
+Release workflow test run 38942331672 and publishing run 38942922204 passed
+the Windows and Ubuntu 22.04 builds, native tests, Python tests, source/
+history and package audits. Assets match GitHub digests and SHA256SUMS:
+Windows ZIP 16,975,157 bytes (`2045e62e...071458`), Linux AppImage
+13,605,368 bytes (`1a5c28f1...2871f4`), SHA256SUMS 216 bytes. The ZIP holds
+the eleven mod packages (Extra Characters; no Honey and Kotetsu or
+Subordinate Bomber package) and no ROM, generated C, WAV or screenshot. Remote
+notes equal the UTF-8 generator output with no U+FFFD.
+
+Downloaded AppImage on the Linux cloud host: first launch installed the
+writable 0.13.0 setup, `tools/regen.sh` generated from the real ROM and the
+game rebuilt (system compilers, not the launcher's portable tools); a Battle
+route with Bomber Kings + Extra Characters + colors showed Terrorin standing
+and his barrier with dummy video/audio. The Windows ZIP was not run by me
+(the workflow artifacts could not be downloaded here); the maintainer's
+Windows check covered the source build before release.
+
+Publicada com ZIP Windows, AppImage Linux experimental e SHA256SUMS. O
+AppImage baixado gerou e recompilou o jogo e passou numa rota de Battle com o
+Terrorin; o ZIP Windows não foi executado nesta sessão.
+
 ## v0.13.0 release candidate - 2026-10-16
 
 Based on published v0.12.1 with pinned dependencies unchanged. Adds the
