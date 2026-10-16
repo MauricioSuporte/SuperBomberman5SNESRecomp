@@ -1,5 +1,22 @@
 # Super Bomberman 5: estado do protótipo
 
+## Retired mod packages in reused builds / Pacotes de mods antigos em builds reaproveitados - 2026-10-16
+
+v0.13.0 merged `superbomberman5.honey-kotetsu` and
+`superbomberman5.subordinate-bomber` into `superbomberman5.extra-characters`,
+but the framework's catalog staging only copies packages: a `build-lle/` used
+since earlier releases still listed both on the launcher's Gameplay page
+(with a warning mark) and its `state.toml` kept them enabled. A post-build step
+(`tools/prune-retired-mods.cmake`) now removes the two package folders and
+their state entries; when either was enabled and the state has no Extra
+Characters entry, it enables `extra_characters`. Checked on Linux with a copy
+of the maintainer's `build-lle/mods/preloaded/state.toml` (29 → 25 tables,
+other mods and the SB4 ROM path unchanged, idempotent) and through a
+`cmake --build` of the game target. Fresh setup packs never contained them.
+
+O launcher não mostra mais Honey/Kotetsu e Subordinate Bomber separados num
+build antigo; quem os tinha ligados passa a ter o Extra Characters ligado.
+
 ## Portal destinations after bosses / Destinos dos portais após chefes - 2026-10-16
 
 The portal-labels plugin showed nothing on the gates a defeated boss opens:

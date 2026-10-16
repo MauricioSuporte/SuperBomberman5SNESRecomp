@@ -174,6 +174,14 @@ snesrecomp_target_generated_code(SuperBomberman5SNESRecomp ${CMAKE_SOURCE_DIR}/s
 # it is now also enforced: a project with packages that never calls this fails
 # to configure.
 snesrecomp_target_mod_catalog(SuperBomberman5SNESRecomp ${CMAKE_SOURCE_DIR}/mods/preloaded)
+# Staging only copies, so a reused build directory still listed packages that
+# v0.13.0 merged into Extra Characters (Honey/Kotetsu, Subordinate Bomber).
+add_custom_command(TARGET SuperBomberman5SNESRecomp POST_BUILD
+    COMMAND ${CMAKE_COMMAND}
+        "-DSNES_MOD_DIR=$<TARGET_FILE_DIR:SuperBomberman5SNESRecomp>/${SNESRECOMP_MOD_CATALOG_DEST}/.."
+        -P "${CMAKE_SOURCE_DIR}/tools/prune-retired-mods.cmake"
+    COMMENT "SuperBomberman5SNESRecomp: removing retired mod packages"
+    VERBATIM)
 # Any other directory the game reads exe-relative (a translations/ table, ...)
 # is staged with snesrecomp_target_stage_dir, never with a separate ALL target.
 
