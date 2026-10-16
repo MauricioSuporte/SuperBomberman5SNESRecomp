@@ -331,6 +331,11 @@ zero animation frames are deliberately invisible, even with an allocated object.
   v0.5.0 and is unresolved.
 - Framework submodules point to maintainer forks for the five-seat launcher;
   push fork commits before updating gitlinks (see docs/PUBLISHING.md).
+- A five-seat picker with every picker mod on leaves few idle OAM entries
+  (cursor boxes are 8x8 sprites). The third-row Super Bomberman 4 figures
+  silently disappeared with Subordinate Bomber enabled; they now reuse
+  entries of native sprites that end above the row, written by the raster
+  observer on that line (`late_places`). Test overlays with all mods on.
 - The developer plays `build-lle/SuperBomberman5SNESRecomp.exe` through a
   desktop shortcut; source changes appear only after `./tools/build-windows.ps1`.
 

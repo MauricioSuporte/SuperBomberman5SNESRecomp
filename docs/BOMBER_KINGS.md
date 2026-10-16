@@ -13,6 +13,11 @@ salvo nas configurações de mods. Os gráficos e as paletas do Super Bomberman 
 são lidos dessa ROM em tempo de execução; nada dela fica no projeto ou nos
 pacotes, e o arquivo nunca é copiado nem alterado.
 
+Com o Subordinate Bomber e o mod de cores ativos ao mesmo tempo, as seis
+figuras da terceira fileira continuam aparecendo: quando faltam entradas OAM
+livres, elas reaproveitam as de sprites nativos que terminam acima da fileira,
+trocadas na linha em que a fileira começa e restauradas no fim do quadro.
+
 A seleção de personagens passa a ter **três fileiras de seis**:
 
 ```
@@ -90,7 +95,7 @@ têm som de habilidade; a velocidade do projétil da Honey (4 px por quadro) foi
 escolhida, porque a IA da chefe não disparou nas capturas. A tela de campeão do Battle
 continua com o Bomberman. Os ataques da Honey e do Kotetsu seguem a descrição
 da luta (a IA dos chefes não foi reproduzida nas capturas). O mod vem desativado
-e exige host v0.11.0 ou superior. Pacote de dados:
+e exige host v0.12.0 ou superior. Pacote de dados:
 
 ```powershell
 python tools/package-bomber-kings.py
@@ -108,6 +113,11 @@ is selected, Play asks you to resolve the mod. The path is saved with the mod
 settings. Super Bomberman 4 graphics and palettes are read from that ROM at
 runtime; nothing from it is stored in the project or its packages, and the file
 is never copied or modified.
+
+With Subordinate Bomber and the color mod on at the same time, all six
+third-row figures stay visible: when idle OAM entries run out they reuse the
+entries of native sprites that end above the row, switched on the row's first
+line and restored at the end of the frame.
 
 The character selection gets **three rows of six**: the two stock rows move up,
 Honey/Kotetsu end them, and a new bottom row holds Super Bomberman 4's
@@ -184,9 +194,16 @@ sound; Honey's bullet speed (4 px per frame) was chosen, as the boss AI did not
 fire in captures. The Battle champion screen still
 shows Bomberman. Honey's and Kotetsu's attacks follow the boss fight as
 described (the bosses' AI was not reproduced in captures). Disabled by default;
-requires host v0.11.0 or newer.
+requires host v0.12.0 or newer (first included in the v0.12.0 setup packs).
 
 ## Technical notes
+
+- Full five-seat picker (cursor boxes, "L+R" hints, Subordinate Bomber's
+  figure): too few idle OAM entries for the third row's six figures, which
+  used to vanish. The scanline renderer evaluates OAM per line, so a figure
+  takes the entry of a native sprite that ends at least two lines above the
+  row, rewritten when the raster observer reaches the row (`late_places`)
+  and restored on line 224 with the other overlay writes.
 
 - Manifest `[[external_rom]]` `sb4-rom` (`normalized_sha256`, `required = true`):
   the launcher asks for the file and verifies it; the plugin reads the path with

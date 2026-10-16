@@ -477,6 +477,26 @@ static int idle_slot(const Ppu *ppu,bool *taken) {
     for(int s=127;s>=0;--s) if(!visible(ppu,(unsigned)s) && !taken[s]) { taken[s]=true;return s; }
     return -1;
 }
+/* A full picker (five cursors, five "L+R" hints, Subordinate Bomber) leaves
+ * too few idle OAM entries for the six Super Bomberman 4 figures of the third
+ * row. The scanline renderer evaluates OAM line by line, so a figure low on
+ * the screen may reuse the entry of a native sprite that ended a few lines
+ * above it: the entry is rewritten when the beam reaches `late_line` and put
+ * back on line 224 with everything else. */
+static int late_line=-1;
+typedef struct { int line; unsigned slot,x,y,tile,palette,priority; } LatePlace;
+static LatePlace late_places[48];
+static unsigned late_count;
+static int sprite_top(const Ppu *ppu,unsigned s) { int y=ppu->oam[s*2]>>8;return y>=240?y-256:y; }
+static int late_slot(const Ppu *ppu,bool *taken) {
+    if(late_line<0 || late_count>=sizeof(late_places)/sizeof(*late_places)) return -1;
+    for(int s=127;s>=0;--s) {
+        if(taken[s] || !visible(ppu,(unsigned)s)) continue;
+        int bottom=sprite_top(ppu,(unsigned)s)+(big(ppu,(unsigned)s)?16:8);
+        if(sprite_top(ppu,(unsigned)s)>=0 && bottom+2<=late_line) { taken[s]=true;return s; }
+    }
+    return -1;
+}
 /* Draws the canvas as 16x16 sprites with screen (x, y) at its top-left:
  * one column of blocks starting at the leftmost drawn pixel, a second one
  * for wide frames (weapons). Blocks are borrowed first: when that fails
@@ -509,18 +529,25 @@ static bool emit(Ppu *ppu,int x,int y,unsigned palette,unsigned priority,
         if(cx+16>CANVAS_W) break;
         for(unsigned row=0;row<block_rows;++row) if(!block_empty(cx,top+row*16)) { cols[count]=cx;rows[count++]=top+row*16; }
     }
-    int blocks[MAX],slots[MAX];
+    int blocks[MAX],slots[MAX];bool late[MAX];
     for(unsigned k=0;k<count;++k) if((blocks[k]=borrow_block(ppu))<0) { borrowed_count=first;return false; }
     for(unsigned k=0;k<hide_count;++k) taken[hide_slots[k]]=true;
     for(unsigned k=0;k<count;++k) {
+        late[k]=false;
         slots[k]=k<hide_count?(int)hide_slots[k]:idle_slot(ppu,taken);
-        if(slots[k]<0) { borrowed_count=first;return false; }
+        if(slots[k]<0 && (slots[k]=late_slot(ppu,taken))>=0) late[k]=true;
+        if(slots[k]<0 || (late[k] && late_count+count>sizeof(late_places)/sizeof(*late_places))) {
+            /* Give the entries back; nothing was written yet. */
+            for(unsigned j=0;j<=k;++j) if(slots[j]>=0 && (j>=hide_count)) taken[slots[j]]=false;
+            borrowed_count=first;return false;
+        }
     }
     for(unsigned k=0;k<hide_count;++k) hide(ppu,hide_slots[k]);
     for(unsigned k=0;k<count;++k) {
         paint_block(ppu,(unsigned)blocks[k],cols[k],rows[k]);
-        place(ppu,(unsigned)slots[k],(unsigned)((x+(int)cols[k])&0x1ff),(unsigned)((y+(int)rows[k])&255),
-              (unsigned)blocks[k],palette,priority);
+        unsigned px=(unsigned)((x+(int)cols[k])&0x1ff),py=(unsigned)((y+(int)rows[k])&255);
+        if(late[k]) late_places[late_count++]=(LatePlace){late_line,(unsigned)slots[k],px,py,(unsigned)blocks[k],palette,priority};
+        else place(ppu,(unsigned)slots[k],px,py,(unsigned)blocks[k],palette,priority);
     }
     return true;
 }
@@ -954,6 +981,7 @@ static void draw_grid(Ppu *ppu,bool *taken) {
             busy_until[palettes[k]]=bottom;
             add_line_load(top,(unsigned)palettes[k],keys[k]);
         }
+        late_line=top-2;
         for(unsigned k=0;k<count;++k) {
             if(palettes[k]<0) continue;
             unsigned c=cols[k];
@@ -962,6 +990,7 @@ static void draw_grid(Ppu *ppu,bool *taken) {
             compose_grid_figure(kGrid[r][c]-1);
             emit(ppu,px-ORIGIN_X+8,py-8-ORIGIN_Y,(unsigned)palettes[k],3,NULL,0,taken);
         }
+        late_line=-1;
     }
 }
 static void draw_portraits(Ppu *ppu) {
@@ -1049,7 +1078,7 @@ bool ExtraEmitSkinFrame(unsigned skin,unsigned anim,unsigned step,int x,int y) {
 void HoneyKotetsuObserve(const Ppu *view,unsigned line,void *context) {
     (void)context;Ppu *ppu=(Ppu *)view;
     if(line==224) {
-        line_load_count=0;
+        line_load_count=0;late_count=0;
         if(!drawn) return;
         while(saved_count) { Saved w=saved[--saved_count];*w.word=w.value; }
         memcpy(ppu->highOam,saved_high,sizeof(saved_high));
@@ -1057,10 +1086,14 @@ void HoneyKotetsuObserve(const Ppu *view,unsigned line,void *context) {
     }
     if(line!=1) {
         if(drawn && line_load_count) apply_line_loads(ppu,line);
+        if(drawn) for(unsigned k=0;k<late_count;++k) if(late_places[k].line==(int)line) {
+            const LatePlace *l=&late_places[k];
+            place(ppu,l->slot,l->x,l->y,l->tile,l->palette,l->priority);++ppu->oamWriteCount;
+        }
         return;
     }
     if(!enabled || !patched || !art_ready || PPU_objSize(ppu)!=0) return;
-    saved_count=0;borrowed_count=0;line_load_count=0;memcpy(saved_high,ppu->highOam,sizeof(saved_high));
+    saved_count=0;borrowed_count=0;line_load_count=0;late_count=0;late_line=-1;memcpy(saved_high,ppu->highOam,sizeof(saved_high));
     memcpy(frame_obj_colors,&ppu->cgram[0x80],sizeof(frame_obj_colors));
     bool taken[128]={false};
     for(unsigned k=0;k<SKINS*8;++k) key_palette[k]=-1;
@@ -1071,5 +1104,5 @@ void HoneyKotetsuObserve(const Ppu *view,unsigned line,void *context) {
         effect_ppu=ppu;effect_taken=taken;SpecialAbilityDraw();effect_ppu=NULL;effect_taken=NULL;
         apply_line_loads(ppu,1);
     }
-    if(saved_count || line_load_count) { drawn=true;++ppu->vramWriteCount;++ppu->oamWriteCount; }
+    if(saved_count || line_load_count || late_count) { drawn=true;++ppu->vramWriteCount;++ppu->oamWriteCount; }
 }

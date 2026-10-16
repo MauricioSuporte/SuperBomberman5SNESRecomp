@@ -379,6 +379,20 @@ int main(void) {
         CHECK(ppu->cgram[0x80+p*16+5]==Sb4Color(2,3,5));
     }
     HoneyKotetsuObserve(ppu,224,NULL);CHECK(!drawn && same(before,ppu));
+    /* A full picker: only four idle OAM entries. The third row reuses the
+     * entries of native sprites that end above it, written when the beam
+     * reaches the row and restored on line 224. */
+    hide_all(ppu);
+    for(unsigned k=0;k<124;++k) sprite(ppu,k,(int)(k%32)*8,30+(int)(k/32)*8,0x01,0,false);
+    snap(before,ppu);
+    HoneyKotetsuObserve(ppu,1,NULL);CHECK(drawn && late_count>0);
+    unsigned late_line0=(unsigned)late_places[0].line;
+    CHECK(late_line0>100 && (ppu->oam[late_places[0].slot*2]>>8)<64);   /* still native */
+    for(unsigned line=2;line<224;++line) HoneyKotetsuObserve(ppu,line,NULL);
+    row3=0;
+    for(unsigned s=0;s<128;++s) if(visible(ppu,s) && (ppu->oam[s*2]>>8)>=150 && (ppu->oam[s*2]>>8)<200) ++row3;
+    CHECK(row3>=12);
+    HoneyKotetsuObserve(ppu,224,NULL);CHECK(!drawn && same(before,ppu));
     /* Stage: seat 0 plays Hammer (choice 14) in color 2, drawn from frame
      * 3 (stand facing right) with the image's palette 2 in a free palette. */
     memset(g_ram,0,sizeof(g_ram));g_ram[0x1031]=0x74;g_ram[0x1f824]=14;g_ram[0x1f829]=2;
