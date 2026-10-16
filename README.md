@@ -1,127 +1,75 @@
 # Super Bomberman 5 Recompiled
 
-An unofficial, noncommercial **Super Bomberman 5** PC port prototype built with [SNESRecomp](https://github.com/RetroPortingToolKit/snesrecomp) and [recomp-ui](https://github.com/RetroPortingToolKit/recomp-ui). It follows the separate-game-repository architecture used by [Mega Man X Recompiled](https://github.com/mstan/MegaManXSNESRecomp).
+An unofficial, noncommercial **Super Bomberman 5** PC port built with [SNESRecomp](https://github.com/RetroPortingToolKit/snesrecomp) and [recomp-ui](https://github.com/RetroPortingToolKit/recomp-ui), following the game-repository architecture of [Mega Man X Recompiled](https://github.com/mstan/MegaManXSNESRecomp).
 
-[Download / Baixar](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases) · [English](#english) · [Português](#português) · [Technical status](docs/STATUS.md) · [Contributing](CONTRIBUTING.md)
+[Download v1.0.0](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v1.0.0) · [English](#english) · [Português](#português) · [Technical status](docs/STATUS.md) · [Contributing](CONTRIBUTING.md)
 
-> **Early prototype, partial recompilation.** Most game logic currently uses the framework's interpreter. First-stage entry has been verified locally; full-game accuracy and multiplayer have not been established. Supply your own legally obtained ROM. No ROM or extracted runtime assets are included; documentation contains gameplay screenshots.
+> **Partial recompilation.** Most game logic still runs on the framework's interpreter. Supply your own legally obtained ROM; no ROM, generated game code or extracted assets are distributed. Releases remain prereleases until full-campaign accuracy is validated.
 
-<p align="center"><img src="docs/images/five-player-showcase.png" width="820" alt="Five-player Normal Game title menu; seven-column character selection with Emperor Terrorin, Honey and Super Bomberman 4 Bomber Kings in changed colors; Zone 1-1 with Terrorin's blue barrier, Jet's flight and fire trail, Honey and Bazooka using their abilities, and green Subordinate Bomber riding Black Louie; Battle Mode stage 1 with Kotetsu's sword, Bazooka's fire beam, Hammer's mace, Honey and Terrorin's barrier"></p>
-
-<p align="center"><b>New in v0.13.1:</b> selected-character faces in the Normal HUD (P1/P2 only), selections retained after Game Over → Continue, and <b>SuperBomberman5Recomp.exe</b> with the existing “5” icon.<br><b>Novo na v0.13.1:</b> rostos dos personagens na HUD do Normal (apenas P1/P2), escolhas preservadas em Game Over → Continue e <b>SuperBomberman5Recomp.exe</b> com o ícone atual do “5”.</p>
+<p align="center"><img src="docs/images/five-player-showcase.png" width="820" alt="Five-player Normal Game title menu; seven-column character selection with Emperor Terrorin, Honey and Super Bomberman 4 Bomber Kings in changed colors; a Normal Game stage with green Subordinate Bomber riding Black Louie, Jet flying with his fire trail, Bazooka's fire beam, Hammer's mace and Terrorin's barrier; Battle Mode with Kotetsu's sword, Bazooka's fire beam, Hammer's mace, Honey and Terrorin's barrier"></p>
 
 ## English
 
-### Features and current validation
+### Highlights
 
-| Feature | Status |
-|---|---|
-| Windows x64 executable and launcher | Release build and launcher smoke test passed locally |
-| Opening, title, normal-mode menus, Zone 1 map and first-stage entry | Verified with captures; scripted route completed 3,628 frames |
-| Windows video and audio devices | Initialization and callbacks tested; audio accuracy not independently compared |
-| Static CPU recompilation | Small AOT coverage; reset/NMI and most game logic remain interpreted |
-| Five-player multitap | Port 2 configured; launcher PLAYER 1–5 tabs; Normal co-op and five-player Battle exercised with scripted inputs; full campaign/physical controllers unqualified |
-| Normal Game five players (v0.5.0) | Optional 1–5 player campaign with shared lives, Start rejoin, item carry-over, per-seat characters/colors; boss stages with rival bombers seat up to four |
-| PT-BR mod (v0.2.0) | Optional menu translation; v0.8.2 adds file headings, Game Over, HUD, password reward and all 33 completion ranks/tips |
-| Normal Game character selection (v0.3.0) | Optional Battle picker after file confirmation; second/ninth characters verified in Zone 1-1 |
-| Character selection colors (v0.4.0) | Six palettes with L/R for all ten characters; Normal and Battle stage routes verified |
-| Subordinate Bomber (v0.6.0; in Extra Characters since v0.13.0) | Optional tenth character in the X cell with six colors, authored portraits and HUD faces; Battle, Normal and Zone 3-D scripted routes verified on Linux LLE |
-| Pause — exit & draw (v0.7.0) | Normal map return, Battle Draw/restart and arena return; Windows LLE routes with 1/2/5 campaign seats and 2-human/3-CPU Battle |
-| Portal destinations (v0.8.0) | Optional hints from native exit scripts; all 192 destinations audited; Windows/LLE visibility, both PPUs and PT-BR/pause fixtures passed |
-| Honey and Kotetsu (v0.10.0; in Extra Characters since v0.13.0) | Optional sixth picker column with the Zone 1-3 secret-stage bosses, own frames/poses/Louie riding from the ROM; Battle, Normal and secret-stage routes verified on Linux LLE |
-| Bomber Kings (v0.12.0) | Optional third picker row with Super Bomberman 4's Bomberman and Bomber Kings read from the player's own SB4 ROM, five SB4 colors, B + direction abilities with SB4 timings, poses, sounds and debuff (also Honey/Kotetsu); Battle (FFA/Team) and Normal scripted routes on Linux LLE; Windows gameplay checked by the maintainer |
-| Super Bomberman 5 Extra Characters (v0.13.0) | Honey, Kotetsu, Subordinate Bomber and Emperor Terrorin in one mod with a seven-column picker; Terrorin's barrier, its sound and the flying Clock (B + direction); boss defeat animation; Battle and Normal scripted routes on Linux LLE |
-| Netplay / widescreen enhancements | Not implemented for this title |
-| Linux / macOS | Experimental x86_64 AppImage: Ubuntu 22.04 CI; Ubuntu 24.04/WSL local rebuild and 3,628-frame LLE route; macOS unavailable |
+- Windows x64 setup and an experimental Linux x86_64 AppImage; the game is generated and compiled locally from your ROM.
+- Launcher with **PLAYER 1–5** input tabs (keyboard or gamepad per player, including several identical controllers such as two DualSense pads).
+- Twelve optional mods, all disabled by default: five-player Normal Game, character and color selection in Normal, extra characters, Super Bomberman 4 Bomber Kings, Louie improvements, PT-BR menus and more.
 
-### Quick start — Windows setup release
+### Install
 
-1. Download the Windows x64 ZIP from [Releases](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases). Extract the **entire archive** into a writable folder.
-2. Open `SuperBomberman5Recomp.exe` at the package root. This is a setup program; the package contains no recompiled game code.
-3. Let the launcher obtain the official portable build tools, then select your own ROM matching the hashes below. Internet is needed for the first tool download.
-4. Select **Generate & rebuild**. The native analyzer is included; installing Rust is unnecessary for release users. Game code is generated and compiled locally.
-5. Run the resulting game under `build/`; configure controls in the launcher.
+1. Download **superbomberman5-1.0.0-windows-x64.zip** (Windows 10+ x64) or **superbomberman5-1.0.0-linux-x86_64.AppImage** (glibc 2.35+, Ubuntu 22.04 baseline) from [v1.0.0](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v1.0.0) and check **SHA256SUMS**.
+2. Windows: extract the **entire** ZIP into a new writable folder and open `SuperBomberman5Recomp.exe`. Linux: `chmod +x` the AppImage and run it (without FUSE, add `--appimage-extract-and-run`); its setup lives in `~/.local/share/superbomberman5/1.0.0`.
+3. Let the launcher fetch the portable build tools (internet needed once; Rust is not required), select your own ROM and choose **Generate & rebuild**.
+4. Open **Mods** to enable features, configure controls and select **Play**.
 
-Upgrading: extract v0.13.1 into a new folder and run Generate & rebuild again with your own ROM; an older generated executable cannot load the new native mod code.
-
-Requires Windows 10 or newer, x64. Leave several GB free for extraction, tools and build output. Open the root executable to start release setup.
-
-### Linux AppImage
-
-Download **superbomberman5-0.13.1-linux-x86_64.AppImage** from [v0.13.1](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.13.1), make it executable (`chmod +x superbomberman5-0.13.1-linux-x86_64.AppImage`) and run it. The AppImage copies its ROM-free setup into `${XDG_DATA_HOME:-~/.local/share}/superbomberman5/0.13.1` on first launch. Select your own supported ROM and use **Generate & rebuild**; subsequent launches open the locally rebuilt game. Rust is not required. Internet is needed for the first portable tool download. Linux x86_64, glibc 2.35+ (Ubuntu 22.04 baseline), desktop graphics/audio libraries and several GB free are required. If FUSE is unavailable, run with `--appimage-extract-and-run`. Keep the writable version folder to retain local builds and settings; ROM and generated game data are never part of the download. Linux distribution and full-campaign coverage remain limited; see [validation](docs/STATUS.md).
-
-Windows users download the **superbomberman5-0.13.1-windows-x64.zip** setup pack. Both formats include the same twelve optional mods, disabled by default. Upgrading from an earlier version: extract v0.13.1 into a new folder (or the AppImage creates a new 0.13.1 folder) and run **Generate & rebuild** again so the new native plugins are compiled. Check the release's **SHA256SUMS** before use.
+**Upgrading:** install 1.0.0 into a new folder and run **Generate & rebuild** again; an older generated executable cannot load new native mod code. Leave several GB free.
 
 ### Supported ROM
 
-The developer's local filename is `Super Bomberman 5 (USA).sfc`, but its header reports **JPN**. Compatibility is determined by hashes, not filenames. A valid internal checksum alone does not establish original-dump provenance. Other revisions and translations have not been qualified.
+Compatibility is decided by hash, not filename. The developer's file is named `Super Bomberman 5 (USA).sfc`, but its header reports **JPN**. Other revisions and translations are not qualified. [rom_identity.txt](rom_identity.txt) is authoritative; no ROM links are provided.
 
 | Identity | Value |
 |---|---|
 | Header title | `Hu SUPER BOMBERMAN 5` |
-| Mapping | Fast HiROM; no special coprocessor detected |
-| ROM / SRAM | 4 MiB / 8 KiB |
+| Mapping / ROM / SRAM | Fast HiROM / 4 MiB / 8 KiB |
 | CRC32 | `c25ab56a` |
 | SHA-256 | `5251e6491872dc51879b630a34d76a92e29ea0c39026c4f8773c1fe006d047c4` |
 
-[rom_identity.txt](rom_identity.txt) is authoritative. No ROM download links are provided.
+### Mods
 
-### Included mods
+Each setup package already includes these mods (no separate download). They can be enabled together; the full combination is not qualified.
 
-**Louie improvements (v0.11.0)** adds Yellow bomb kicks and chain transfers, a three-second Red punch freeze for Normal enemies, and Black eggs plus a protected pushing dash (Y). Red enemy hits use the native player-hit sound. Current source plays Black acquisition/dash sounds through the cartridge audio driver; rebuild the host to apply this correction. [Controls, audio and validation](docs/LOUIE_IMPROVEMENTS.md).
-
-The **v0.13.1 setup packs** include the twelve optional mods below, each at mod version **0.1.0** and disabled by default. Complete **Generate & rebuild**, open **Mods**, enable the desired features and select Play. Each setup package contains the executable, launcher resources, analyzer, source and all twelve preinstalled mods; no separate mod download or import is needed. `FILE_SHA256SUMS` inside each setup payload covers its packaged files. They require the corresponding native plugins in the host; importing a package cannot update an older executable.
-
-| Mod / category | Feature and use |
+| Mod | What it does |
 |---|---|
-| **Louie improvements** / **Gameplay** | Enable **Yellow, Red and Black Louies**. Y kicks bombs with Yellow, freezes Normal enemies for three seconds with Red, or performs Black’s protected pushing dash. Black can hatch from eggs and retains the native Louie death sound. Requires host v0.11.0. Current source uses cartridge SFX without external WAVs. [Controls and audio setup](docs/LOUIE_IMPROVEMENTS.md). |
-| **Português brasileiro — menus (prévia)** / **Translation** | Enable **Menus em português brasileiro** to translate mapped title, player/file selection, options, sound test, battle setup/rules and stage headings. Also translates Continue/Erase headings, Normal Game Over, HUD prompts (APERTE START / FIM DE JOGO), the password reward and all 33 certificate ranks/tips. Native fonts and expanded Battle coverage require host v0.10.0 and Generate & rebuild. v0.10.0 uses native cartridge fonts with preserved heading crossbars and upper outlines, proportional menus and title text, translate BATTLE START as INÍCIO DA BATALHA, and translate all 13 Battle arena names without source-language flashes in checked transitions. Other unmapped text remains original. Disable to restore the original presentation. [Scope and testing](docs/TRANSLATION_PTBR.md). |
-| **Normal Game — character selection** / **Gameplay** | Enable **Choose a character in Normal Game** to open the original Battle character picker after confirming a Normal save file. Use the D-pad and A to choose; B returns to file selection. The campaign uses the chosen character. Requires host v0.3.0 or newer. [Instructions and validation](docs/NORMAL_CHARACTERS.md). |
-| **Normal Game HUD faces** / **Gameplay** | Selected character/color and native alive/defeated faces for P1 and active P2 only, including five-player campaigns. No Battle victory counters. Requires host v0.13.1. [Details](docs/NORMAL_HUD_FACES.md). |
-| **Normal Game — infinite time** / **Gameplay** | Enable **Unlimited time in Normal Game** for the native `-:--` timer without timeout deaths. Disabled by default. Requires host v0.4.3 or newer. [Details and validation](docs/INFINITE_TIME.md). |
-| **Character selection — color controls** / **Gameplay** | Enable **Choose character colors with L and R** for white, black, red, blue, green and yellow palettes for the native bomber choices, including Subordinate with the extra characters mod. R cycles forward, L backward; A confirms. Starts: P1 white, P2 black, P3 red, P4 blue, P5 green. The v0.8.1 host fixes palette changes affecting the figure below. Works in Battle and in Normal when the character selection mod is enabled. Default keyboard: C/V; gamepad: LB/RB (L1/R1). Requires host v0.4.0 or newer. [Controls and validation](docs/SELECTION_COLORS.md). |
-| **Normal Game — five players** / **Gameplay** | Enable **Play Normal Game with up to five players** and choose 1 PLAYER / 2–5 PLAYERS on the title. Shared lives start at players + 2 (3–7); a dead player presses Start to spend a life and rejoin while a teammate is alive. Any player finishes a stage through an exit, items carry over for every seat, P3–P5 spawn on safe floor and take enemy contact damage. Boss stages with rival bombers seat up to four players (three with two rivals); the others return in the next stage. With the character and color mods, each seat picks its own character and color from New Game or Continue. Requires host v0.5.0 or newer. [Instructions, tests and limits](docs/NORMAL_COOP.md). |
-| **Super Bomberman 5 Extra Characters** / **Gameplay** | Enable **Play as the Super Bomberman 5 Extra Characters** (new in v0.13.0; replaces the separate Honey and Kotetsu and Subordinate Bomber mods, which are no longer shipped: enable this one instead). The character selection gets **seven columns**: the stock columns move left, **Honey** (cowgirl boss of the Zone 1-3 secret stages) and **Emperor Terrorin** (on foot, as in the last phase of ZONE5 - J) end the top row, **Kotetsu** ends the second, and **Subordinate Bomber** (the Zone 3-D rival, six cartridge colors with L/R) takes the X cell. The cursor skips the empty cells. They play as Bomberman (same rules and items) with their own frames, portraits and HUD faces decoded from your ROM. Hold **B** and press a **direction**: Honey's shot, Kotetsu's sword cut and **Terrorin's barrier**: he spins in place, untouchable, a blue barrier rises around the 3 x 3 square he stands in (touching it kills like an explosion; it never hurts him, Normal Game allies or his Team Battle teammates), with the boss's barrier sound, and a **Clock** flies off him like an item a player loses and lands on a free cell; in Battle, when Terrorin takes it, everyone else is paralyzed, and when an opponent takes it, Terrorin is. Honey, Kotetsu and Terrorin then move at half speed for about 10.7 s. Terrorin's defeat replays the boss's own (his head flies off). Battle and, with the Normal character selection mod, Normal Game. Requires host v0.13.0. [Instructions, tests and limits](docs/EXTRA_CHARACTERS.md). |
-| **Bomber Kings — Super Bomberman 4 characters** / **Gameplay** | Enable **Play as the Bomber Kings** and select **your own Super Bomberman 4 ROM** (Japanese release, checked by SHA-256) in the mod's **Super Bomberman 4 ROM** item on the Mods page. The selection gets a third row (the stock rows move up; with the Super Bomberman 5 Extra Characters mod the grid has seven columns) holding Super Bomberman 4's Bomberman, Hammer, Jet, Lady, Bazooka and Great Bomber, drawn from that ROM at runtime with their five SB4 colors (L/R with the color mod). Hold **B** and press a **direction** for each character's special ability ported from Super Bomberman 4 with its timings, poses and graphics (Hammer's mace swing, Jet's flight with a fire trail, untouchable by enemies, Lady's laser, Bazooka's fire beam, Great's invulnerability) ; Bazooka, Jet and Great then move at half speed for about 10.7 s, as in Super Bomberman 4. The picker shows each Bomber King's own SB4 portrait; riding and Bad Bomber use SB4's own poses, and the abilities play SB4's sound effects. B alone still detonates remote bombs; riding Louie keeps B native. Abilities hit enemies in Normal Game (never other players) and other players or the other team in Battle. Requires host v0.12.0 (v0.13.0 for the seven-column layout with the Extra Characters mod); the Super Bomberman 4 ROM is never included. [Instructions, tests and limits](docs/BOMBER_KINGS.md). |
-| **Gold Cartridge — Battle** / **Gameplay** | Enable **Arenas 11–13 and Hyper Revenge** to unlock the three extra arenas and the fourth Revenge setting, **Hyper**. Returning from the cart after defeating an opponent inherits their equipment. Uses arena data already present in the regular ROM; no second ROM is needed. Included in v0.10.0; use Generate & rebuild to install its native code. [Controls and evidence](docs/GOLD_BATTLE.md). |
-| **Pause — exit & draw** / **Gameplay** | Enable **Stage exits and Battle Draw**. Normal: Resume / Return to world map. Battle: Resume / Force Draw (round restart) / Return to stage select. Start confirms; B goes back. Menus start on Resume and exit confirmations on No. Compact panel, opaque text/glove and native menu sounds. Requires host v0.7.0. [Controls and validation](docs/PAUSE_MENU.md). v0.10.0 translates these labels with PT-BR and restores separate native pause/resume sounds. |
-| **Normal Game — portal destinations** / **Gameplay** | Enable **Show portal destinations** for readable title-screen-font hints beneath each visible gate: `Z1-2`, `Z1-5`, `Z1-7`, special `Z1-S` and boss variants `Z1-A1`–`Z1-A3`. Covered exits remain hidden. Requires host v0.8.0; importing a manifest cannot update an older host. [Instructions and validation](docs/PORTAL_LABELS.md). |
+| **Normal Game — five players** | 1–5 player campaign with shared lives (players + 2), Start to rejoin, items carried over per seat. [Details](docs/NORMAL_COOP.md) |
+| **Normal Game — character selection** | Battle character picker after choosing a Normal save file. [Details](docs/NORMAL_CHARACTERS.md) |
+| **Character selection — color controls** | Six palettes per character with L/R (keyboard C/V, gamepad LB/RB). [Details](docs/SELECTION_COLORS.md) |
+| **Super Bomberman 5 Extra Characters** | Seven-column picker with Honey, Kotetsu, Subordinate Bomber and Emperor Terrorin, each with a B + direction ability. [Details](docs/EXTRA_CHARACTERS.md) |
+| **Bomber Kings — Super Bomberman 4 characters** | Third picker row with SB4's Bomberman, Hammer, Jet, Lady, Bazooka and Great Bomber, read from **your own SB4 ROM**, with their SB4 abilities. [Details](docs/BOMBER_KINGS.md) |
+| **Normal Game HUD faces** | Selected character and color in the P1/P2 HUD faces. [Details](docs/NORMAL_HUD_FACES.md) |
+| **Louie improvements** | Yellow bomb kicks, Red enemy freeze and Black Louie's protected dash (Y). [Details](docs/LOUIE_IMPROVEMENTS.md) |
+| **Normal Game — portal destinations** | Shows each visible portal's destination (`Z1-2`, `Z1-S`, `Z1-A1`…). [Details](docs/PORTAL_LABELS.md) |
+| **Normal Game — infinite time** | Native `-:--` timer without timeout deaths. [Details](docs/INFINITE_TIME.md) |
+| **Pause — exit & draw** | Return to the map in Normal; force a draw or return to stage select in Battle. [Details](docs/PAUSE_MENU.md) |
+| **Gold Cartridge — Battle** | Arenas 11–13 and Hyper Revenge. [Details](docs/GOLD_BATTLE.md) |
+| **Português brasileiro — menus** | PT-BR menus, HUD and certificates using the cartridge fonts. [Details](docs/TRANSLATION_PTBR.md) |
 
 ![Normal Game portal destination hints](docs/images/portal-destinations.png)
 
-ZONE1-1: left **Z1-2**, center **Z1-5**, right **Z1-7**. Hints appear only with each visible portal.
+### Controls
 
-v0.12.0 adds the **Bomber Kings** mod: a third picker row with Super Bomberman 4's Bomberman, Hammer, Jet, Lady, Bazooka and Great Bomber drawn from your own Super Bomberman 4 ROM (selected on the Mods page, verified by SHA-256, never distributed), five SB4 colors each with the color mod, and B + direction abilities ported from Super Bomberman 4 with its timings, poses and sound effects; Honey and Kotetsu get their boss shot and sword thrust. Abilities hit enemies in Normal Game and opponents in Battle; Jet is immune to enemy contact while flying.
-
-v0.13.0 merges Honey and Kotetsu, Subordinate Bomber and the Honey/Kotetsu abilities into **Super Bomberman 5 Extra Characters** and adds Emperor Terrorin. If you used either old mod, enable the new one after Generate & rebuild; the old packages are not shipped. Bomber Kings no longer gives Honey and Kotetsu their abilities by itself.
-
-v0.12.1 uses **1 PLAYER / 2–5 PLAYERS** in the English Normal menu, with the native Y and cleaned T outline. B from the Normal character picker rebuilds the previous file list and supports reentry. Generate & rebuild with v0.12.1 to apply these corrections.
-
-v0.11.1 fixes player-count digits in the PT-BR Normal Game menu: 1/2 use original cartridge glyphs and 3–5 use authored extensions matching their weight and outline. The cursor follows the selected row with the native eight-pixel gap. Rebuild with this host to apply the fix; the mod package remains 0.1.0.
-
-The launcher categories use English, including **Translation**. The PT-BR mod's name and descriptions remain in Brazilian Portuguese. All twelve can be enabled together; their full combination has not been qualified. Full campaign and multiplayer coverage remain unqualified.
-
-v0.4.1 also embeds the supplied application icon with ten sizes from 16 to 256 pixels, preserving the whole drawing and transparency for Windows display scaling.
-
-### Controls and starting a game
-
-After a Windows source build, open `SuperBomberman5Recomp.exe` at the
-repository root. It uses the existing “5” icon and locates the generated
-game automatically. The five-player menu recognizes the native
-screen independently of script return history from the opening/demo.
-
-| Keyboard | SNES input |
+| Keyboard | SNES |
 |---|---|
-| Arrow keys | Direction |
-| Enter | Start |
+| Arrow keys | D-pad |
+| Enter / Right Shift | Start / Select |
 | X / Z | A / B |
 | S / A | X / Y |
 | C / V | L / R |
-| Right Shift | Select |
 
-Press Enter in the opening/title sequence. Choose **Normal Game → 1 Player Game → New Game → File 1**, confirming with A (keyboard X). On the Zone 1 map, use Start (Enter) to enter the stage. Controls can be changed in the launcher. The optional Normal co-op mod adds choices through five players; full campaign coverage remains unqualified. The launcher shows **PLAYER 1–5** tabs: set each player's input to Keyboard or Gamepad and press **Configure**. Players 3–5 start with no device and no keys; give each a gamepad or its own keys (sharing keys moves both players).
+Remap in the launcher. Each **PLAYER** tab chooses Keyboard or Gamepad and a device; identical controllers are listed separately (`DualSense (2)`). Players 3–5 start unassigned: give each its own gamepad or keys.
 
-### Building from source
+### Build from source
 
 Install Git for Windows and Python 3.11+, then:
 
@@ -130,126 +78,72 @@ git clone --recurse-submodules https://github.com/MauricioSuporte/SuperBomberman
 cd SuperBomberman5SNESRecomp
 ./tools/setup-windows.ps1
 ./tools/build-windows.ps1 -Regenerate -Rom 'C:/roms/your-game.sfc'
-./tools/build-windows.ps1 -Run -Rom 'C:/roms/your-game.sfc'
 ```
 
-With the developer ROM under its default filename at the repository root, `SuperBomberman5Recomp.exe` opens the launcher after a successful build. Tools are installed under ignored `.tools/`; the global PATH is unchanged. See [Windows build instructions](docs/BUILD_WINDOWS.md).
+Then open `SuperBomberman5Recomp.exe` at the repository root. Tools go to the ignored `.tools/` folder. See [BUILD_WINDOWS.md](docs/BUILD_WINDOWS.md). Never hand-edit or commit `src/gen/`.
 
-The validated build uses `SNESRECOMP_FRAME_IMPL=LLE`. HLE composition has not been qualified for this title. Regenerate after changing `recomp/`; never hand-edit or commit `src/gen/`.
+### Status and limits
 
-### What recompilation means here
+SNESRecomp translates analyzable 65816 routines into C and runs the rest through an interpreter, with PPU, APU, DMA and cartridge hardware modeled. AOT coverage is small and reset/NMI remain interpreted. Gameplay is verified with scripted routes on Linux LLE and maintainer play on Windows; the full campaign, all mod combinations, physical five-player play and broad Linux compatibility are not qualified. No netplay, widescreen or macOS. Details: [STATUS.md](docs/STATUS.md).
 
-SNESRecomp translates analyzable 65816 CPU routines into C and links them with a SNES hardware runtime. Unresolved paths use an interpreter; PPU, APU/SPC700, DMA and cartridge hardware remain modeled. This is a hybrid port, not recovered original game source. AOT coverage is currently small. Promoting reset/NMI causes continuation/dispatch failures, so those paths remain interpreted pending a validated fix.
-
-### Reporting problems
-
-[Open an issue](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/issues) with the project version, Windows version, ROM hash, settings, stage and steps to reproduce. Inspect local reports for personal paths or memory data before attaching. Do not upload the ROM, extracted assets, audio dumps or save states to public issues. Known limitations are in [STATUS.md](docs/STATUS.md).
-
-### Repository layout
-
-| Path | Purpose |
-|---|---|
-| `src/` | Game integration and desktop host descriptor |
-| `recomp/` | Analysis configuration and symbol metadata |
-| `src/gen/` | Locally generated ROM-derived C; ignored |
-| `snesrecomp/`, `recomp-ui/` | Framework and launcher pinned as submodules |
-| `rom_identity.txt`, `VERSION`, `framework_pins.txt` | ROM identity, version and dependency commits |
-| `tools/`, `scripts/` | Build, publication audit and setup packaging |
-| `docs/` | Build, validation evidence, limitations and publication workflow |
-| `.agents/skills/super-bomberman5-repository/` | Reusable Git/documentation/release skill |
-| `.agents/skills/super-bomberman5-mod-development/` | Skill for researching, implementing, testing and documenting native mods |
-| `AGENTS.md`, `CLAUDE.md` | Guidance for AI agents: rules, architecture, RAM map, workflows |
+[Open an issue](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/issues) with version, OS, ROM hash and steps to reproduce. Never upload the ROM, extracted assets or save states.
 
 ### Credits and license
 
-Thanks to Matthew Stanley and RetroPorting ToolKit contributors for SNESRecomp and recomp-ui, and to Mega Man X Recompiled for the architecture reference. Project software uses [PolyForm Noncommercial 1.0.0](LICENSE). Dependency notices are preserved; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). This license does not cover Super Bomberman 5 ROM or game content. The project is not affiliated with or endorsed by the game's rights holders.
+Thanks to Matthew Stanley and the RetroPorting ToolKit contributors for SNESRecomp and recomp-ui, and to Mega Man X Recompiled for the architecture reference. Project software uses [PolyForm Noncommercial 1.0.0](LICENSE); dependency notices are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). The license does not cover the Super Bomberman 5 ROM or game content. Not affiliated with or endorsed by the game's rights holders. AI agent guidance lives in [AGENTS.md](AGENTS.md).
 
 ## Português
 
-### Sobre o projeto
+### Destaques
 
-Protótipo não oficial e não comercial de port de **Super Bomberman 5** para PC, usando SNESRecomp e o launcher recomp-ui, com a estrutura de repositório por jogo utilizada pelo Mega Man X Recompiled.
+- Setup Windows x64 e AppImage Linux x86_64 experimental; o jogo é gerado e compilado localmente a partir da sua ROM.
+- Launcher com abas **PLAYER 1–5** (teclado ou controle por jogador, inclusive vários controles iguais, como dois DualSense).
+- Doze mods opcionais, desligados por padrão: Normal Game com cinco jogadores, seleção de personagem e cor no Normal, personagens extras, Reis Bomber do Super Bomberman 4, melhorias dos Louies, menus em PT-BR e mais.
 
-**A recompilação ainda é parcial:** a maior parte da lógica usa o interpretador. Abertura, título, menus, mapa da Zone 1 e entrada na primeira fase foram verificados numa rota de 3.628 frames. Isso não comprova o jogo completo ou precisão de som. A v0.5.0 trouxe o mod opcional de até cinco jogadores no Normal Game, a v0.6.0 o Subordinate Bomber e a v0.10.0 a Honey e o Kotetsu como personagens selecionáveis, a v0.12.0 o Bomberman e os Reis Bomber do Super Bomberman 4 (lidos da ROM do SB4 do próprio jogador) com habilidades especiais, todos testados com entradas roteirizadas; campanha completa e cinco controles físicos ainda não foram qualificados. Não há netplay nem melhorias de widescreen neste jogo.
+### Instalação
 
-### Como instalar e jogar
+1. Baixe **superbomberman5-1.0.0-windows-x64.zip** (Windows 10+ x64) ou **superbomberman5-1.0.0-linux-x86_64.AppImage** (glibc 2.35+, base Ubuntu 22.04) na [v1.0.0](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v1.0.0) e confira o **SHA256SUMS**.
+2. Windows: extraia o ZIP **inteiro** numa pasta nova e gravável e abra `SuperBomberman5Recomp.exe`. Linux: dê `chmod +x` no AppImage e execute (sem FUSE, use `--appimage-extract-and-run`); o setup fica em `~/.local/share/superbomberman5/1.0.0`.
+3. Deixe o launcher baixar as ferramentas portáteis (internet só na primeira vez; Rust não é necessário), escolha sua própria ROM e clique em **Generate & rebuild**.
+4. Abra **Mods** para ativar funções, configure os controles e clique em **Play**.
 
-1. Baixe o ZIP Windows x64 em [Releases](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases) e extraia **todo o conteúdo** para uma pasta gravável.
-2. Abra `SuperBomberman5Recomp.exe` na raiz do pacote. Esse é o instalador, sem código recompilado do jogo.
-3. Permita baixar as ferramentas oficiais e selecione sua própria ROM. A primeira instalação requer internet para obter as ferramentas.
-4. Clique em **Generate & rebuild** para gerar, compilar e iniciar o jogo localmente. O analisador já está incluído; usuários da release não precisam instalar Rust.
-5. Nas próximas execuções, abra o jogo em `build/` e ajuste os controles no launcher.
+**Atualizando:** instale a 1.0.0 numa pasta nova e faça **Generate & rebuild** de novo; um executável gerado antigo não carrega o código nativo novo. Deixe alguns GB livres.
 
-Requer Windows 10 ou superior, x64, e alguns GB livres. **Nenhuma ROM, código gerado da ROM ou recurso extraído acompanha o download.** O arquivo de desenvolvimento tem “USA” no nome, porém o cabeçalho indica **JPN**. Confira os hashes em [Supported ROM](#supported-rom); o nome do arquivo não garante compatibilidade.
+### ROM compatível
 
-Ao atualizar para a v0.13.1, extraia numa pasta nova e faça **Generate & rebuild** novamente com sua ROM; o executável gerado da versão anterior não recebe o novo código nativo por meio de um manifesto.
+A compatibilidade é definida pelo hash da tabela em [Supported ROM](#supported-rom), não pelo nome do arquivo. O arquivo do desenvolvedor tem “USA” no nome, mas o cabeçalho indica **JPN**. Outras revisões e traduções não foram qualificadas. Nenhuma ROM acompanha o projeto.
 
-### AppImage Linux
+### Mods
 
-Build CI Ubuntu 22.04 e geração/rebuild local no Ubuntu 24.04/WSL passaram; a rota de 3.628 frames LLE até a primeira fase terminou com vídeo/áudio dummy. Launcher inicializado em modo offscreen. Dispositivos físicos e outras distribuições seguem não qualificados.
+Todos já vêm no pacote de setup (sem download separado) e podem ser ativados juntos; a combinação completa não foi qualificada.
 
-Baixe **superbomberman5-0.13.1-linux-x86_64.AppImage** na [v0.13.1](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.13.1), dê permissão de execução e execute. Sem FUSE, use --appimage-extract-and-run. O setup é copiado para a pasta XDG de dados da versão (padrão ~/.local/share/superbomberman5/0.13.1), onde você fornece sua ROM e usa **Generate & rebuild**. Nas próximas aberturas, o AppImage usa o jogo gerado localmente. Requer Linux x86_64 com glibc 2.35+, bibliotecas de vídeo/áudio do desktop, internet para as primeiras ferramentas e alguns GB livres. Rust não é necessário. Preserve a pasta gravável para manter builds e configurações. Confira SHA256SUMS na release. Compatibilidade ampla e campanha completa continuam não qualificadas.
-
-No Windows, baixe **superbomberman5-0.13.1-windows-x64.zip**. Para atualizar de uma versão anterior, extraia a v0.13.1 numa pasta nova (o AppImage cria a pasta 0.13.1) e use **Generate & rebuild** de novo para compilar os novos plugins nativos.
-
-### Mods incluídos
-
-**Louie improvements (v0.11.0)** adiciona chute de bombas e transferências em cadeia para Yellow, paralisia de três segundos nos inimigos do Normal pelo Red e Black nos ovos com arrancada protegida (Y). Red usa o SFX nativo de acerto. O código atual usa os SFX do cartucho para montagem e arrancada do Black; recompile o host para aplicar a correção. [Controles, áudio e validação](docs/LOUIE_IMPROVEMENTS.md).
-
-Os **pacotes Windows e Linux v0.13.1** incluem os doze mods opcionais abaixo, todos na versão de mod **0.1.0** e desabilitados por padrão. Conclua **Generate & rebuild**, abra **Mods**, ative as funções desejadas e selecione Play. Cada pacote inclui executável, recursos do launcher, analisador, fontes e os doze mods pré-instalados; não é necessário baixar nem importar mods separados. O arquivo `FILE_SHA256SUMS` dentro do setup cobre os arquivos do pacote. Eles contêm apenas dados e dependem dos plugins nativos do host; importar um pacote não atualiza um executável antigo.
-
-| Mod / categoria | Função e uso |
+| Mod | O que faz |
 |---|---|
-| **Louie improvements** / **Gameplay** | Ative **Yellow, Red and Black Louies**. Y chuta bombas com Yellow, paralisa inimigos do Normal por três segundos com Red ou inicia a arrancada protegida do Black. Black pode sair dos ovos e mantém o som nativo de morte dos Louies. Exige host v0.11.0. O código atual usa os SFX do cartucho, sem WAVs externos. [Controles e áudio](docs/LOUIE_IMPROVEMENTS.md). |
-| **Português brasileiro — menus (prévia)** / **Translation** | Ative **Menus em português brasileiro** para traduzir rótulos de título, jogadores/arquivos, opções, teste de som, menus/regras de batalha e cabeçalhos de fases. Também traduz os cabeçalhos Continuar/Apagar, Fim de Jogo do Normal, HUD (APERTE START / FIM DE JOGO), recompensa com senha e os 33 títulos/dicas dos certificados. As fontes nativas e a ampliação do Battle exigem host v0.10.0 e Generate & rebuild. A v0.10.0 usa letras nativas do cartucho, preservando barras centrais e contornos superiores nos cabeçalhos, menus proporcionais e título, além de traduzir BATTLE START para INÍCIO DA BATALHA e os nomes das 13 arenas sem flashes do original nas transições verificadas. Outros textos não mapeados continuam originais. Desative para restaurar a apresentação original. [Escopo e testes](docs/TRANSLATION_PTBR.md). |
-| **Normal Game — character selection** / **Gameplay** | Ative **Choose a character in Normal Game** para abrir o seletor original do Battle depois de confirmar um arquivo do Normal. Use direcional e A para escolher; B retorna aos arquivos. A campanha usa o personagem escolhido. Requer host v0.3.0 ou superior. [Instruções e validação](docs/NORMAL_CHARACTERS.md). |
-| **Normal Game HUD faces** / **Gameplay** | Rosto/cor selecionados e poses vivo/derrotado, apenas P1 e P2 ativo, inclusive no Normal de cinco jogadores. Sem contadores de vitórias. Exige host v0.13.1. [Detalhes](docs/NORMAL_HUD_FACES.md). |
-| **Normal Game — infinite time** / **Gameplay** | Ative **Unlimited time in Normal Game** para usar o cronômetro nativo `-:--` sem morte por tempo. Desativado por padrão. Requer host v0.4.3 ou superior. [Detalhes e validação](docs/INFINITE_TIME.md). |
-| **Character selection — color controls** / **Gameplay** | Ative **Choose character colors with L and R** para escolher branco, preto, vermelho, azul, verde e amarelo nos dez personagens. R avança, L retorna e A confirma. Início: P1 branco, P2 preto, P3 vermelho, P4 azul, P5 verde. O host v0.8.1 corrige a troca de paleta afetando o personagem abaixo. Funciona no Battle e no Normal com o mod de seleção de personagens ativo. Teclado padrão: C/V; controle: LB/RB (L1/R1). Requer host v0.4.0 ou superior. [Controles e validação](docs/SELECTION_COLORS.md). |
-| **Normal Game — five players** / **Gameplay** | Ative **Play Normal Game with up to five players** e escolha de 1 a 5 jogadores no título. As vidas compartilhadas começam em jogadores + 2 (3–7); quem morre aperta Start para gastar uma vida e voltar, se houver alguém vivo. Qualquer jogador conclui a fase pelo portal, os itens seguem para a próxima fase em todos os assentos, P3–P5 nascem em chão seguro e tomam dano dos inimigos. Fases de chefe com rivais Bomber aceitam até quatro jogadores (três com dois rivais); os demais voltam na fase seguinte. Com os mods de personagem e cor, cada jogador escolhe os seus em New Game ou Continue. Requer host v0.5.0 ou superior. [Instruções, testes e limites](docs/NORMAL_COOP.md). |
-| **Super Bomberman 5 Extra Characters** / **Gameplay** | Ative **Play as the Super Bomberman 5 Extra Characters** (novo na v0.13.0; substitui os mods separados Honey and Kotetsu e Subordinate Bomber, que deixam de vir nos pacotes: ative este no lugar deles). A seleção ganha **sete colunas**: as colunas originais vão para a esquerda, a **Honey** (a cowgirl chefe das fases secretas das zonas 1 a 3) e o **imperador Terrorin** (a pé, como na última etapa do ZONE5 - J) fecham a fileira de cima, o **Kotetsu** fecha a segunda e o **Subordinate Bomber** (o rival do ZONE3-D, seis cores do cartucho com L/R) fica na célula do X. O cursor pula as células vazias. Eles jogam como o Bomberman (mesmas regras e itens) com os próprios quadros, retratos e rostos no HUD lidos da sua ROM. Segure **B** e aperte uma **direção**: tiro da Honey, corte de espada do Kotetsu e a **barreira do Terrorin**: ele gira parado, intocável, sobe uma barreira azul em volta do quadrado 3 x 3 em que está (encostar nela mata como uma explosão; ela nunca fere ele, os aliados no Normal Game ou o time dele no Team Battle) com o som da barreira do chefe, e um **Clock** sai voando dele como o item que um jogador perde e cai numa célula livre; no Battle, se o Terrorin pegar, todos os outros ficam paralisados, e se um adversário pegar, o Terrorin fica. Honey, Kotetsu e Terrorin ficam depois com metade da velocidade por cerca de 10,7 s. A derrota do Terrorin repete a do chefe (a cabeça sai voando). Battle e, com o mod de seleção no Normal, Normal Game. Exige host v0.13.0. [Instruções, testes e limites](docs/EXTRA_CHARACTERS.md). |
-| **Bomber Kings — Super Bomberman 4 characters** / **Gameplay** | Ative **Play as the Bomber Kings** e escolha **a sua própria ROM do Super Bomberman 4** (lançamento japonês, conferida pelo SHA-256) no item **Super Bomberman 4 ROM** do mod, na página Mods. A seleção ganha uma terceira fileira (as originais sobem; com o mod dos personagens extras do Super Bomberman 5 a grade tem sete colunas) com o Bomberman, o Hammer, o Jet, a Lady, o Bazooka e o Great Bomber do Super Bomberman 4, desenhados a partir dessa ROM durante o jogo, com as cinco cores do SB4 (L/R com o mod de cores). Segure **B** e aperte uma **direção** para a habilidade de cada um portadas do Super Bomberman 4 com os mesmos tempos, poses e gráficos (maça girando do Hammer, voo do Jet com rastro de fogo, imune aos inimigos, laser da Lady, raio de fogo do Bazooka, invencibilidade do Great); Bazooka, Jet e Great ficam com metade da velocidade por cerca de 10,7 s, como no Super Bomberman 4. A seleção mostra o retrato do SB4 de cada Rei Bomber; montado e Bad Bomber usam as poses do SB4, e as habilidades tocam os efeitos sonoros do SB4. B sozinho continua detonando a bomba-controle; montado no Louie o B continua normal. As habilidades acertam inimigos no Normal Game (nunca outros jogadores) e os outros jogadores ou o time adversário no Battle. Exige host v0.12.0 (v0.13.0 para a seleção de sete colunas com o mod Extra Characters); a ROM do Super Bomberman 4 nunca é incluída. [Instruções, testes e limites](docs/BOMBER_KINGS.md). |
-| **Gold Cartridge — Battle** / **Gameplay** | Ative **Arenas 11–13 and Hyper Revenge** para liberar as três arenas extras e a quarta opção de Revanche, **Hiper** com PT-BR. Ao voltar à arena após eliminar alguém do carrinho, recebe os poderes do adversário. Já existe conteúdo das arenas na ROM comum; dispensa carregar a Gold. Incluído na v0.10.0; use Generate & rebuild para instalar o código nativo. [Controles e evidências](docs/GOLD_BATTLE.md). |
-| **Pause — exit & draw** / **Gameplay** | Ative **Stage exits and Battle Draw**. Normal: retomar ou voltar ao mapa. Battle: retomar, empatar/reiniciar a rodada ou voltar às arenas. Start confirma; B volta. Com PT-BR: Continuar, Empatar rodada, Voltar ao mapa e Escolher arena; confirmação inicialmente em Não. Painel compacto, texto/mão opacos e sons nativos ao pausar e retomar. Exige host v0.7.0. [Controles e validação](docs/PAUSE_MENU.md). |
-| **Normal Game — portal destinations** / **Gameplay** | Ative **Show portal destinations** para mostrar dicas legíveis com a fonte da tela de título sob cada portal visível: `Z1-2`, `Z1-5`, `Z1-7`, especial `Z1-S` e variantes `Z1-A1`–`Z1-A3`. Saídas cobertas continuam ocultas. Exige host v0.8.0; importar o manifesto não atualiza um executável antigo. [Instruções e validação](docs/PORTAL_LABELS.md). |
+| **Normal Game — five players** | Campanha de 1 a 5 jogadores com vidas compartilhadas (jogadores + 2), Start para voltar e itens mantidos por jogador. [Detalhes](docs/NORMAL_COOP.md) |
+| **Normal Game — character selection** | Seletor de personagens do Battle depois de escolher o arquivo do Normal. [Detalhes](docs/NORMAL_CHARACTERS.md) |
+| **Character selection — color controls** | Seis paletas por personagem com L/R (teclado C/V, controle LB/RB). [Detalhes](docs/SELECTION_COLORS.md) |
+| **Super Bomberman 5 Extra Characters** | Seleção de sete colunas com Honey, Kotetsu, Subordinate Bomber e imperador Terrorin, cada um com habilidade em B + direção. [Detalhes](docs/EXTRA_CHARACTERS.md) |
+| **Bomber Kings — Super Bomberman 4 characters** | Terceira fileira com Bomberman, Hammer, Jet, Lady, Bazooka e Great Bomber do SB4, lidos da **sua própria ROM do SB4**, com as habilidades do SB4. [Detalhes](docs/BOMBER_KINGS.md) |
+| **Normal Game HUD faces** | Personagem e cor escolhidos nos rostos da HUD de P1/P2. [Detalhes](docs/NORMAL_HUD_FACES.md) |
+| **Louie improvements** | Chute de bombas do Yellow, paralisia de inimigos do Red e arrancada protegida do Black Louie (Y). [Detalhes](docs/LOUIE_IMPROVEMENTS.md) |
+| **Normal Game — portal destinations** | Mostra o destino de cada portal visível (`Z1-2`, `Z1-S`, `Z1-A1`…). [Detalhes](docs/PORTAL_LABELS.md) |
+| **Normal Game — infinite time** | Cronômetro nativo `-:--` sem morte por tempo. [Detalhes](docs/INFINITE_TIME.md) |
+| **Pause — exit & draw** | Voltar ao mapa no Normal; empatar a rodada ou voltar às arenas no Battle. [Detalhes](docs/PAUSE_MENU.md) |
+| **Gold Cartridge — Battle** | Arenas 11–13 e Revanche Hiper. [Detalhes](docs/GOLD_BATTLE.md) |
+| **Português brasileiro — menus** | Menus, HUD e certificados em PT-BR com as fontes do cartucho. [Detalhes](docs/TRANSLATION_PTBR.md) |
 
-![Dicas de destino dos portais do Normal Game](docs/images/portal-destinations.png)
+### Controles
 
-ZONE1-1: esquerda **Z1-2**, centro **Z1-5**, direita **Z1-7**. Cada dica aparece somente com o respectivo portal visível.
+**Setas** = direcional, **Enter** = Start, **Shift direito** = Select, **X/Z** = A/B, **S/A** = X/Y, **C/V** = L/R. Remapeie no launcher. Cada aba **PLAYER** escolhe Teclado ou Gamepad e o dispositivo; controles iguais aparecem separados (`DualSense (2)`). P3–P5 começam sem dispositivo: dê a cada um seu próprio controle ou teclas.
 
-A v0.12.0 traz o mod **Bomber Kings**: uma terceira fileira na seleção com o Bomberman, o Hammer, o Jet, a Lady, o Bazooka e o Great Bomber do Super Bomberman 4, desenhados a partir da sua própria ROM do Super Bomberman 4 (escolhida na página Mods, conferida pelo SHA-256 e nunca distribuída), cinco cores do SB4 para cada um com o mod de cores e habilidades em B + direção portadas do Super Bomberman 4 com os mesmos tempos, poses e efeitos sonoros; Honey e Kotetsu ganham o tiro e a estocada da luta de chefe. As habilidades acertam inimigos no Normal Game e adversários no Battle; o Jet é imune ao contato com inimigos durante o voo.
+### Compilar
 
-A v0.13.0 junta Honey and Kotetsu, Subordinate Bomber e as habilidades da Honey/Kotetsu no **Super Bomberman 5 Extra Characters** e adiciona o imperador Terrorin. Se você usava algum dos mods antigos, ative o novo depois do Generate & rebuild; os pacotes antigos não vêm mais. O Bomber Kings sozinho não dá mais as habilidades à Honey e ao Kotetsu.
+Instale Git for Windows e Python 3.11+ e execute os comandos de [Build from source](#build-from-source); depois abra `SuperBomberman5Recomp.exe` na raiz do repositório. Veja [BUILD_WINDOWS.md](docs/BUILD_WINDOWS.md) e [CONTRIBUTING.md](CONTRIBUTING.md).
 
-A v0.12.1 usa **1 PLAYER / 2–5 PLAYERS** no menu em inglês, com Y original e contorno do T corrigido. B no seletor de personagens do Normal reconstrói a lista anterior de arquivos e permite reabrir o seletor. Faça Generate & rebuild com a v0.12.1 para aplicar estas correções.
+### Estado e limites
 
-A v0.11.1 corrige os números no menu Normal em PT-BR: 1/2 usam a fonte original da ROM; 3–5 são extensões autorais com o mesmo peso e contorno. O cursor acompanha a linha selecionada, com o espaçamento original de oito pixels. Faça Generate & rebuild com este host; o pacote do mod continua 0.1.0.
+A recompilação é parcial: rotinas analisáveis viram C e o restante roda no interpretador; reset/NMI continuam interpretados. A jogabilidade é verificada com rotas roteirizadas no Linux LLE e testes do mantenedor no Windows; campanha completa, todas as combinações de mods, cinco controles físicos e compatibilidade ampla no Linux não foram qualificados. Sem netplay, widescreen ou macOS. Detalhes em [STATUS.md](docs/STATUS.md).
 
-As categorias do launcher ficam em inglês, incluindo **Translation**. O nome e as descrições do mod PT-BR continuam em português brasileiro. Os doze podem ser ativados juntos; a combinação completa ainda não foi qualificada. Campanha e multiplayer completos ainda não foram qualificados.
+[Abra uma issue](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/issues) com versão, sistema, hash da ROM e passos. Nunca publique ROM, recursos extraídos ou save states.
 
-A v0.4.1 também incorpora o ícone fornecido em dez tamanhos, de 16 a 256 pixels, preservando o desenho inteiro e a transparência para escalas de exibição do Windows.
-
-### Controles e início de partida
-
-Depois de compilar no Windows, abra `SuperBomberman5Recomp.exe` na raiz
-do repositório. Ele usa o ícone atual do “5” e localiza o jogo gerado
-automaticamente. O menu de cinco jogadores reconhece a tela original sem
-depender do histórico de retorno dos scripts da abertura/demonstração.
-
-**Setas** para direção, **Enter** para Start, **X/Z** para A/B e **Shift direito** para Select. Pressione Enter na abertura/título, escolha **Normal Game → 1 Player Game → New Game → File 1**, confirme com **X** e pressione **Enter** no mapa da Zone 1 para entrar na fase. Remapeie os controles no launcher se desejar. O launcher mostra as abas **PLAYER 1–5**: escolha Teclado ou Gamepad para cada jogador e use **Configure**. P3–P5 começam sem dispositivo e sem teclas; dê a cada um um controle ou teclas próprias (teclas iguais movem os dois jogadores).
-
-### Compilar, contribuir e publicar
-
-Instale Git for Windows e Python 3.11+, clone com `--recurse-submodules` e execute os comandos de [Building from source](#building-from-source). Os scripts preparam ferramentas em `.tools/`, sem alterar o PATH global. Depois de compilar, `SuperBomberman5Recomp.exe` abre o launcher com a ROM local padrão. Consulte [BUILD_WINDOWS.md](docs/BUILD_WINDOWS.md) e [CONTRIBUTING.md](CONTRIBUTING.md).
-
-A build validada usa composição LLE. Reset/NMI permanecem interpretados devido a falhas de continuidade na tentativa AOT. Precisamos ampliar a cobertura nativa e comparar o comportamento com uma referência independente.
-
-[Abra uma issue](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/issues) informando versão, Windows, hash da ROM e reprodução. Não publique ROM, sprites/músicas extraídos, dumps ou save states. Confira dados pessoais nos relatórios antes de anexá-los.
-
-O estado e as observações ficam em [STATUS.md](docs/STATUS.md); o fluxo de versões e releases está em [PUBLISHING.md](docs/PUBLISHING.md). A skill de manutenção fica em `.agents/skills/super-bomberman5-repository/` e a de desenvolvimento de mods em `.agents/skills/super-bomberman5-mod-development/`; orientações para agentes de IA estão em `AGENTS.md`. ROM, fontes gerados, builds e capturas ficam fora do Git. Releases contêm instalador e fontes sem dados do jogo.
-
-O software usa [PolyForm Noncommercial 1.0.0](LICENSE), preservando as licenças das dependências. Veja [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). A licença não concede direitos sobre a ROM ou conteúdo de Super Bomberman 5. O projeto não tem vínculo ou endosso dos titulares do jogo.
-
-Windows source builds also create **SuperBomberman5Recomp.exe** at the repository root, with the existing “5” icon; open it after building. It forwards command-line arguments and locates build-lle automatically.
-
-O build Windows também cria **SuperBomberman5Recomp.exe** na raiz do repositório com o ícone atual do “5”; abra-o depois de compilar. Ele repassa os argumentos e localiza build-lle automaticamente.
+O software usa [PolyForm Noncommercial 1.0.0](LICENSE), preservando as licenças das dependências ([THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)). A licença não cobre a ROM nem o conteúdo de Super Bomberman 5. O projeto não tem vínculo ou endosso dos titulares do jogo.

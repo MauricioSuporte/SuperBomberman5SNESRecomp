@@ -1,5 +1,11 @@
 # Super Bomberman 5: estado do protótipo
 
+## v1.0.0 release / Release v1.0.0 - 2026-10-16
+
+v1.0.0 packages the fixes below (Louies with five seats, identical controllers, ZONE3 - D co-op, mounted boss entry, portal labels after bosses, retired mod pruning, SuperBomberman5Recomp.exe only) and a shorter bilingual README. It stays a prerelease: the full campaign, all mod combinations, physical five-player play and broad Linux compatibility remain unqualified. The identical-controller seating was verified by code paths and build only, not with two physical DualSense pads.
+
+A v1.0.0 reúne as correções abaixo e um README bilíngue mais curto. Continua pré-release: campanha completa, combinações de mods, cinco controles físicos e compatibilidade ampla no Linux não foram qualificados. O assento de controles iguais foi verificado apenas por código e build, sem dois DualSense físicos.
+
 ## Louies with five co-op seats and identical controllers / Louies com cinco jogadores e controles iguais - 2026-10-16
 
 Five co-op seats own all five campaign OBJ pages (`$1D00-$1D04`, pool

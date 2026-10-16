@@ -1036,6 +1036,42 @@ Baixe o ZIP Windows x64 ou AppImage Linux x86_64 experimental e confira SHA256SU
 Evidências e limites em docs/STATUS.md. Recompilação parcial, principalmente interpretada. Campanha completa, todas as combinações, multiplayer físico e compatibilidade ampla no Linux não qualificados; sem netplay. Downloads de setup sem ROM, código/executável gerado do jogo, assets extraídos, saves ou capturas brutas.
 '''
 
+if version == '1.0.0':
+    notes = f'''# Super Bomberman 5 v{version}
+
+## English
+
+- Five-player Normal Game: Louies now hatch, animate and are ridden correctly with every seat, even when all sprite pages are in use.
+- ZONE3 - D in co-op: the Pirate Bomber gets its Black Louie again, and a restart after everyone dies no longer leaves P1 on a frozen Red Louie or hangs the game.
+- Mounted boss entry (ZONE4 - G and others) no longer corrupts P1 or the boss.
+- Portal destinations now also appear on the portals shown after defeating a boss.
+- Several identical controllers (for example two DualSense pads) can be assigned to different players in the launcher and keep their seats in game.
+- The removed Honey and Kotetsu and Subordinate Bomber packages no longer linger in rebuilt installs; Windows uses only **SuperBomberman5Recomp.exe** (play.cmd and the shortcut were removed).
+- Shorter README with a new gameplay panel: green Subordinate Bomber on Black Louie, Jet, Bazooka, Hammer and Terrorin using their abilities.
+
+Twelve optional mods, disabled by default; mod packages remain 0.1.0. Run **Generate & rebuild** after upgrading.
+
+Download the Windows x64 ZIP or experimental Linux x86_64 AppImage and verify SHA256SUMS. Install in a new writable folder. Linux: chmod +x; without FUSE use --appimage-extract-and-run. Supply your own supported JPN SB5 ROM. Internet is needed for the first tools; Rust is not required.
+
+Still a prerelease: partial recompilation with mostly interpreted gameplay. Full campaign, all mod combinations, physical five-player play and broad Linux compatibility remain unqualified; no netplay. Evidence: docs/STATUS.md. Downloads contain no ROM, generated game code/binary, extracted assets, saves or raw captures.
+
+## Português
+
+- Normal Game com cinco jogadores: os Louies nascem, animam e são montados corretamente em todos os assentos, mesmo com todas as páginas de sprites ocupadas.
+- ZONE3 - D em co-op: o Pirate Bomber volta a receber o Black Louie, e reiniciar depois que todos morrem não deixa mais o P1 num Red Louie travado nem congela o jogo.
+- Entrada montada em fases de chefe (ZONE4 - G e outras) não corrompe mais o P1 nem o chefe.
+- Os destinos dos portais também aparecem nos portais mostrados após derrotar um chefe.
+- Vários controles iguais (por exemplo dois DualSense) podem ser atribuídos a jogadores diferentes no launcher e mantêm o assento no jogo.
+- Os pacotes removidos Honey and Kotetsu e Subordinate Bomber não ficam mais nas instalações recompiladas; o Windows usa apenas **SuperBomberman5Recomp.exe** (play.cmd e o atalho foram removidos).
+- README mais curto com novo quadro: Subordinate verde no Black Louie, Jet, Bazooka, Hammer e Terrorin usando habilidades.
+
+Doze mods opcionais, desligados por padrão; pacotes de mod em 0.1.0. Faça **Generate & rebuild** ao atualizar.
+
+Baixe o ZIP Windows x64 ou o AppImage Linux x86_64 experimental e confira SHA256SUMS. Instale em pasta nova e gravável. Linux: chmod +x; sem FUSE use --appimage-extract-and-run. Forneça sua ROM JPN compatível do SB5. Internet para as primeiras ferramentas; Rust não é necessário.
+
+Ainda é pré-release: recompilação parcial, principalmente interpretada. Campanha completa, todas as combinações de mods, cinco controles físicos e compatibilidade ampla no Linux não qualificados; sem netplay. Evidências em docs/STATUS.md. Downloads sem ROM, código/executável gerado do jogo, assets extraídos, saves ou capturas brutas.
+'''
+
 if args.output:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(notes, encoding='utf-8', newline='\n')
