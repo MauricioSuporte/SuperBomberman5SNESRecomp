@@ -591,7 +591,7 @@ static unsigned sb4_pose_frame(unsigned object,bool rider) {
     int direction;int pose=bomber_pose(g_ram[0x79f+object],&direction);
     unsigned d=sb4_direction(direction),step=walk_step(object);
     unsigned walk=step==1?1:step==3?2:0;
-    if(rider) return 56+d;
+    if(rider) return 20+d; /* seated, legs hidden by the mount */
     switch(pose) {
     case POSE_WALK: return d*3+walk;
     case POSE_CARRY_WALK: return 32+d*3+walk;
@@ -605,6 +605,15 @@ static unsigned sb4_pose_frame(unsigned object,bool rider) {
     case POSE_STAND: return d*3;
     default: return ((snes_frame_counter/6)&3)*3;
     }
+}
+/* Bad Bomber cart animations: $42-$45 riding, $3B-$3E throwing (right,
+ * down, left, up = the side of the arena it faces; verified by Battle
+ * routes with Bad Bomber on). */
+static uint32_t bad_bomber_pc(unsigned character,unsigned object) {
+    unsigned anim=g_ram[0x79f+object];
+    if(anim>=0x42 && anim<0x46) return Sb4BadBomberPc(character,anim-0x42,false);
+    if(anim>=0x3b && anim<0x3f) return Sb4BadBomberPc(character,anim-0x3b,true);
+    return 0;
 }
 /* Draws Super Bomberman 4 frame `frame` with the character's standing
  * anchor (centre of the opaque columns, lowest opaque line of the front
@@ -725,6 +734,69 @@ static void bomber_anchor(void) {
     int l,r,b;frame_box(data,&l,&r,&b);
     if(r>l && b>-64 && b<64) { bomber_cx=(l+r)/2;bomber_bottom=b; }
 }
+/* First and last canvas lines with a drawn pixel. */
+static int canvas_top(void) {
+    for(int y=0;y<CANVAS_H;++y) for(int x=0;x<CANVAS_W;++x) if(canvas[y][x]) return y;
+    return CANVAS_H;
+}
+static int canvas_bottom(void) {
+    for(int y=CANVAS_H-1;y>=0;--y) for(int x=0;x<CANVAS_W;++x) if(canvas[y][x]) return y;
+    return -1;
+}
+/* Palette loads applied on a later line. Picker grid rows have their own
+ * palettes, loaded where the row starts. In stages a seat's own palette slot
+ * is recolored only over the lines its figure covers (restored on the next
+ * line), so the seat's mount, eggs and HUD sprites elsewhere keep their
+ * colors; RESTORE puts back the colors the frame started with. */
+enum { RESTORE = 0xffff };
+typedef struct { int line;unsigned palette,key; } LineLoad;
+static LineLoad line_loads[64];
+static unsigned line_load_count;
+static uint16_t frame_obj_colors[128];
+static void add_line_load(int line,unsigned palette,unsigned key) {
+    if(line_load_count<sizeof(line_loads)/sizeof(*line_loads))
+        line_loads[line_load_count++]=(LineLoad){line,palette,key};
+}
+static void apply_line_loads(Ppu *ppu,unsigned line) {
+    /* Restores first, so a region ending on the line before another one
+     * starts in the same palette keeps the second one's colors. */
+    for(unsigned pass=0;pass<2;++pass)
+        for(unsigned k=0;k<line_load_count;++k) {
+            const LineLoad *l=&line_loads[k];
+            if((l->key==RESTORE)!=(pass==0)) continue;
+            if(l->line!=(int)line && !(line==1 && l->line<1)) continue;
+            if(l->key==RESTORE) {
+                for(unsigned c=1;c<16;++c) put(&ppu->cgram[0x80+l->palette*16+c],frame_obj_colors[l->palette*16+c]);
+            } else load_palette(ppu,l->palette,l->key);
+        }
+}
+static int screen_line(int y) { y&=255;return y>=240?y-256:y; }
+/* True when a visible sprite in `palette` other than `own` covers any of the
+ * lines top..bottom. */
+static bool palette_shared(const Ppu *ppu,unsigned palette,const unsigned *own,unsigned own_count,int top,int bottom) {
+    for(unsigned s=0;s<128;++s) {
+        if(!visible(ppu,s) || sprite_palette(ppu,s)!=palette) continue;
+        bool mine=false;
+        for(unsigned k=0;k<own_count;++k) mine|=own[k]==s;
+        if(mine) continue;
+        int y=screen_line(ppu->oam[s*2]>>8),h=big(ppu,s)?16:8;
+        if(y<=bottom && y+h-1>=top) return true;
+    }
+    return false;
+}
+/* Palette for a figure covering lines top..bottom in seat slot `slot`: the
+ * slot itself recolored on those lines when nothing else there uses it;
+ * otherwise a palette no visible sprite uses, or (none free) the slot for
+ * the whole frame. */
+static int figure_palette(Ppu *ppu,unsigned key,unsigned slot,const unsigned *own,unsigned own_count,int top,int bottom) {
+    if(slot<8 && bottom>=top && !palette_shared(ppu,slot,own,own_count,top,bottom)) {
+        palette_given[slot]=true;
+        add_line_load(top,slot,key);
+        add_line_load(bottom+1,slot,RESTORE);
+        return (int)slot;
+    }
+    return choose_palette(ppu,key,(int)slot);
+}
 static void draw_players(Ppu *ppu,bool *taken) {
     for(unsigned i=0;i<5;++i) {
         int skin=skin_of(g_ram[SEAT_CHOICE+i]);
@@ -734,13 +806,10 @@ static void draw_players(Ppu *ppu,bool *taken) {
         if(slot>=8) continue;
         unsigned mine[16];int ox=0,oy=0,bottom=0;
         unsigned count=match_native(ppu,object,slot,mine,&ox,&oy,&bottom);
-        /* Bomber not drawn (blinking, dead); Jet's flight keeps the native
-         * invulnerability timer fixed, so he is drawn at his object. */
-        bool forced=!count && SpecialAbilityShown(i);
-        if(!count && !forced) continue;
+        if(!count) continue; /* Bomber not drawn (blinking, dead). */
         /* Death ($16): the last step is the burnt-out debris; leave it native. */
         if(g_ram[0x79f+object]==0x16 && g_ram[0x7ff+object]/2>=4) continue;
-        unsigned priority=forced?2:(ppu->oam[mine[0]*2+1]>>12)&3;
+        unsigned priority=(ppu->oam[mine[0]*2+1]>>12)&3;
         /* $1782+seat: bit 7 riding a mount, bit 1 jumping onto it. A rider
          * stands with its feet where the native rider frame ends; neither
          * keeps the ground shadow (the jump has its own native one). */
@@ -752,9 +821,13 @@ static void draw_players(Ppu *ppu,bool *taken) {
         int lift=0;
         if(skin>=2) {
             key+=g_ram[SEAT_COLOR+i]%SB4_COLORS;
-            uint32_t frame_pc=ability>=0 && sb4_frame?sb4_frame:Sb4FramePc((unsigned)skin-2,sb4_pose_frame(object,rider));
+            /* Bad Bomber ($15A2 bit 7): the Super Bomberman 4 Bad Bomber on
+             * its board, its feet where the native cart ends. */
+            uint32_t bad=(g_ram[0x15a2+i]&0x80)?bad_bomber_pc((unsigned)skin-2,object):0;
+            uint32_t frame_pc=bad?bad:ability>=0 && sb4_frame?sb4_frame:Sb4FramePc((unsigned)skin-2,sb4_pose_frame(object,rider));
+            bool own=rider || bad;
             if(!compose_sb4_at((unsigned)skin-2,frame_pc,ORIGIN_X+bomber_cx,
-                               rider?ORIGIN_Y+bottom-1:ORIGIN_Y+bomber_bottom-1,rider)) continue;
+                               own?ORIGIN_Y+bottom-1:ORIGIN_Y+bomber_bottom-1,own)) continue;
         } else if(ability<0 && bomber_pose(g_ram[0x79f+object],&direction)==POSE_VICTORY && champion_ready && !rider) {
             /* Champion frames are anchored at their left edge with the feet
              * one line above the origin. */
@@ -764,9 +837,11 @@ static void draw_players(Ppu *ppu,bool *taken) {
             compose_data(frame_data(pose_frame((unsigned)skin,object,ability,step)),archive,ARCHIVE_SIZE,ORIGIN_X,ORIGIN_Y-2,shadow);
             lift=rider?bottom+1:0;
         }
-        int palette=choose_palette(ppu,key,(int)slot);
+        int y=g_ram[0x5bf+object]+oy-ORIGIN_Y+lift;
+        int top=screen_line(y+canvas_top()),low=top+(canvas_bottom()-canvas_top());
+        int palette=figure_palette(ppu,key,slot,mine,count,top,low);
         if(palette<0) continue;
-        emit(ppu,g_ram[0x55f+object]+ox-ORIGIN_X,g_ram[0x5bf+object]+oy-ORIGIN_Y+lift,(unsigned)palette,priority,mine,count,taken);
+        emit(ppu,g_ram[0x55f+object]+ox-ORIGIN_X,y,(unsigned)palette,priority,mine,count,taken);
     }
 }
 /* Head of a character in a 16x16 block at canvas (ORIGIN_X-8, ORIGIN_Y):
@@ -803,7 +878,8 @@ static void draw_faces(Ppu *ppu) {
         unsigned x=g_ram[0x55f+object],y=(g_ram[0x5bf+object]-17)&255;
         for(unsigned s=0;s<128;++s) {
             if(!visible(ppu,s) || !big(ppu,s) || sprite_x(ppu,s)!=x || (ppu->oam[s*2]>>8)!=y) continue;
-            int palette=choose_palette(ppu,key,(int)sprite_palette(ppu,s));
+            unsigned own[1]={s};
+            int palette=figure_palette(ppu,key,sprite_palette(ppu,s),own,1,screen_line((int)y),screen_line((int)y)+15);
             if(palette<0) return;
             if(blocks[key]<0) {
                 if((blocks[key]=borrow_block(ppu))<0 || !compose_head(key)) return;
@@ -822,12 +898,6 @@ static bool picker(void) {
     uint32_t pc=picker_pc();
     return g_ram[0x1031]==4 && pc>=0xc68b48 && pc<0xc68ee4;
 }
-/* Palette loads applied on a later line: grid rows have their own palettes,
- * loaded where the row starts, so the six figures of a row (and the rows
- * above) each keep their own colors. */
-typedef struct { unsigned line,palette,key; } LineLoad;
-static LineLoad line_loads[24];
-static unsigned line_load_count;
 static int sprite_bottom(const Ppu *ppu,unsigned s) {
     int y=ppu->oam[s*2]>>8;if(y>=240) y-=256;
     return y+(big(ppu,s)?16:8);
@@ -837,15 +907,6 @@ static bool palette_free_from(const Ppu *ppu,unsigned palette,int from,const boo
     for(unsigned s=0;s<128;++s)
         if(!taken[s] && visible(ppu,s) && sprite_palette(ppu,s)==palette && sprite_bottom(ppu,s)>from) return false;
     return true;
-}
-/* First and last canvas lines with a drawn pixel. */
-static int canvas_top(void) {
-    for(int y=0;y<CANVAS_H;++y) for(int x=0;x<CANVAS_W;++x) if(canvas[y][x]) return y;
-    return CANVAS_H;
-}
-static int canvas_bottom(void) {
-    for(int y=CANVAS_H-1;y>=0;--y) for(int x=0;x<CANVAS_W;++x) if(canvas[y][x]) return y;
-    return -1;
 }
 static bool compose_grid_figure(unsigned cell) {
     memset(canvas,0,sizeof(canvas));
@@ -888,8 +949,7 @@ static void draw_grid(Ppu *ppu,bool *taken) {
             }
             if(palettes[k]<0) continue;
             busy_until[palettes[k]]=bottom;
-            if(line_load_count<sizeof(line_loads)/sizeof(*line_loads))
-                line_loads[line_load_count++]=(LineLoad){(unsigned)top,(unsigned)palettes[k],keys[k]};
+            add_line_load(top,(unsigned)palettes[k],keys[k]);
         }
         for(unsigned k=0;k<count;++k) {
             if(palettes[k]<0) continue;
@@ -900,10 +960,6 @@ static void draw_grid(Ppu *ppu,bool *taken) {
             emit(ppu,px-ORIGIN_X+8,py-8-ORIGIN_Y,(unsigned)palettes[k],3,NULL,0,taken);
         }
     }
-}
-static void apply_line_loads(Ppu *ppu,unsigned line) {
-    for(unsigned k=0;k<line_load_count;++k) if(line_loads[k].line==line || (line==1 && line_loads[k].line<1))
-        load_palette(ppu,line_loads[k].palette,line_loads[k].key);
 }
 static void draw_portraits(Ppu *ppu) {
     int blocks[SKINS*8][4];memset(blocks,0xff,sizeof(blocks));
@@ -990,6 +1046,7 @@ void HoneyKotetsuObserve(const Ppu *view,unsigned line,void *context) {
     }
     if(!enabled || !patched || !art_ready || PPU_objSize(ppu)!=0) return;
     saved_count=0;borrowed_count=0;line_load_count=0;memcpy(saved_high,ppu->highOam,sizeof(saved_high));
+    memcpy(frame_obj_colors,&ppu->cgram[0x80],sizeof(frame_obj_colors));
     bool taken[128]={false};
     for(unsigned k=0;k<SKINS*8;++k) key_palette[k]=-1;
     memset(palette_given,0,sizeof(palette_given));
@@ -997,6 +1054,7 @@ void HoneyKotetsuObserve(const Ppu *view,unsigned line,void *context) {
     else if(stage()) {
         draw_players(ppu,taken);draw_faces(ppu);
         effect_ppu=ppu;effect_taken=taken;SpecialAbilityDraw();effect_ppu=NULL;effect_taken=NULL;
+        apply_line_loads(ppu,1);
     }
     if(saved_count || line_load_count) { drawn=true;++ppu->vramWriteCount;++ppu->oamWriteCount; }
 }

@@ -23,6 +23,8 @@ bool Sb4FrameAt(uint32_t pc,uint8_t out[32][32]);
 bool Sb4FireBlock(unsigned code,uint8_t out[16][16]);
 uint16_t Sb4FireColor(unsigned index);
 bool Sb4EffectBlock(unsigned tile,uint8_t out[16][16]);
+/* Bad Bomber frame (SB5 directions: 0 right, 1 down, 2 left, 3 up). */
+uint32_t Sb4BadBomberPc(unsigned character,unsigned direction,bool throwing);
 /* Battle picker portrait (32x32) and its colors per player palette. */
 bool Sb4Portrait(unsigned character,uint8_t out[32][32]);
 uint16_t Sb4PortraitColor(unsigned character,unsigned palette,unsigned index);

@@ -37,7 +37,9 @@ bool Sb4Portrait(unsigned character,uint8_t out[32][32]) {
 uint16_t Sb4PortraitColor(unsigned character,unsigned palette,unsigned index) { return (uint16_t)(0x2000+character*0x100+palette*0x10+index); }
 static int ability_pose=-1;static uint32_t ability_frame;
 int SpecialAbilityPose(unsigned seat,unsigned *step,uint32_t *sb4_frame) { (void)seat;*step=0;*sb4_frame=ability_frame;return ability_pose; }
-bool SpecialAbilityShown(unsigned seat) { (void)seat;return false; }
+uint32_t Sb4BadBomberPc(unsigned character,unsigned direction,bool throwing) {
+    return character<6 && direction<4?0xd00000|character<<8|(40+direction+(throwing?4u:0u)):0;
+}
 void SpecialAbilitiesInstall(void) {}
 void SpecialAbilityDraw(void) {}
 int SelectionColorSeat(unsigned seat) { (void)seat;return -1; }
@@ -387,22 +389,51 @@ int main(void) {
     hide_all(ppu);
     sprite(ppu,10,92,99,0x23,1,false);sprite(ppu,11,100,99,0x25,1,false);sprite(ppu,12,92,83,0x20,1,true);
     snap(before,ppu);
-    CHECK(sb4_pose_frame(8,false)==3 && sb4_pose_frame(8,true)==57);
+    CHECK(sb4_pose_frame(8,false)==3 && sb4_pose_frame(8,true)==21);
     HoneyKotetsuObserve(ppu,1,NULL);CHECK(drawn);
-    unsigned shown_blocks=0;
+    unsigned shown_blocks=0;int fig_top=256,fig_bottom=-1;
     for(unsigned s=10;s<=12;++s) if(visible(ppu,s)) {
-        CHECK(sprite_palette(ppu,s)==7);++shown_blocks;
+        /* The seat's own slot, recolored only over the figure's lines. */
+        CHECK(sprite_palette(ppu,s)==1);++shown_blocks;
         CHECK(pixel(ppu,ppu->oam[s*2+1]&0x1ff,0,4)==(3+1)%15+1); /* body column 0 of each block */
+        int y=ppu->oam[s*2]>>8;if(y<fig_top) fig_top=y;if(y+15>fig_bottom) fig_bottom=y+15;
     }
-    CHECK(shown_blocks>=2);
-    for(unsigned c=1;c<16;++c) CHECK(ppu->cgram[0x80+7*16+c]==Sb4Color(1,2,c));
+    CHECK(shown_blocks>=2 && fig_top>1);
+    uint16_t native1[16];memcpy(native1,&ppu->cgram[0x90],sizeof(native1));
+    for(unsigned c=1;c<16;++c) CHECK(ppu->cgram[0x80+16+c]==native1[c] && ppu->cgram[0x80+16+c]!=Sb4Color(1,2,c));
+    for(int line=2;line<=fig_bottom+1;++line) {
+        HoneyKotetsuObserve(ppu,(unsigned)line,NULL);
+        if(line<fig_top || line==fig_bottom+1)
+            for(unsigned c=1;c<16;++c) CHECK(ppu->cgram[0x80+16+c]==native1[c]);
+        if(line==fig_top || line==fig_top+20)
+            for(unsigned c=1;c<16;++c) CHECK(ppu->cgram[0x80+16+c]==Sb4Color(1,2,c));
+    }
     HoneyKotetsuObserve(ppu,224,NULL);CHECK(same(before,ppu));
+    /* Another sprite in the seat's slot on those lines (its mount): the
+     * figure takes a free palette for the whole frame instead. */
+    sprite(ppu,13,92,107,0x30,1,true);snap(before,ppu);
+    HoneyKotetsuObserve(ppu,1,NULL);CHECK(drawn);
+    for(unsigned s=10;s<=12;++s) if(visible(ppu,s)) CHECK(sprite_palette(ppu,s)==7);
+    for(unsigned c=1;c<16;++c) CHECK(ppu->cgram[0x80+7*16+c]==Sb4Color(1,2,c) && ppu->cgram[0x90+c]==native1[c]);
+    HoneyKotetsuObserve(ppu,224,NULL);CHECK(same(before,ppu));
+    hide(ppu,13);snap(before,ppu);
     /* During an ability the frame the ability names is drawn instead. */
     ability_pose=1;ability_frame=Sb4FramePc(1,22);
     HoneyKotetsuObserve(ppu,1,NULL);CHECK(drawn);
     for(unsigned s=10;s<=12;++s) if(visible(ppu,s)) CHECK(pixel(ppu,ppu->oam[s*2+1]&0x1ff,0,4)==(22+1)%15+1);
     ability_pose=-1;ability_frame=0;
     HoneyKotetsuObserve(ppu,224,NULL);CHECK(same(before,ppu));
+    /* Bad Bomber ($15A2 bit 7, cart anim $43 facing down): the SB4 Bad
+     * Bomber frame for that side; throwing ($3C) its throwing frame. */
+    g_ram[0x15a2]=0x99;g_ram[0x79f+8]=0x43;
+    HoneyKotetsuObserve(ppu,1,NULL);CHECK(drawn);
+    for(unsigned s=10;s<=12;++s) if(visible(ppu,s)) CHECK(pixel(ppu,ppu->oam[s*2+1]&0x1ff,0,4)==(41+1)%15+1);
+    HoneyKotetsuObserve(ppu,224,NULL);CHECK(same(before,ppu));
+    g_ram[0x79f+8]=0x3c;
+    HoneyKotetsuObserve(ppu,1,NULL);
+    for(unsigned s=10;s<=12;++s) if(visible(ppu,s)) CHECK(pixel(ppu,ppu->oam[s*2+1]&0x1ff,0,4)==(45+1)%15+1);
+    HoneyKotetsuObserve(ppu,224,NULL);CHECK(same(before,ppu));
+    g_ram[0x15a2]=0;g_ram[0x79f+8]=0x46;
     /* Picker portrait of a Super Bomberman 4 seat: its own portrait and
      * portrait palette (Hammer, color 2). */
     g_ram[0x1031]=4;g_ram[0xc90]=0x68;g_ram[0xcb8]=0x8e;g_ram[0xce0]=0xc6;

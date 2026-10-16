@@ -59,6 +59,22 @@ portrait and frame-by-address decoding). Battle routes (five kings):
 - Picker: each seat shows the SB4 Battle portrait of its Bomber King in the
   chosen palette (Bazooka, Jet, Hammer, Lady with R, Great).
 
+Third pass (same day, maintainer feedback): Jet keeps the flying pose 20
+frames after the crash and blinks invulnerable (native `$170A`, never frozen)
+until about a second after it; Lady stands 109 frames (two gun turns around
+the shot) while the laser flies on its own; debuff counted from the trigger
+(SB4 `$E2,X` = 160 on that frame); SB4 riding frames 20-23; SB4 Bad Bomber
+board frames per arena side and throw; SB4 sound effects (`$39`, `$4E`,
+`$5A`, `$5F`) from SB4's own driver in a private APU (dev harness rendered
+1.77/0.22/0.86/1.71 s clips, peaks 12588/4703/6614/10896); seat palettes
+recolored only on the figure's lines so Louie/eggs/HUD keep native colors.
+Evidence (Linux headless, five kings): Jet flight blinking, crash pose and
+kill; Lady laser hit at frame 118 after walking was allowed from 109 (two
+bombs lost); egg pickup and Louie ride with consistent rider/Louie colors (the
+rider used to flip palettes); Bad Bomber on left/top edges and throwing with
+the SB4 board frames; native tests 12/12. Not heard: audio was disabled in the
+headless runs, so the in-game playback of the clips is not verified by ear.
+
 Not verified: Windows build/run, physical controllers, every SB4 pose (stun,
 Time Up and Bad Bomber cart were not captured), boss stages, CPU seats with
 extra characters, save state/rewind during an ability (state lives in WRAM

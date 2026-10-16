@@ -10,8 +10,5 @@ void SpecialAbilitiesInstall(void);
  * the 32x32 Super Bomberman 4 frame to draw (0 = the plain pose). */
 int SpecialAbilityPose(unsigned seat,unsigned *step,uint32_t *sb4_frame);
 bool SpecialAbilityDebuffed(unsigned seat);
-/* True while the seat must be drawn even when its native sprite is hidden
- * (Jet's flight, during which the invulnerability blink is held). */
-bool SpecialAbilityShown(unsigned seat);
 /* Draws the active effects (called by the extra-character overlay). */
 void SpecialAbilityDraw(void);

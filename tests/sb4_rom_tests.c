@@ -54,6 +54,10 @@ int main(void) {
     image_bytes[0xdee87+0x184+0x20]=0x80;
     image_bytes[0x167b7c+0x20+4]=0x78;image_bytes[0x167b7c+0x20+5]=0x56;
     CHECK(Sb4Portrait(1,px) && px[8][8]==1 && px[8][9]==0 && px[0][0]==0 && Sb4PortraitColor(1,1,2)==0x5678);
+    /* Bad Bomber frames: extra sheets (Jet $C6:4000), per side. */
+    CHECK(Sb4BadBomberPc(2,0,false)==0xc67000 && Sb4BadBomberPc(2,1,true)==0xc67180 &&
+          Sb4BadBomberPc(2,2,false)==0xc67800 && Sb4BadBomberPc(2,3,true)==0xc66980 &&
+          Sb4BadBomberPc(0,0,false)==0xc58aed && !Sb4BadBomberPc(6,0,false) && !Sb4BadBomberPc(0,4,false));
     CHECK(!Sb4Portrait(6,px) && !Sb4PortraitColor(1,5,0));
     Sb4RomForTests(NULL);
     CHECK(!Sb4Frame(2,5,px) && !Sb4Color(3,2,3));

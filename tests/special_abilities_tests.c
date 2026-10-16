@@ -21,6 +21,8 @@ uint16_t Sb4FireColor(unsigned index) { return (uint16_t)index; }
 bool Sb4EffectBlock(unsigned tile,uint8_t out[16][16]) { memset(out,1,256);return tile>=0x80; }
 uint16_t Sb4Color(unsigned character,unsigned palette,unsigned index) { return (uint16_t)(character+palette+index); }
 uint32_t Sb4FramePc(unsigned character,unsigned frame) { return 0xd00000|character<<8|frame; }
+static unsigned sounds[128];
+void Sb4SoundPlay(uint8_t id) { ++sounds[id&0x7f]; }
 static InterpPreOpcodeHook hooks[2];static uint32_t hook_pcs[2];static unsigned hook_count;
 bool interp_bridge_add_pre_opcode_hook(uint32_t pc24,InterpPreOpcodeHook hook) {
     if(hook_count<2) { hook_pcs[hook_count]=pc24;hooks[hook_count++]=hook; }
@@ -155,19 +157,20 @@ int main(void) {
     CHECK(g_ram[0x15a2+1]&0x40 && !(g_ram[0x15a2]&0x40) && g_ram[0x15a2+2]&0x40);
 
     /* Great: invulnerable in place for 160 frames facing down, then debuff. */
-    arena();frame(4,0x08,0x08);
-    CHECK(seat_state(4)[S_KIND]==AB_GREAT && (g_ram[0x15a2+4]&0x04) && g_ram[0x170a+4]==GREAT_FRAMES && speed(4,2)==0);
+    arena();memset(sounds,0,sizeof(sounds));frame(4,0x08,0x08);
+    CHECK(sounds[SND_GUARD]==1 && seat_state(4)[S_KIND]==AB_GREAT && (g_ram[0x15a2+4]&0x04) && g_ram[0x170a+4]==GREAT_FRAMES && speed(4,2)==0);
     CHECK(SpecialAbilityPose(4,&step,&pc)==1 && pc==Sb4FramePc(5,6));
     while(seat_state(4)[S_KIND]) frame(4,0,0);
     CHECK(timer(4)==GREAT_FRAMES && SpecialAbilityDebuffed(4));
 
     /* Jet (seat 1, x 64): wind-up, then 4 px per frame to the right with a
-     * fire trail until stopped, invulnerable; debuff when the trail is out. */
-    choices[1]=15;arena();g_ram[0x182a]=200;frame(1,0x08,0x01);
-    CHECK(seat_state(1)[S_KIND]==AB_JET && (g_ram[0x15a2+1]&0x04));
+     * fire trail until stopped, blinking invulnerable; after the crash he
+     * keeps the flying pose for 20 frames. Debuff from the trigger. */
+    choices[1]=15;arena();g_ram[0x182a]=200;memset(sounds,0,sizeof(sounds));frame(1,0x08,0x01);
+    CHECK(seat_state(1)[S_KIND]==AB_JET && (g_ram[0x15a2+1]&0x04) && SpecialAbilityDebuffed(1));
     CHECK(SpecialAbilityPose(1,&step,&pc)==0 && pc==0xcad0b0+1*0x800);
     while(timer(1)<JET_WINDUP) { frame(1,0,0);CHECK(speed(1,2)==0); }
-    CHECK(SpecialAbilityPose(1,&step,&pc)==0 && pc==0xcad0b0+1*0x800+3*0x80 && SpecialAbilityShown(1));
+    CHECK(SpecialAbilityPose(1,&step,&pc)==0 && pc==0xcad0b0+1*0x800+3*0x80);
     unsigned x=64;
     for(unsigned k=0;k<20;++k) {
         frame(1,0,0);
@@ -175,16 +178,19 @@ int main(void) {
         x+=JET_SPEED;g_ram[0x182a+1]=(uint8)x;
     }
     CHECK(g_ram[0x15a2+2]&0x40); /* seat 2 (x 112, tile 7) was in the trail */
+    CHECK(sounds[SND_EXPLOSION]==3);                        /* a segment every 8 frames */
+    /* The invulnerability countdown runs (it blinks) and is never frozen. */
+    { unsigned a=g_ram[0x170a+1];frame(1,0,0);CHECK(g_ram[0x170a+1]!=a || a>=8);x+=JET_SPEED;g_ram[0x182a+1]=(uint8)x; }
     emitted=0;SpecialAbilityDraw();CHECK(emitted>=3);
     for(unsigned k=0;k<3;++k) frame(1,0,0);                 /* a wall: no movement */
-    CHECK(seat_state(1)[S_FLAGS]&1);
-    CHECK(seat_state(1)[S_KIND]==AB_JET && !SpecialAbilityDebuffed(1));
+    CHECK((seat_state(1)[S_FLAGS]&1) && g_ram[0x170a+1]>=JET_LANDING+JET_GUARD_AFTER-4);
+    for(unsigned k=0;k<JET_LANDING-4;++k) { frame(1,0,0);CHECK(SpecialAbilityPose(1,&step,&pc)==0 && speed(1,2)==0); }
     for(unsigned k=0;k<TRAIL_LIFE+8;++k) frame(1,0,0);
-    CHECK(!seat_state(1)[S_KIND] && SpecialAbilityDebuffed(1) && SpecialAbilityPose(1,&step,&pc)<0 && !SpecialAbilityShown(1));
+    CHECK(!seat_state(1)[S_KIND] && SpecialAbilityDebuffed(1) && SpecialAbilityPose(1,&step,&pc)<0);
 
     /* Hammer (seat 2, x 112): stands still for 125 frames; the mace stuns
      * players it touches once and takes an item; no debuff. */
-    choices[2]=14;arena();frame(2,0x08,0x04);
+    choices[2]=14;arena();memset(sounds,0,sizeof(sounds));frame(2,0x08,0x04);
     CHECK(seat_state(2)[S_KIND]==AB_HAMMER && SpecialAbilityPose(2,&step,&pc)==1 && pc==0xcd0900);
     while(timer(2)<MACE_FROM+4) frame(2,0,0);
     g_ram[0x182a+3]=112+16;g_ram[0x1872+3]=16+16;            /* seat 3 next to him */
@@ -196,23 +202,28 @@ int main(void) {
     while(seat_state(2)[S_KIND]) frame(2,0,0);
     CHECK(g_ram[0x15ba+3]==0 && seat_state(3)[S_DROPS]==0);     /* once per swing */
     CHECK(timer(2)==HAMMER_FRAMES && !SpecialAbilityDebuffed(2));
+    CHECK(sounds[SND_MACE]==5);
 
-    /* Lady (seat 0, x 16): laser to the right from frame 48 at 2 px per
-     * frame; the first player hit is stunned and loses two items. */
-    choices[0]=16;arena();frame(0,0x08,0x01);
-    CHECK(seat_state(0)[S_KIND]==AB_LASER && SpecialAbilityPose(0,&step,&pc)==0 && pc==0xcaa0b0+1*0x80);
+    /* Lady (seat 0, x 16): turns the gun, laser to the right from frame 48
+     * at 2 px per frame, turns the gun again and walks from frame 109; the
+     * first player hit is stunned and loses two items. */
+    choices[0]=16;arena();memset(sounds,0,sizeof(sounds));frame(0,0x08,0x01);
+    CHECK(seat_state(0)[S_KIND]==AB_LASER && SpecialAbilityPose(0,&step,&pc)==0 && pc==0xcaa0b0+2*0x800+1*0x80);
     while(seat_state(0)[S_KIND] && !g_ram[0x15ba+1]) frame(0,0,0);
+    CHECK(sounds[SND_LASER]==1 && SpecialAbilityPose(0,&step,&pc)==0 && pc==0xcaa0b0+5*0x800+1*0x80);
     /* One item with the daze, the second through the cartridge's item
      * routine $C4:37CD called this frame through pushed return frames; the
      * hook restores the registers when it comes back. */
     CHECK(g_ram[0x15ba+1]==0x20 && seat_state(1)[S_DROPS]==0 && !g_ram[0x15ba+2]);
-    CHECK(!seat_state(0)[S_KIND] && !SpecialAbilityDebuffed(0));
+    CHECK(seat_state(0)[S_KIND] && !SpecialAbilityDebuffed(0));
     CHECK(redirected==LOSE_ITEM && injecting && cpu.X==1 && (cpu.A&0xff)==0 && cpu.S==0x1ff-5);
     CHECK(g_ram[0x1ff]==0xc0 && g_ram[0x1fe]==0x0a && g_ram[0x1fd]==0xf8 && g_ram[0x1fc]==0x36 && g_ram[0x1fb]==0xd0);
     cpu.S=0x1ff;redirected=0;
     unsigned before=timer(0);
     pad_hook(&cpu,PAD_HOOK);                                      /* back from the routine */
     CHECK(!injecting && !redirected && cpu.A==0x1234 && cpu.X==0x05 && cpu.Y==0x07 && timer(0)==before);
+    while(seat_state(0)[S_KIND]) { CHECK(speed(0,1)==0);frame(0,0,0); }
+    CHECK(timer(0)==LADY_FRAMES && speed(0,1)==1 && SpecialAbilityPose(0,&step,&pc)<0);
     /* Normal Game: no items are taken. */
     arena();g_ram[0x1d1a]=0;g_ram[0x1031]=0x0d;g_ram[0x1d25]=0x1f;frame(0,0x08,0x01);
     for(unsigned k=0;k<120;++k) frame(0,0,0);

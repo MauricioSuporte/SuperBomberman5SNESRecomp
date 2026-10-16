@@ -229,3 +229,14 @@ uint16_t Sb4PortraitColor(unsigned character,unsigned palette,unsigned index) {
     unsigned at=kPortraitPalette[character]+palette*0x20+index*2;
     return (uint16_t)((rom[at]|rom[at+1]<<8)&0x7fff);
 }
+
+/* Bad Bomber frames: each character's extra sheet (same 32x32 layout),
+ * found from the cartridge's own uploads with Bad Bomber on. Facing right
+ * (left edge) +$3000/+$3080 throwing, down (top edge) +$3100/+$3180, left
+ * (right edge) +$3800/+$3880, up (bottom edge) +$2900/+$2980. */
+static const uint32_t kExtraSheet[SB4_CHARACTERS]={0xc55aed,0xc68000,0xc64000,0xc60000,0xc59aed,0xc6c000};
+uint32_t Sb4BadBomberPc(unsigned character,unsigned direction,bool throwing) {
+    static const uint16_t kOffset[4]={0x3000,0x3100,0x3800,0x2900};
+    if(character>=SB4_CHARACTERS || direction>=4) return 0;
+    return kExtraSheet[character]+kOffset[direction]+(throwing?0x80:0);
+}

@@ -17,21 +17,25 @@
  *     68-82 a fire beam from the next tile up to the first block (explosion
  *     tiles, phases 2,2,4,4,6,6,8,8,8,8,6,6,4,4,2); lethal like an explosion.
  *   Jet: 48-frame wind-up (four poses), then flies 4 px per frame until a
- *     block stops it, invulnerable, leaving a fire trail: every 8 frames a
- *     two-tile segment (tail end + middle) that lives 16 frames (phases
- *     2,4,6,8,8,6,4,2), lethal.
+ *     block stops it, leaving a fire trail: every 8 frames a two-tile
+ *     segment (tail end + middle) that lives 16 frames (phases 2,4,6,8,8,6,
+ *     4,2), lethal. After the crash he keeps the flying pose for 20 frames.
+ *     He blinks invulnerable from the trigger until about a second after the
+ *     crash (the native countdown, never frozen).
  *   Hammer: stands still for 125 frames swinging the mace around himself
  *     (frames 29-106: angle -90 - 22.5 deg per frame, radius growing from 16
  *     to 48 px by frame 61, then shrinking back); a player it touches is
  *     stunned and loses an item. No debuff.
- *   Lady: six-pose throw (0-40), then from frame 48 a laser leaves 14 px in
- *     front of her at 2 px per frame until a block or a target; a player it
- *     hits is stunned and loses two items. No debuff.
+ *   Lady: stands 109 frames: a turn of the gun, the shot pose while the
+ *     laser leaves 14 px in front of her at frame 48, another turn; the
+ *     laser flies on its own at 2 px per frame until a block or a target; a
+ *     player it hits is stunned and loses two items. No debuff.
  *   Great: stands invulnerable for 160 frames facing the camera.
  *   Honey (boss): shooting animation; the shot hits the first target in
  *     line before a block. Kotetsu (boss): sword cut on the tile in front.
  * Debuff (Super Bomberman 4: Bazooka, Jet, Great; also Honey and Kotetsu):
- * 640 frames (about 10.7 s) at half walking speed with the ability blocked.
+ * 640 frames (about 10.7 s) from the trigger at half walking speed with the
+ * ability blocked. Sound effects are Super Bomberman 4's (sb4_sound.c).
  *
  * Damage uses the cartridge's own rules (point damage $C0:373F): a player
  * actor gets $15A2 bit 6 (hit) unless invulnerable ($15A2 bit 2), an enemy
@@ -50,6 +54,7 @@
 #include "special_abilities.h"
 #include "honey_kotetsu_mod.h"
 #include "sb4_rom.h"
+#include "sb4_sound.h"
 #include "common_rtl.h"
 #include "snes/interp_bridge.h"
 #include <string.h>
@@ -82,7 +87,9 @@ static const Ability kAbility[8]={
 };
 enum { SHOT_FRAMES = 24, SHOT_AT = 8, SLASH_FRAMES = 16, BAZOOKA_FRAMES = 98, BEAM_FROM = 68, BEAM_TO = 82,
        JET_WINDUP = 48, JET_SPEED = 4, TRAIL_LIFE = 16, HAMMER_FRAMES = 125, MACE_FROM = 29, MACE_TO = 106,
-       LASER_FROM = 48, LASER_POSE = 41, GREAT_FRAMES = 160 };
+       LASER_FROM = 48, LADY_FRAMES = 109, GREAT_FRAMES = 160, JET_LANDING = 20, JET_GUARD_AFTER = 64 };
+/* Super Bomberman 4 sound effects ($C0:071D numbers). */
+enum { SND_EXPLOSION = 0x39, SND_MACE = 0x4e, SND_LASER = 0x5a, SND_GUARD = 0x5f };
 static uint8_t *seat_state(unsigned i) { return g_ram+STATE+i*SEAT_BYTES; }
 static unsigned get16(const uint8_t *p) { return p[0]|p[1]<<8; }
 static void set16(uint8_t *p,unsigned v) { p[0]=(uint8_t)v;p[1]=(uint8_t)(v>>8); }
@@ -186,6 +193,15 @@ static void invulnerable(unsigned seat,unsigned frames) {
     g_ram[0x15a2+seat]|=0x04;
     if(g_ram[0x170a+seat]<frames) g_ram[0x170a+seat]=(uint8_t)frames;
 }
+/* Keeps the native invulnerability running for at least `frames` more
+ * frames without disturbing its blink: the cartridge blinks on bits 0-1 of
+ * the countdown ($C4:2E42), so it only ever grows in steps of 4. */
+static void extend_invulnerability(unsigned seat,unsigned frames) {
+    g_ram[0x15a2+seat]|=0x04;
+    unsigned v=g_ram[0x170a+seat];
+    while(v<frames && v+4<=255) v+=4;
+    g_ram[0x170a+seat]=(uint8_t)v;
+}
 static void start(unsigned seat,int direction) {
     const Ability *a=ability_of(seat);
     uint8_t *s=seat_state(seat);
@@ -193,14 +209,17 @@ static void start(unsigned seat,int direction) {
     memset(s+S_KIND,0,SEAT_BYTES-S_KIND);
     s[S_DROPS]=drops;
     s[S_KIND]=a->kind;s[S_DIR]=(uint8_t)direction;
-    if(a->kind==AB_GREAT) invulnerable(seat,GREAT_FRAMES);
+    /* Super Bomberman 4 starts the debuff counter with the move ($E2,X =
+     * 160 on the trigger frame), not when it ends. */
+    set16(s+S_DEBUFF,a->debuff);
+    if(a->kind==AB_GREAT) { invulnerable(seat,GREAT_FRAMES);Sb4SoundPlay(SND_GUARD); }
     if(a->kind==AB_JET) invulnerable(seat,JET_WINDUP+8);
 }
 static void finish(unsigned seat) {
     const Ability *a=ability_of(seat);
     uint8_t *s=seat_state(seat);
     s[S_KIND]=0;
-    if(a) { set16(s+S_DEBUFF,a->debuff);set16(s+S_COOLDOWN,a->cooldown); }
+    if(a) set16(s+S_COOLDOWN,a->cooldown);
 }
 /* Fire beam of Bazooka: tiles from the next one up to the first block. */
 static unsigned beam_length(unsigned seat) {
@@ -231,8 +250,9 @@ static void laser_position(unsigned seat,int *x,int *y) {
 static bool frozen(unsigned seat) {
     uint8_t *s=seat_state(seat);unsigned t=get16(s+S_TIMER);
     switch(s[S_KIND]) {
-    case AB_SHOT: case AB_SLASH: case AB_HAMMER: case AB_BAZOOKA: case AB_GREAT: case AB_LASER: return true;
-    case AB_JET: return !(s[S_FLAGS]&1) || t<(unsigned)s[S_STOP]+8u;
+    case AB_SHOT: case AB_SLASH: case AB_HAMMER: case AB_BAZOOKA: case AB_GREAT: return true;
+    case AB_LASER: return t<LADY_FRAMES;
+    case AB_JET: return !(s[S_FLAGS]&1) || t<(unsigned)s[S_STOP]+JET_LANDING;
     default: return false;
     }
 }
@@ -259,6 +279,7 @@ static void tick(unsigned seat) {
         if(t+1>=SLASH_FRAMES) finish(seat);
         break;
     case AB_BAZOOKA:
+        if(t==BEAM_FROM-1) Sb4SoundPlay(SND_EXPLOSION);
         if(t==BEAM_FROM) s[S_BEAM]=(uint8_t)beam_length(seat);
         if(t>=BEAM_FROM && t<=BEAM_TO)
             for(int k=1;k<=s[S_BEAM];++k) strike_cell(seat,cx+kDx[d]*k,cy+kDy[d]*k);
@@ -268,6 +289,7 @@ static void tick(unsigned seat) {
         if(t+1>=GREAT_FRAMES) finish(seat);
         break;
     case AB_HAMMER:
+        if(t>=28 && t<=92 && (t-28)%16==0) Sb4SoundPlay(SND_MACE);
         if(t>=MACE_FROM && t<=MACE_TO) {
             int mx,my;mace_position(seat,t,&mx,&my);
             unsigned found[24],n=near(seat,mx,my,12,found,24);
@@ -276,6 +298,9 @@ static void tick(unsigned seat) {
         if(t+1>=HAMMER_FRAMES) finish(seat);
         break;
     case AB_LASER:
+        /* Lady stands for 109 frames (two turns of the gun around the
+         * shot); the laser flies on its own until a block or a target. */
+        if(t==LASER_FROM-1) Sb4SoundPlay(SND_LASER);
         if(t>=LASER_FROM && !(s[S_FLAGS]&2)) {
             if(t>LASER_FROM) set16(s+S_DIST,get16(s+S_DIST)+2);
             int lx,ly;laser_position(seat,&lx,&ly);
@@ -283,7 +308,8 @@ static void tick(unsigned seat) {
             if(blocked_cell(cell_of(lx+kDx[d]*4),cell_of(ly+kDy[d]*4))) s[S_FLAGS]|=2;
             else if(near(seat,lx,ly,10,found,1)) { knock(seat,found[0],2);s[S_FLAGS]|=2; }
         }
-        if(s[S_FLAGS]&2) finish(seat);
+        if((s[S_FLAGS]&2) && t+1>=LADY_FRAMES) finish(seat);
+        if(t>600) finish(seat);
         break;
     case AB_JET: {
         uint8_t *trail=s+S_TRAIL;
@@ -297,20 +323,27 @@ static void tick(unsigned seat) {
             strike_cell(seat,sx,sy);
             if(seg[2]&1) strike_cell(seat,sx-kDx[d],sy-kDy[d]);
         }
-        if(t<JET_WINDUP) { invulnerable(seat,8);break; }
+        /* Invulnerable (blinking) from the wind-up until about a second
+         * after he lands, as in Super Bomberman 4. */
+        if(t<JET_WINDUP) { extend_invulnerability(seat,8);break; }
         if(!(s[S_FLAGS]&1)) {
-            invulnerable(seat,8);
+            extend_invulnerability(seat,8);
             unsigned f=t-JET_WINDUP,here=(unsigned)((x&0xff)<<8|(y&0xff));
             /* A block stops the flight: the position stays for two frames. */
-            if(f>=2 && get16(s+S_LAST)==here) { s[S_FLAGS]|=1;s[S_STOP]=(uint8_t)(t>255?255:t); }
+            if(f>=2 && get16(s+S_LAST)==here) {
+                s[S_FLAGS]|=1;s[S_STOP]=(uint8_t)(t>255?255:t);
+                extend_invulnerability(seat,JET_LANDING+JET_GUARD_AFTER);
+            }
             set16(s+S_LAST,here);
             if(!(s[S_FLAGS]&1) && f%8==0) {
                 uint8_t *seg=trail+((f/8)%TRAILS)*3;
                 seg[0]=(uint8_t)(cy*16+cx);seg[1]=1;seg[2]=f?1:0;live=true;
                 strike_cell(seat,cx,cy);
+                Sb4SoundPlay(SND_EXPLOSION);
             }
         }
-        if((s[S_FLAGS]&1) && t>=(unsigned)s[S_STOP]+8u && !live) finish(seat);
+        /* After the crash he keeps the flying pose for 20 frames. */
+        if((s[S_FLAGS]&1) && t+1>=(unsigned)s[S_STOP]+JET_LANDING && !live) finish(seat);
         if(t>600) finish(seat);
         break;
     }
@@ -418,12 +451,17 @@ void SpecialAbilitiesInstall(void) {
                     interp_bridge_add_pre_opcode_hook(SPEED_HOOK,speed_hook);
 }
 bool SpecialAbilityDebuffed(unsigned seat) { return seat<5 && get16(seat_state(seat)+S_DEBUFF)!=0; }
-bool SpecialAbilityShown(unsigned seat) {
-    if(seat>=5 || !ability_of(seat)) return false;
-    uint8_t *s=seat_state(seat);
-    return s[S_KIND]==AB_JET && alive(seat) && (!(s[S_FLAGS]&1) || get16(s+S_TIMER)<(unsigned)s[S_STOP]+8u);
-}
 
+
+/* Lady's gun turns (k of $CA:A0B0 + k*$800 + dir*$80), measured frame by
+ * frame in Super Bomberman 4: a turn of the gun, the shot pose held while
+ * the laser leaves (frame 48), another turn, then she walks again. */
+static unsigned lady_pose(unsigned t) {
+    static const uint8_t until[]={4,9,15,19,24,29,34,39,80,87,90,96,100,105,109};
+    static const uint8_t pose[]={2,3,4,0,1,2,3,4,5,0,1,2,3,4,0};
+    for(unsigned i=0;i<sizeof(until);++i) if(t<until[i]) return pose[i];
+    return 0;
+}
 /* Super Bomberman 4 directions: up, right, down, left. */
 static unsigned sb4_dir(unsigned d) { return (d+1)&3; }
 int SpecialAbilityPose(unsigned seat,unsigned *step,uint32_t *sb4_frame) {
@@ -440,13 +478,14 @@ int SpecialAbilityPose(unsigned seat,unsigned *step,uint32_t *sb4_frame) {
         k=t<32?(sb4_dir(d)+t/8)&3:sb4_dir(d);
         *sb4_frame=0xca98b0+k*0x80;return (int)d;
     case AB_JET:
-        if((s[S_FLAGS]&1) && t>=(unsigned)s[S_STOP]+8u) return -1;
+        if((s[S_FLAGS]&1) && t>=(unsigned)s[S_STOP]+JET_LANDING) return -1;
         k=t<9?0:t<19?1:t<25?2:3;
         *sb4_frame=0xcad0b0+sb4_dir(d)*0x800+k*0x80;return (int)d;
     case AB_HAMMER:
         *sb4_frame=t<10?0xcd0900:t<37?0xcd0980:((t-37)/8)&1?0xcd0980:0xcd1000;return (int)d;
     case AB_LASER:
-        k=t<LASER_POSE?t/7:5;
+        if(t>=LADY_FRAMES) return -1;
+        k=lady_pose(t);
         *sb4_frame=0xcaa0b0+k*0x800+sb4_dir(d)*0x80;return (int)d;
     case AB_GREAT:
         *sb4_frame=Sb4FramePc(5,6);return 1;

@@ -335,7 +335,15 @@ second copy of the picker/skin code.
     again on return — skip the frame logic and restore A/X/Y/D/DB there.
 12. **Don't refresh the invulnerability timer every frame** if the native
     sprite must stay visible: a fixed `$170A` freezes the blink (hidden);
-    draw the seat at its object instead (`SpecialAbilityShown`).
+    let it run (extend it in steps of 4 so the blink phase is kept).
+13. **Shared palette slots: recolor by lines.** A seat's mount, eggs and HUD
+    face share its OBJ palette slot. Recolor the slot only over the figure's
+    screen lines (line loads + restore on the next line); fall back to a free
+    palette only when another sprite of the slot is on those lines.
+14. **Sounds of another game.** Upload that game's sound driver from its ROM
+    into a private `Apu` (`apu_init`, the cartridge's own upload handshake),
+    send the effect number, render the DSP output to PCM and play it with
+    `snes_mod_audio_*` (`src/sb4_sound.c`). Never touch the game's APU.
 
 ### Playable-character checklist (any new one)
 
