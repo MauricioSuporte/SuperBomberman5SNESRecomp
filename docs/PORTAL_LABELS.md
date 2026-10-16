@@ -34,6 +34,14 @@ fornece o destino, depois de eventuais comandos `$05/$06` de flags.
 O parser tem limites de banco, quantidade, coordenadas e formato; entradas
 incompatíveis não geram dicas.
 
+As fases de chefe guardam as listas no banco `$C7` e criam os portais só
+para a rota usada para chegar lá: antes de `$11`/`$12` vêm condições nativas
+`$08 f` (flag de rota f em `$7E2900`), `$83` (inverte), `$5B` (valor) e
+`$49 n`/`$47 n` (pula n bytes se falso/verdadeiro). O mod segue essas
+condições com as flags atuais, então os rótulos aparecem nos portais que o
+chefe abre ao ser derrotado (por exemplo, ZONE1-A pela rota A1: `Z2-1` e
+`Z2-5`; ZONE4-G: `Z5-1`, `Z5-2`, `Z5-3`).
+
 Cada dica exige o objeto nativo correspondente, frame não nulo em `$049F`,
 slot de paleta válido e sprite da mesma paleta na posição do portal no OAM
 da composição. Usa os deslocamentos de câmera `$1D3B/$1D3D`, como `$C0:1F78`.
@@ -100,6 +108,13 @@ no cartridge pixels are embedded. It also works with translation disabled.
 White text with a dark outline borrows unused BG3 tiles before OBJ memory; VRAM and screen
 registers are restored at line 224, in reverse overlay order. OAM/CGRAM are
 untouched.
+
+Boss stages keep their lists in bank `$C7` and create only the exits of
+the route taken: native conditions `$08 f` (route flag f at `$7E2900`),
+`$83` (negate), `$5B` (value) and `$49 n`/`$47 n` (skip n bytes when
+false/true) precede `$11`/`$12`. The mod follows them with the live flags,
+so the gates a defeated boss opens are labelled (ZONE1-A on route A1:
+`Z2-1`/`Z2-5`; ZONE4-G: `Z5-1`/`Z5-2`/`Z5-3`).
 
 Run the commands above. Native tests cover context/visibility, bounded
 parsing, variants, tile exhaustion and full restoration. The optional local

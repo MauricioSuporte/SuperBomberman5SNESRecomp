@@ -61,6 +61,24 @@ int main(int argc,char **argv) {
     /* Route flags disambiguate the three Zone 1 boss entrances. */
     const uint8_t boss[]={6,7,6,8,5,9,15,103,0};memcpy(cartridge+0x61210,boss,sizeof(boss));
     unsigned variant=0;CHECK(destination(root,&variant)==103&&variant==3);
+    /* Boss gates live in bank C7 behind native route-flag conditions:
+     * 08 7 49 n (only on route flag 7), 08 4 83 49 n (and not flag 4). */
+    putptr(0x60000+102*3,0xc71000);putptr(0x71000,0xc71100);
+    const uint8_t boss_root[]={13,0,0x12,0xc7,11,0x10,0x12,0xc7,12,0x20,0x12,0xc7,0};
+    const uint8_t boss_create[]={8,7,0x49,9,8,4,0x83,0x49,4,17,0x1f,3,5,0};
+    const uint8_t boss_exit[]={15,28,0};
+    const uint8_t boss_touch[]={8,7,0x83,0x47,4,8,4,0x49,3,0x5b,0,0,18,3,5,0};
+    memcpy(cartridge+0x71100,boss_root,sizeof(boss_root));memcpy(cartridge+0x71200,boss_create,sizeof(boss_create));
+    memcpy(cartridge+0x71210,boss_exit,sizeof(boss_exit));memcpy(cartridge+0x71220,boss_touch,sizeof(boss_touch));
+    g_ram[0x1031]=g_ram[0x102f]=103;
+    CHECK(!portals(found)); /* Route flag 7 clear: the native script creates no gate. */
+    g_ram[0x2900]=0x80;
+    CHECK(portals(found)==1&&found[0].x==3&&found[0].y==5&&found[0].destination==28&&found[0].variant==0);
+    CHECK(label(found[0].destination,found[0].variant,text)&&!strcmp(text,"Z2-1"));
+    g_ram[0x2900]=0x90;CHECK(!portals(found)); /* Flag 4 suppresses it. */
+    g_ram[0x2900]=0x80;cartridge[0x7122d]=5;CHECK(!portals(found)); /* Contact must match. */
+    cartridge[0x7122d]=3;putptr(0x71101,0xc7fff0);CHECK(!portals(found)); /* Bank end. */
+    g_ram[0x2900]=0;g_ram[0x1031]=g_ram[0x102f]=13;
     reset_callback();CHECK(!PortalLabelsEnabled());
     if(argc>1) {
         FILE *file=fopen(argv[1],"rb");CHECK(file);
@@ -69,10 +87,26 @@ int main(int argc,char **argv) {
         unsigned total=0;
         for(unsigned stage=13;stage<116;++stage) {
             g_ram[0x1031]=g_ram[0x102f]=(uint8)stage;
-            unsigned n=portals(found);CHECK(stage>=103&&stage<=112?n==0:n>=1);
+            /* Bosses without a route flag: only the unconditional exits. */
+            static const uint8_t boss_default[10]={0,0,1,3,0,3,3,2,0,0};
+            unsigned n=portals(found);CHECK(stage>=103&&stage<=112?n==boss_default[stage-103]:n>=1);
+            if(stage>=103&&stage<=112)continue;
             total+=n;
             for(unsigned i=0;i<n;++i)CHECK(label(found[i].destination,found[i].variant,text)&&text[0]=='Z');
         }
+        /* Boss exits depend on the route flag set by the gate that led there. */
+        const struct { unsigned stage,flag,count; } bosses[]={
+            {103,7,2},{103,8,2},{103,9,1},{103,4,1},{104,10,3},{104,11,2},{104,4,1},
+            {105,4,1},{106,4,1},{107,12,2},{107,13,2},{107,4,1},{108,4,1},{109,4,1},
+            {110,4,1},{106,0,3},{108,0,3},{110,0,2},{111,4,0},{112,4,0}};
+        unsigned boss_total=0;
+        for(unsigned i=0;i<sizeof(bosses)/sizeof(bosses[0]);++i) {
+            memset(g_ram+0x2900,0,16);g_ram[0x2900+bosses[i].flag/8]=(uint8)(1u<<(bosses[i].flag%8));
+            g_ram[0x1031]=g_ram[0x102f]=(uint8)bosses[i].stage;unsigned n=portals(found);
+            CHECK(n==bosses[i].count);boss_total+=n;
+            for(unsigned j=0;j<n;++j)CHECK(label(found[j].destination,found[j].variant,text)&&text[0]=='Z');
+        }
+        memset(g_ram+0x2900,0,16);
         const struct { unsigned stage,x,y,dest,variant; } routes[]={
             {13,5,7,14,0},{13,7,5,17,0},{13,9,7,19,0},
             {28,5,10,29,0},{28,9,10,30,0},{43,13,2,48,0},
@@ -84,7 +118,15 @@ int main(int argc,char **argv) {
                 found[j].destination==routes[i].dest&&found[j].variant==routes[i].variant)match=true;
             CHECK(match);
         }
-        printf("Real-ROM script audit: %u gates across 90 numbered and three special stages passed.\n",total);
+        memset(g_ram+0x2900,0,16);g_ram[0x2900]=0x80;g_ram[0x1031]=g_ram[0x102f]=103;
+        CHECK(portals(found)==2&&found[0].x==3&&found[0].y==5&&found[0].destination==28&&
+              found[1].x==11&&found[1].y==5&&found[1].destination==32);
+        /* ZONE4 - G with the default route opens Zone 5 stages 1-3. */
+        memset(g_ram+0x2900,0,16);g_ram[0x1031]=g_ram[0x102f]=108;
+        CHECK(portals(found)==3&&found[0].destination==73&&found[1].destination==74&&found[2].destination==75);
+        memset(g_ram+0x2900,0,16);
+        printf("Real-ROM script audit: %u gates across 90 numbered and three special stages, "
+               "%u boss exits on their routes, passed.\n",total,boss_total);
     }
     puts("portal label tests passed");return 0;
 }

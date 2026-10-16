@@ -23,12 +23,46 @@ SNES_MOD_CONSTRUCTOR(register_portal_labels) {
 }
 bool PortalLabelsEnabled(void) { return enabled; }
 
-/* Only C6 script pointers are accepted, and every read stays inside that bank. */
+/* Stage scripts live in banks C6 (numbered/special stages) and C7 (bosses).
+ * Every read stays inside the bank of its pointer. */
 static const uint8_t *script(unsigned pc, unsigned size) {
-    if (!g_rom || pc < 0xc60000 || pc > 0xc70000 - size) return NULL;
+    if (!g_rom || (pc >> 16) < 0xc6 || (pc >> 16) > 0xc7 || (pc & 0xffff) > 0x10000 - size) return NULL;
     return g_rom + (pc & 0x3fffff);
 }
 static unsigned pointer(const uint8_t *p) { return p[0] | p[1] << 8 | p[2] << 16; }
+/* Bytes a gate script may use: up to 32, never past the end of its bank. */
+static unsigned span(unsigned pc) {
+    unsigned left = 0x10000 - (pc & 0xffff);
+    return left < 32 ? left : 32;
+}
+/* Native route flags at $7E2900 (`$C2:031C`/`$C2:0372`). */
+static bool route_flag(unsigned flag) {
+    return flag < 128 && (g_ram[0x2900 + (flag >> 3)] & (1u << (flag & 7)));
+}
+/* Follow the native conditional prefix of a gate script up to `op`:
+ * $08 f (condition = route flag f), $83 (negate), $5B lo hi (condition =
+ * word), $49 n / $47 n (skip n bytes when false / true). Boss gates use it
+ * to create only the exits of the route taken (`$C2:19AA/$19B3/$1CBA/$1AC2`).
+ * Returns the operand bytes of `op`, or NULL if it is not reached. */
+static const uint8_t *conditional(const uint8_t *p, unsigned size, uint8_t op, unsigned operands) {
+    bool condition = false;
+    for (unsigned i = 0, steps = 0; i + operands + 1 < size && steps < 16; ++steps) {
+        unsigned skip = 0;
+        switch (p[i]) {
+        case 0x08: if (i + 2 >= size) return NULL; condition = route_flag(p[i + 1]); i += 2; break;
+        case 0x83: condition = !condition; ++i; break;
+        case 0x5b: if (i + 3 >= size) return NULL; condition = (p[i + 1] | p[i + 2]) != 0; i += 3; break;
+        case 0x47: case 0x49:
+            if (i + 2 >= size || p[i + 1] >= 0x80) return NULL;
+            skip = p[i] == 0x49 ? !condition : condition;
+            i += 2 + (skip ? p[i + 1] : 0);
+            break;
+        default:
+            return p[i] == op && !p[i + operands + 1] ? p + i + 1 : NULL;
+        }
+    }
+    return NULL;
+}
 static unsigned destination(const uint8_t *root, unsigned *variant) {
     const uint8_t *p = script(pointer(root + 5), 16);
     if (!p) return 0;
@@ -57,13 +91,18 @@ static unsigned portals(Portal out[5]) {
         if (!pc) break;
         const uint8_t *root = script(pc, 13);
         if (!root || root[0] != 13 || root[4] != 11 || root[8] != 12 || root[12]) continue;
-        const uint8_t *create = script(pointer(root + 1), 5);
-        const uint8_t *touch = script(pointer(root + 9), 4);
+        /* $11 object x y / $12 x y, after any route-flag conditions. */
+        unsigned create_pc = pointer(root + 1), touch_pc = pointer(root + 9);
+        unsigned create_size = span(create_pc), touch_size = span(touch_pc);
+        const uint8_t *create_script = script(create_pc, create_size);
+        const uint8_t *touch_script = script(touch_pc, touch_size);
+        if (!create_script || !touch_script) continue;
+        const uint8_t *create = conditional(create_script, create_size, 17, 3);
+        const uint8_t *touch = conditional(touch_script, touch_size, 18, 2);
         unsigned variant=0,dest = destination(root,&variant);
-        if (!create || !touch || create[0] != 17 || create[4] || touch[0] != 18 || touch[3] ||
-            create[2] != touch[1] || create[3] != touch[2] || !dest ||
-            create[2] < 1 || create[2] > 13 || create[3] < 1 || create[3] > 11) continue;
-        out[count++] = (Portal){ create[2], create[3], dest, variant };
+        if (!create || !touch || create[1] != touch[0] || create[2] != touch[1] || !dest ||
+            create[1] < 1 || create[1] > 13 || create[2] < 1 || create[2] > 11) continue;
+        out[count++] = (Portal){ create[1], create[2], dest, variant };
     }
     return count;
 }
