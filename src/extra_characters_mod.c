@@ -81,7 +81,7 @@ static const uint8_t kChampionAnim[2]={0x50,0x4e};
 /* Terrorin (object set $0E): four-way groups right, down, left, up. */
 /* He stands on the first step of his walk (the $4A-$4D frames are a lower
  * crouch, not his standing pose). */
-enum { T_WALK = 0x39, T_LIFT = 0x3d, T_CARRY_WALK = 0x41, T_THROW = 0x45, T_SPIN = 0x49, T_STAND = T_WALK,
+enum { T_WALK = 0x39, T_LIFT = 0x3d, T_CARRY_WALK = 0x41, T_THROW = 0x45, T_SPIN = 0x49, T_STAND = T_WALK, STAND_STEP = 2,
        T_CHEER = 0x4e, T_DEATH = 0x50, T_HURT = 0x51, T_SPIN_GUARD = 0x52, T_FRONT = 0x53 };
 
 /* sb5_extras: the Super Bomberman 5 Extra Characters plugin (Honey,
@@ -258,7 +258,7 @@ static const struct { uint8_t anim,steps; } kTerrorinAnims[]={
     {T_WALK,8},{T_WALK+1,8},{T_WALK+2,8},{T_WALK+3,8},{T_LIFT,3},{T_LIFT+1,3},{T_LIFT+2,3},{T_LIFT+3,3},
     {T_CARRY_WALK,8},{T_CARRY_WALK+1,8},{T_CARRY_WALK+2,8},{T_CARRY_WALK+3,8},
     {T_THROW,3},{T_THROW+1,3},{T_THROW+2,3},{T_THROW+3,3},{T_SPIN,4},
-    {T_STAND,1},{T_STAND+1,1},{T_STAND+2,1},{T_STAND+3,1},{T_CHEER,2},{T_HURT,3},{T_SPIN_GUARD,4},{T_FRONT,1},
+    {T_CHEER,2},{T_HURT,3},{T_SPIN_GUARD,4},{T_FRONT,1},
 };
 enum { DEATH_FIRST = 152, DEATH_LAST = 169 };   /* the frames of animation $50 (defeat) */
 static bool check_terrorin(void) {
@@ -339,8 +339,12 @@ static void compose_pieces(uint32_t data,const uint8_t *art,unsigned art_size,in
         unsigned tile=rw(piece+4),attr=rb(piece+6),size=(attr&1)?2:1;
         if(!shadow && size==1 && dy>=2) continue;
         for(unsigned ty=0;ty<size;++ty) for(unsigned tx=0;tx<size;++tx) {
-            /* Tiles $F0-$FF (a few weapon pieces) are not in the archive. */
-            if(tile+ty*16+tx>=art_size/32) continue;
+            /* The archive holds 16x16 blocks (tile t in block
+             * (t%16)/2 + 8*(t/32)), so a tile is present when its block is:
+             * Terrorin's up-throw legs are tiles $F6-$F9 of his last blocks;
+             * a few weapon pieces ($F0-$FF of smaller archives) are not. */
+            unsigned t=tile+ty*16+tx;
+            if(((t%16)/2+8*(t/32)+1)*128>art_size) continue;
             uint8_t px[8][8];archive_pixels(art,tile+ty*16+tx,px);
             unsigned cx=(attr&0x40)?size-1-tx:tx,cy=(attr&0x80)?size-1-ty:ty;
             for(unsigned y=0;y<8;++y) for(unsigned x=0;x<8;++x) {
@@ -723,15 +727,17 @@ static unsigned terrorin_pose_frame(unsigned seat,unsigned object,int ability,un
     int d;int pose=bomber_pose(g_ram[0x79f+object],&d);
     if(ability>=0) return terrorin_frame(T_SPIN_GUARD,(step/6)&3);
     unsigned dir=(unsigned)d&3;
+    /* On a mount ($1782 bit 7) he stands still: the mount walks. */
+    if(seat<5 && (g_ram[0x1782+seat]&0x80) && (pose==POSE_WALK || pose==POSE_STAND)) return terrorin_frame(T_STAND+dir,STAND_STEP);
     /* Paralyzed by a Clock: frozen in his standing frame, like the boss. */
-    if(SpecialAbilityDazed(seat)) return terrorin_frame(T_STAND+dir,0);
+    if(SpecialAbilityDazed(seat)) return terrorin_frame(T_STAND+dir,STAND_STEP);
     switch(pose) {
     case POSE_WALK: return terrorin_frame(T_WALK+dir,terrorin_walk(object));
     case POSE_CARRY_WALK: return terrorin_frame(T_CARRY_WALK+dir,terrorin_walk(object));
     case POSE_CARRY: return terrorin_frame(T_LIFT+dir,2);
     case POSE_ACTION: return terrorin_frame(T_THROW+dir,(g_ram[0x7ff+object]/2u)<2?1:2);
     case POSE_VICTORY: return terrorin_frame(T_CHEER,(snes_frame_counter/8)&1);
-    case POSE_STAND: case POSE_AIR: return terrorin_frame(T_STAND+dir,0);
+    case POSE_STAND: case POSE_AIR: return terrorin_frame(T_STAND+dir,STAND_STEP);
     case POSE_DEATH: return terrorin_death_frame(seat);
     case POSE_STUN: return terrorin_frame(T_HURT,(snes_frame_counter/8)%3);
     case POSE_TIME_UP: return terrorin_frame(T_FRONT,0);
@@ -911,7 +917,7 @@ static void bomber_anchor(void) {
     int l,r,b;frame_box(data,&l,&r,&b);
     if(r>l && b>-64 && b<64) { bomber_cx=(l+r)/2;bomber_bottom=b; }
     if(terrorin_ready) {
-        frame_box(set_frame_data(TERRORIN_SET,terrorin_frame(T_STAND+1,0)),&l,&r,&b);
+        frame_box(set_frame_data(TERRORIN_SET,terrorin_frame(T_STAND+1,STAND_STEP)),&l,&r,&b);
         if(r>l && b>-64 && b<64) { terrorin_cx=(l+r)/2;terrorin_bottom=b; }
     }
 }
@@ -1052,7 +1058,7 @@ static bool compose_head(unsigned key) {
     if(skin<2) { compose(anim_frame(kAnimBase[skin]+1,0),ORIGIN_X,ORIGIN_Y+22);return true; }
     if(skin==SKIN_TERRORIN) {
         /* The top 16 lines of his front standing frame. */
-        compose_terrorin(terrorin_frame(T_STAND+1,0),ORIGIN_X,CANVAS_H-1);
+        compose_terrorin(terrorin_frame(T_STAND+1,STAND_STEP),ORIGIN_X,CANVAS_H-1);
         int top=canvas_top();
         if(top>=CANVAS_H) return false;
         uint8_t head[16][CANVAS_W];
@@ -1123,7 +1129,7 @@ static bool compose_grid_figure(unsigned cell) {
     int skin=skin_of(cell+1);
     if(skin<0) return false;
     if(skin<2) { compose(anim_frame(kAnimBase[skin]+1,0),ORIGIN_X,ORIGIN_Y);return true; }
-    if(skin==SKIN_TERRORIN) { compose_terrorin(terrorin_frame(T_STAND+1,0),ORIGIN_X,ORIGIN_Y+7);return true; }
+    if(skin==SKIN_TERRORIN) { compose_terrorin(terrorin_frame(T_STAND+1,STAND_STEP),ORIGIN_X,ORIGIN_Y+7);return true; }
     /* The native figure's bottom line is canvas ORIGIN_Y+7: Super
      * Bomberman 4 figures keep the front standing frame's lowest line there. */
     return compose_sb4((unsigned)skin-2,6,ORIGIN_X,ORIGIN_Y+7,false);
@@ -1206,7 +1212,7 @@ static void draw_portraits(Ppu *ppu) {
                 for(unsigned y=28;y<CANVAS_H;++y) memset(canvas[y],0,CANVAS_W);
             } else if(skin==SKIN_TERRORIN) {
                 /* Terrorin: the top 24 lines of his front standing frame. */
-                compose_terrorin(terrorin_frame(T_STAND+1,0),16,CANVAS_H-1);
+                compose_terrorin(terrorin_frame(T_STAND+1,STAND_STEP),16,CANVAS_H-1);
                 int t=canvas_top();
                 if(t>=CANVAS_H) return;
                 for(int y=0;y<CANVAS_H;++y) {

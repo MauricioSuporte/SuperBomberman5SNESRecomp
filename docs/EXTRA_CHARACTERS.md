@@ -147,7 +147,9 @@ already use the color window or color math. Linux LLE scripted routes only
   walk `$41-$44`, throw `$45-$48`, spin `$49`, cheer `$4E`, defeat `$50`
   (frames 152-169; in 153-165 piece 0 is the head, drawn apart moving
   right), hurt `$51`, guarded spin `$52`, front `$53`. Standing uses the
-  walk's first step (`$4A-$4D` are crouch frames, shorter than walking). Found by forcing stage `$6F`, killing phases 1-2 (`$1667=0`,
+  walk's middle step, legs straight (`$4A-$4D` are crouch frames, shorter
+  than walking), also on a mount and when paralyzed. The up-throw frames'
+  legs are tiles `$F6-$F9` (the archive's last 16x16 blocks). Found by forcing stage `$6F`, killing phases 1-2 (`$1667=0`,
   `$15A7=$40`) and dumping phase 3 every 8 frames.
 - Barrier: `$C3:3F2D` spins `$40` frames (`$15A2` bit 2), then ORs `$0C` into
   `$1052` at the 21 offsets of `$C3:4091` (bit 2 lethal: player death via
@@ -156,9 +158,12 @@ already use the color window or color math. Linux LLE scripted routes only
   creates the Clock script `$C2:2629` (A = `$72+$1632`), fades out and clears
   the cells (`$C3:4084`). The boss's barrier sound is `$0288` (command `$74`
   via `$C0:86D0`), which the Battle sound set lacks: sending it froze the
-  game, so `src/sb5_sound.c` renders it in a private APU (streams via
-  `$C5:F69B` like `$C0:0E31`, sets via `$DA:C2E0` like `$C0:0E9C`, command
-  sent like `$C0:0E7F`). The mod raises only free cells and clears only its
+  game, so `src/sb5_sound.c` renders it in a private APU in the state of the
+  boss's third phase (boot streams `$58/$56`, set 0, command `$01`; stream
+  `$01`, streams `$0D/$26/$3F`, set `$18`; streams via `$C5:F69B` like
+  `$C0:0E31`, sets via `$DA:C2E0` like `$C0:0E9C`, the command rewritten
+  until echoed like `$C0:0E7F`, since the driver clears its ports). About
+  1.8 s, rendered once on the stage's first frame. The mod raises only free cells and clears only its
   own; `$C4:2CFE` (`AND #$04` on `$1CCA`) is hooked to spare the owner and
   his allies. Clock: thrown with `$C4:398C`, the lost-item flight (A = 8,
   `$8D` = seat, `$1CC7` = 0; both saved and restored); pickup

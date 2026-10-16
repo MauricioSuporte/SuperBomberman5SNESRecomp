@@ -17,6 +17,7 @@ bool ExtraCharactersInstalled(void) { return installed; }
 bool Sb5ExtrasEnabled(void) { return true; }
 static unsigned stage_sounds;static uint32_t stage_sound;
 void Sb5StageSoundPlay(unsigned set,uint16_t effect) { ++stage_sounds;stage_sound=set<<16|effect; }
+void Sb5StageSoundPrepare(unsigned set,uint16_t effect) { (void)set;(void)effect; }
 int snes_frame_counter;
 static unsigned tints;static uint16_t tint_color;static int tint_box[4];
 bool ExtraTintBox(int left,int top,int right,int bottom,uint16_t color) {
@@ -300,7 +301,7 @@ int main(void) {
     g_ram[0x15a2+1]=0x08;cpu.X=1;cpu.A=0x0004;death_hook(&cpu,DEATH_HOOK);CHECK(cpu.A==4); /* other team */
     g_ram[0x625d]=0;g_ram[0x15a2+1]=0x18;
     tints=0;SpecialAbilityDraw();CHECK(tints==1 && tint_color==(2u<<10) && tint_box[2]-tint_box[0]==79);
-    CHECK(stage_sounds==1 && stage_sound==((0x0fu<<16)|0x0288));          /* barrier sound, set $0F */
+    CHECK(stage_sounds==1 && stage_sound==((0x18u<<16)|0x0288));          /* barrier sound, set $18 */
     idle(WALL_CLOCK-WALL_UP-1);
     /* The Clock flies off like a lost item: $C4:398C (RTS in bank C4) with
      * A = 8, $8D = seat and $1CC7 = 0, both restored afterwards. */

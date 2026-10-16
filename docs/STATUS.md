@@ -41,13 +41,25 @@ Evidence (same harness, SB4 ROM selected through `[[resource]]`):
   Clock pickup by Terrorin froze seats 2-5; by an opponent froze Terrorin
   (frozen standing); the Battle timer kept running.
 - Follow-up (same day): mod renamed "Super Bomberman 5 Extra Characters";
-  standing uses the walk's first step (the `$4A-$4D` frames are a crouch,
-  shorter than walking); the barrier fades in over 16 frames like the boss
-  and plays `$0288`, rendered in a private APU (`src/sb5_sound.c`, about
-  2.6 s; sending `$74` to the game's own driver in Battle froze it, since the
-  Battle set lacks it); the Clock flies off him like a lost item (`$C4:398C`)
+  the barrier fades in over 16 frames like the boss and plays `$0288`,
+  rendered in a private APU (`src/sb5_sound.c`; sending `$74` to the game's
+  own driver in Battle froze it, since the Battle set lacks it); the Clock flies off him like a lost item (`$C4:398C`)
   and landed on a random free cell; defeat replays the boss's animation `$50`
   (head flying right, body falling), kept after the native sprite vanishes.
+- Second follow-up (same day, Windows report): standing (and walking on a
+  mount, and the Clock paralysis) uses the walk's middle step, legs straight
+  (frames 68/74/80/86; the walk's first step had one leg out and `$4A-$4D`
+  are a crouch). The barrier sound never played: the driver clears its input
+  ports, so the command must be rewritten until echoed (as `$C0:0E82`
+  does), and the right state is the third phase's: a stage-load trace
+  (LAB_PCS on `$C0:0E31/$0E9C/$0E7F/$0CED`) showed stream `$01` before every
+  stage's streams, phase 3 loading `$0D/$26/$3F` + set `$18`, and the boss
+  sending `$0288` (command `$74`). A headless harness linking `sb5_sound.c`
+  with the runner's APU renders 1.8 s with the command and silence without
+  it; the clip is now rendered on the stage's first frame. The up-throw legs
+  (tiles `$F6-$F9`, Terrorin's last archive blocks) were dropped by a tile
+  bound that ignored the 16x16 block layout; fixed for every archive.
+  Battle run: standing frame and barrier checked in dumps.
 - Normal Game (normal character selection): Terrorin chosen, Zone 1-1 with
   his skin and HUD face, barrier and Clock.
 

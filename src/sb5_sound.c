@@ -1,6 +1,7 @@
 /* Stage sound effects of Super Bomberman 5 rendered from the player's own
  * cartridge, for effects whose samples the current stage has not loaded
- * (Terrorin's barrier, effect $0288 of ZONE5 - J, played in Battle).
+ * (Terrorin's barrier, effect $0288 of ZONE5 - J's third phase, played in
+ * Battle).
  *
  * Sending a stage effect the loaded sound set lacks hangs the game's own
  * sound driver (Battle froze after $0288), so the effect is rendered in a
@@ -12,11 +13,12 @@
  * IPL-style handshake of $C0:0F13/$0F62/$0F35), then the effect command
  * from $C0:86D0 is sent like $C0:0E7F (port 0, bit 7 toggling). The DSP
  * output becomes a PCM clip for the host's mod mixer; no sound data is
- * stored and the game's APU is never touched. Barrier sound ($74): about
- * 2.6 s, rendered and checked in a headless run. */
+ * stored and the game's APU is never touched. Barrier sound ($74, set $18):
+ * about 1.8 s, checked in a headless render (silent without the command). */
 #include "sb5_sound.h"
 #include "common_rtl.h"
 #include "snes/apu.h"
+#include "snes/dsp.h"
 #include "mod_audio.h"
 #include <stdlib.h>
 #include <string.h>
@@ -103,26 +105,40 @@ static bool upload(Driver *d,unsigned set) {
 /* $C0:0E7F: command byte with bit 7 toggling ($03C0), echoed on port 0. */
 static bool send(Driver *d,uint8_t command) {
     uint8_t v=(uint8_t)((command|d->toggle)^0x80);
-    put(d,0,v);
-    if(!wait_for(d,0,(uint8_t)(v^0x80))) return false;
+    /* The driver clears its input ports after reading them, so the value
+     * is written again until the echo arrives (the loop at $C0:0E82). */
+    for(;;) {
+        put(d,0,v);
+        if(get(d,0)==(uint8_t)(v^0x80)) break;
+        if(!step(d)) return false;
+    }
     d->toggle^=0x80;
+    return true;
+}
+/* Stage sound states, from a $C0:0E31/$0E9C/$0E7F trace of ZONE5 - J: every
+ * stage load uploads stream $01 and the stage's streams, then its set. The
+ * boss's third phase (Terrorin on foot, where the barrier is used) loads
+ * streams $0D/$26/$3F and set $18 and starts no music. */
+static const struct { uint8_t set, streams[3]; } kStages[]={ {0x18,{0x0d,0x26,0x3f}} };
+/* A private APU brought to that state: boot (driver $58, common data $56,
+ * set 0, command $01, as $C0:0CCF and the title do), then the stage. */
+static bool prepare(Driver *d,unsigned set) {
+    unsigned k;
+    for(k=0;k<sizeof(kStages)/sizeof(*kStages) && kStages[k].set!=set;++k) {}
+    if(k==sizeof(kStages)/sizeof(*kStages) || !d->apu) return false;
+    apu_reset(d->apu);
+    for(int i=0;i<20000;++i) apu_cycle(d->apu);
+    if(!(upload_stream(d,0x58) && upload_stream(d,0x56) && upload(d,0) && send(d,0x01) && upload_stream(d,0x01))) return false;
+    for(unsigned i=0;i<3;++i) if(!upload_stream(d,kStages[k].streams[i])) return false;
+    if(!upload(d,set)) return false;
+    for(int i=0;i<RATE*CYCLES_PER_SAMPLE/10;++i) apu_cycle(d->apu);   /* settle 0.1 s */
     return true;
 }
 static int16_t *render(unsigned set,uint8_t command,uint32_t *frames) {
     if(!g_rom) return NULL;
     Driver d={apu_init(),0,0,0,400000000};
-    if(!d.apu) return NULL;
-    apu_reset(d.apu);
-    for(int i=0;i<20000;++i) apu_cycle(d.apu);
     int16_t *pcm=NULL;
-    /* Boot: driver, common data, set 0 and command $01; the stage
-     * (ZONE5 - J): streams $03/$20/$36, its set and command $02 (the
-     * cartridge's own order, from a $C0:0E31/$0E9C/$0E7F trace). */
-    bool ready=upload_stream(&d,0x58) && upload_stream(&d,0x56) && upload(&d,0) && send(&d,0x01) &&
-               upload_stream(&d,0x03) && upload_stream(&d,0x20) && upload_stream(&d,0x36) && upload(&d,set) &&
-               send(&d,0x02);
-    if(ready) {
-        for(int i=0;i<RATE*CYCLES_PER_SAMPLE/10;++i) apu_cycle(d.apu);   /* settle 0.1 s */
+    if(prepare(&d,set)) {
         int16_t scratch[2*512];
         while(dsp_available(d.apu->dsp)) dsp_getSamples(d.apu->dsp,scratch,512);
         if(send(&d,command)) {
@@ -139,29 +155,32 @@ static int16_t *render(unsigned set,uint8_t command,uint32_t *frames) {
             if(!last) { free(pcm);pcm=NULL; }
         }
     }
-    apu_free(d.apu);
+    if(d.apu) apu_free(d.apu);
     return pcm;
 }
 
 enum { SLOTS = 4 };
 static struct { unsigned set; uint16_t effect; bool tried; SNESModAudioClip clip; SNESModAudioVoice voice; } slots[SLOTS];
-void Sb5StageSoundPlay(unsigned set,uint16_t effect) {
+static int slot_of(unsigned set,uint16_t effect) {
     unsigned k;
-    for(k=0;k<SLOTS;++k) if(slots[k].tried && slots[k].set==set && slots[k].effect==effect) break;
-    if(k==SLOTS) {
-        for(k=0;k<SLOTS && slots[k].tried;++k) {}
-        if(k==SLOTS) return;
-        slots[k].tried=true;slots[k].set=set;slots[k].effect=effect;
-        /* Group 2 effects: command byte from the table at $C0:86D0. */
-        uint8_t command=(effect>>8)==2?rb(0xc086d0+(effect&0xff)):0;
-        uint32_t frames=0;
-        int16_t *pcm=command?render(set,command,&frames):NULL;
-        if(pcm) {
-            slots[k].clip=snes_mod_audio_register_pcm_s16(pcm,frames,RATE,SNES_MOD_AUDIO_CHANNELS_STEREO);
-            free(pcm);
-        }
+    for(k=0;k<SLOTS;++k) if(slots[k].tried && slots[k].set==set && slots[k].effect==effect) return (int)k;
+    for(k=0;k<SLOTS && slots[k].tried;++k) {}
+    if(k==SLOTS) return -1;
+    slots[k].tried=true;slots[k].set=set;slots[k].effect=effect;
+    /* Group 2 effects: command byte from the table at $C0:86D0. */
+    uint8_t command=(effect>>8)==2?rb(0xc086d0+(effect&0xff)):0;
+    uint32_t frames=0;
+    int16_t *pcm=command?render(set,command,&frames):NULL;
+    if(pcm) {
+        slots[k].clip=snes_mod_audio_register_pcm_s16(pcm,frames,RATE,SNES_MOD_AUDIO_CHANNELS_STEREO);
+        free(pcm);
     }
-    if(!slots[k].clip) return;
+    return (int)k;
+}
+void Sb5StageSoundPrepare(unsigned set,uint16_t effect) { (void)slot_of(set,effect); }
+void Sb5StageSoundPlay(unsigned set,uint16_t effect) {
+    int k=slot_of(set,effect);
+    if(k<0 || !slots[k].clip) return;
     if(slots[k].voice) snes_mod_audio_stop_voice(slots[k].voice);
     slots[k].voice=snes_mod_audio_play_voice(slots[k].clip,100);
 }

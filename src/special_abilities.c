@@ -65,7 +65,7 @@ enum {
     CLOCK_EVENT = 0x1f8ef, CLOCK_OWNER = 0x1f8f1, STATE_END = 0x1f8f2,
     PAD_HOOK = 0xc00af9, SPEED_HOOK = 0xc43180, DEATH_HOOK = 0xc42cfe, CLOCK_HOOK = 0xc542d3,
     LOSE_ITEM = 0xc437cd, RTL_C4 = 0xc436d1, BURN_BLOCK = 0xc5441d,
-    BARRIER_SET = 0x0f, BARRIER_SOUND = 0x0288, THROW_ITEM = 0xc4398c, FREEZE_PLAYER = 0xc44503, ITEM_CLOCK = 0x08,
+    BARRIER_SET = 0x18, BARRIER_SOUND = 0x0288, THROW_ITEM = 0xc4398c, FREEZE_PLAYER = 0xc44503, ITEM_CLOCK = 0x08,
     DEBUFF_FRAMES = 640, B_WINDOW = 8, TRAILS = 3,
 };
 /* Per seat: +0/1 debuff, +2/3 cooldown, +4 kind, +5/6 timer, +7 direction
@@ -595,6 +595,8 @@ static void pad_hook(CpuState *cpu,uint32_t pc) {
         }
         const Ability *a=ability_of(i);
         if(!a) { g_ram[PENDING+i]=0;continue; }
+        /* Rendered once, on the stage's first frame rather than mid-move. */
+        if(a->kind==AB_BARRIER) Sb5StageSoundPrepare(BARRIER_SET,BARRIER_SOUND);
         tick(i);
         if(s[S_KIND] && frozen(i)) {
             /* Standing for the move: no walking, turning or new actions;

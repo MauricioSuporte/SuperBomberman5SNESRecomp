@@ -528,8 +528,10 @@ int main(void) {
     for(unsigned c=1;c<16;++c) CHECK(ppu->cgram[0x80+7*16+c]==(0x3000+c*5));
     ExtraCharactersObserve(ppu,224,NULL);CHECK(same(before,ppu));
     ability_pose=1;CHECK(terrorin_pose_frame(0,8,1,13)==terrorin_frame(T_SPIN_GUARD,2));ability_pose=-1;
-    /* A Clock paralysis keeps his standing frame (down: the walk's first step). */
-    dazed=true;CHECK(terrorin_pose_frame(0,8,-1,0)==terrorin_frame(T_WALK+1,0));dazed=false;
+    /* A Clock paralysis keeps his standing frame (down: the walk's middle
+     * step, legs straight); so does walking on a mount. */
+    dazed=true;CHECK(terrorin_pose_frame(0,8,-1,0)==terrorin_frame(T_WALK+1,STAND_STEP));dazed=false;
+    g_ram[0x1782]=0x80;CHECK(terrorin_pose_frame(0,8,-1,0)==terrorin_frame(T_WALK+1,STAND_STEP));g_ram[0x1782]=0;
     /* Defeat ($16): the $50 steps by time since the death began; the
      * flying head (piece 0 of frames 153-165) is drawn apart. */
     g_ram[0x79f+8]=0x16;snes_frame_counter=1000;track_death(0,8);
