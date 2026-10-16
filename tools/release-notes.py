@@ -908,6 +908,102 @@ Recompilação parcial, principalmente interpretada; sem netplay. Sem ROM, códi
 ou executável gerado do jogo, gráficos/áudio extraídos, saves ou dumps.
 '''
 
+if tuple(int(n) for n in version.split('.')) >= (0,13,0):
+    notes = f'''# Super Bomberman 5 v{version} - Super Bomberman 5 Extra Characters and Emperor Terrorin
+
+## English
+
+New optional mod **Super Bomberman 5 Extra Characters** (enable **Play as the
+Super Bomberman 5 Extra Characters** in Mods). It replaces the separate Honey and
+Kotetsu and Subordinate Bomber mods, which are no longer shipped: if you used
+them, enable this one after Generate & rebuild.
+
+- Seven-column character selection: the stock columns move left, **Honey** and
+  **Emperor Terrorin** end the top row, **Kotetsu** the second, **Subordinate
+  Bomber** takes the X cell (six cartridge colors with L/R). The cursor skips
+  empty cells. With Bomber Kings, its Super Bomberman 4 row sits below.
+- **Emperor Terrorin**, the on-foot final phase of ZONE5 - J, is playable with
+  his own walking, standing, Power Glove, cheer, hurt, riding, portrait and HUD
+  frames decoded from your ROM, and the boss's defeat (his head flies off).
+- **B + direction**: Honey's shot, Kotetsu's sword (both moved here from Bomber
+  Kings) and **Terrorin's barrier**: he spins, a blue barrier fades in around
+  the 3 x 3 square he stands in with the boss's barrier sound (rendered from
+  your ROM in a private APU), and a **Clock** flies off him like a lost item.
+  In Battle, Terrorin taking it paralyzes everyone else; an opponent taking it
+  paralyzes Terrorin. A half-speed debuff follows, as for the other abilities.
+- The README montage shows the new picker and abilities in Zone 1-1 and Battle.
+
+Includes **eleven optional mods**, disabled by default (twelve minus the two
+merged mods, plus Extra Characters). Bomber Kings still requires your own
+Super Bomberman 4 ROM selected on the Mods page. Mod package versions are
+0.1.0; native code arrives only with Generate & rebuild.
+
+Download **superbomberman5-{version}-windows-x64.zip** or experimental
+**superbomberman5-{version}-linux-x86_64.AppImage**, and verify **SHA256SUMS**.
+Extract Windows to a new writable folder. On Linux use chmod +x and run;
+without FUSE use --appimage-extract-and-run. Supply your own supported SB5 ROM
+and run **Generate & rebuild**, including when upgrading. Windows 10+ x64 or
+Linux x86_64/glibc 2.35+, several GB free and internet for initial tool
+downloads are required. Rust is not required by players.
+
+Validation: native tests (picker tables, Terrorin frames/poses/defeat, barrier
+timeline, Clock flight and paralysis rules), Python tests and publication
+audits; Linux LLE scripted Battle and Normal routes (five seats, picker,
+barrier, Clock, defeat); the barrier sound rendered in a headless harness; the
+maintainer checked the mod in Windows gameplay. CPU players do not use
+abilities; full campaign, all mod combinations, physical multiplayer and
+Linux distributions remain unqualified. Partial recompilation: most logic uses
+the interpreter; no netplay. See docs/EXTRA_CHARACTERS.md and docs/STATUS.md.
+
+Setup packs contain source, analyzer, launcher, licenses and manifests, never
+ROMs, generated game code, playable ROM-derived executables, extracted audio
+or graphics, saves or raw dumps. Supported SB5: JPN header, CRC32 c25ab56a,
+SHA-256 5251e6491872dc51879b630a34d76a92e29ea0c39026c4f8773c1fe006d047c4.
+
+## Português
+
+Novo mod opcional **Super Bomberman 5 Extra Characters** (ative **Play as the
+Super Bomberman 5 Extra Characters** em Mods). Ele substitui os mods separados
+Honey and Kotetsu e Subordinate Bomber, que deixam de vir nos pacotes: se você
+os usava, ative este depois do Generate & rebuild.
+
+- Seleção com sete colunas: as originais vão para a esquerda, **Honey** e
+  **imperador Terrorin** fecham a fileira de cima, **Kotetsu** a segunda e o
+  **Subordinate Bomber** fica na célula do X (seis cores do cartucho com L/R).
+  O cursor pula as células vazias. Com o Bomber Kings, a fileira do SB4 fica
+  embaixo.
+- O **imperador Terrorin**, a última etapa a pé do ZONE5 - J, é jogável, com
+  quadros próprios lidos da sua ROM (andar, parado, Power Glove, comemorar,
+  dano, montaria, retrato e HUD) e a derrota do chefe (a cabeça sai voando).
+- **B + direção**: tiro da Honey, espada do Kotetsu (vindos do Bomber Kings) e
+  a **barreira do Terrorin**: ele gira, a barreira azul aparece aos poucos em
+  volta do quadrado 3 x 3 com o som da barreira do chefe (gerado da sua ROM
+  num APU privado) e um **Clock** sai voando como item perdido. No Battle, se o
+  Terrorin pegar, os outros ficam paralisados; se um adversário pegar, o
+  Terrorin fica. Depois vem o debuff de meia velocidade.
+- A montagem do README mostra a nova seleção e as habilidades na ZONE1-1 e no
+  Battle.
+
+Inclui **onze mods opcionais**, desligados por padrão. O Bomber Kings continua
+exigindo sua própria ROM do Super Bomberman 4, selecionada em Mods. Os pacotes
+de mod ficam em 0.1.0; o código nativo só chega com Generate & rebuild.
+
+Baixe o **ZIP Windows x64** ou o **AppImage Linux x86_64 experimental** e
+confira **SHA256SUMS**. Extraia o Windows numa pasta nova e gravável. No Linux,
+chmod +x e execute; sem FUSE, --appimage-extract-and-run. Forneça sua ROM do
+SB5 e faça **Generate & rebuild**, inclusive ao atualizar. Requer Windows 10+
+x64 ou Linux/glibc 2.35+, espaço livre e internet para as primeiras
+ferramentas; Rust não é necessário.
+
+Validação: testes nativos e Python, auditorias de publicação, rotas Linux LLE
+de Battle e Normal com cinco jogadores, som da barreira gerado num harness e
+verificação do mantenedor no Windows. A CPU não usa habilidades; campanha
+completa, todas as combinações, multiplayer físico e distribuições Linux seguem
+sem qualificação. Recompilação parcial, principalmente interpretada; sem
+netplay. Sem ROM, código ou executável gerado do jogo, gráficos/áudio
+extraídos, saves ou dumps.
+'''
+
 if args.output:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(notes, encoding='utf-8', newline='\n')

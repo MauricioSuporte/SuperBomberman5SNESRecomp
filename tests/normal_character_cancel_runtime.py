@@ -39,7 +39,7 @@ def setup(args, folder, ptbr):
         '[Sound]\nEnableAudio=1\n')
     packages = ['normal-characters', 'normal-coop']
     if not args.minimal:
-        packages += ['selection-colors', 'subordinate-bomber', 'honey-kotetsu']
+        packages += ['selection-colors', 'extra-characters']
     if ptbr:
         packages += ['ptbr']
     state = 'format_version = 1\n'

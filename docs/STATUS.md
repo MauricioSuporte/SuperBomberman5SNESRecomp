@@ -1,9 +1,26 @@
 # Super Bomberman 5: estado do protótipo
 
+## v0.13.0 release candidate - 2026-10-16
+
+Based on published v0.12.1 with pinned dependencies unchanged. Adds the
+Super Bomberman 5 Extra Characters mod (below), which replaces the Honey and
+Kotetsu and Subordinate Bomber packages: eleven optional mods, default
+disabled. The maintainer confirmed the mod's latest build in Windows gameplay
+before release. Rebased tree: all thirteen native tests, Python tests,
+publication audit and `git diff --check` pass on Linux.
+
+README montage: the top-left v0.12.1 frame is kept; the other three were
+recaptured from the Linux LLE build of these sources (Normal picker with
+Terrorin/Honey/Jet/Lady/Great, Zone 1-1 with Terrorin's barrier, Jet's flight,
+Honey, Lady and Great; Battle stage 1 with Kotetsu, Bazooka's beam, Hammer,
+Honey and Terrorin's barrier). Seats 3-5 were driven through a local,
+uncommitted script extension for the multitap seats (not part of the release);
+Zone 1-1 positions were poked. Package checks are recorded after the workflow.
+
 ## Super Bomberman 5 Extra Characters + Emperor Terrorin / personagens extras + imperador Terrorin — 2026-10-16
 
-Branch `extra-characters` (from `main` v0.12.0; not released, VERSION
-unchanged). One mod, `superbomberman5.extra-characters` 0.1.0 (default
+Developed on branch `extra-characters` (from v0.12.0, rebased on v0.12.1) and
+released in v0.13.0. One mod, `superbomberman5.extra-characters` 0.1.0 (default
 disabled), replaces `superbomberman5.honey-kotetsu` and
 `superbomberman5.subordinate-bomber`: Honey, Kotetsu, Subordinate Bomber and
 the new **Emperor Terrorin** (on-foot phase of ZONE5 - J, stage `$6F`), with
