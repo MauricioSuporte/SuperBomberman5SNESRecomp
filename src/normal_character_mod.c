@@ -43,6 +43,7 @@ static void finish_picker(bool cancel) {
     memcpy(choices,g_ram+0x625f,sizeof(choices));
     memcpy(palettes,g_ram+0x6264,sizeof(palettes));
     unsigned count=players;
+    bool continued=from_continue;
     /* Detach before loading: the save extension replaces its own buffer. */
     uint8_t *snapshot=resume;uint32_t size=resume_size;
     resume=NULL;resume_size=0;
@@ -50,20 +51,19 @@ static void finish_picker(bool cancel) {
     free(snapshot);
     picking=false;
     if (!ok) return;
-    players=count;
+    players=count;from_continue=continued;
     if (cancel) {
         chosen=false;
-        if(from_continue) {
-            /* Resume the Continue script right after its menu fade-out, where
-             * it builds and fades in the file list ($C7:0D39, called from
-             * $C7:0BE4 with inner return $C7:0D37). */
-            set_picker_pc(0xc70d39);
-            g_ram[0x2003]=0xe4;g_ram[0x2004]=0x0b;g_ram[0x2005]=0xc7;
-            g_ram[0x2006]=0x37;g_ram[0x2007]=0x0d;g_ram[0x2008]=0xc7;
-        }
-        else {
-            set_picker_pc(0xc71014); /* Initialize and rebuild the Normal file menu. */
-            g_ram[0x2006]=0xc7;g_ram[0x2007]=0x10;g_ram[0x2008]=0xc7;
+        /* Restart the whole native file-list entry, including screen cleanup
+         * and the FF.8D archive load. $C7:1014 is inside that load's operands.
+         * Unwind the suspended file-confirm fade's VM call before restarting
+         * its caller, so re-confirming the file has the original return stack. */
+        set_picker_pc(from_continue?0xc70d59:0xc7100e);
+        if(g_ram[0x0d08]) --g_ram[0x0d08]; /* task 9 VM call depth */
+        unsigned stack=g_ram[0x10]|((unsigned)g_ram[0x11]<<8);
+        if(stack>=3) {
+            stack-=3;
+            g_ram[0x10]=(uint8_t)stack;g_ram[0x11]=(uint8_t)(stack>>8);
         }
     } else {
         chosen=true;

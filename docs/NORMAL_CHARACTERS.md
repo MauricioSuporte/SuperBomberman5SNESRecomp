@@ -10,8 +10,8 @@ Mod opcional `superbomberman5.normal-characters` v0.1.0, incluído no setup pack
 com `src/normal_character_mod.c`. Em **Mods**, ative **Choose a character in
 Normal Game** e inicie o jogo. Após confirmar o arquivo, tanto em New Game
 quanto em Continue, aparece a seleção original do Battle Mode. Use o direcional e confirme com A (teclado X). B
-(teclado Z) volta à seleção de arquivo (no ambiente de testes sem janela essa
-volta ainda termina em tela preta; veja abaixo). A escolha é aplicada aos sprites e à
+(teclado Z) volta à seleção de arquivo. Nos builds atuais de fonte, a volta
+reconstrói a lista e permite navegar, reabrir o seletor ou voltar ao menu anterior. A escolha é aplicada aos sprites e à
 paleta do jogador antes do carregamento das fases. A tela funciona também com
 o mod de tradução PT-BR habilitado.
 
@@ -56,8 +56,11 @@ The verified JPN revision uses script task 9, with its program counter split
 across WRAM `$0C90/$0CB8/$0CE0`. The confirmed-file fade at `$C7:1257` is guarded
 by the Normal mode and its file-menu return stack at `$2003-$2008`: New Game
 `$C7:0BFF/$C7:10E6` or Continue `$C7:0BEA/$C7:0E2B`. Back from the file list
-uses a different stack and never opens the picker. Cancel from Continue resumes
-`$C7:0D39` (file list build and fade-in) with its own return stack. The mod snapshots that
+uses a different stack and never opens the picker. Current source cancellation restarts the complete file-list entry: New Game
+`$C7:100E`, Continue `$C7:0D59`. Both include the native screen cleanup and
+archive loader. The suspended fade call is unwound from the VM byte stack
+and task depth, preserving the outer menu return for reentry. Continue/New
+origin is retained across snapshot loading, which resets the mod extension. The mod snapshots that
 machine in memory, runs the cartridge's picker at `$C6:89CF`, and restores the
 Normal snapshot after confirmation. Menu state changes cannot replace campaign
 state. No ROM bytes are modified.
@@ -75,10 +78,11 @@ The title's snapshot extension includes execution position, selection state and
 the suspended snapshot, with a bounded allocation. Tests cover disabled mode,
 campaign restoration, character/palette mapping, both-player confirmation,
 cancel, Continue confirmation/cancel, picker-state serialization and invalid
-snapshot lengths. In headless LLE runs, Back from the picker leaves the screen
-black for both New Game and Continue (also with the earlier New Game-only
-version: the script stops at `$C7:108D` with the NMI latch `$67` set); this
-remains unresolved.
+snapshot lengths. The former black-screen cancellation jumped into FF.8D operands at
+`$C7:1014`; it could corrupt the VM or stop at `$C7:108D` with NMI busy.
+Current source uses complete native entries and restores the original call
+depth/stack pointer before rebuilding, so repeated cancels can reopen the
+picker. No snapshot fields or SRAM layout were added.
 
 Public snapshots reserve a fixed 384 KiB for the suspended machine, keeping
 their size stable for the framework's rewind ring. The private checkpoint omits
@@ -90,3 +94,11 @@ PT-BR overlay enabled alongside the mod. Cancel returns to file selection.
 Two-player confirmation was exercised and the Normal map resumed, but full
 cooperative stages and a populated Continue file have not been qualified.
 The full campaign, deaths, bosses and endings remain unverified.
+
+Current cancellation regression: `tests/normal_character_cancel_runtime.py`
+uses isolated SRAM and native menu inputs, checks repeated Back/reentry, file
+navigation and return to the outer Normal menu, with co-op, colors, Subordinate,
+Honey/Kotetsu and PT-BR on/off. Continue records are synthetic fixtures.
+A regressão atual usa SRAM isolado, entradas nativas, B/reentrada repetidos,
+navegação de arquivos e saída ao menu anterior, com os mods combinados.
+Os arquivos Continue são fixtures; não representam uma campanha completa.

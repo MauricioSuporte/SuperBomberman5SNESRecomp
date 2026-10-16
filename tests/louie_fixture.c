@@ -1,11 +1,14 @@
 /* Test-only egg choice: mailbox $7F:FFF0 = native mount index + 1.
  * $7F:FFF1 counts native $0238 SFX commands; FFF2/FFF3 record the
- * native frame counter at Black acquisition cue / attachment.
+ * FFF4/FFF5 count native Black acquisition / dash commands.
+ * FFF2/FFF3 hold the native frame counter at Black acquisition cue / attachment.
  * The native egg pickup still allocates, animates and attaches the mount. */
 #include "common_rtl.h"
 #include "snes/interp_bridge.h"
 static void egg_choice(CpuState *cpu,uint32_t pc) {
     if(pc==0xc00ced) {
+        if(cpu->A==0x022e && g_ram[0x1fff4]<255) ++g_ram[0x1fff4];
+        if(cpu->A==0x0235 && g_ram[0x1fff5]<255) ++g_ram[0x1fff5];
         if(cpu->A==0x0238 && g_ram[0x1fff1]<255) ++g_ram[0x1fff1];
         return;
     }

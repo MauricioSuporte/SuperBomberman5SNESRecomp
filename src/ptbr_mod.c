@@ -506,7 +506,7 @@ static void restore_labels(Ppu *ppu) {
 static void coop_menu_text(unsigned row, char *text, size_t capacity) {
     if(!row) snprintf(text,capacity,"%s",s_enabled?"APERTE START":"PUSH START BUTTON");
     else if(s_enabled) snprintf(text,capacity,"  %u %s",row,row==1?"JOGADOR":"JOGADORES");
-    else snprintf(text,capacity,"  %u PLAYER GAME",row);
+    else snprintf(text,capacity,"  %u %s",row,row==1?"PLAYER":"PLAYERS");
 }
 
 /* Compact five-row title layout. Copyright remains in its original row 26.
@@ -524,15 +524,11 @@ static void apply_coop_menu(Ppu *ppu) {
         int target=(12+(int)NormalCoopPlayerCount()*2)*8-1,y=target;
         if(ppu->oam[1]!=0x2be8) y+=(ppu->oam[0]>>8)-((ppu->oam[0]>>8)>=0x87?0x8f:0x7f);
         coop_cursor_moved=true;coop_cursor=ppu->oam[0];
-        unsigned x=48;
-        if(s_enabled) {
-            char text[32];coop_menu_text(NormalCoopPlayerCount(),text,sizeof(text));
-            /* Centered Portuguese rows have different lengths. Keep the
-             * native eight-pixel gap after the 16-pixel cursor and before
-             * the digit, including the shorter singular row. */
-            unsigned digit=48+(160-(unsigned)strlen(text)*8)/2+16;
-            x=digit-24;
-        }
+        char text[32];coop_menu_text(NormalCoopPlayerCount(),text,sizeof(text));
+        /* Both languages center each row. Follow its first digit while
+         * preserving the native eight-pixel cursor/digit cell gap. */
+        unsigned digit=48+(160-(unsigned)strlen(text)*8)/2+16;
+        unsigned x=digit-24;
         ppu->oam[0]=(uint16_t)(x+((unsigned)y&0xff)*256);
         ++ppu->oamWriteCount;
     }

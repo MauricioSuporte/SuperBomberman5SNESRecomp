@@ -198,7 +198,7 @@ File 1 (A = keyboard X) → Start on Zone 1 map.
 | `$4E8D+i` / `$4EA5+i` | Spawn tile x / y |
 | `$2910` | CGRAM shadow; set `$0351=1` after changing it |
 | `$0349`, `$06DF`, `$2B10/$2B18` | Palette slot refcounts, object→slot, slot palette id / owner |
-| `$C6:8E68` | Picker ready (accepting A) · `$C6:89CF` picker init · `$C7:1257` Normal file-confirm fade · `$C7:1014` file menu init |
+| `$C6:8E68` | Picker ready (accepting A) · `$C6:89CF` picker init · `$C7:1257` Normal file-confirm fade · `$C7:100E` full New Game file menu entry |
 | `$C4:2A69` | Player actor spawn allocator · free in-memory patch areas used by coop: `$C2:4300`, `$C2:4340`, `$C4:5B00`, `$C5:7000`, `$C5:7100` |
 | `$C0:BB30/BB3A/BB44/BB4E` | Per-character tables, 10 entries (index 9 = Subordinate Bomber: sprite set `$19`, palettes `$48-$4D` colors, `$4E` effect, `$4F` rival). Palette block per character: base+0..5 colors, +6 effect (`$C4:46AD`, 90 frames), +7 rival (`$C4:3CCF`); Bomberman has no +7. `$C4:3CB5` creates rivals; Zone 3-D (`$6A`) uses types 4 and 9. Verified by Zone 3-D dumps and stage runs as index 9 |
 | `$C6:8AF4-$8B2E` / `$C2:122A` | Picker script fills grid cell 9: X (char 0) when the secret slot is locked (`$C6:8B17`), char 1 color 5 when unlocked. Grid drawer: BG arrangements (set 6) only for chars 1-9, X = `$90`; figure at BG1 tile (`$C2:12D2[cell]+$C2:12E6[c]`, `$C2:12DC[cell]+$C2:12EF[c]`) |
@@ -326,9 +326,12 @@ zero animation frames are deliberately invisible, even with an allocated object.
   `$1052` at spawn time sees zeros (P3/P4 appeared outside smaller arenas).
 - Patch immediate operands at opcode+1. A one-byte offset error at
   `$C3:4766` corrupted the following branch and crashed every enemy update.
-- Back (B) from the Normal character picker leaves a black screen in headless
-  LLE runs (script stops at `$C7:108D`, NMI latch `$67` set); it predates
-  v0.5.0 and is unresolved.
+- Picker cancel must restart the complete native file-list entry (`$C7:100E`
+  New Game, `$C7:0D59` Continue). `$C7:1014` is inside FF.8D operands; entering
+  there corrupted VM execution and could stick at `$C7:108D` with NMI busy.
+  Unwind the suspended fade call (task-9 depth `$0D08`, VM byte-stack pointer
+  `$10/$11`, three-byte return address), and preserve `from_continue` across
+  snapshot loading. The scheduler id `$73` need not be 9 at the checkpoint.
 - Framework submodules point to maintainer forks for the five-seat launcher;
   push fork commits before updating gitlinks (see docs/PUBLISHING.md).
 - A five-seat picker with every picker mod on leaves few idle OAM entries
@@ -471,20 +474,31 @@ present in normal builds. See docs/LOUIE_IMPROVEMENTS.md.
 Louie audio cues (2026-10-15): Red's `$C4:5563` tests carry from the native
 player search. With only an enemy hit, redirect to `$C4:5576` to reuse the
 exact player-hit SFX (A=`$0238`, `$C0:0CED`); do not duplicate it when the native
-player path already succeeds. Black acquisition PCM plays at `$C4:5168`, the
-same native sound call used for other egg choices, rather than delayed
-attachment `$C4:519C`. Verified by JPN disassembly, native unit tests and
-Normal scripted audio-command/egg-phase fixtures. Local SB6 WAVs contain
-37.56 ms (mount) / 49.50 ms (dash) of initial digital silence; skip it only in
-the runtime PCM registration, leaving files untouched. Dash voices are per
-seat and stopped on reset/load. Fixture-only `$7F:FFF1` counts native `$0238`
-commands; FFF2/FFF3 record acquisition cue / attachment frame counters.
+player path already succeeds. Black acquisition retains `$C4:5168` (group 2 / `$2E`). Dash calls group 2 /
+`$35` via `$C4:5C00`, setting M/X to 8-bit for `$C0:0CED`, restoring registers
+and flags, then executing the original input-poll PLX/PLY/RTL tail. Verified
+by disassembly and PCM comparison with the stage sound bank loaded.
+Fixture-only FFF4/FFF5 count acquisition/dash native commands.
 
-## Additional Louie audio publication exception — 2026-10-15
+## Louie audio policy correction - 2026-10-16
 
-The maintainer explicitly authorized shipping MountBlackLouie.wav and BlackLouieDash.wav from the SB6 project as additional mod resources, clarifying they are not extractions of the original game. Only the two exact files under mods/preloaded/packages/superbomberman5.louie-improvements/0.1.0/audio/ are approved; see the sibling AUDIO_PROVENANCE.md for source paths, SHA-256 and licensing limits. Other extracted audio remains prohibited. The publication guard checks the approved paths and bytes.
+The maintainer clarified that the two bundled Black Louie WAVs are extracted
+game audio and requested removal. Current source and new packages must contain
+neither WAV; use cartridge SFX at runtime. Exact historical hashes are retained
+only to audit already published Git history, not to allow new distribution.
+Published tags, history and release assets are not rewritten by this correction.
 
 Title count font (2026-10-15): runtime 2bpp glyph halves 1 = ROM file
 `$23DC90/$23DC20`, 2 = `$23DB10/$23DD50`. Verified by exact tile-byte
 matching against Windows/LLE title BG3 VRAM `$12E/$127` and `$116/$13A`;
 the copyright uses the same font page. No extracted pixels stored in source.
+
+Normal picker cancellation (2026-10-16): `$C7:100E/$C7:0D59` call screen
+cleanup `$C7:118B` before FF.8D loads the New/Continue file archive. `$C7:1014`
+is an operand byte, not an entry. VM call `$C2:1737` pushes a 24-bit return
+through `$C2:02EE` and increments `$0CFF+task` (task 9 = `$0D08`); the byte
+stack pointer is `$10/$11`. Verified by disassembly and paired interactive
+file/picker/cancel dumps (depth 1/2/1, pointer 6/9/6), including reentry.
+White title Y halves: ROM file `$23DCB0/$23DD40`, matched to native title
+VRAM tiles `$130/$139`. T's source cell includes a neighboring U outline
+at column 7 below row 5; crop only that strip when isolating the glyph.

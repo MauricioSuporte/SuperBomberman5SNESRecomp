@@ -100,4 +100,5 @@ static const PtbrNativeWhite kNativeWhite[] = {
     {'S', {0x23d9f0,0x23da80}},
     {'T', {0x23da10,0x23daa0}},
     {'U', {0x23d9e0,0x23da70}},
+    {'Y', {0x23dcb0,0x23dd40}},
 };

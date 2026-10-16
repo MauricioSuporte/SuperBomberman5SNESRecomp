@@ -31,6 +31,7 @@ size_t RtlSaveSnapshotToMemory(void *data,size_t capacity) {
 }
 bool RtlLoadSnapshotFromMemory(const void *data,size_t size) {
     if(size!=sizeof(g_ram)) return false;
+    NormalCharacterReset(); /* Real snapshot loads also reset/load the mod extension. */
     memcpy(g_ram,data,size);return true;
 }
 void RtlSaveExecutionState(SaveLoadInfo *sli) { (void)sli; }
@@ -50,6 +51,7 @@ static void transfer(SaveLoadInfo *sli,void *data,size_t size) {
 static void file_ready(unsigned count) {
     memset(g_ram,0,sizeof(g_ram));
     g_ram[0x1031]=3;g_ram[0x1d25]=count==2?3:1;
+    g_ram[0x73]=4;g_ram[0x10]=9;g_ram[0x0d08]=2;
     g_ram[0x2003]=0xff;g_ram[0x2004]=0x0b;g_ram[0x2005]=0xc7;
     g_ram[0x2006]=0xe6;g_ram[0x2007]=0x10;g_ram[0x2008]=0xc7;
     g_ram[0x625f]=1;g_ram[0x6260]=1;
@@ -93,7 +95,8 @@ int main(void) {
     }
     NormalCharacterReset();file_ready(1);NormalCharacterFrame();
     set_picker_pc(0xc68e68);pad=0x0001;NormalCharacterBeforeFrame();
-    CHECK(!picking && !chosen && picker_pc()==0xc71014 && g_ram[0x4000]==0x72);
+    CHECK(!picking && !chosen && picker_pc()==0xc7100e && g_ram[0x4000]==0x72);
+    CHECK(g_ram[0x0d08]==1 && g_ram[0x10]==6 && g_ram[0x2003]==0xff);
     /* Continue -> File confirms through its own fade return stack. */
     pad=0;NormalCharacterReset();file_ready(1);
     g_ram[0x2003]=0xea;g_ram[0x2006]=0x2b;g_ram[0x2007]=0x0e;
@@ -110,7 +113,7 @@ int main(void) {
     NormalCharacterReset();file_ready(1);
     g_ram[0x2003]=0xea;g_ram[0x2006]=0x2b;g_ram[0x2007]=0x0e;NormalCharacterFrame();
     set_picker_pc(0xc68e68);pad=0x0001;NormalCharacterBeforeFrame();
-    CHECK(!picking && !chosen && picker_pc()==0xc70d39 && g_ram[0x2003]==0xe4 && g_ram[0x2006]==0x37);
+    CHECK(!picking && !chosen && picker_pc()==0xc70d59 && from_continue && g_ram[0x2003]==0xea && g_ram[0x0d08]==1 && g_ram[0x10]==6);
     /* Back from the file list and other fades never open the picker. */
     pad=0;NormalCharacterReset();file_ready(1);g_ram[0x2006]=0x2b;NormalCharacterFrame();CHECK(!picking);
     pad=0;reset_callback();file_ready(1);NormalCharacterFrame();CHECK(!picking);

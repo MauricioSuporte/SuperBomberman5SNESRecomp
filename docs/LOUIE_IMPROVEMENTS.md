@@ -27,27 +27,14 @@ Behavior is informed by the three ability classes in the maintainer's SB6
 Unity project. Sprite sheets are references only: all displayed mount art,
 palettes and animations come from the player's SB5 cartridge at runtime.
 
-### Included Black Louie sounds
+### Native Black Louie sounds
 
-The release includes `audio/MountBlackLouie.wav` and
-`audio/BlackLouieDash.wav` inside the selected mod package. No separate
-installation is needed. The maintainer supplied them from SB6 and explicitly
-authorized publication as additional mod resources, clarifying that they are
-not extractions of the original game. See the package's
-[AUDIO_PROVENANCE.md](../mods/preloaded/packages/superbomberman5.louie-improvements/0.1.0/AUDIO_PROVENANCE.md)
-for exact source paths, hashes and licensing limits. `SB5_BLACK_LOUIE_SFX` and
-`SB5_BLACK_LOUIE_DASH_SFX` override the acquisition/dash paths if desired.
-The package-root lookup works independently of the working directory.
-
-The supported format is PCM signed 16-bit, mono/stereo, 8–192 kHz, at most
-4 MiB per file. The host's PCM overlay mixer plays acquisition at the other
-Louies' native sound cue (`$C4:5168`), before attachment animation finishes.
-The unused native cry command for type 6 is suppressed. Dash audio starts once
-per accepted Y ability, with independent voices for P1–P5. Digital silence at
-the start of either WAV is skipped during registration; original files and the
-waveform's attack are preserved. Missing files make only their respective
-cues silent. Reset/load stops this mod's voices. Disabling restores the egg
-lottery and in-memory code; no ROM file or SRAM format is changed.
+Current source uses the cartridge SPC driver. Acquisition retains the original
+`$C4:5168` call (group 2 / `$2E`); dash calls group 2 / `$35` once per accepted
+ability. Simultaneous starts share one command in the same input poll. No WAVs,
+host PCM voices or audio path overrides are used. Sound data comes from the
+player's ROM at runtime. Previously published v0.11.0/v0.11.1 packages contained
+external audio; this correction requires rebuilding and does not alter those releases.
 
 ### Implementation and validation
 
@@ -56,7 +43,7 @@ ROM padding at `$C4:5B80-$5C1F` holds authored native-call trampolines; original
 bytes are saved and restored on reset. These hooks require the relevant
 routines to remain interpreted. Save states append a fixed-size validated
 extension after Gold Battle; older states without it start with empty effects.
-Host audio voices are stopped on reset/load. Five seats share the same code;
+Native audio follows the game audio state. Five seats share the same code;
 Normal co-op's `$1CBF` determines mount and enemy slot boundaries.
 
 Native tests cover activation/restore, P1–P5, native Clock timer borrowing,
@@ -94,29 +81,18 @@ As três classes de habilidades do projeto SB6 Unity orientam o comportamento.
 As imagens anexadas servem de referência; gráficos, paletas e animações são
 lidos da ROM de SB5 do jogador durante a execução.
 
-Os dois sons acompanham a release em `audio/MountBlackLouie.wav` e
-`audio/BlackLouieDash.wav` dentro do pacote selecionado. Não é necessário
-instalá-los separadamente. O mantenedor forneceu os arquivos pelo SB6,
-autorizou a distribuição e esclareceu que não são extrações do jogo original.
-Origem, hashes e limites de licença constam no
-[AUDIO_PROVENANCE.md](../mods/preloaded/packages/superbomberman5.louie-improvements/0.1.0/AUDIO_PROVENANCE.md).
-O caminho é resolvido a partir do pacote, inclusive ao abrir pelo atalho.
-`SB5_BLACK_LOUIE_SFX` e `SB5_BLACK_LOUIE_DASH_SFX` permitem substituir os
-caminhos de aquisição/arrancada. Aceita WAV PCM de 16 bits, mono/estéreo,
-8–192 kHz, até 4 MiB por arquivo.
-
-O som do ovo começa no mesmo ponto nativo dos demais Louies (`$C4:5168`),
-antes do fim da animação de montagem. A arrancada toca uma vez por ativação
-válida de Y, com vozes independentes para P1–P5. O silêncio digital inicial
-dos dois WAVs é ignorado ao carregá-los, preservando os arquivos e o ataque
-da forma de onda. Se um arquivo estiver ausente, somente seu respectivo som fica silencioso.
-Reset e carregamento interrompem as vozes deste mod. Os áudios são arquivos
-adicionais do pacote, sem incorporação de áudio do cartucho ao código.
+O código atual usa o driver SPC do cartucho. A montagem preserva a chamada
+original `$C4:5168` (grupo 2 / `$2E`); a arrancada chama o grupo 2 / `$35` uma
+vez por habilidade aceita. Ativações simultaneas compartilham um comando na
+mesma leitura de entrada. Não usa WAVs, vozes PCM ou variáveis de caminho de
+áudio. Os dados dos sons vêm da ROM do jogador durante a execução. Os pacotes
+publicados v0.11.0/v0.11.1 continham áudio externo; esta correção exige recompilar
+o host e não modifica essas releases.
 
 A implementação usa hooks aditivos do interpretador e trampolins autorais em
 `$C4:5B80-$5C1F`, com restauração dos bytes originais no reset. Estados salvos
 recebem uma extensão validada de tamanho fixo; estados antigos começam sem
-os efeitos. Reset/carregamento interrompem a voz de áudio do mod. O mesmo
+os efeitos. O áudio nativo acompanha o estado de áudio do jogo. O mesmo
 código atende P1–P5, usando `$1CBF` para separar jogadores, montarias e inimigos.
 Desativar restaura o sorteio e os patches em memória, sem alterar ROM ou SRAM.
 

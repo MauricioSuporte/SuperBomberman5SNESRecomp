@@ -39,21 +39,15 @@ class PublicationGuardTests(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertIsNotNone(audit.forbidden(path))
 
-    def test_louie_audio_exception_checks_exact_paths_and_bytes(self):
-        for relative, digest in audit.APPROVED_AUDIO.items():
-            self.assertIsNone(audit.forbidden(relative))
-            self.assertIsNone(audit.forbidden('setup/' + relative, release=True))
-            self.assertEqual(hashlib.sha256((ROOT / relative).read_bytes()).hexdigest(), digest)
-        for path in ['audio/MountBlackLouie.wav', 'assets/BlackLouieDash.wav',
-                     'mods/preloaded/packages/other/0.1.0/audio/BlackLouieDash.wav']:
-            self.assertIsNotNone(audit.forbidden(path))
-            self.assertIsNotNone(audit.forbidden('setup/' + path, release=True))
+    def test_former_louie_audio_is_rejected_in_source_and_packages(self):
+        for relative in audit.HISTORICAL_AUDIO:
+            self.assertIsNotNone(audit.forbidden(relative))
+            self.assertIsNotNone(audit.forbidden('setup/' + relative, release=True))
         with tempfile.TemporaryDirectory(dir=ROOT / '.bootstrap') as directory:
             archive_path = pathlib.Path(directory) / 'audio.zip'
-            relative = next(iter(audit.APPROVED_AUDIO))
             with zipfile.ZipFile(archive_path, 'w') as archive:
-                archive.writestr('setup/' + relative, b'changed audio')
-            self.assertTrue(any('audio digest mismatch' in e for e in audit.audit_zip(archive_path)))
+                archive.writestr(next(iter(audit.HISTORICAL_AUDIO)), b'synthetic')
+            self.assertTrue(any('extracted audio' in e for e in audit.audit_zip(archive_path)))
 
     def test_icon_exception_is_limited_to_reviewed_asset(self):
         self.assertIsNone(audit.forbidden('assets/app.ico'))

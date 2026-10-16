@@ -91,6 +91,9 @@ static unsigned native_white(unsigned character,uint8_t p[16][24]) {
         for(unsigned y=4;y<14;++y) for(unsigned x=0;x<8;++x)
             p[y][x]=small[(y-4)*16/10][x]==4?2:small[(y-4)*16/10][x]?1:0;
     }
+    /* The native T cell includes the left outline of its following U.
+     * Keep the crossbar, but crop that neighboring stroke below it. */
+    if(c=='T') for(unsigned y=6;y<15;++y) p[y][7]=0;
     if(c=='C') for(unsigned y=6;y<11;++y) for(unsigned x=4;x<8;++x) p[y][x]=0;
     if(c=='J') for(unsigned y=3;y<11;++y) for(unsigned x=0;x<4;++x) p[y][x]=0;
     if(c=='D') for(unsigned y=4;y<14;++y) {p[y][0]=2;p[y][1]=2;}

@@ -124,6 +124,25 @@ static int native_font_tests(void) {
         if(rows!=10 || !shadow) return 83;
     }
 
+    char row_text[32];s_enabled=false;
+    coop_menu_text(1,row_text,sizeof(row_text));if(strcmp(row_text,"  1 PLAYER")) return 87;
+    coop_menu_text(5,row_text,sizeof(row_text));if(strcmp(row_text,"  5 PLAYERS")) return 88;
+    const PtbrNativeWhite *title_y=NULL,*title_t=NULL;
+    for(unsigned n=0;n<sizeof(kNativeWhite)/sizeof(kNativeWhite[0]);++n) {
+        if(kNativeWhite[n].character=='Y') title_y=&kNativeWhite[n];
+        if(kNativeWhite[n].character=='T') title_t=&kNativeWhite[n];
+    }
+    if(!title_y || !title_t) return 89;
+    for(unsigned y=0;y<16;++y) {
+        font_cartridge[title_y->tiles[y/8]+y%8*2+1]=0x60;
+        font_cartridge[title_t->tiles[y/8]+y%8*2]=0x01;
+        font_cartridge[title_t->tiles[y/8]+y%8*2+1]=0x30;
+    }
+    native_white('Y',glyph);
+    for(unsigned y=0;y<16;++y) if(glyph[y][1]!=2 || glyph[y][2]!=2) return 90;
+    native_white('T',glyph);
+    for(unsigned y=6;y<15;++y) if(glyph[y][7] || glyph[y][2]!=2) return 91;
+    if(glyph[4][7]!=1) return 92; /* Crossbar outline remains native. */
     const PtbrNativeBlue *b=NULL;
     for(unsigned n=0;n<sizeof(kNativeBlue)/sizeof(kNativeBlue[0]);++n)
         if(kNativeBlue[n].character=='A') b=&kNativeBlue[n];
@@ -281,7 +300,7 @@ int main(int argc,char **argv) {
         fixture.renderFlags=kPpuRenderFlags_NewRenderer;
         observe_line(&fixture,1,NULL);
         if(fixture.renderFlags&kPpuRenderFlags_NewRenderer) return 15;
-        if(fixture.screenWindowed[0]&4 || fixture.oam[0]!=(175u<<8|(language?68u:48u)) ||
+        if(fixture.screenWindowed[0]&4 || fixture.oam[0]!=(175u<<8|(language?68u:76u)) ||
            fixture.vram[0x4348]!=0x2132 || !s_saved_count ||
            fixture.vram[0x5000+0x132*8]!=0x7e5a ||
            memcmp(fixture.vram+0x6000,original+0x6000,0x2000*sizeof(uint16_t))) return 12;
@@ -306,12 +325,12 @@ int main(int argc,char **argv) {
     if(fixture.oam[0]!=(175u<<8|68u)) return 20;
     observe_line(&fixture,224,NULL);
     /* Every selected translated row keeps an eight-pixel cursor/text gap;
-     * the singular row is shorter. English positioning stays unchanged. */
+     * the singular row is shorter. English uses PLAYER/PLAYERS with the same gap. */
     for(unsigned language=0;language<2;++language) for(unsigned seat=1;seat<=5;++seat) {
         s_enabled=language!=0;coop_count_fixture=seat;
         fixture.oam[0]=0x7f40;fixture.oam[1]=0x2be8;
         observe_line(&fixture,1,NULL);
-        unsigned expected_x=language?(seat==1?76:68):48;
+        unsigned expected_x=language?(seat==1?76:68):(seat==1?80:76);
         if(fixture.oam[0]!=((12+seat*2)*8-1)*256+expected_x) return 85;
         observe_line(&fixture,224,NULL);
         if(fixture.oam[0]!=0x7f40 || memcmp(original,fixture.vram,sizeof(original))) return 86;

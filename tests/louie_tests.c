@@ -1,5 +1,4 @@
 #include "mod_runtime.h"
-#include "mod_audio.h"
 #include "snes/interp_bridge.h"
 #include "snes/saveload.h"
 #include <stdlib.h>
@@ -8,25 +7,10 @@
 static SNESModActivationCallback activation,reset_callback;
 int snes_mod_register_reset_callback(SNESModActivationCallback f) { reset_callback=f;return 1; }
 int snes_mod_register_activation_plugin(const char *id,SNESModActivationCallback f) { (void)id;activation=f;return 1; }
-static const char *audio_package_root;
-int snes_mod_runtime_package_root_c(const char *id,const char *version,char *out,uint32_t cap) {
-    (void)id;(void)version;
-    if(!audio_package_root) return 0;
-    return snprintf(out,cap,"%s",audio_package_root)>0;
-}
 static unsigned redirect_pc,registrations;
 bool interp_bridge_add_pre_opcode_hook(uint32_t pc,InterpPreOpcodeHook f) { (void)pc;(void)f;++registrations;return true; }
 void interp_bridge_pre_opcode_redirect(uint32_t pc) { redirect_pc=pc; }
-static unsigned registrations_audio,plays_audio,last_frames;
-static int last_clip;
-SNESModAudioClip snes_mod_audio_register_pcm_s16(const int16_t *s,uint32_t n,uint32_t r,uint32_t c) { (void)s;last_frames=n;return n && r==48000 && c==2 ? (int)++registrations_audio:0; }
-void snes_mod_audio_unregister(SNESModAudioClip c) { (void)c; }
-SNESModAudioVoice snes_mod_audio_play_voice(SNESModAudioClip c,int g) { (void)g;++plays_audio;last_clip=c;return c; }
-void snes_mod_audio_stop_voice(SNESModAudioVoice c) { (void)c; }
-static const char *test_audio_path(const char *name) { (void)name;return audio_package_root?NULL:"louie-pcm-test.tmp"; }
-#define getenv test_audio_path
 #include "../src/louie_mod.c"
-#undef getenv
 uint8 g_ram[0x20000];
 static uint8 cartridge[0x400000];
 uint8_t *SnesRomPtr(uint32_t pc) { return cartridge+(pc&0x3fffff); }
@@ -60,7 +44,7 @@ static void scene(unsigned count,unsigned type) {
 int main(void) {
     memset(cartridge,255,sizeof(cartridge));*rom(limits[0])=*rom(limits[1])=5;
     LouieBeforeFrame();CHECK(!installed);
-    activation();LouieBeforeFrame();CHECK(installed && registrations==12);
+    activation();LouieBeforeFrame();CHECK(installed && registrations==11);
     CHECK(*rom(limits[0])==6 && *rom(limits[1])==6);
     CpuState cpu={0};
     for(unsigned count=2;count<=5;count+=3) for(unsigned a=0;a<count;++a) {
@@ -97,9 +81,8 @@ int main(void) {
     g_ram[0xdef]=40;hook(&cpu,0xc52182);CHECK(!redirect_pc);
     for(unsigned a=0;a<5;++a) {
         scene(5,BLACK);g_ram[0x36+a]=4;g_ram[0x1632+a]=2;
-        dash_clip=19;unsigned plays_before=plays_audio;
-        hook(&cpu,0xc00af9);CHECK(plays_audio==plays_before+1 && last_clip==dash_clip && dash_voice[a]==dash_clip);
-        hook(&cpu,0xc00af9);CHECK(plays_audio==plays_before+1);
+        redirect_pc=0;hook(&cpu,0xc00af9);CHECK(redirect_pc==0xc45c00);
+        redirect_pc=0;hook(&cpu,0xc00af9);CHECK(!redirect_pc);
         CHECK(state.dash[a]==30 && (g_ram[0x15a2+a]&4) && g_ram[0x31+a]==4);
         cpu.X=(uint16_t)a;cpu.A=0;cpu._flag_Z=1;hook(&cpu,0xc43180);CHECK(cpu.A==1 && !cpu._flag_Z);
         unsigned enemy=10;actor(enemy,40,0x43+a);LouieBeforeFrame();CHECK(state.push[enemy]==16);
@@ -109,10 +92,10 @@ int main(void) {
         CHECK(position(enemy,true)<y+32);
     }
     scene(2,BLACK);g_ram[0x8d]=0;g_ram[0x1782]=2;g_ram[0x9f]=BLACK;
-    mount_clip=23;unsigned acquisition_plays=plays_audio;redirect_pc=0;
-    hook(&cpu,0xc45168);CHECK(redirect_pc==0xc4516c && plays_audio==acquisition_plays+1 && last_clip==mount_clip);
-    hook(&cpu,0xc4519c);CHECK(plays_audio==acquisition_plays+1);
-    g_ram[0x9f]=YELLOW;redirect_pc=0;hook(&cpu,0xc45168);CHECK(!redirect_pc && plays_audio==acquisition_plays+1);
+    redirect_pc=0;cpu.A=0x022e;
+    hook(&cpu,0xc45168);CHECK(!redirect_pc && cpu.A==0x022e);
+    CHECK(rom(0xc45c00)[7]==0x35 && rom(0xc45c00)[8]==2);
+    CHECK(rom(0xc45c00)[21]==0xfa && rom(0xc45c00)[22]==0x7a && rom(0xc45c00)[23]==0x6b);
     scene(2,BLACK);cpu.X=0;unsigned distance=0;
     for(unsigned remaining=30;remaining;--remaining) {
         state.dash[0]=(uint8_t)remaining;cpu.A=4;hook(&cpu,0xc43180);
@@ -137,27 +120,6 @@ int main(void) {
     Stream disabled_stream={.base.func=transfer};LouieSave(&disabled_stream.base);
     disabled_stream.reading=true;disabled_stream.at=0;enabled=false;
     LouieLoad(&disabled_stream.base,0);CHECK(!state.freeze[10] && g_ram[0x800+40]==1);enabled=true;
-    const uint8_t wav[]={82,73,70,70,44,0,0,0,87,65,86,69,102,109,116,32,
-        16,0,0,0,1,0,2,0,128,187,0,0,0,238,2,0,4,0,16,0,
-        100,97,116,97,8,0,0,0,0,0,0,0,0,0,0,0};
-    FILE *audio=fopen("louie-pcm-test.tmp","wb");CHECK(audio);
-    CHECK(fwrite(wav,1,sizeof(wav),audio)==sizeof(wav));fclose(audio);
-    mount_clip=dash_clip=0;registrations_audio=0;load_audio();CHECK(mount_clip==1 && dash_clip==2 && last_frames==2);
-    uint8_t onset_wav[sizeof(wav)];memcpy(onset_wav,wav,sizeof(wav));onset_wav[48]=1;
-    audio=fopen("louie-pcm-test.tmp","wb");CHECK(audio);
-    CHECK(fwrite(onset_wav,1,sizeof(onset_wav),audio)==sizeof(onset_wav));fclose(audio);
-    CHECK(load_wav("SB5_BLACK_LOUIE_SFX","MountBlackLouie.wav") && last_frames==1);
-    remove("louie-pcm-test.tmp");
-    char package_path[4096];snprintf(package_path,sizeof(package_path),"%s",__FILE__);
-    char *slash=strrchr(package_path,'/');
-    if(!slash) slash=strrchr(package_path,'\\');
-    CHECK(slash);*slash=0;
-    const char *relative="/../mods/preloaded/packages/superbomberman5.louie-improvements/0.1.0";
-    CHECK(strlen(package_path)+strlen(relative)<sizeof(package_path));strcat(package_path,relative);
-    audio_package_root=package_path;mount_clip=dash_clip=0;registrations_audio=0;
-    load_audio();CHECK(mount_clip==1 && dash_clip==2 && last_frames==30696);
-    audio_package_root=NULL;
-mount_clip=dash_clip=0;
     Stream stream={.base.func=transfer};LouieSave(&stream.base);
     unsigned duration=state.dash[0];memset(&state,0,sizeof(state));
     stream.at=0;stream.reading=true;LouieLoad(&stream.base,0);CHECK(!failed && state.dash[0]==duration);

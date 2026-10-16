@@ -269,3 +269,11 @@ A linha singular recebe seu próprio alinhamento; a animação de confirmação
 In the five-player menu, the face follows the selected Portuguese row with
 the native eight-pixel cursor/digit cell gap, including the shorter singular
 row. Confirmation bounce and exact OAM/VRAM restoration are preserved.
+
+Current source: the five-player English menu uses 1 PLAYER / 2–5 PLAYERS.
+Y reads the cartridge's original white-title halves; T drops the neighboring
+U's outline below its crossbar. Both languages align the face cursor to the
+selected row with the native gap; all writes remain render-only.
+Nos builds atuais de fonte, o menu inglês usa 1 PLAYER / 2–5 PLAYERS. Y usa
+os glifos originais do título; T remove o contorno vizinho abaixo da barra.
+O cursor acompanha a linha nos dois idiomas, sem alterar a memória do jogo.

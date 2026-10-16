@@ -131,6 +131,78 @@ fogo, maça, laser e retratos lidos da ROM do SB4; atordoamento e perda de
 itens com as rotinas do próprio SB5). Testes
 nativos e rotas roteirizadas no Linux passaram (seleção, Battle Free-for-All e
 Team Battle, Normal com cinco jogadores); Windows ainda não foi testado.
+
+## Black Louie native cartridge audio / SFX nativos - 2026-10-16
+
+Current source removes both Black Louie WAVs, their loader and the package
+provenance exception. Acquisition now retains native A=$022E at $C4:5168;
+dash calls A=$0235 via an authored $C4:5C00 trampoline once per input poll
+with an accepted ability. M/X widths, registers and the native return tail
+are preserved. No sound data is embedded in source or the new manifest-only
+package. The ROM file and SRAM layout remain unchanged.
+
+Local Windows/LLE research compared stage-bank PCM against both supplied
+references: acquisition duration 1.256 s vs 1.261 s; dash 0.490 s vs 0.492 s.
+Waveform correlation is affected by capture clocks/resampling; these are native
+SFX matches, not claims of byte-identical WAV reproduction. All raw audio
+and diagnostic captures remain ignored under .bootstrap/native-louie-audio/.
+
+Windows/LLE fixtures passed for Normal P1 and five-player Normal P5 with
+PT-BR: real egg acquisition, attachment, Y dash and enemy push, exactly one
+native $022E acquisition command and one $0235 command per accepted dash,
+with no repeated dash sound while active. All native test executables passed;
+Python discovery passed 10 tests (2 optional checks skipped). The manifest-only
+archive and tracked source plus Git history passed publication audit;
+`git diff --check` passed. Battle sound-bank playback and subjective
+speaker listening were not separately qualified in this run.
+
+O código atual remove os dois WAVs e usa os comandos nativos da ROM para
+montagem ($022E) e arrancada ($0235). O pacote novo tem apenas manifesto e
+licença; o executável do atalho foi recompilado com fixtures desativadas.
+Histórico Git e releases anteriores permanecem intactos; hashes antigos só
+servem para auditoria histórica, sem permitir WAVs em novos pacotes.
+Validados ovo, montagem e arrancada no Normal com P1 e no cooperativo com P5
+mais PT-BR, sem repetição do som durante a habilidade. Battle e escuta por
+alto-falantes não foram qualificados separadamente nesta rodada.
+
+
+## English player menu and Normal Back / Menu inglês e retorno — 2026-10-16
+
+Current source uses 1 PLAYER / 2–5 PLAYERS in the five-seat English menu,
+with the original title Y and T's neighboring outline cropped below its
+crossbar. The face follows the selected row in both languages. Native tests
+cover the strings, source halves, T crop, cursor positions and restoration;
+Windows/LLE captures checked all five rows and both heading blink phases.
+
+Normal picker cancellation now enters the complete native file-list scripts
+($C7:100E New Game / $C7:0D59 Continue), including cleanup and archive load.
+The former $C7:1014 entry was inside FF.8D operands: co-op combinations could
+stick at $C7:108D with NMI busy; Honey/Kotetsu-only also exposed WRAM damage.
+Cancellation unwinds the suspended fade's VM call (depth and three-byte
+return), preserves Continue origin across snapshot loading, and leaves the
+snapshot layout unchanged. Unit tests now simulate the mod reset during
+private checkpoint loading, rather than restoring WRAM alone.
+
+Paired Windows/LLE routes exercise New Game/Continue, 1/2/5 seats, PT-BR
+on/off, co-op/colors/Subordinate/Honey/Kotetsu, repeated Back/reentry, file
+navigation and return to the outer menu. Both cancels preserve SRAM exactly.
+Additional one-seat/PT-BR routes canceled, reopened, confirmed a character
+and entered live Zone 1-1 in New Game (4,309 simulated frames) and Continue
+(5,207 simulated frames). No interpreter errors in these routes.
+`tests/normal_character_cancel_runtime.py` records the isolated fixtures and
+checks menu responsiveness, VM call depth and NMI progress. Full campaign,
+physical controls and Linux runtime coverage for this fix remain unqualified.
+The developer executable is rebuilt; published v0.11.1 assets are unchanged.
+
+Builds atuais: singular/plural no menu inglês, Y original, contorno do T
+corrigido e cursor alinhado nos dois idiomas. B reconstrói a lista nativa de
+arquivos, sem entrar no meio dos parâmetros nem deixar retornos extras na
+pilha. A origem Continue é preservada ao carregar o snapshot. Rotas locais
+conferem 1/2/5 jogadores, PT-BR ligado/desligado, cancelamentos repetidos,
+reentrada, navegação e retorno ao menu anterior, sem alterar SRAM. Testes
+nativos/Python e auditoria passaram. Sem mudança nas releases já publicadas;
+campanha completa, controles físicos e Linux não qualificados nesta correção.
+
 ## v0.11.1 published / Publicada — 2026-10-15
 
 [Prerelease v0.11.1](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.11.1)

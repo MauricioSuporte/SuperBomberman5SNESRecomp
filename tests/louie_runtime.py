@@ -72,6 +72,9 @@ elif args.case in ('yellow','chain'):
   assert end[0x1052+0x39]!=0x30,out
 else:
  before,hit,end=map(ram,['black_before','black_hit','black_end'])
+ assert m[0x1fff4]==1,('native Black acquisition command',out)
+ assert hit[0x1fff5]==before[0x1fff5]+1,('native dash command',out)
+ assert end[0x1fff5]==hit[0x1fff5],('dash sound repeated',out)
  enemy=10 if args.case=='five' else 5
  assert pos(end,enemy)[0]>=pos(before,enemy)[0]+16,out
  assert hit[0x15a2+seat_index]&4 and end[0x1782+seat_index]&0x80,out

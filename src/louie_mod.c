@@ -3,19 +3,14 @@
 #include "common_rtl.h"
 #include "common_cpu_infra.h"
 #include "mod_runtime.h"
-#include "mod_audio.h"
 #include "snes/interp_bridge.h"
 #include "snes/saveload.h"
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 enum { RED=0, YELLOW=3, BLACK=6, ACTORS=24, TASKS=40 };
 static bool enabled, installed, clock_borrowed, collision_resuming;
 static uint16_t clock_original;
-static SNESModAudioClip mount_clip,dash_clip;
 static bool red_hit;
-static SNESModAudioVoice mount_voice,dash_voice[5];
 static uint8_t original_space[160], original_limits[2];
 static const uint32_t limits[]={0xc45150,0xc45158};
 static const uint8_t pad_direction[]={0,1,4,2,8};
@@ -100,68 +95,6 @@ static void a8(CpuState *cpu,unsigned value) {
 }
 static void redirect(uint32_t pc) { interp_bridge_pre_opcode_redirect(pc); }
 
-/* Maintainer-supplied add-on PCM lives in the selected mod package. */
-static SNESModAudioClip load_wav(const char *variable,const char *filename) {
-    const char *path=getenv(variable);
-    char package_root[3072],local_path[4096];
-    if(!path && snes_mod_runtime_package_root_c("superbomberman5.louie-improvements",NULL,
-                                               package_root,sizeof(package_root))) {
-        int n=snprintf(local_path,sizeof(local_path),"%s/audio/%s",package_root,filename);
-        if(n>0 && (size_t)n<sizeof(local_path)) path=local_path;
-    }
-    if(!path) {
-        int n=snprintf(local_path,sizeof(local_path),"mods/local/louie-improvements/%s",filename);
-        if(n<0 || (size_t)n>=sizeof(local_path)) return 0;
-        path=local_path;
-    }
-    FILE *f=fopen(path,"rb");if(!f) return 0;
-    unsigned char header[12];
-    if(fread(header,1,12,f)!=12 || memcmp(header,"RIFF",4) || memcmp(header+8,"WAVE",4)) { fclose(f);return 0; }
-    uint16_t channels=0,bits=0,format=0;uint32_t rate=0;
-    unsigned char *pcm=NULL;uint32_t size=0;
-    for(unsigned chunks=0;chunks<64;++chunks) {
-        unsigned char h[8];if(fread(h,1,8,f)!=8) break;
-        uint32_t n=(uint32_t)h[4]|(uint32_t)h[5]<<8|(uint32_t)h[6]<<16|(uint32_t)h[7]<<24;
-        if(n>4*1024*1024) break;
-        if(!memcmp(h,"fmt ",4) && n>=16) {
-            unsigned char fmt[16];if(fread(fmt,1,16,f)!=16) break;
-            format=fmt[0]|fmt[1]<<8;channels=fmt[2]|fmt[3]<<8;
-            rate=(uint32_t)fmt[4]|(uint32_t)fmt[5]<<8|(uint32_t)fmt[6]<<16|(uint32_t)fmt[7]<<24;
-            bits=fmt[14]|fmt[15]<<8;
-            if(fseek(f,(long)(n-16+(n&1)),SEEK_CUR)) break;
-        } else if(!memcmp(h,"data",4)) {
-            if(pcm || !n) break;
-            pcm=malloc(n);if(!pcm) break;
-            if(fread(pcm,1,n,f)!=n) { free(pcm);pcm=NULL;break; }
-            size=n;if(n&1) fseek(f,1,SEEK_CUR);
-        } else if(fseek(f,(long)(n+(n&1)),SEEK_CUR)) break;
-    }
-    fclose(f);
-    SNESModAudioClip clip=0;
-    if(pcm && format==1 && bits==16 && (channels==1 || channels==2) && size%(channels*2)==0) {
-        const int16_t *samples=(const int16_t *)pcm;
-        uint32_t frames=size/(channels*2),first=0;
-        /* Drop only digital silence, leaving the waveform's attack intact. */
-        while(first<frames) {
-            bool silent=true;
-            for(unsigned channel=0;channel<channels;++channel)
-                if(samples[first*channels+channel]) silent=false;
-            if(!silent) break;
-            ++first;
-        }
-        if(first==frames) first=0;
-        clip=snes_mod_audio_register_pcm_s16(samples+first*channels,frames-first,rate,channels);
-    }
-    free(pcm);return clip;
-}
-static void load_audio(void) {
-    if(!mount_clip) mount_clip=load_wav("SB5_BLACK_LOUIE_SFX","MountBlackLouie.wav");
-    if(!dash_clip) dash_clip=load_wav("SB5_BLACK_LOUIE_DASH_SFX","BlackLouieDash.wav");
-}
-static void stop_audio(void) {
-    snes_mod_audio_stop_voice(mount_voice);mount_voice=0;
-    for(unsigned a=0;a<5;++a) { snes_mod_audio_stop_voice(dash_voice[a]);dash_voice[a]=0; }
-}
 static void hook(CpuState *cpu,uint32_t pc) {
     if(!enabled || !installed) return;
     /* These two hooks bracket the native Clock helper, within one guest call. */
@@ -174,9 +107,6 @@ static void hook(CpuState *cpu,uint32_t pc) {
     unsigned rider=g_ram[0x8d];
     if(pc==0xc42266 && cpu->X<ACTORS) {
         state.freeze[cpu->X]=0;state.push[cpu->X]=0;
-    } else if(pc==0xc45168 && g_ram[0x9f]==BLACK) {
-        /* Match the other Louies' acquisition cue, before attachment animation. */
-        mount_voice=snes_mod_audio_play_voice(mount_clip,100);redirect(0xc4516c);
     } else if(pc==0xc45560) {
         red_hit=false;
         if(riding(rider,RED) && !(g_ram[0x1d1a]&1)) {
@@ -232,13 +162,13 @@ static void hook(CpuState *cpu,uint32_t pc) {
             collision_resuming=true;redirect(0xc45be0);
         }
     } else if(pc==0xc00af9) {
+        bool started=false;
         for(unsigned a=0;a<5;++a) {
             unsigned dir=g_ram[0x1632+a];
             if(!state.dash[a] && !state.push[a] && !state.cooldown[a] && g_ram[0x1782+a]==0x80 && riding(a,BLACK) &&
                (g_ram[0x36+a]&4) && dir>=1 && dir<=4) {
                 state.dash[a]=30;state.cooldown[a]=36;state.direction[a]=(uint8_t)dir;
-                snes_mod_audio_stop_voice(dash_voice[a]);
-                dash_voice[a]=snes_mod_audio_play_voice(dash_clip,100);
+                started=true;
                 g_ram[0x15a2+a]|=4;
                 if(g_ram[0x170a+a]<2 && !g_ram[0x1722+a]) g_ram[0x170a+a]=2;
             }
@@ -247,12 +177,13 @@ static void hook(CpuState *cpu,uint32_t pc) {
                 g_ram[0x36+a]&=(uint8_t)~4;
             } else if(state.push[a]) { g_ram[0x31+a]=0;g_ram[0x3b+a]=0; }
         }
+        if(started) redirect(0xc45c00);
     } else if(pc==0xc43180 && cpu->X<5 && state.dash[cpu->X]) {
         a8(cpu,state.dash[cpu->X]%5<2?1:2);
     }
 }
 
-static const uint32_t hook_pcs[]={0xc45168,0xc45560,0xc45563,0xc4224f,0xc34c69,
+static const uint32_t hook_pcs[]={0xc45560,0xc45563,0xc4224f,0xc34c69,
     0xc42266,0xc45797,0xc457b4,0xc45973,0xc52182,0xc00af9,0xc43180};
 static void install(void) {
     if(*rom(limits[0])!=5 || *rom(limits[1])!=5) return;
@@ -269,6 +200,12 @@ static void install(void) {
         0xa9,0,0x85,0xa1,0xaa,0x20,0x9e,0x57,0x68,0x85,0x8d,
         0x68,0x7a,0xfa,0x5c,0x82,0x21,0xc5};
     memcpy(code+96,block,sizeof(block));
+    /* Native group 2 / $35, then the original input-poll PLX/PLY/RTL tail.
+       Preserve full registers and flags; the sound driver requires 8-bit X. */
+    const uint8_t dash_sound[]={0x08,0xc2,0x30,0x48,0xda,0x5a,
+        0xa9,0x35,0x02,0xe2,0x30,0x22,0xed,0x0c,0xc0,
+        0xc2,0x30,0x7a,0xfa,0x68,0x28,0xfa,0x7a,0x6b};
+    memcpy(code+128,dash_sound,sizeof(dash_sound));
     memcpy(original_space,rom(0xc45b80),sizeof(original_space));
     for(unsigned i=0;i<2;++i) { original_limits[i]=*rom(limits[i]);*rom(limits[i])=BLACK; }
     memcpy(rom(0xc45b80),code,sizeof(code));
@@ -277,7 +214,7 @@ static void install(void) {
             for(unsigned j=0;j<2;++j) *rom(limits[j])=original_limits[j];
             memcpy(rom(0xc45b80),original_space,sizeof(original_space));return;
         }
-    installed=true;load_audio();
+    installed=true;
 }
 void LouieBeforeFrame(void) {
     if(!enabled) return;
@@ -338,13 +275,10 @@ void LouieReset(void) {
         memcpy(rom(0xc45b80),original_space,sizeof(original_space));
     }
     installed=false;clock_borrowed=false;collision_resuming=false;chain_direction=0;memset(&state,0,sizeof(state));
-    red_hit=false;stop_audio();
+    red_hit=false;
 }
 static void reset_plugin(void) {
     LouieReset();enabled=false;
-    if(mount_clip) snes_mod_audio_unregister(mount_clip);
-    if(dash_clip) snes_mod_audio_unregister(dash_clip);
-    mount_clip=dash_clip=0;
 }
 static void activate(void) { enabled=true; }
 SNES_MOD_CONSTRUCTOR(register_louies) {
@@ -356,7 +290,7 @@ void LouieSave(struct SaveLoadInfo *sli) {
 }
 void LouieLoad(struct SaveLoadInfo *sli,unsigned version) {
     (void)version;memset(&state,0,sizeof(state));chain_direction=0;clock_borrowed=false;collision_resuming=false;
-    red_hit=false;stop_audio();
+    red_hit=false;
     if(!RtlStateBytesRemaining(sli)) return;
     uint32_t magic=0;sli->func(sli,&magic,4);sli->func(sli,&state,sizeof(state));
     bool valid=magic==0x3149554c;
