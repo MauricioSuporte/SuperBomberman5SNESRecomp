@@ -1,5 +1,17 @@
 # Super Bomberman 5: estado do protótipo
 
+## v0.12.0 published / Publicada — 2026-10-16
+
+[Prerelease v0.12.0](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.12.0),
+tag at `3392683` (main). Release workflow run 38846580292: Windows and Ubuntu
+22.04 builds, thirteen native tests per platform, audits and publish passed.
+Assets: `superbomberman5-0.12.0-windows-x64.zip` (17,109,642 bytes, SHA-256
+`1fc5950e…44db`), `superbomberman5-0.12.0-linux-x86_64.AppImage` (13,744,632
+bytes, `4fa03f10…dbcd`) and `SHA256SUMS`, matching GitHub's digests. Notes
+equal `tools/release-notes.py` output (UTF-8, no U+FFFD). The Windows ZIP holds
+the Bomber Kings manifest and no ROM or `docs/images`. Not re-run here: the
+extracted packages' first launch and local Generate & rebuild.
+
 ## v0.12.0 — Bomber Kings release preparation / preparação — 2026-10-16
 
 `bomber-kings` merged with `main` (v0.11.1: Louie improvements, PT-BR title
