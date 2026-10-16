@@ -4,9 +4,14 @@
 
 Integrated on main 94eba67 with its pinned framework/UI dependencies and unified Extra Characters implementation. Windows LLE runtime passed two-player Game Over → Continue retention and the five-player HUD stale-pointer, death/reentry regression. All 14 native setup-host test binaries pass; Python discovery passes (10 tests, 2 conditional skips). The additional SB4 picker-color regression covers choices 11–19 across snapshot restoration.
 
-The ROM-independent Windows entry SuperBomberman5Recomp.exe uses the existing authored assets/app.ico, finds the sibling setup/game or build-lle executable, starts it without a console, forwards Unicode arguments and preserves its exit status. A synthetic child verified sibling/development lookup, spaces, accents, working directory, default --launcher and exit code 37. Source builds copy the entry to the repository root; the Windows finalizer includes it in the setup ZIP. Existing game target/binary name stays compatible.
+The ROM-independent Windows entry SuperBomberman5Recomp.exe uses the existing reviewed assets/app.ico, finds the sibling setup/game or build-lle executable, starts it without a console, forwards Unicode arguments and preserves its exit status. A synthetic child verified sibling/development lookup, spaces, accents, working directory, default --launcher and exit code 37. Source builds copy the entry to the repository root; the Windows finalizer includes it in the setup ZIP. Existing game target/binary name stays compatible.
 
 Integração sobre a main 94eba67, mantendo os pins e o Extra Characters unificado. Rotas Windows LLE de Continue em dois jogadores e HUD em cinco passaram. Os 14 testes nativos passam; os testes Python também (10, dois condicionais ignorados). A entrada nativa com o ícone atual do “5” localiza o setup/jogo ou build-lle, não abre console e preserva argumentos Unicode e código de saída; testes com processo filho sintético passaram. Campanha completa, controles físicos, todas as combinações e distribuições Linux não são qualificados por esses testes.
+
+
+The extracted Windows setup ZIP passed its bundled-analyzer synthetic test, local user-ROM generation/build with the portable toolchain, and the root native entry completed validation/first-stage.input (3,628 frames, no fatal report). The entry prefers a generated build-lle/build game over the sibling setup host. This precedence is covered with two distinct synthetic child exit codes.
+
+O ZIP Windows extraído passou no teste sintético do analisador, geração/compilação local com a ROM do usuário e rota de 3.628 frames pela entrada nativa, sem fatal no relatório. A entrada prioriza o jogo gerado em build-lle/build diante do setup ao lado; teste com códigos de saída distintos cobre essa prioridade.
 
 ## Co-op HUD limited to P1/P2 / HUD cooperativa somente P1/P2 — 2026-10-16
 
@@ -1948,3 +1953,9 @@ fase. O segundo e o nono personagens foram observados na Zone 1-1; o nono foi
 testado com movimento/bomba e tradução PT-BR. B volta aos arquivos. Compilação
 e testes de seleção/estado passaram. Campanha completa e fases cooperativas
 ainda não foram qualificadas. Pré-release Windows com setup host sem ROM e dois pacotes de mods.
+
+## README v0.13.1 Normal frame — 2026-10-16
+
+Replaced only the bottom-left montage panel with Windows LLE runtime frame 4100. Native picker choices are Subordinate/Honey/Jet/Bazooka/Terrorin, colors green/native/black/red/native. Native egg pickup produced Black Louie (type 6); staging sets native down-facing animation after repositioning. Simultaneous Honey, Jet, Bazooka and Terrorin abilities and the P1/P2-only Normal HUD are visible. Other three panels compared pixel-identical. Poses/positions/protection/corridors were scripted for composition; no artwork was generated or extracted for source. See docs/images/README.md.
+
+Somente o quadro inferior esquerdo foi atualizado: captura real Windows LLE com cinco personagens, habilidades, Subordinado verde no Black Louie e nova HUD. Os outros três quadros são idênticos pixel a pixel; a composição usa posições e poses preparadas por script.

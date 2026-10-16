@@ -18,4 +18,11 @@ run(["--rom","C:/pasta com espaço/rom japonesa.sfc"],["--rom","C:/pasta com esp
 run([],["--launcher"])
 (d/"build-lle").mkdir();shutil.move(d/"SuperBomberman5SNESRecomp.exe",d/"build-lle/SuperBomberman5SNESRecomp.exe")
 run(["--help"],["--help"])
-print("Native entry: sibling/setup and build-lle lookup, Unicode/spaces, working directory, default launcher and exit status passed.")
+# An existing setup host must not shadow the locally generated game.
+other=d/"setup.c";other.write_text(src.read_text().replace("return 37;","return 19;"))
+subprocess.run([str(args.cc.resolve()),"-municode",str(other),"-o",str(d/"SuperBomberman5SNESRecomp.exe")],check=True)
+run(["--help"],["--help"])
+(d/"build").mkdir()
+shutil.move(d/"build-lle/SuperBomberman5SNESRecomp.exe",d/"build/SuperBomberman5SNESRecomp.exe")
+run(["--help"],["--help"])
+print("Native entry: setup/build-lle/build lookup and precedence, Unicode/spaces, working directory, default launcher and exit status passed.")

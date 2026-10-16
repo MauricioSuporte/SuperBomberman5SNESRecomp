@@ -13,8 +13,9 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR unused, int sho
   if (!slash) return 1;
   *slash = 0;
   const wchar_t *paths[] = {
-    L"%s\\SuperBomberman5SNESRecomp.exe",
-    L"%s\\build-lle\\SuperBomberman5SNESRecomp.exe"
+    L"%s\\build-lle\\SuperBomberman5SNESRecomp.exe",
+    L"%s\\build\\SuperBomberman5SNESRecomp.exe",
+    L"%s\\SuperBomberman5SNESRecomp.exe"
   };
   unsigned i;
   for (i = 0; i < ARRAYSIZE(paths); ++i) {
