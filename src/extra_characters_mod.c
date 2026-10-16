@@ -596,6 +596,7 @@ static bool column_empty(unsigned cx) {
     for(unsigned y=0;y<CANVAS_H;++y) if(canvas[y][cx]) return false;
     return true;
 }
+static unsigned emitted_slots[16],emitted_count;
 static bool emit(Ppu *ppu,int x,int y,unsigned palette,unsigned priority,
                  const unsigned *hide_slots,unsigned hide_count,bool *taken) {
     enum { MAX = (CANVAS_H/16)*2 };
@@ -628,7 +629,9 @@ static bool emit(Ppu *ppu,int x,int y,unsigned palette,unsigned priority,
         }
     }
     for(unsigned k=0;k<hide_count;++k) hide(ppu,hide_slots[k]);
+    emitted_count=0;
     for(unsigned k=0;k<count;++k) {
+        if(!late[k] && emitted_count<16) emitted_slots[emitted_count++]=(unsigned)slots[k];
         paint_block(ppu,(unsigned)blocks[k],cols[k],rows[k]);
         unsigned px=(unsigned)((x+(int)cols[k])&0x1ff),py=(unsigned)((y+(int)rows[k])&255);
         if(late[k]) late_places[late_count++]=(LatePlace){late_line,(unsigned)slots[k],px,py,(unsigned)blocks[k],palette,priority};
@@ -987,6 +990,136 @@ static int figure_palette(Ppu *ppu,unsigned key,unsigned slot,const unsigned *ow
     }
     return choose_palette(ppu,key,(int)slot);
 }
+/* ---- Mounts without an OBJ page. ----
+ * A campaign stage has five 1 KiB OBJ pages ($1D00-$1D04, pool $1D10 = 5;
+ * the other pages hold the stage's static graphics). Five co-op players
+ * own all five, so a Louie (its own object, rider + $1CBF) gets no page:
+ * the allocator leaves its request queued and the object is drawn with no
+ * tiles or with the tile offset ($073F/$0740) of the page's previous owner.
+ * Such a mount is drawn here from the cartridge instead: its page request
+ * ($C4:5442) names the sheet as table $C0:C415[type] -> (archive, half
+ * page) per animation - $1692+actor, the archive's raw 4bpp sheet is entry
+ * $85:E22D + (archive - 1) * 8, bytes 4-6 ($C5:6B77), and a piece tile t is
+ * sheet tile t (the page offset only maps it into VRAM). Verified against a
+ * Black Louie's uploaded page (archives $21/$22). */
+static bool object_paged(unsigned object) {
+    for(unsigned p=0;p<16;++p) if(g_ram[0x1d00+p]==object) return true;
+    return false;
+}
+static uint32_t mount_sheet(unsigned actor,unsigned object) {
+    unsigned type=g_ram[0x16c2+actor];
+    if(type>9) return 0;
+    uint32_t table=0xc00000|rw(0xc0c415+type*2);
+    unsigned index=(uint8_t)(g_ram[0x79f+object]-g_ram[0x1692+actor]);
+    if(index>=0x60 || (table&0xffff)<0x8000) return 0;
+    unsigned archive=rb(table+index*2);
+    if(!archive) return 0;
+    uint32_t entry=0x85e22d+(archive-1)*8;
+    uint32_t src=rw(entry+4)|(uint32_t)rb(entry+6)<<16;
+    return (src>>16)>=0xc0?src:0;
+}
+static void sheet_pixels(uint32_t src,unsigned tile,uint8_t out[8][8]) {
+    uint32_t t=src+tile*32;
+    for(unsigned y=0;y<8;++y) for(unsigned x=0;x<8;++x) {
+        unsigned v=0;
+        for(unsigned p=0;p<4;++p) v|=((rb(t+(p/2)*16+y*2+(p%2))>>(7-x))&1u)<<p;
+        out[y][x]=(uint8_t)v;
+    }
+}
+static void compose_sheet(uint32_t data,uint32_t src,int ox,int oy) {
+    unsigned n=rb(data);
+    for(unsigned k=n;k-->0;) {
+        uint32_t piece=data+1+k*7;
+        int dx=(int16_t)rw(piece),dy=(int16_t)rw(piece+2);
+        unsigned tile=rw(piece+4)&0x1ff,attr=rb(piece+6),size=(attr&1)?2:1;
+        for(unsigned ty=0;ty<size;++ty) for(unsigned tx=0;tx<size;++tx) {
+            uint8_t px[8][8];sheet_pixels(src,tile+ty*16+tx,px);
+            unsigned cx=(attr&0x40)?size-1-tx:tx,cy=(attr&0x80)?size-1-ty:ty;
+            for(unsigned y=0;y<8;++y) for(unsigned x=0;x<8;++x) {
+                uint8_t c=px[(attr&0x80)?7-y:y][(attr&0x40)?7-x:x];
+                int X=ox+dx+(int)(cx*8+x),Y=oy+dy+(int)(cy*8+y);
+                if(c && X>=0 && X<CANVAS_W && Y>=0 && Y<CANVAS_H) canvas[Y][X]=c;
+            }
+        }
+    }
+}
+static bool campaign_stage(void) {
+    unsigned mode=g_ram[0x1031];
+    return mode>=0x0d && mode<0x74 && !(g_ram[0x1d1a]&1) && (g_ram[0xaee]&0x7f);
+}
+static unsigned pageless_mount(unsigned seat,unsigned *object) {
+    if(seat>=5 || !(g_ram[0x1782+seat]&0x82) || g_ram[0x17fa+seat]>=0x60) return 0;
+    unsigned actor=seat+g_ram[0x1cbf];
+    if(actor>=24) return 0;
+    unsigned o=g_ram[0x17fa+actor];
+    if(o>=0x60 || object_paged(o)) return 0;
+    *object=o;return actor;
+}
+static bool pageless_mounts(void) {
+    if(!campaign_stage()) return false;
+    unsigned o;
+    for(unsigned i=0;i<5;++i) if(pageless_mount(i,&o)) return true;
+    return false;
+}
+static bool mount_first(unsigned mount,unsigned rider) {
+    unsigned o=g_ram[0x49b];
+    for(unsigned n=0;n<64 && o<0x60;++n,o=g_ram[0x43b+o]) {
+        if(o==mount) return true;
+        if(o==rider) return false;
+    }
+    return false;
+}
+/* Rewrites the OAM entries of `front` and `back` so every `front` sprite
+ * takes a lower (higher-priority) slot than every `back` one. */
+static void put_first(Ppu *ppu,const unsigned *front,unsigned nf,const unsigned *back,unsigned nb) {
+    unsigned all[32],n=0;uint16_t lo[32],hi[32];uint8_t bits[32];
+    for(unsigned k=0;k<nf+nb && n<32;++k) {
+        unsigned s=k<nf?front[k]:back[k-nf];
+        lo[n]=ppu->oam[s*2];hi[n]=ppu->oam[s*2+1];bits[n]=(ppu->highOam[s/4]>>((s%4)*2))&3;all[n++]=s;
+    }
+    unsigned sorted[32];memcpy(sorted,all,n*sizeof(*all));
+    for(unsigned a=1;a<n;++a) for(unsigned b=a;b>0 && sorted[b-1]>sorted[b];--b) { unsigned t=sorted[b];sorted[b]=sorted[b-1];sorted[b-1]=t; }
+    for(unsigned k=0;k<n;++k) {
+        unsigned s=sorted[k];
+        put(&ppu->oam[s*2],lo[k]);put(&ppu->oam[s*2+1],hi[k]);
+        ppu->highOam[s/4]=(uint8_t)((ppu->highOam[s/4]&~(3u<<((s%4)*2)))|(bits[k]<<((s%4)*2)));
+    }
+}
+static void draw_pageless_mounts(Ppu *ppu,bool *taken) {
+    if(!campaign_stage()) return;
+    for(unsigned i=0;i<5;++i) {
+        unsigned object=0,actor=pageless_mount(i,&object);
+        if(!actor) continue;
+        uint32_t src=mount_sheet(actor,object),data=frame_pointer(object);
+        unsigned slot=g_ram[0x6df+object],n=rb(data);
+        if(!src || slot>=8 || !n || n>16) continue;
+        /* Hide what the native object drew with another page's tiles. The
+         * shown OAM can lag its frame pointer, so these are found by place:
+         * sprites of the rider's palette slot around the mount that are not
+         * the rider's own frame. */
+        unsigned rider=g_ram[0x17fa+i],riders[16],mine[16],count=0;int ox=0,oy=0,bottom=0;
+        unsigned rider_count=match_native(ppu,rider,g_ram[0x6df+rider],riders,&ox,&oy,&bottom);
+        if(!rider_count) { ox=0;oy=0; }
+        int mx=g_ram[0x55f+object]+ox,my=g_ram[0x5bf+object]+oy;
+        for(unsigned c=0;c<128 && count<16;++c) {
+            if(!visible(ppu,c) || sprite_palette(ppu,c)!=slot) continue;
+            bool own=false;for(unsigned k=0;k<rider_count;++k) own|=riders[k]==c;
+            if(own) continue;
+            int sx=(int)sprite_x(ppu,c);if(sx>=256) sx-=512;
+            int sy=sprite_top(ppu,c),size=big(ppu,c)?16:8;
+            int dx=((sx-mx)%512+512+256)%512-256,dy=((sy-my)%256+256+128)%256-128;
+            if(dx+size>-24 && dx<24 && dy+size>-48 && dy<12) mine[count++]=c;
+        }
+        memset(canvas,0,sizeof(canvas));
+        compose_sheet(data,src,ORIGIN_X,ORIGIN_Y);
+        unsigned priority=count?(ppu->oam[mine[0]*2+1]>>12)&3:2;
+        int x=g_ram[0x55f+object]+ox-ORIGIN_X,y=g_ram[0x5bf+object]+oy-ORIGIN_Y;
+        if(!emit(ppu,x,y,slot,priority,mine,count,taken)) continue;
+        /* The object list ($049B/$043B) draws its earlier object on top:
+         * facing down, the Louie comes before its rider and hides him. */
+        if(rider_count && mount_first(object,rider)) put_first(ppu,emitted_slots,emitted_count,riders,rider_count);
+    }
+}
 static void draw_players(Ppu *ppu,bool *taken) {
     for(unsigned i=0;i<5;++i) {
         int skin=skin_of(g_ram[SEAT_CHOICE+i]);
@@ -1343,18 +1476,26 @@ void ExtraCharactersObserve(const Ppu *view,unsigned line,void *context) {
         }
         return;
     }
-    if(!enabled || !patched || !art_ready || PPU_objSize(ppu)!=0) return;
+    bool extras=enabled && patched && art_ready;
+    if(PPU_objSize(ppu)!=0 || (!extras && !pageless_mounts())) return;
     restore_tints(ppu);tint_count=0;
     saved_count=0;borrowed_count=0;line_load_count=0;late_count=0;late_line=-1;memcpy(saved_high,ppu->highOam,sizeof(saved_high));
     memcpy(frame_obj_colors,&ppu->cgram[0x80],sizeof(frame_obj_colors));
     bool taken[128]={false};
     for(unsigned k=0;k<SKINS*8;++k) key_palette[k]=-1;
     memset(palette_given,0,sizeof(palette_given));
-    if(picker()) { draw_portraits(ppu);draw_grid(ppu,taken);apply_line_loads(ppu,1); }
+    if(extras && picker()) { draw_portraits(ppu);draw_grid(ppu,taken);apply_line_loads(ppu,1); }
     else if(stage()) {
-        draw_players(ppu,taken);draw_faces(ppu);
-        effect_ppu=ppu;effect_taken=taken;SpecialAbilityDraw();effect_ppu=NULL;effect_taken=NULL;
+        /* Mounts first: they find the rider by its native frame, which
+         * the extra-character skins replace. */
+        draw_pageless_mounts(ppu,taken);
+        if(extras) draw_players(ppu,taken);
+        if(extras) {
+            draw_faces(ppu);
+            effect_ppu=ppu;effect_taken=taken;SpecialAbilityDraw();effect_ppu=NULL;effect_taken=NULL;
+        }
         apply_line_loads(ppu,1);apply_tints(ppu,1);
     }
     if(saved_count || line_load_count || late_count || tint_count) { drawn=true;++ppu->vramWriteCount;++ppu->oamWriteCount; }
 }
+bool ExtraCharactersPagelessMounts(void) { return pageless_mounts(); }

@@ -107,7 +107,7 @@ static void ObserveOverlays(const struct Ppu *ppu, unsigned line, void *context)
 void GameDrawPpuFrame(void)
 {
     bool overlays = NormalHudEnabled() || SelectionColorEnabled() || SubordinateEnabled() || ExtraCharactersEnabled() ||
-                    PauseMenuEnabled() || PortalLabelsEnabled();
+                    ExtraCharactersPagelessMounts() || PauseMenuEnabled() || PortalLabelsEnabled();
     PtbrDrawPpuFrameObserved(overlays ? ObserveOverlays : NULL, NULL);
 }
 

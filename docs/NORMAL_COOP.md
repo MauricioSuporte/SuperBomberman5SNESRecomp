@@ -68,6 +68,9 @@ o host v0.5.0 ou superior; importar em uma release antiga não atualiza o
 executável. O mod fica desabilitado
 por padrão. Para empacotar: `python tools/package-normal-coop.py`.
 
+Com 5 jogadores, os Louies aparecem normalmente e as animações de quem está
+montado não travam mais.
+
 Na ZONE3 - D com 3 a 5 jogadores, o Pirate Bomber volta a montar o Louie
 Preto; antes o P3 recebia um Louie Vermelho, o P1 voltava montado e travado
 depois do recomeço da fase e o jogo congelava quando ele morria.
@@ -149,6 +152,13 @@ to five-entry arrays at `$1FC0-$1FDD` (never written in any recorded campaign
 dump), the loops cover the roster and `$C3:FF70` fills seats 3-5 before the
 stock P1/P2 pass. The nearest-player chooser `$C3:4641` keeps its two-entry
 direct-page buffers, so enemies still steer toward P1/P2.
+
+Five seats own the campaign's five OBJ pages, so a Louie gets no page of its
+own. The stock page service (`$C5:6AE3`) kept retrying that request first in
+its queue, freezing every later animation request (riders included). With
+five seats it now runs through `$C5:7140`: the failed request starts its
+animation without tiles and the queue moves on, and the extra-character
+overlay draws the Louie from the cartridge.
 
 Boss start `$C4:3C60` also names the rivals by literal slot: it gives them
 equipment through `$C4:2906` (slots 2/3, operands `$C4:3C83/$3C8C`) and seats

@@ -279,6 +279,23 @@ static const uint8_t page_allocator[]={
     0xfa,             /* 7128 PLX                                   */
     0x60,             /* 7129 RTS                                   */
 };
+/* Page request service $C5:6AE3: JSR $6AF5 (allocate); BCS out; JSR $6B36
+ * (tile offset, start animation, dequeue); JSR $6B77 (upload); DEX; STX
+ * $1CFE. A request with no page left (a Louie when five seats own all five
+ * pages) stays first in the queue and is retried every frame, so every later
+ * request - the riders' animations - waits forever. With five seats the
+ * service jumps here: a failed request starts its animation without tiles and
+ * the queue moves on; the extra-character overlay draws that mount. */
+static const uint8_t page_service[]={
+    0x20,0xf5,0x6a,   /* 7140 JSR $6AF5   allocate                  */
+    0xb0,0x09,        /* 7143 BCS $714E                             */
+    0x20,0x36,0x6b,   /* 7145 JSR $6B36                             */
+    0x20,0x77,0x6b,   /* 7148 JSR $6B77                             */
+    0x4c,0xee,0x6a,   /* 714B JMP $6AEE   DEX; STX $1CFE; out       */
+    0xbc,0xd6,0x1c,   /* 714E LDY $1CD6,X requesting object         */
+    0x20,0x56,0x6b,   /* 7151 JSR $6B56   start animation, dequeue  */
+    0x4c,0xee,0x6a,   /* 7154 JMP $6AEE                             */
+};
 /* `CPX #$02` bounds of cartridge loops that visit only P1/P2:
  * $C2:0C9F script op $12 (exit warps and floor switches), $C5:6195/$C5:61C6
  * stage floor gimmicks, $C1:6BA1 input hold on a cell, $C0:373F point damage
@@ -307,7 +324,7 @@ static void build_rejoin(void) {
 }
 static void configure(void) {
     bool coop=campaign() && count>2;
-    restore(0xc4286f);restore(0xc502ff);restore(0xc5060e);restore(0xc56af5);
+    restore(0xc4286f);restore(0xc502ff);restore(0xc5060e);restore(0xc56af5);restore(0xc56ae3);
     restore(0xc21697);restore(0xc43794);restore(0xc21f2b);restore(0xc30458);
     for(unsigned i=0;i<sizeof(seat_loops)/sizeof(*seat_loops);++i) restore(seat_loops[i]);
     restore(0xc0374d);restore(0xc24340);
@@ -342,6 +359,7 @@ static void configure(void) {
      * state. Its two-seat $1D25/$1D24 values are replaced by set_masks() at
      * the $C5:060E hook before anything else reads them. */
     jump(0xc56af5,0xc57100); /* Sprite page allocator with own-page reuse. */
+    jump(0xc56ae3,0xc57140); /* Requests without a page no longer block the queue. */
     jump(0xc5060e,0xc57000);
     /* Script op $12 (exit warps, switches) tests only P1/P2 against the tile,
      * so a warp entered by P3-P5 never finished the stage. */
@@ -492,6 +510,8 @@ void NormalCoopBeforeFrame(void) {
         for(unsigned i=0;i<sizeof(mount_backups)/sizeof(*mount_backups);++i) reserve(mount_backups[i],3);
         reserve(0xc45b00,32);reserve(0xc24300,64);reserve(0xc57000,96);
         reserve(0xc57100,sizeof(page_allocator));memcpy(rom(0xc57100),page_allocator,sizeof(page_allocator));
+        reserve(0xc56ae3,3);
+        reserve(0xc57140,sizeof(page_service));memcpy(rom(0xc57140),page_service,sizeof(page_service));
         previous_hook=g_interp_bridge_pc_hook;g_interp_bridge_pc_hook=instruction;installed=true;
         build_spawn();build_rejoin();
     }

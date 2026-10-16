@@ -136,7 +136,12 @@ int main(void) {
     CHECK(rom(0xc5066c)[0]==0xff);
     CHECK(rom(0xc56af5)[0]==0x4c && rom(0xc56af5)[1]==0x00 && rom(0xc56af5)[2]==0x71);
     CHECK(!memcmp(rom(0xc57100),page_allocator,sizeof(page_allocator)));
+    /* A request with no page left (a Louie with five seats) no longer
+     * blocks the page queue: the service starts it without tiles. */
+    CHECK(rom(0xc56ae3)[0]==0x4c && rom(0xc56ae3)[1]==0x40 && rom(0xc56ae3)[2]==0x71);
+    CHECK(!memcmp(rom(0xc57140),page_service,sizeof(page_service)));
     count=2;configure();CHECK(rom(0xc56af5)[0]==0xff && g_ram[0x1cbf]==2 && rom(0xc43c75)[0]==0xb9);
+    CHECK(rom(0xc56ae3)[0]==0xff);
     /* One/two players keep the boss stage's own mount offset ($C4:3C78:
      * rivals own slot 2), carried mounts included; only the five-seat
      * value is undone. */

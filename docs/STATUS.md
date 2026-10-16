@@ -1,5 +1,36 @@
 # Super Bomberman 5: estado do protótipo
 
+## Louies with five co-op seats and identical controllers / Louies com cinco jogadores e controles iguais - 2026-10-16
+
+Five co-op seats own all five campaign OBJ pages (`$1D00-$1D04`, pool
+`$1D10` = 5), so a Louie got none: the stock allocator left its request first
+in the queue (`$C5:6AE3`, retried every frame), every later request - the
+riders' animations - waited forever, and the Louie was invisible or drawn with
+another page's tiles (the broken green Subordinate in the old README image).
+Co-op now routes the page service through `$C5:7140`: a failed request starts
+its animation without tiles and the queue moves on. The extra-character
+overlay draws such a mount from the cartridge (sheet from `$C0:C415[type]`,
+archive entry `$85:E22D`, raw 4bpp tile t at sheet offset t*32, verified
+against an uploaded Black Louie page), hides the native leftovers by place and
+keeps the native order (the object list draws a Louie facing down over its
+rider). Linux LLE, five seats, Zone 1-1 egg pickups (Red, Yellow, Blue, Black
+via the fixture build) match one-player captures in all directions; no
+interpreter cap, BRK or fatal; Zone 3-D restart and ZONE4 - G mounted entry
+re-run clean. The README image now shows green Subordinate on Black Louie with
+Jet, Bazooka, Hammer and Terrorin using their abilities (fixture build, enemy
+positions poked).
+
+Controllers: the SNES launcher listed live pads once per SDL GUID and disabled
+that entry for other players, so two identical controllers (two DualSense)
+could not drive different players. recomp-ui `18cd477` lists and claims pads
+per device and binds each GUID seat to one connected pad; snesrecomp `91052ad`
+seats each pad on the device the launcher picked and no longer lets SDL's
+preferred player index take an occupied seat. Built and unit-tested here; not
+tested with physical controllers.
+
+Com 5 jogadores os Louies aparecem e as animações não travam mais; dois
+controles iguais (DualSense) podem ser escolhidos para jogadores diferentes.
+
 ## ZONE3 - D with co-op / ZONE3 - D no co-op - 2026-10-16
 
 Reported with five players: P3 got a Red Louie in ZONE3 - D instead of the
