@@ -310,7 +310,12 @@ static void configure(void) {
     for(unsigned i=0;i<sizeof(enemy_loops)/sizeof(*enemy_loops);++i) restore(enemy_loops[i]);
     restore(0xc34766);restore(0xc34b8f);restore(0xc3ff70);
     for(unsigned i=0;i<sizeof(mount_backups)/sizeof(*mount_backups);++i) restore(mount_backups[i]);
-    if(!coop) { if(campaign()) g_ram[0x1cbf]=2;return; }
+    /* $1CBF (mount actor = rider + $1CBF) is 2 in stock stages, but boss
+     * stages set 3 or 4 from $C0:B9AE at $C4:3C78: their rival bombers own
+     * slot 2 (and 3). Only undo the five-player value set below; forcing 2
+     * every frame put a carried mount on the boss's slot (ZONE4 - G: boss
+     * never appeared, rider stuck). */
+    if(!coop) { if(campaign() && g_ram[0x1cbf]==5) g_ram[0x1cbf]=2;return; }
     set_masks();g_ram[0x1cbf]=5;
     rom(0xc30458)[1]=10; /* 0–4 players, 5–9 mount companions, 10–23 enemies. */
     for(unsigned i=0;i<sizeof(mount_backups)/sizeof(*mount_backups);++i) rom(mount_backups[i])[1]+=3;

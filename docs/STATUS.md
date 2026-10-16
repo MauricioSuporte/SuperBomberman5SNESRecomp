@@ -19,6 +19,25 @@ Windows was not built in this session.
 Os rótulos agora aparecem nos portais que o chefe abre; validado no Linux
 na ZONE1-A (rota A1). Falta conferir no Windows.
 
+### Mounted entry into boss stages with 1-2 players / Montado em chefes com 1-2 jogadores
+
+Reported: 1 player as Terrorin, entering ZONE4 - G on Blue Louie, P1 and the
+boss broke. Reproduced on Linux LLE with all gameplay mods (co-op, characters,
+Louie, colors, pause, infinite time, Gold Battle): picker route choosing
+Terrorin, egg pickup in Zone 1-1, forced transition to stage `$6C`. The boss
+never appeared, the rider stood still. Same with Bomberman; absent without the
+co-op mod. Cause: the co-op adapter wrote `$1CBF = 2` every campaign frame
+with one/two players, overriding the boss value 3 from `$C0:B9AE`, so the mount
+used the boss's actor slot 2. Now only the adapter's own value 5 is undone.
+After the fix the same routes (four egg timings, Black Louie from the native
+lottery; Blue/other colors were not reached from the full picker route) show
+the boss, its rival and minions, the rider and mount in slots 0/3, and normal
+mount loss on a hit; no interpreter cap, abandonment, BRK or fatal. Native
+coop test covers values 3/4 kept and 5 reset. Windows not built here.
+
+Corrigido: com 1–2 jogadores e o co-op ligado, entrar montado num chefe
+deixava o Louie no lugar do chefe. Validado no Linux; falta o Windows.
+
 ## v0.13.0 published / Publicada - 2026-10-16
 
 [Prerelease v0.13.0](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.13.0)

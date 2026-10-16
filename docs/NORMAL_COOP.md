@@ -68,6 +68,11 @@ o host v0.5.0 ou superior; importar em uma release antiga não atualiza o
 executável. O mod fica desabilitado
 por padrão. Para empacotar: `python tools/package-normal-coop.py`.
 
+Com 1 ou 2 jogadores, entrar montado no Louie numa fase de chefe mantém o
+deslocamento de montaria do próprio jogo (`$1CBF`); antes o mod forçava o
+valor de fase comum e o Louie ocupava o lugar do chefe (na ZONE4 - G o chefe
+não aparecia e o jogador ficava parado).
+
 ## English
 
 The menu is identified by both original player rows on BG3 and title mode.
@@ -140,6 +145,13 @@ to five-entry arrays at `$1FC0-$1FDD` (never written in any recorded campaign
 dump), the loops cover the roster and `$C3:FF70` fills seats 3-5 before the
 stock P1/P2 pass. The nearest-player chooser `$C3:4641` keeps its two-entry
 direct-page buffers, so enemies still steer toward P1/P2.
+
+With one or two players the adapter leaves the mount offset `$1CBF`
+(mount actor = rider + `$1CBF`) to the cartridge: boss stages set 3 or 4
+from `$C0:B9AE` at `$C4:3C78` because their rivals own slot 2. The adapter
+previously wrote 2 every campaign frame, so a mount carried into a boss stage
+took the boss's slot (ZONE4 - G never started and the rider stood still).
+Now it only undoes its own five-seat value 5.
 
 Boss stages `$67-$6E` create their rival bomber in actor slot 2 (`$6A` adds
 slot 3) through `$C2:16B8/$C2:16EE` and `$C4:3CCF`. Five-entry bomber tables
