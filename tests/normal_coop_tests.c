@@ -130,7 +130,13 @@ int main(void) {
     CHECK(rom(0xc5066c)[0]==0xff);
     CHECK(rom(0xc56af5)[0]==0x4c && rom(0xc56af5)[1]==0x00 && rom(0xc56af5)[2]==0x71);
     CHECK(!memcmp(rom(0xc57100),page_allocator,sizeof(page_allocator)));
-    count=2;configure();CHECK(rom(0xc56af5)[0]==0xff);
+    count=2;configure();CHECK(rom(0xc56af5)[0]==0xff && g_ram[0x1cbf]==2);
+    /* One/two players keep the boss stage's own mount offset ($C4:3C78:
+     * rivals own slot 2), carried mounts included; only the five-seat
+     * value is undone. */
+    g_ram[0x1cbf]=3;g_ram[0x1031]=0x6c;configure();CHECK(g_ram[0x1cbf]==3);
+    g_ram[0x1cbf]=4;g_ram[0x1031]=0x6a;configure();CHECK(g_ram[0x1cbf]==4);
+    g_ram[0x1031]=13;g_ram[0x1cbf]=5;configure();CHECK(g_ram[0x1cbf]==2);
     count=5;configure();CHECK(rom(0xc56af5)[0]==0x4c);
     /* Every P1/P2-only loop covers the roster; point damage skips companions. */
     CHECK(rom(0xc20c9f)[1]==5 && rom(0xc56195)[1]==5 && rom(0xc561c6)[1]==5);
