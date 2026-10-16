@@ -62,7 +62,7 @@
 enum {
     STATE = 0x1f830, SEAT_BYTES = 32, PENDING = 0x1f8d0, SPEED_ACC = 0x1f8d5, STATE_END = 0x1f8da,
     PAD_HOOK = 0xc00af9, SPEED_HOOK = 0xc43180,
-    LOSE_ITEM = 0xc437cd, RTL_C4 = 0xc436d1,
+    LOSE_ITEM = 0xc437cd, RTL_C4 = 0xc436d1, BURN_BLOCK = 0xc5441d,
     DEBUFF_FRAMES = 640, B_WINDOW = 8, TRAILS = 3,
 };
 /* Per seat: +0/1 debuff, +2/3 cooldown, +4 kind, +5/6 timer, +7 direction
@@ -71,7 +71,7 @@ enum {
  * the flight stopped, +15/16 last position, +17 items this seat still has
  * to lose, +18..26 Jet trail (TRAILS x: cell, age, flags), +27 beam tiles. */
 enum { S_DEBUFF = 0, S_COOLDOWN = 2, S_KIND = 4, S_TIMER = 5, S_DIR = 7, S_DIST = 8, S_HIT = 10,
-       S_FLAGS = 13, S_STOP = 14, S_LAST = 15, S_DROPS = 17, S_TRAIL = 18, S_BEAM = 27 };
+       S_FLAGS = 13, S_STOP = 14, S_LAST = 15, S_DROPS = 17, S_TRAIL = 18, S_BEAM = 27, S_SHOT = 28 };
 enum { AB_NONE, AB_SHOT, AB_SLASH, AB_HAMMER, AB_JET, AB_LASER, AB_BAZOOKA, AB_GREAT };
 typedef struct { uint8_t kind; uint16_t debuff; uint16_t cooldown; } Ability;
 /* Index: choice - 11 (Honey, Kotetsu, Bomberman, Hammer, Jet, Lady, Bazooka, Great). */
@@ -85,9 +85,9 @@ static const Ability kAbility[8]={
     {AB_BAZOOKA,DEBUFF_FRAMES, 0},
     {AB_GREAT,  DEBUFF_FRAMES, 0},
 };
-enum { SHOT_FRAMES = 24, SHOT_AT = 8, SLASH_FRAMES = 16, BAZOOKA_FRAMES = 98, BEAM_FROM = 68, BEAM_TO = 82,
+enum { SHOT_FRAMES = 55, SHOT_AT = 32, SHOT_SPEED = 4, SLASH_FRAMES = 61, SLASH_FROM = 13, BAZOOKA_FRAMES = 98, BEAM_FROM = 68, BEAM_TO = 82,
        JET_WINDUP = 48, JET_SPEED = 4, TRAIL_LIFE = 16, HAMMER_FRAMES = 125, MACE_FROM = 29, MACE_TO = 106,
-       LASER_FROM = 48, LADY_FRAMES = 109, GREAT_FRAMES = 160, JET_LANDING = 20, JET_GUARD_AFTER = 64 };
+       LASER_FROM = 48, LADY_FRAMES = 109, GREAT_FRAMES = 160, JET_LANDING = 24, JET_GUARD_AFTER = 60 };
 /* Super Bomberman 4 sound effects ($C0:071D numbers). */
 enum { SND_EXPLOSION = 0x39, SND_MACE = 0x4e, SND_LASER = 0x5a, SND_GUARD = 0x5f };
 static uint8_t *seat_state(unsigned i) { return g_ram+STATE+i*SEAT_BYTES; }
@@ -169,10 +169,23 @@ static bool strike_cell(unsigned seat,int cx,int cy) {
     return hit;
 }
 static const int kDx[4]={1,0,-1,0},kDy[4]={0,1,0,-1};
-/* Stage map: $1052, 16 columns; $80 hard block, $30 soft block, $20 bomb. */
-static bool blocked_cell(int cx,int cy) {
-    if(cx<0 || cy<0 || cx>=16 || cy>=13) return true;
-    return (g_ram[0x1052+cy*16+cx]&0xb0)!=0;
+/* Stage map: $1052, 16 columns; $80 hard block, $40 bomb, $30 soft block,
+ * $10 alone a revealed item (verified by bomb/item/block dumps). */
+static unsigned map_cell(int cx,int cy) {
+    if(cx<0 || cy<0 || cx>=16 || cy>=13) return 0x80;
+    return g_ram[0x1052+cy*16+cx];
+}
+static bool blocked_cell(int cx,int cy) { return (map_cell(cx,cy)&0xe0)!=0; }
+static bool soft_cell(int cx,int cy) { unsigned v=map_cell(cx,cy);return !(v&0xc0) && (v&0x20); }
+/* A bomb in the bomb list (head $0E2A, next $0EA4, cell $0E7C, fuse $0E40;
+ * $FF = remote, which $C5:1F84 detonates by setting 5) explodes at once. */
+static void detonate(int cx,int cy) {
+    unsigned cell=(unsigned)(cy*16+cx),x=g_ram[0xe2a];
+    for(unsigned n=0;x<0x14 && n<0x14;++n,x=g_ram[0xea4+x]) {
+        if(g_ram[0xe7c+x]!=cell || (g_ram[0xe90+x]&0xe8)) continue;
+        if(g_ram[0xe40+x]==0xff) g_ram[0xe40+x]=5;
+        else if(g_ram[0xe40+x]>1) g_ram[0xe40+x]=1;
+    }
 }
 /* Pad direction bits ($31+seat): right 1, left 2, down 4, up 8 -> R/D/L/U. */
 static int direction_of(unsigned bits) {
@@ -221,11 +234,21 @@ static void finish(unsigned seat) {
     s[S_KIND]=0;
     if(a) set16(s+S_COOLDOWN,a->cooldown);
 }
-/* Fire beam of Bazooka: tiles from the next one up to the first block. */
-static unsigned beam_length(unsigned seat) {
+/* Fire beam of Bazooka, like a bomb's flame to one side: from the next
+ * tile up to a hard block; a soft block is the last tile (it burns, the
+ * cartridge's own $C5:441D), a bomb stops it and explodes. */
+static unsigned beam_length(unsigned seat,int *soft) {
     unsigned d=seat_state(seat)[S_DIR]&3,k=0;
     int cx=cell_of(world_x(seat)),cy=cell_of(world_y(seat));
-    while(k<15 && !blocked_cell(cx+kDx[d]*(int)(k+1),cy+kDy[d]*(int)(k+1))) ++k;
+    *soft=-1;
+    while(k<15) {
+        int nx=cx+kDx[d]*(int)(k+1),ny=cy+kDy[d]*(int)(k+1);
+        unsigned v=map_cell(nx,ny);
+        if(v&0x80) break;
+        if(v&0x40) { detonate(nx,ny);break; }
+        ++k;
+        if(soft_cell(nx,ny)) { *soft=ny*16+nx;break; }
+    }
     return k;
 }
 static int mace_radius(unsigned t) {
@@ -250,12 +273,41 @@ static void laser_position(unsigned seat,int *x,int *y) {
 static bool frozen(unsigned seat) {
     uint8_t *s=seat_state(seat);unsigned t=get16(s+S_TIMER);
     switch(s[S_KIND]) {
-    case AB_SHOT: case AB_SLASH: case AB_HAMMER: case AB_BAZOOKA: case AB_GREAT: return true;
+    case AB_SLASH: case AB_HAMMER: case AB_BAZOOKA: case AB_GREAT: return true;
+    case AB_SHOT: return t<SHOT_FRAMES;
     case AB_LASER: return t<LADY_FRAMES;
     case AB_JET: return !(s[S_FLAGS]&1) || t<(unsigned)s[S_STOP]+JET_LANDING;
     default: return false;
     }
 }
+/* Cartridge routines called from the pad hook: items lost by stunned
+ * players ($C4:37CD, A = 0, X = seat; ends in RTS) and soft blocks burnt by
+ * Bazooka's beam ($C5:441D, A = cell; RTL). Return frames for $C0:0AF9 (and
+ * for an RTL in bank $C4) are pushed, so each routine comes back to the
+ * hook, which starts the next one or restores the registers. */
+static bool injecting;
+static CpuState saved_cpu;
+typedef struct { uint32_t routine;uint8_t a,x;bool rts; } Call;
+static Call calls[24];
+static uint8_t call_count,call_next;
+static void queue_call(uint32_t routine,uint8_t a,uint8_t x,bool rts) {
+    if(call_count<sizeof(calls)/sizeof(*calls)) calls[call_count++]=(Call){routine,a,x,rts};
+}
+static void push(CpuState *cpu,uint8_t v) { g_ram[cpu->S]=v;cpu->S=(uint16_t)(cpu->S-1); }
+/* A JSL-style routine gets a return frame for $C0:0AF9; an RTS routine in
+ * bank $C4 also one for the RTL at $C4:36D1. */
+static void inject(CpuState *cpu,const Call *c) {
+    push(cpu,(uint8_t)(PAD_HOOK>>16));push(cpu,(uint8_t)((PAD_HOOK-1)>>8));push(cpu,(uint8_t)(PAD_HOOK-1));
+    if(c->rts) { push(cpu,(uint8_t)((RTL_C4-1)>>8));push(cpu,(uint8_t)(RTL_C4-1)); }
+    cpu->A=(uint16_t)((cpu->A&0xff00)|c->a);cpu->X=(uint16_t)c->x;
+    interp_bridge_pre_opcode_redirect(c->routine);
+}
+static bool next_call(CpuState *cpu) {
+    if(call_next>=call_count) return false;
+    inject(cpu,&calls[call_next++]);
+    return true;
+}
+
 static void tick(unsigned seat) {
     uint8_t *s=seat_state(seat);
     if(get16(s+S_DEBUFF)) set16(s+S_DEBUFF,get16(s+S_DEBUFF)-1);
@@ -268,19 +320,32 @@ static void tick(unsigned seat) {
     int x=world_x(seat),y=world_y(seat),cx=cell_of(x),cy=cell_of(y);
     switch(s[S_KIND]) {
     case AB_SHOT:
-        if(t==SHOT_AT) {
-            for(int k=1;k<16 && !blocked_cell(cx+kDx[d]*k,cy+kDy[d]*k);++k)
-                if(strike_cell(seat,cx+kDx[d]*k,cy+kDy[d]*k)) break;
+        /* Honey's boss attack: the shooting animation ($23-$26, 55 frames,
+         * muzzle flash at 32) and a bullet ($27-$2A) that flies on until a
+         * block or a target. */
+        if(t==SHOT_AT) { s[S_FLAGS]|=4;set16(s+S_DIST,8); }
+        else if(s[S_FLAGS]&4) set16(s+S_DIST,get16(s+S_DIST)+SHOT_SPEED);
+        if(s[S_FLAGS]&4) {
+            int bx=x+kDx[d]*(int)get16(s+S_DIST),by=y+kDy[d]*(int)get16(s+S_DIST);
+            unsigned found[1];
+            if(blocked_cell(cell_of(bx+kDx[d]*4),cell_of(by+kDy[d]*4))) s[S_FLAGS]&=(uint8_t)~4;
+            else if(near(seat,bx,by,10,found,1)) { damage(found[0]);s[S_FLAGS]&=(uint8_t)~4; }
         }
-        if(t+1>=SHOT_FRAMES) finish(seat);
+        if(t+1>=SHOT_FRAMES && !(s[S_FLAGS]&4)) finish(seat);
+        if(t>600) finish(seat);
         break;
     case AB_SLASH:
-        if(t>=4 && t<8) strike_cell(seat,cx+kDx[d],cy+kDy[d]);
+        /* Kotetsu's thrust ($30-$33: 5, 8 and 48 frames): the blade is out
+         * on the tile in front for the last 48. */
+        if(t>=SLASH_FROM) strike_cell(seat,cx+kDx[d],cy+kDy[d]);
         if(t+1>=SLASH_FRAMES) finish(seat);
         break;
     case AB_BAZOOKA:
         if(t==BEAM_FROM-1) Sb4SoundPlay(SND_EXPLOSION);
-        if(t==BEAM_FROM) s[S_BEAM]=(uint8_t)beam_length(seat);
+        if(t==BEAM_FROM) {
+            int soft;s[S_BEAM]=(uint8_t)beam_length(seat,&soft);
+            if(soft>=0) queue_call(BURN_BLOCK,(uint8_t)soft,0,false);
+        }
         if(t>=BEAM_FROM && t<=BEAM_TO)
             for(int k=1;k<=s[S_BEAM];++k) strike_cell(seat,cx+kDx[d]*k,cy+kDy[d]*k);
         if(t+1>=BAZOOKA_FRAMES) finish(seat);
@@ -328,8 +393,9 @@ static void tick(unsigned seat) {
         if(t<JET_WINDUP) { extend_invulnerability(seat,8);break; }
         if(!(s[S_FLAGS]&1)) {
             extend_invulnerability(seat,8);
-            unsigned f=t-JET_WINDUP,here=(unsigned)((x&0xff)<<8|(y&0xff));
-            /* A block stops the flight: the position stays for two frames. */
+            /* A block stops the flight: the position along the flight stays
+             * for two frames (sliding round a corner does not count). */
+            unsigned f=t-JET_WINDUP,here=(unsigned)((d&1)?y:x)&0xffff;
             if(f>=2 && get16(s+S_LAST)==here) {
                 s[S_FLAGS]|=1;s[S_STOP]=(uint8_t)(t>255?255:t);
                 extend_invulnerability(seat,JET_LANDING+JET_GUARD_AFTER);
@@ -342,7 +408,8 @@ static void tick(unsigned seat) {
                 Sb4SoundPlay(SND_EXPLOSION);
             }
         }
-        /* After the crash he keeps the flying pose for 20 frames. */
+        /* After the crash he stays against the block in the flying pose
+         * for 24 frames (SB4: stops at frame 96, walks again at 120). */
         if((s[S_FLAGS]&1) && t+1>=(unsigned)s[S_STOP]+JET_LANDING && !live) finish(seat);
         if(t>600) finish(seat);
         break;
@@ -351,33 +418,12 @@ static void tick(unsigned seat) {
     }
 }
 
-/* Items lost by stunned players: the cartridge's routine $C4:37CD (A = 0,
- * X = seat; it ends in RTS) runs from the pad hook. A return frame for
- * $C0:0AF9 (RTL) and one for an RTL in bank $C4 are pushed, so the routine
- * comes back here; the hook then starts the next one or restores the
- * registers. One item per seat per frame. */
-static bool injecting;
-static CpuState saved_cpu;
-static uint8_t drop_seats[5],drop_count,drop_next;
-static void push(CpuState *cpu,uint8_t v) { g_ram[cpu->S]=v;cpu->S=(uint16_t)(cpu->S-1); }
-static void inject_drop(CpuState *cpu,unsigned seat) {
-    push(cpu,(uint8_t)(PAD_HOOK>>16));push(cpu,(uint8_t)((PAD_HOOK-1)>>8));push(cpu,(uint8_t)(PAD_HOOK-1));
-    push(cpu,(uint8_t)((RTL_C4-1)>>8));push(cpu,(uint8_t)(RTL_C4-1));
-    cpu->A=(uint16_t)(cpu->A&0xff00);cpu->X=(uint16_t)seat;
-    interp_bridge_pre_opcode_redirect(LOSE_ITEM);
-}
-static bool next_drop(CpuState *cpu) {
-    if(drop_next>=drop_count) return false;
-    inject_drop(cpu,drop_seats[drop_next++]);
-    return true;
-}
-
 /* $C0:0AF9: the pad reader has filled $2C/$31/$36/$3B+seat and the frame's
  * game logic has not consumed them yet. */
 static void pad_hook(CpuState *cpu,uint32_t pc) {
     (void)pc;
     if(injecting) {
-        if(next_drop(cpu)) return;
+        if(next_call(cpu)) return;
         injecting=false;
         cpu->A=saved_cpu.A;cpu->X=saved_cpu.X;cpu->Y=saved_cpu.Y;cpu->D=saved_cpu.D;cpu->DB=saved_cpu.DB;
         return;
@@ -388,12 +434,12 @@ static void pad_hook(CpuState *cpu,uint32_t pc) {
         return;
     }
     if(!playing()) return;
-    drop_count=drop_next=0;
+    call_count=call_next=0;
     for(unsigned i=0;i<5;++i) {
         uint8_t *s=seat_state(i);
         if(s[S_DROPS]) {
             --s[S_DROPS];
-            if(alive(i) && battle()) drop_seats[drop_count++]=(uint8_t)i;
+            if(alive(i) && battle()) queue_call(LOSE_ITEM,0,(uint8_t)i,true);
         }
         const Ability *a=ability_of(i);
         if(!a) { g_ram[PENDING+i]=0;continue; }
@@ -424,7 +470,7 @@ static void pad_hook(CpuState *cpu,uint32_t pc) {
         } else if(held_b && fresh>=0) start(i,fresh);
         if(s[S_KIND]) { g_ram[0x31+i]=0;g_ram[0x3b+i]=0;g_ram[0x36+i]=0; }
     }
-    if(drop_count) { saved_cpu=*cpu;injecting=true;next_drop(cpu); }
+    if(call_count) { saved_cpu=*cpu;injecting=true;next_call(cpu); }
 }
 /* $C4:3180 STA $1CC2: A = pixels the seat (X) walks this frame; $C4:3284
  * walks that many single-pixel steps. */
@@ -472,8 +518,10 @@ int SpecialAbilityPose(unsigned seat,unsigned *step,uint32_t *sb4_frame) {
     if(!a || !s[S_KIND]) return -1;
     unsigned t=get16(s+S_TIMER),d=s[S_DIR]&3,k;
     switch(s[S_KIND]) {
-    case AB_SHOT: *step=t<6?0:t<12?1:2;return (int)d;
-    case AB_SLASH: *step=t<4?0:t<8?1:2;return (int)d;
+    case AB_SHOT:
+        if(t>=SHOT_FRAMES) return -1;
+        *step=t<5?0:t<16?1:t<32?2:t<35?3:t<39?4:5;return (int)d;
+    case AB_SLASH: *step=t<5?0:t<SLASH_FROM?1:2;return (int)d;
     case AB_BAZOOKA:
         k=t<32?(sb4_dir(d)+t/8)&3:sb4_dir(d);
         *sb4_frame=0xca98b0+k*0x80;return (int)d;
@@ -545,6 +593,14 @@ void SpecialAbilityDraw(void) {
                 int sx=seg[0]%16,sy=seg[0]/16;
                 draw_fire(sx,sy,d,false,phase,fire);
                 if(seg[2]&1) draw_fire(sx-kDx[d],sy-kDy[d],(d+2)&3,true,phase,fire);
+            }
+            break;
+        case AB_SHOT:
+            /* Honey's bullet: object set $0D anims $27-$2A (right, down,
+             * left, up). */
+            if(s[S_FLAGS]&4) {
+                int bx=world_x(i)+kDx[d]*(int)get16(s+S_DIST),by=world_y(i)+kDy[d]*(int)get16(s+S_DIST);
+                ExtraEmitSkinFrame(0,0x27+d,0,screen_x(bx),screen_y(by)-6);
             }
             break;
         case AB_HAMMER: {

@@ -75,6 +75,16 @@ rider used to flip palettes); Bad Bomber on left/top edges and throwing with
 the SB4 board frames; native tests 12/12. Not heard: audio was disabled in the
 headless runs, so the in-game playback of the clips is not verified by ear.
 
+Fourth pass (same day): Honey fires her boss bullet (anims `$27-$2A`) after
+her shooting animation (`$23-$26`, 55 frames) — headless: bullet flew the top
+row and killed the player at x 208; Kotetsu uses his 61-frame thrust;
+Bazooka's beam burns the first soft block (`$C5:441D` through a pushed RTL
+frame; headless: row 1 cell 3 `$30` → burn animation → `$00`) and sets off
+bombs (native test); Jet stops on the flight axis and stays 24 frames
+(SB4: crash at 96, walks at 120; headless: crash 97, ability until 121);
+riding frames 16-19, mounting 20-23 (SB4 uploads with Lady and Great).
+Native tests 12/12.
+
 Not verified: Windows build/run, physical controllers, every SB4 pose (stun,
 Time Up and Bad Bomber cart were not captured), boss stages, CPU seats with
 extra characters, save state/rewind during an ability (state lives in WRAM

@@ -21,7 +21,8 @@ uint16_t Sb4FireColor(unsigned index) { return (uint16_t)index; }
 bool Sb4EffectBlock(unsigned tile,uint8_t out[16][16]) { memset(out,1,256);return tile>=0x80; }
 uint16_t Sb4Color(unsigned character,unsigned palette,unsigned index) { return (uint16_t)(character+palette+index); }
 uint32_t Sb4FramePc(unsigned character,unsigned frame) { return 0xd00000|character<<8|frame; }
-static unsigned sounds[128];
+static unsigned sounds[128],skin_frames;
+bool ExtraEmitSkinFrame(unsigned skin,unsigned anim,unsigned step,int x,int y) { (void)skin;(void)anim;(void)step;(void)x;(void)y;++skin_frames;return true; }
 void Sb4SoundPlay(uint8_t id) { ++sounds[id&0x7f]; }
 static InterpPreOpcodeHook hooks[2];static uint32_t hook_pcs[2];static unsigned hook_count;
 bool interp_bridge_add_pre_opcode_hook(uint32_t pc24,InterpPreOpcodeHook hook) {
@@ -74,9 +75,13 @@ int main(void) {
     frame(0,0x08,0x01);
     CHECK(seat_state(0)[S_KIND]==AB_SHOT && seat_state(0)[S_DIR]==0 && !(g_ram[0x36]&0x08));
     CHECK(SpecialAbilityPose(0,&step,&pc)==0 && step==0 && !pc);
-    /* Honey stands while shooting; the shot hits the first target in line. */
+    /* Honey stands for her shooting animation (flash at frame 32); the
+     * bullet flies 4 px per frame and kills the first target in line. */
     CHECK(speed(0,2)==0);
-    idle(SHOT_AT+1);CHECK(g_ram[0x15a2+1]&0x40 && !(g_ram[0x15a2+2]&0x40));
+    idle(SHOT_AT);CHECK(!(seat_state(0)[S_FLAGS]&4) && SpecialAbilityPose(0,&step,&pc)==0 && step==3);
+    frame(0,0,0);CHECK((seat_state(0)[S_FLAGS]&4) && !(g_ram[0x15a2+1]&0x40));
+    skin_frames=0;SpecialAbilityDraw();CHECK(skin_frames==1);
+    idle(10);CHECK(g_ram[0x15a2+1]&0x40 && !(g_ram[0x15a2+2]&0x40) && !(seat_state(0)[S_FLAGS]&4));
     idle(SHOT_FRAMES);
     CHECK(!seat_state(0)[S_KIND] && SpecialAbilityDebuffed(0) && SpecialAbilityPose(0,&step,&pc)<0);
     /* While it recovers, B stays native. */
@@ -102,10 +107,12 @@ int main(void) {
     /* Direction held, then B: ability in that direction. Kotetsu's cut hits
      * the tile in front (seat 2 stands to his left). */
     arena();frame(1,0,0x02);frame(1,0x08,0x02);CHECK(seat_state(1)[S_KIND]==AB_SLASH && seat_state(1)[S_DIR]==2);
-    for(unsigned k=0;k<6;++k) frame(1,0,0);
+    for(unsigned k=0;k<SLASH_FROM+2;++k) frame(1,0,0);
     CHECK((g_ram[0x15a2]&0x40)==0); /* seat 0 is three tiles away */
     arena();g_ram[0x182a]=48;frame(1,0,0x02);frame(1,0x08,0x02);
-    for(unsigned k=0;k<6;++k) frame(1,0,0);
+    for(unsigned k=0;k<SLASH_FROM;++k) frame(1,0,0);
+    CHECK(!(g_ram[0x15a2]&0x40));                     /* the thrust comes out at 13 */
+    frame(1,0,0);
     CHECK(g_ram[0x15a2]&0x40);
     /* Riding Louie: B + direction is native. */
     arena();g_ram[0x1782+1]=0x80;frame(1,0x08,0x02);CHECK(!seat_state(1)[S_KIND] && (g_ram[0x37]&0x08));
@@ -136,6 +143,17 @@ int main(void) {
     arena();g_ram[0x15a2+2]|=0x04;g_ram[0x1052+16+3]=0x80;frame(3,0x08,0x02);
     while(timer(3)<=BEAM_FROM) frame(3,0,0);
     CHECK(!(g_ram[0x15a2+2]&0x40) && (g_ram[0x15a2+1]&0x40) && !(g_ram[0x15a2]&0x40) && seat_state(3)[S_BEAM]==6);
+    /* A soft block is the beam's last tile and burns with the cartridge's
+     * $C5:441D (A = cell, called through a pushed RTL frame). */
+    arena();g_ram[0x1052+16+3]=0x30;redirected=0;
+    frame(3,0x08,0x02);while(timer(3)<=BEAM_FROM && !redirected) frame(3,0,0);
+    CHECK(seat_state(3)[S_BEAM]==7 && redirected==BURN_BLOCK && injecting && (cpu.A&0xff)==0x13 && cpu.S==0x1ff-3);
+    CHECK(g_ram[0x1ff]==0xc0 && g_ram[0x1fe]==0x0a && g_ram[0x1fd]==0xf8);
+    cpu.S=0x1ff;redirected=0;pad_hook(&cpu,PAD_HOOK);CHECK(!injecting && cpu.A==0x1234);
+    /* A bomb stops it and explodes at once (fuse $0E40 set to 1). */
+    arena();g_ram[0x1052+16+5]=0x50;g_ram[0xe2a]=0;g_ram[0xe7c]=0x15;g_ram[0xe40]=100;g_ram[0xea4]=0x14;
+    frame(3,0x08,0x02);while(timer(3)<=BEAM_FROM) frame(3,0,0);
+    CHECK(seat_state(3)[S_BEAM]==4 && g_ram[0xe40]==1 && !(g_ram[0x15a2]&0x40) && (g_ram[0x15a2+2]&0x40));
     /* Team Battle: teammates (same $15A2 bits 3-4) are spared. */
     arena();g_ram[0x625d]=1;
     g_ram[0x15a2]=0x10;g_ram[0x15a2+1]=0x08;g_ram[0x15a2+2]=0x10;g_ram[0x15a2+3]=0x10;g_ram[0x15a2+4]=0x08;

@@ -33,8 +33,8 @@ mod inclui a coluna da Honey e do Kotetsu (mesmo sem o mod deles ativo).
 - **Na fase:** eles jogam como o Bomberman do Super Bomberman 5 (mesmas regras,
   hitbox e itens) com os sprites do Super Bomberman 4: andar e parar nas quatro
   direções, andar e parar com a bomba erguida (Power Glove), chute/arremesso,
-  pulo, montado no Louie (com a pose sentada do Super Bomberman 4; o Louie
-  mantém as cores originais), comemoração, derrota, atordoado, Time Up, Bad
+  pulo, montado no Louie (com as poses de montaria do Super Bomberman 4: ao
+  subir e montado; o Louie mantém as cores originais), comemoração, derrota, atordoado, Time Up, Bad
   Bomber (a prancha do Super Bomberman 4 em cada lado da arena, também ao
   arremessar), placar; retrato na seleção e rosto no HUD.
 - **Cores na fase:** cada jogador usa a sua própria paleta, trocada só nas
@@ -52,12 +52,12 @@ seguem os ataques deles na luta contra eles no Normal Game:
 
 | Personagem | Habilidade | Depois de usar |
 |---|---|---|
-| Honey | animação de tiro; acerta o primeiro alvo na linha até um bloco | debuff |
-| Kotetsu | corte de espada no bloco da frente | debuff |
+| Honey | fica parada na animação de tiro da luta contra ela (0,9 s) e dispara um projétil que segue sozinho até um bloco e mata quem acertar | debuff |
+| Kotetsu | estocada de espada da luta contra ele (1 s), atingindo o bloco da frente | debuff |
 | Hammer Bomber | fica parado girando a maça em volta de si (~2 s); quem ela toca fica atordoado e perde um item | — |
-| Jet Bomber | preparação de 0,8 s, depois voa a 4 px por quadro até bater deixando um rastro de fogo; ao bater fica mais 20 quadros na pose de voo; pisca invencível do começo até cerca de 1 s depois de bater | debuff |
+| Jet Bomber | preparação de 0,8 s, depois voa a 4 px por quadro até bater deixando um rastro de fogo; ao bater fica parado no obstáculo na pose de voo por 24 quadros (como no SB4) e só então volta a andar; pisca invencível do começo até cerca de 1 s depois de bater | debuff |
 | Lady Bomber | gira a arma, dispara o laser (sai aos 0,8 s, 2 px por quadro, segue sozinho até um bloco ou alvo), gira a arma de novo e volta a andar (1,8 s); o alvo fica atordoado e perde dois itens | — |
-| Bazooka Bomber | fica parado 1,6 s mirando (gira nas quatro direções) e dispara um raio de fogo até o primeiro bloco | debuff |
+| Bazooka Bomber | fica parado 1,6 s mirando (gira nas quatro direções) e dispara um raio de fogo para a frente como a chama de uma bomba: queima o primeiro soft block, para em blocos fixos e detona bombas no caminho | debuff |
 | Great Bomber | fica parado, piscando e invencível, por 2,7 s | debuff |
 | Bomberman (SB4) | nenhuma (B normal) | — |
 
@@ -86,7 +86,8 @@ seguem os ataques deles na luta contra eles no Normal Game:
   próprio Super Bomberman 4 (o da seleção do Battle), na cor escolhida.
 
 Limitações: Jogadores da CPU não usam habilidades. A Honey e o Kotetsu não
-têm som de habilidade. A tela de campeão do Battle
+têm som de habilidade; a velocidade do projétil da Honey (4 px por quadro) foi
+escolhida, porque a IA da chefe não disparou nas capturas. A tela de campeão do Battle
 continua com o Bomberman. Os ataques da Honey e do Kotetsu seguem a descrição
 da luta (a IA dos chefes não foi reproduzida nas capturas). O mod vem desativado
 e exige host v0.11.0 ou superior. Pacote de dados:
@@ -121,7 +122,7 @@ Honey/Kotetsu column.
 - **In stages** they play as Super Bomberman 5's Bomberman (same rules, hitbox
   and items) drawn with Super Bomberman 4 frames: walking/standing in four
   directions, carrying a bomb, kick/throw, jumping, riding Louie (Super
-  Bomberman 4's seated pose; Louie keeps its colors), cheering, defeat, stun,
+  Bomberman 4's mount poses, jumping on and riding; Louie keeps its colors), cheering, defeat, stun,
   Time Up, Bad Bomber (Super Bomberman 4's board on each side of the arena,
   throwing too), score board; picker portrait and HUD face.
 - **Colors in stages:** each player's own palette is recolored only on the
@@ -136,18 +137,21 @@ The Bomber Kings' abilities are Super Bomberman 4's, with its timings, poses
 and graphics (read from your SB4 ROM); Honey's and Kotetsu's follow their
 attacks in their Normal Game boss fight:
 
-- **Honey**: shooting animation; the shot hits the first target in line
-  before a block. **Kotetsu**: sword cut on the tile in front.
+- **Honey**: stands in her boss shooting animation (0.9 s) and fires a bullet
+  that flies on its own up to a block and kills whoever it hits. **Kotetsu**:
+  his boss sword thrust (1 s) on the tile in front.
 - **Hammer**: stands still swinging his mace around himself (about 2 s); a
   player it touches is stunned and loses an item.
 - **Jet**: 0.8 s wind-up, then flies 4 px per frame until stopped, leaving a
-  fire trail; after the crash he keeps the flying pose for 20 frames. He blinks
+  fire trail; after the crash he stays at the obstacle in the flying pose for
+  24 frames (as in SB4) before walking again. He blinks
   invulnerable from the start until about 1 s after the crash.
 - **Lady**: turns her gun, fires the laser (leaves at 0.8 s, 2 px per frame and
   flies on its own up to a block or a target), turns the gun again and walks
   again (1.8 s); the target is stunned and loses two items.
 - **Bazooka**: stands 1.6 s aiming (the pose turns through the four
-  directions), then fires a fire beam up to the first block.
+  directions), then fires a fire beam forward like a bomb's flame: it burns
+  the first soft block, stops at hard blocks and sets off bombs in its way.
 - **Great**: stands still, blinking and invulnerable, for 2.7 s.
 - Super Bomberman 4's Bomberman has none.
 
@@ -174,7 +178,8 @@ attacks in their Normal Game boss fight:
   own Super Bomberman 4 Battle picker portrait in the chosen color.
 
 Limits: CPU players do not use abilities. Honey and Kotetsu have no ability
-sound. The Battle champion screen still
+sound; Honey's bullet speed (4 px per frame) was chosen, as the boss AI did not
+fire in captures. The Battle champion screen still
 shows Bomberman. Honey's and Kotetsu's attacks follow the boss fight as
 described (the bosses' AI was not reproduced in captures). Disabled by default;
 requires host v0.11.0 or newer.
@@ -198,8 +203,9 @@ requires host v0.11.0 or newer.
 - Super Bomberman 4 ability input: hold B, then press a direction (`$C2:44FC`);
   debuff counter `$E2,X` is 160 on the trigger frame and falls 0.25 per frame;
   speed halves.
-- Riding: Super Bomberman 4 shows frames 20-23 (seated) while mounted (DMA
-  `$CB:A980` for Lady facing left on a mount). Bad Bomber: each character's
+- Riding: Super Bomberman 4 shows frames 20-23 while jumping onto a mount
+  (state `$1E`) and 16-19 while riding (from the cartridge's uploads with
+  Lady and, with `$0522` set to 5, Great on a mount). Bad Bomber: each character's
   extra sheet (Bomberman `$C5:5AED`, Hammer `$C6:8000`, Jet `$C6:4000`, Lady
   `$C6:0000`, Bazooka `$C5:9AED`, Great `$C6:C000`), facing right +`$3000`,
   down +`$3100`, left +`$3800`, up +`$2900`, throwing +`$80`; Super Bomberman
@@ -212,6 +218,14 @@ requires host v0.11.0 or newer.
   cartridge's handshake (`$C0:029B/$02F0/$02BD`), then renders each effect to
   a PCM clip for the host mixer (`snes_mod_audio_*`); a repeat cuts the last
   one, like the driver's channel.
+- Honey: object set `$0D` attack anims `$23-$26` (5, 11, 16, 3, 4, 16
+  frames; muzzle flash at 32) and bullet anims `$27-$2A`; Kotetsu `$30-$33`
+  (5, 8, 48). Bazooka: soft blocks burn with `$C5:441D` (A = cell, the
+  routine Kotetsu's boss AI uses); bombs are in the list at `$0E2A` (next
+  `$0EA4`, cell `$0E7C`, fuse `$0E40`); `$1052` bits `$80` hard, `$40` bomb,
+  `$20` soft, `$10` item. Jet stops when his position along the flight stops
+  changing (sliding round corners does not count); SB4 releases him 24 frames
+  after the crash (frame 96 → 120).
 - Jet invulnerability is the native one (`$15A2` bit 2 + `$170A`), extended in
   steps of 4 so its blink (low bits of `$170A`, `$C4:2E42`) keeps running.
 - Ability poses (32x32, same layout as the sheets): Bazooka aiming

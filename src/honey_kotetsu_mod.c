@@ -59,7 +59,7 @@ enum {
 };
 static const uint32_t kPalette[2]={0xc18fc6,0xc18fa6};  /* Honey, Kotetsu */
 static const uint8_t kAnimBase[2]={0x1e,0x2b};         /* right, down, left, up, spin */
-static const uint8_t kAttackBase[2]={0x23,0x30},kAttackStep[2]={2,2},kVictoryStep[2]={4,1};
+static const uint8_t kAttackBase[2]={0x23,0x30},kAttackStep[2]={5,2},kVictoryStep[2]={4,1};
 /* Champion screen (Battle winner): Honey $A2/$A3, Kotetsu $9E/$9F. */
 static const uint8_t kChampionAnim[2]={0x50,0x4e};
 
@@ -573,7 +573,7 @@ static unsigned pose_frame(unsigned skin,unsigned object,int ability,unsigned st
     if(ability>=0) return anim_frame(kAttackBase[skin]+(unsigned)ability,step<kAttackStep[skin]?step:kAttackStep[skin]);
     switch(pose) {
     case POSE_WALK: case POSE_CARRY_WALK: return anim_frame(kAnimBase[skin]+(unsigned)direction,walk_step(object));
-    case POSE_ACTION: return anim_frame(kAttackBase[skin]+(unsigned)direction,kAttackStep[skin]);
+    case POSE_ACTION: return anim_frame(kAttackBase[skin]+(unsigned)direction,2);
     case POSE_VICTORY: return anim_frame(kAttackBase[skin]+1,kVictoryStep[skin]);
     case POSE_STAND: case POSE_CARRY: case POSE_AIR: return anim_frame(kAnimBase[skin]+(unsigned)direction,0);
     default: return anim_frame(kAnimBase[skin]+4,(snes_frame_counter/6)&3);
@@ -587,11 +587,14 @@ static unsigned pose_frame(unsigned skin,unsigned object,int ability,unsigned st
  * 48-51 crouch (airborne), 56-59 riding, 60-63 kick/throw. SB5 directions
  * are right, down, left, up. */
 static unsigned sb4_direction(int direction) { return (unsigned)(direction+1)&3; }
-static unsigned sb4_pose_frame(unsigned object,bool rider) {
+/* Mounts (Super Bomberman 4, from the cartridge's uploads with a rider):
+ * 20-23 while jumping onto the mount, 16-19 riding. */
+static unsigned sb4_pose_frame(unsigned object,bool rider,bool mounting) {
     int direction;int pose=bomber_pose(g_ram[0x79f+object],&direction);
     unsigned d=sb4_direction(direction),step=walk_step(object);
     unsigned walk=step==1?1:step==3?2:0;
-    if(rider) return 20+d; /* seated, legs hidden by the mount */
+    if(mounting) return 20+d;
+    if(rider) return 16+d;
     switch(pose) {
     case POSE_WALK: return d*3+walk;
     case POSE_CARRY_WALK: return 32+d*3+walk;
@@ -824,7 +827,7 @@ static void draw_players(Ppu *ppu,bool *taken) {
             /* Bad Bomber ($15A2 bit 7): the Super Bomberman 4 Bad Bomber on
              * its board, its feet where the native cart ends. */
             uint32_t bad=(g_ram[0x15a2+i]&0x80)?bad_bomber_pc((unsigned)skin-2,object):0;
-            uint32_t frame_pc=bad?bad:ability>=0 && sb4_frame?sb4_frame:Sb4FramePc((unsigned)skin-2,sb4_pose_frame(object,rider));
+            uint32_t frame_pc=bad?bad:ability>=0 && sb4_frame?sb4_frame:Sb4FramePc((unsigned)skin-2,sb4_pose_frame(object,rider,(g_ram[0x1782+i]&0x02)!=0));
             bool own=rider || bad;
             if(!compose_sb4_at((unsigned)skin-2,frame_pc,ORIGIN_X+bomber_cx,
                                own?ORIGIN_Y+bottom-1:ORIGIN_Y+bomber_bottom-1,own)) continue;
@@ -1029,6 +1032,18 @@ bool ExtraEmitPixels(int x,int y,const uint8_t *pixels,unsigned w,unsigned h,con
     memset(canvas,0,sizeof(canvas));
     for(unsigned yy=0;yy<h;++yy) for(unsigned xx=0;xx<w;++xx) canvas[yy][xx]=pixels[yy*w+xx];
     return emit(ppu,x,y,(unsigned)palette,priority,NULL,0,effect_taken);
+}
+/* Draws step `step` of animation `anim` of the Honey/Kotetsu object set
+ * with its origin at screen (x, y), in the character's colors (skin 0
+ * Honey, 1 Kotetsu): Honey's bullet. */
+bool ExtraEmitSkinFrame(unsigned skin,unsigned anim,unsigned step,int x,int y) {
+    if(!effect_ppu || skin>1 || !art_ready) return false;
+    uint8_t pixels[CANVAS_H][CANVAS_W];uint16_t colors[16];
+    memset(canvas,0,sizeof(canvas));
+    compose(anim_frame(anim,step),ORIGIN_X,ORIGIN_Y);
+    memcpy(pixels,canvas,sizeof(pixels));
+    for(unsigned c=0;c<16;++c) colors[c]=(uint16_t)palette_color(skin*8,c);
+    return ExtraEmitPixels(x-ORIGIN_X,y-ORIGIN_Y,&pixels[0][0],CANVAS_W,CANVAS_H,colors,3);
 }
 
 void HoneyKotetsuObserve(const Ppu *view,unsigned line,void *context) {

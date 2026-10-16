@@ -32,5 +32,8 @@ unsigned ExtraCharacterColorCount(unsigned choice);
  * SpecialAbilityDraw runs): draws w x h color indices at screen (x, y)
  * with its own palette. */
 bool ExtraEmitPixels(int x,int y,const uint8_t *pixels,unsigned w,unsigned h,const uint16_t colors[16],unsigned priority);
+/* Same, for a Honey/Kotetsu animation frame (skin 0/1) with its origin at
+ * screen (x, y). */
+bool ExtraEmitSkinFrame(unsigned skin,unsigned anim,unsigned step,int x,int y);
 void HoneyKotetsuBeforeFrame(void);
 void HoneyKotetsuObserve(const struct Ppu *ppu,unsigned line,void *context);

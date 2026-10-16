@@ -389,7 +389,7 @@ int main(void) {
     hide_all(ppu);
     sprite(ppu,10,92,99,0x23,1,false);sprite(ppu,11,100,99,0x25,1,false);sprite(ppu,12,92,83,0x20,1,true);
     snap(before,ppu);
-    CHECK(sb4_pose_frame(8,false)==3 && sb4_pose_frame(8,true)==21);
+    CHECK(sb4_pose_frame(8,false,false)==3 && sb4_pose_frame(8,true,false)==17 && sb4_pose_frame(8,true,true)==21);
     HoneyKotetsuObserve(ppu,1,NULL);CHECK(drawn);
     unsigned shown_blocks=0;int fig_top=256,fig_bottom=-1;
     for(unsigned s=10;s<=12;++s) if(visible(ppu,s)) {
