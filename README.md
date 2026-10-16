@@ -44,7 +44,7 @@ An unofficial, noncommercial **Super Bomberman 5** PC port prototype built with 
 
 Upgrading: extract v0.13.1 into a new folder and run Generate & rebuild again with your own ROM; an older generated executable cannot load the new native mod code.
 
-Requires Windows 10 or newer, x64. Leave several GB free for extraction, tools and build output. Open the root executable to start release setup; the repository's developer `play.cmd` is for local source builds.
+Requires Windows 10 or newer, x64. Leave several GB free for extraction, tools and build output. Open the root executable to start release setup.
 
 ### Linux AppImage
 
@@ -107,7 +107,7 @@ v0.4.1 also embeds the supplied application icon with ten sizes from 16 to 256 p
 
 After a Windows source build, open `SuperBomberman5Recomp.exe` at the
 repository root. It uses the existing “5” icon and locates the generated
-game automatically. `play.cmd` remains a compatibility shortcut. The five-player menu recognizes the native
+game automatically. The five-player menu recognizes the native
 screen independently of script return history from the opening/demo.
 
 | Keyboard | SNES input |
@@ -133,7 +133,7 @@ cd SuperBomberman5SNESRecomp
 ./tools/build-windows.ps1 -Run -Rom 'C:/roms/your-game.sfc'
 ```
 
-With the developer ROM under its default filename at the repository root, `play.cmd` opens the launcher after a successful build. Tools are installed under ignored `.tools/`; the global PATH is unchanged. See [Windows build instructions](docs/BUILD_WINDOWS.md).
+With the developer ROM under its default filename at the repository root, `SuperBomberman5Recomp.exe` opens the launcher after a successful build. Tools are installed under ignored `.tools/`; the global PATH is unchanged. See [Windows build instructions](docs/BUILD_WINDOWS.md).
 
 The validated build uses `SNESRECOMP_FRAME_IMPL=LLE`. HLE composition has not been qualified for this title. Regenerate after changing `recomp/`; never hand-edit or commit `src/gen/`.
 
@@ -233,7 +233,7 @@ A v0.4.1 também incorpora o ícone fornecido em dez tamanhos, de 16 a 256 pixel
 
 Depois de compilar no Windows, abra `SuperBomberman5Recomp.exe` na raiz
 do repositório. Ele usa o ícone atual do “5” e localiza o jogo gerado
-automaticamente. O `play.cmd` continua como atalho de compatibilidade. O menu de cinco jogadores reconhece a tela original sem
+automaticamente. O menu de cinco jogadores reconhece a tela original sem
 depender do histórico de retorno dos scripts da abertura/demonstração.
 
 **Setas** para direção, **Enter** para Start, **X/Z** para A/B e **Shift direito** para Select. Pressione Enter na abertura/título, escolha **Normal Game → 1 Player Game → New Game → File 1**, confirme com **X** e pressione **Enter** no mapa da Zone 1 para entrar na fase. Remapeie os controles no launcher se desejar. O launcher mostra as abas **PLAYER 1–5**: escolha Teclado ou Gamepad para cada jogador e use **Configure**. P3–P5 começam sem dispositivo e sem teclas; dê a cada um um controle ou teclas próprias (teclas iguais movem os dois jogadores).

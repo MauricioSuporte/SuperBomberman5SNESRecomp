@@ -14,6 +14,10 @@ of the maintainer's `build-lle/mods/preloaded/state.toml` (29 → 25 tables,
 other mods and the SB4 ROM path unchanged, idempotent) and through a
 `cmake --build` of the game target. Fresh setup packs never contained them.
 
+`play.cmd` was removed: `SuperBomberman5Recomp.exe`, which every Windows
+build copies to the repository root since v0.13.1, opens the launcher.
+O `play.cmd` foi removido; use o `SuperBomberman5Recomp.exe` da raiz.
+
 O launcher não mostra mais Honey/Kotetsu e Subordinate Bomber separados num
 build antigo; quem os tinha ligados passa a ter o Extra Characters ligado.
 

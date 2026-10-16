@@ -112,7 +112,7 @@ git submodule update --init --recursive
 ./tools/build-windows.ps1 -Regenerate          # after changing recomp/ or first time
 ./tools/build-windows.ps1                      # incremental (src/ changes)
 ./tools/build-windows.ps1 -Run                 # build + run with the default ROM
-./play.cmd                                     # launcher with local ROM
+./SuperBomberman5Recomp.exe                    # launcher with local ROM (copied by the build)
 ```
 
 - Output: `build-lle/SuperBomberman5SNESRecomp.exe` (contains ROM-derived code — local only).

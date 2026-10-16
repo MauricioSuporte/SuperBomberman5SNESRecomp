@@ -75,6 +75,6 @@ Gameplay screenshots under `docs/images/` are authorized for README/docs/release
 
 Capturas são opcionais; não é exigida uma imagem por mod.
 
-Windows v0.13.1 includes SuperBomberman5Recomp.exe, a ROM-independent entry with the existing “5” icon. It locates the sibling setup/game executable or the source tree build-lle executable, forwarding arguments and exit status. play.cmd remains a compatibility shortcut. The audited Windows ZIP includes this native entry.
+Windows v0.13.1 includes SuperBomberman5Recomp.exe, a ROM-independent entry with the existing “5” icon. It locates the sibling setup/game executable or the source tree build-lle executable, forwarding arguments and exit status. It replaced play.cmd, removed after v0.13.1. The audited Windows ZIP includes this native entry.
 
-O Windows v0.13.1 inclui SuperBomberman5Recomp.exe com o ícone atual do “5”. A entrada localiza o setup/jogo ao lado ou o build local em build-lle e repassa argumentos e código de saída. play.cmd continua como atalho de compatibilidade.
+O Windows v0.13.1 inclui SuperBomberman5Recomp.exe com o ícone atual do “5”. A entrada localiza o setup/jogo ao lado ou o build local em build-lle e repassa argumentos e código de saída. Ele substituiu o play.cmd, removido depois da v0.13.1.

@@ -19,12 +19,12 @@ Se a política local bloquear scripts, invoque-os com `powershell -ExecutionPoli
 
 A primeira build usa composição de frames LLE, para validação. O executável fica em `build-lle/SuperBomberman5SNESRecomp.exe`. `-Run` passa a ROM diretamente e inicia o jogo. Abrir o executável sem argumentos permite usar o launcher.
 
-Depois de compilar, clique em `play.cmd` na raiz para abrir o launcher com a ROM deste diretório. As teclas padrão de P1 são setas para direção, Enter para Start, X para A e Z para B. Os controles podem ser alterados no launcher.
+Depois de compilar, abra `SuperBomberman5Recomp.exe` na raiz para abrir o launcher com a ROM deste diretório. As teclas padrão de P1 são setas para direção, Enter para Start, X para A e Z para B. Os controles podem ser alterados no launcher.
 
 Para builds incrementais, omita `-Regenerate`. Use regeneração depois de alterar `recomp/`. A opção `-FrameImpl HLE` cria uma build separada em `build-hle/`; essa composição ainda não foi validada para este jogo.
 
 Esta versão é um protótipo de integração: a cobertura AOT ainda é pequena e as rotinas de reset/NMI permanecem no interpretador. Compilar o executável não prova que o port inteiro está correto. Veja `STATUS.md`.
 
-Windows v0.13.1 includes SuperBomberman5Recomp.exe, a ROM-independent entry with the existing “5” icon. It locates the sibling setup/game executable or the source tree build-lle executable, forwarding arguments and exit status. play.cmd remains a compatibility shortcut. The audited Windows ZIP includes this native entry.
+Windows v0.13.1 includes SuperBomberman5Recomp.exe, a ROM-independent entry with the existing “5” icon. It locates the sibling setup/game executable or the source tree build-lle executable, forwarding arguments and exit status. It replaced play.cmd, removed after v0.13.1. The audited Windows ZIP includes this native entry.
 
-O Windows v0.13.1 inclui SuperBomberman5Recomp.exe com o ícone atual do “5”. A entrada localiza o setup/jogo ao lado ou o build local em build-lle e repassa argumentos e código de saída. play.cmd continua como atalho de compatibilidade.
+O Windows v0.13.1 inclui SuperBomberman5Recomp.exe com o ícone atual do “5”. A entrada localiza o setup/jogo ao lado ou o build local em build-lle e repassa argumentos e código de saída. Ele substituiu o play.cmd, removido depois da v0.13.1.
