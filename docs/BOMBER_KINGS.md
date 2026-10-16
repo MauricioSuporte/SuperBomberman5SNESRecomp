@@ -18,16 +18,18 @@ figuras da terceira fileira continuam aparecendo: quando faltam entradas OAM
 livres, elas reaproveitam as de sprites nativos que terminam acima da fileira,
 trocadas na linha em que a fileira começa e restauradas no fim do quadro.
 
-A seleção de personagens passa a ter **três fileiras de seis**:
+A seleção de personagens ganha uma **terceira fileira**:
 
 ```
- Bomberman  Pretty   ...  (5 originais)   Honey
+ Bomberman  Pretty   ...  (5 originais)   Honey    Terrorin
  (5 originais de baixo / Subordinate / X)  Kotetsu
  Bomberman SB4  Hammer  Jet  Lady  Bazooka  Great
 ```
 
-As duas fileiras originais sobem e a nova fileira fica onde era a de baixo. O
-mod inclui a coluna da Honey e do Kotetsu (mesmo sem o mod deles ativo).
+As duas fileiras originais sobem e a nova fileira fica onde era a de baixo.
+Honey, Kotetsu, Terrorin e o Subordinate vêm do mod **Super Bomberman 5 extra
+characters** ([EXTRA_CHARACTERS.md](EXTRA_CHARACTERS.md)); com ele a grade tem
+sete colunas, sem ele seis (as células deles ficam vazias e o cursor as pula).
 
 - **Cursor:** direita/esquerda dão a volta na fileira; cima/baixo passam pelas
   três fileiras (de cima vai para a de baixo e vice-versa).
@@ -53,7 +55,8 @@ mod inclui a coluna da Honey e do Kotetsu (mesmo sem o mod deles ativo).
 Segure **B** e aperte uma **direção** (ou aperte B enquanto segura uma direção).
 As habilidades dos Reis Bomber são as do Super Bomberman 4, com os mesmos
 tempos, poses e gráficos (lidos da sua ROM do SB4); as da Honey e do Kotetsu
-seguem os ataques deles na luta contra eles no Normal Game:
+seguem os ataques deles na luta contra eles no Normal Game (com o mod dos
+personagens extras do Super Bomberman 5, que também traz a barreira do Terrorin):
 
 | Personagem | Habilidade | Depois de usar |
 |---|---|---|
@@ -119,10 +122,12 @@ third-row figures stay visible: when idle OAM entries run out they reuse the
 entries of native sprites that end above the row, switched on the row's first
 line and restored at the end of the frame.
 
-The character selection gets **three rows of six**: the two stock rows move up,
-Honey/Kotetsu end them, and a new bottom row holds Super Bomberman 4's
-Bomberman, Hammer, Jet, Lady, Bazooka and Great Bomber. The mod includes the
-Honey/Kotetsu column.
+The character selection gets a **third row**: the two stock rows move up and a
+new bottom row holds Super Bomberman 4's Bomberman, Hammer, Jet, Lady, Bazooka
+and Great Bomber. Honey, Kotetsu, Terrorin and Subordinate Bomber come from the
+**Super Bomberman 5 extra characters** mod ([EXTRA_CHARACTERS.md](EXTRA_CHARACTERS.md));
+with it the grid has seven columns, without it six (their cells stay empty and
+the cursor skips them). Honey's and Kotetsu's abilities below need that mod.
 
 - **Cursor:** left/right wrap inside a row; up/down cycle through the three rows.
 - **Colors:** with **Selection colors**, L/R choose among each character's five
@@ -267,13 +272,13 @@ requires host v0.12.0 or newer (first included in the v0.12.0 setup packs).
   `$184` apart), palettes at file `$16783C` (Bomberman), `$16799C` (Bazooka),
   `$167A3C` (Lady), `$167ADC` (Jet), `$167B7C` (Hammer), `$167C1C` (Great).
   Timelines measured frame by frame in a headless emulator.
-- `src/honey_kotetsu_mod.c` is the extra-character core: 18-cell arrays at
-  `$7F:F800/$F812`, per-seat choice `$7F:F824` and color `$7F:F829`, tables at
-  `$C2:60C0-$612F`, BG rows `$C2:12DC` 12/16/20. Row palettes are reloaded on
+- `src/extra_characters_mod.c` is the extra-character core: 20-entry arrays at
+  `$7F:F800/$F814`, per-seat choice `$7F:F828` and color `$7F:F82D`, tables at
+  `$C2:60C0-$6135`, BG rows `$C2:12DC` 12/16/20. Row palettes are reloaded on
   the first line of each row from the raster observer.
 - `src/special_abilities.c`: pre-opcode hooks at `$C0:0AF9` (end of the pad
   reader: `$2C/$31/$36/$3B+seat`) and `$C4:3180` (walking steps; the hook also
-  sets the Z flag the following `BEQ` reads). State in `$7F:F830-$F8D9` (saved
+  sets the Z flag the following `BEQ` reads). State in `$7F:F840-$F8F0` (saved
   with WRAM). Stun and item loss: `$15BA` bit 5 (the cartridge's own reaction
   `$C4:4618` → `$C4:4631`: dazed 50 frames, `JSR $37CD` with A = 0 throws the
   first item); Lady's second item calls `$C4:37CD` from the pad hook through

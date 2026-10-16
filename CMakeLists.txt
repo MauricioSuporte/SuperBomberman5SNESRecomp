@@ -57,7 +57,7 @@ add_executable(SuperBomberman5SNESRecomp
     src/normal_coop_mod.c
     src/selection_color_mod.c
     src/subordinate_mod.c
-    src/honey_kotetsu_mod.c
+    src/extra_characters_mod.c
     src/bomber_kings_mod.c
     src/sb4_rom.c
     src/sb4_sound.c
@@ -122,10 +122,10 @@ if(BUILD_TESTING)
     target_include_directories(subordinate_tests PRIVATE
         "${SNESRECOMP_ROOT}/runner/src")
     add_test(NAME subordinate_bomber COMMAND subordinate_tests)
-    add_executable(honey_kotetsu_tests tests/honey_kotetsu_tests.c)
-    target_include_directories(honey_kotetsu_tests PRIVATE
+    add_executable(extra_characters_tests tests/extra_characters_tests.c)
+    target_include_directories(extra_characters_tests PRIVATE
         "${SNESRECOMP_ROOT}/runner/src")
-    add_test(NAME honey_kotetsu_characters COMMAND honey_kotetsu_tests)
+    add_test(NAME extra_characters COMMAND extra_characters_tests)
     add_executable(special_abilities_tests tests/special_abilities_tests.c)
     target_include_directories(special_abilities_tests PRIVATE
         "${SNESRECOMP_ROOT}/runner/src")

@@ -13,7 +13,13 @@ static unsigned choices[5];
 static bool installed=true;
 unsigned ExtraCharacterSeatChoice(unsigned seat) { return seat<5?choices[seat]:0; }
 unsigned ExtraCharacterSeatColor(unsigned seat) { (void)seat;return 0; }
-bool HoneyKotetsuInstalled(void) { return installed; }
+bool ExtraCharactersInstalled(void) { return installed; }
+bool Sb5ExtrasEnabled(void) { return true; }
+int snes_frame_counter;
+static unsigned tints;static uint16_t tint_color;static int tint_box[4];
+bool ExtraTintBox(int left,int top,int right,int bottom,uint16_t color) {
+    tint_box[0]=left;tint_box[1]=top;tint_box[2]=right;tint_box[3]=bottom;tint_color=color;++tints;return true;
+}
 static unsigned emitted;
 bool ExtraEmitPixels(int x,int y,const uint8_t *pixels,unsigned w,unsigned h,const uint16_t colors[16],unsigned priority) {
     (void)x;(void)y;(void)pixels;(void)w;(void)h;(void)colors;(void)priority;++emitted;return true;
@@ -264,6 +270,65 @@ int main(void) {
     arena();g_ram[0x1d1a]=0;g_ram[0x1031]=0x0d;g_ram[0x1d25]=0x1f;frame(0,0x08,0x01);
     for(unsigned k=0;k<120;++k) frame(0,0,0);
     CHECK(!g_ram[0x15ba+1] && !injecting);
+
+    /* Terrorin (seat 0, cell 3,3): B + down spins him in place, untouchable
+     * (kill stores and the fire-cell test), for 64 frames; then the barrier
+     * rises on the 21 cells of the 5 x 5 square ($C3:4091), tinted blue;
+     * a Clock is placed on a free cell outside it at frame 174 and the
+     * barrier drops at 192. */
+    choices[0]=19;choices[1]=11;
+    arena();
+    g_ram[0x182a]=48;g_ram[0x1872]=48;g_ram[0x16aa]=0x33;
+    g_ram[0x182b]=80;g_ram[0x1873]=48;g_ram[0x16ab]=0x35;          /* seat 1 two cells right */
+    for(unsigned i=2;i<5;++i) g_ram[0x16aa+i]=(uint8)(0x1b+i);
+    g_ram[0x1052+0x55]=0x30;                                       /* a soft block inside */
+    frame(0,0x08,0x04);
+    CHECK(seat_state(0)[S_KIND]==AB_BARRIER && SpecialAbilityPose(0,&step,&pc)==1 && speed(0,2)==0 && shielded(0));
+    idle(WALL_UP);CHECK(g_ram[0x1052+0x33]==0);
+    frame(0,0,0);
+    unsigned raised=0;
+    for(unsigned c=0;c<13*16;++c) raised+=g_ram[0x1052+c]==0x0c;
+    CHECK(raised==20 && g_ram[0x1052+0x55]==0x30 && g_ram[0x1052+0x33]==0x0c && g_ram[0x1052+0x34]==0x0c);
+    CHECK(g_ram[0x1052+0x22]==0 && g_ram[0x1052+0x11]==0x0c && g_ram[0x1052+0x24]==0);   /* pillar positions free */
+    /* The fire-cell test ($C4:2CFE, A = $1CCA): Terrorin and his allies are
+     * spared, other players are not. */
+    cpu.X=0;cpu.A=0x0004;death_hook(&cpu,DEATH_HOOK);CHECK(cpu.A==0);
+    cpu.X=1;cpu.A=0x0004;death_hook(&cpu,DEATH_HOOK);CHECK(cpu.A==4);
+    g_ram[0x625d]=1;cpu.X=1;cpu.A=0x0004;death_hook(&cpu,DEATH_HOOK);CHECK(cpu.A==0);   /* teammate */
+    g_ram[0x15a2+1]=0x08;cpu.X=1;cpu.A=0x0004;death_hook(&cpu,DEATH_HOOK);CHECK(cpu.A==4); /* other team */
+    g_ram[0x625d]=0;g_ram[0x15a2+1]=0x18;
+    tints=0;SpecialAbilityDraw();CHECK(tints==1 && tint_color==(2u<<10) && tint_box[2]-tint_box[0]==79);
+    idle(WALL_CLOCK-WALL_UP);
+    CHECK(injecting && redirected==PLACE_ITEM && (cpu.A&0xff)==ITEM_CLOCK && g_ram[0xae]==seat_state(0)[S_CLOCK]);
+    unsigned clock=seat_state(0)[S_CLOCK];
+    CHECK(seat_state(0)[S_CLOCK_SET] && (clock%16<1 || clock%16>5 || clock/16<1 || clock/16>5) && !g_ram[0x1052+clock]);
+    cpu.S=0x1ff;redirected=0;pad_hook(&cpu,PAD_HOOK);CHECK(!injecting);
+    g_ram[0x145a+clock]=ITEM_CLOCK;g_ram[0x1052+clock]=0x10;     /* what $C5:4557 does */
+    while(seat_state(0)[S_KIND]) frame(0,0,0);
+    CHECK(timer(0)==WALL_FRAMES && g_ram[0x1052+0x33]==0 && g_ram[0x1052+0x55]==0x30);
+    for(unsigned c=0;c<13*16;++c) CHECK(g_ram[0x1052+c]!=0x0c);
+    CHECK(SpecialAbilityDebuffed(0) && speed(0,2)==1);
+    /* Seat 1 takes Terrorin's Clock ($C5:42D3, picker in $8D): Terrorin is
+     * paralyzed on the next frame ($C4:4503, X = 0) and the Battle clock
+     * keeps running. */
+    g_ram[0x16ab]=(uint8)clock;g_ram[0x8d]=1;g_ram[0xe20]=0xc0;g_ram[0xe21]=3;
+    clock_hook(&cpu,CLOCK_HOOK);CHECK(!seat_state(0)[S_CLOCK_SET]);
+    frame(0,0,0);
+    CHECK(injecting && redirected==FREEZE_PLAYER && cpu.X==0 && SpecialAbilityDazed(0) && !SpecialAbilityDazed(1));
+    CHECK(!g_ram[0xe20] && !g_ram[0xe21]);
+    cpu.S=0x1ff;redirected=0;pad_hook(&cpu,PAD_HOOK);CHECK(!injecting);
+    /* His own Clock paralyzes every other player (Free-for-All). */
+    seat_state(0)[S_CLOCK]=0x77;seat_state(0)[S_CLOCK_SET]=1;g_ram[0x145a+0x77]=ITEM_CLOCK;g_ram[0x1052+0x77]=0x10;
+    g_ram[0x16aa]=0x77;g_ram[0x8d]=0;clock_hook(&cpu,CLOCK_HOOK);
+    frame(0,0,0);
+    unsigned frozen_seats=0;
+    for(unsigned k=0;k<8 && injecting;++k) { if(redirected==FREEZE_PLAYER) frozen_seats|=1u<<cpu.X;cpu.S=0x1ff;redirected=0;pad_hook(&cpu,PAD_HOOK); }
+    CHECK(frozen_seats==0x1e && SpecialAbilityDazed(4));
+    /* A Clock that burnt is forgotten; Normal Game keeps the stock effect. */
+    seat_state(0)[S_CLOCK_SET]=1;g_ram[0x145a+0x77]=0;frame(0,0,0);CHECK(!seat_state(0)[S_CLOCK_SET]);
+    g_ram[0x1d1a]=0;g_ram[0x1031]=0x0d;seat_state(0)[S_CLOCK_SET]=1;g_ram[0x145a+0x77]=ITEM_CLOCK;
+    clock_hook(&cpu,CLOCK_HOOK);CHECK(seat_state(0)[S_CLOCK_SET] && !g_ram[CLOCK_EVENT]);
+    choices[0]=11;choices[1]=12;
 
     /* Leaving the stage clears every seat. */
     arena();frame(3,0x08,0x02);

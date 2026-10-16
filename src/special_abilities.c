@@ -52,7 +52,7 @@
  * All state lives in free WRAM ($7F:F830-$F8D9, zero in every research
  * capture), so save states and rewind carry it without an extension. */
 #include "special_abilities.h"
-#include "honey_kotetsu_mod.h"
+#include "extra_characters_mod.h"
 #include "sb4_rom.h"
 #include "sb4_sound.h"
 #include "common_rtl.h"
@@ -60,9 +60,11 @@
 #include <string.h>
 
 enum {
-    STATE = 0x1f830, SEAT_BYTES = 32, PENDING = 0x1f8d0, SPEED_ACC = 0x1f8d5, STATE_END = 0x1f8da,
-    PAD_HOOK = 0xc00af9, SPEED_HOOK = 0xc43180,
+    STATE = 0x1f840, SEAT_BYTES = 32, PENDING = 0x1f8e0, SPEED_ACC = 0x1f8e5, DAZED = 0x1f8ea,
+    CLOCK_EVENT = 0x1f8ef, STATE_END = 0x1f8f1,
+    PAD_HOOK = 0xc00af9, SPEED_HOOK = 0xc43180, DEATH_HOOK = 0xc42cfe, CLOCK_HOOK = 0xc542d3,
     LOSE_ITEM = 0xc437cd, RTL_C4 = 0xc436d1, BURN_BLOCK = 0xc5441d,
+    PLACE_ITEM = 0xc54557, FREEZE_PLAYER = 0xc44503, ITEM_CLOCK = 0x08,
     DEBUFF_FRAMES = 640, B_WINDOW = 8, TRAILS = 3,
 };
 /* Per seat: +0/1 debuff, +2/3 cooldown, +4 kind, +5/6 timer, +7 direction
@@ -71,11 +73,15 @@ enum {
  * the flight stopped, +15/16 last position, +17 items this seat still has
  * to lose, +18..26 Jet trail (TRAILS x: cell, age, flags), +27 beam tiles. */
 enum { S_DEBUFF = 0, S_COOLDOWN = 2, S_KIND = 4, S_TIMER = 5, S_DIR = 7, S_DIST = 8, S_HIT = 10,
-       S_FLAGS = 13, S_STOP = 14, S_LAST = 15, S_DROPS = 17, S_TRAIL = 18, S_BEAM = 27, S_SHOT = 28 };
-enum { AB_NONE, AB_SHOT, AB_SLASH, AB_HAMMER, AB_JET, AB_LASER, AB_BAZOOKA, AB_GREAT };
+       S_FLAGS = 13, S_STOP = 14, S_LAST = 15, S_DROPS = 17, S_TRAIL = 18, S_BEAM = 27, S_SHOT = 28,
+       /* Terrorin (over the Jet trail bytes): barrier centre cell, the 21
+        * barrier cells this seat raised (bit mask), his Clock's cell. */
+       S_WALL_CELL = 18, S_WALL_MASK = 19, S_CLOCK = 22, S_CLOCK_SET = 23 };
+enum { AB_NONE, AB_SHOT, AB_SLASH, AB_HAMMER, AB_JET, AB_LASER, AB_BAZOOKA, AB_GREAT, AB_BARRIER };
 typedef struct { uint8_t kind; uint16_t debuff; uint16_t cooldown; } Ability;
-/* Index: choice - 11 (Honey, Kotetsu, Bomberman, Hammer, Jet, Lady, Bazooka, Great). */
-static const Ability kAbility[8]={
+/* Index: choice - 11 (Honey, Kotetsu, Bomberman, Hammer, Jet, Lady, Bazooka,
+ * Great, Terrorin). */
+static const Ability kAbility[9]={
     {AB_SHOT,   DEBUFF_FRAMES, 0},
     {AB_SLASH,  DEBUFF_FRAMES, 0},
     {AB_NONE,   0,             0},
@@ -84,10 +90,16 @@ static const Ability kAbility[8]={
     {AB_LASER,  0,            30},
     {AB_BAZOOKA,DEBUFF_FRAMES, 0},
     {AB_GREAT,  DEBUFF_FRAMES, 0},
+    {AB_BARRIER,DEBUFF_FRAMES, 0},
 };
 enum { SHOT_FRAMES = 55, SHOT_AT = 32, SHOT_SPEED = 4, SLASH_FRAMES = 61, SLASH_FROM = 13, BAZOOKA_FRAMES = 98, BEAM_FROM = 68, BEAM_TO = 82,
        JET_WINDUP = 48, JET_SPEED = 4, TRAIL_LIFE = 16, HAMMER_FRAMES = 125, MACE_FROM = 29, MACE_TO = 106,
-       LASER_FROM = 48, LADY_FRAMES = 109, GREAT_FRAMES = 160, JET_LANDING = 24, JET_GUARD_AFTER = 60 };
+       LASER_FROM = 48, LADY_FRAMES = 109, GREAT_FRAMES = 160, JET_LANDING = 24, JET_GUARD_AFTER = 60,
+       /* Terrorin's barrier, as in ZONE5 - J ($C3:3F2D-$C3:4090): spin
+        * $40 frames, raise the barrier and fade the blue in over 16, hold
+        * $40, the Clock comes out ($C3:4010; it lands about 30 frames
+        * later), fade out over 16 from frame 176 and drop it at 192. */
+       WALL_UP = 64, WALL_FADE = 16, WALL_CLOCK = 174, WALL_DOWN = 176, WALL_FRAMES = 192, DAZED_FRAMES = 0x90 };
 /* Super Bomberman 4 sound effects ($C0:071D numbers). */
 enum { SND_EXPLOSION = 0x39, SND_MACE = 0x4e, SND_LASER = 0x5a, SND_GUARD = 0x5f };
 static uint8_t *seat_state(unsigned i) { return g_ram+STATE+i*SEAT_BYTES; }
@@ -98,6 +110,7 @@ static bool hooks_installed;
 static const Ability *ability_of(unsigned seat) {
     unsigned choice=ExtraCharacterSeatChoice(seat);
     if(choice<HK_CHOICE_HONEY || choice>EXTRA_CHOICE_LAST) return NULL;
+    if(choice==TERRORIN_CHOICE && !Sb5ExtrasEnabled()) return NULL;
     const Ability *a=&kAbility[choice-HK_CHOICE_HONEY];
     return a->kind?a:NULL;
 }
@@ -218,9 +231,9 @@ static void extend_invulnerability(unsigned seat,unsigned frames) {
 static void start(unsigned seat,int direction) {
     const Ability *a=ability_of(seat);
     uint8_t *s=seat_state(seat);
-    uint8_t drops=s[S_DROPS];
+    uint8_t drops=s[S_DROPS],clock=s[S_CLOCK],clock_set=s[S_CLOCK_SET];
     memset(s+S_KIND,0,SEAT_BYTES-S_KIND);
-    s[S_DROPS]=drops;
+    s[S_DROPS]=drops;s[S_CLOCK]=clock;s[S_CLOCK_SET]=clock_set;
     s[S_KIND]=a->kind;s[S_DIR]=(uint8_t)direction;
     /* Super Bomberman 4 starts the debuff counter with the move ($E2,X =
      * 160 on the trigger frame), not when it ends. */
@@ -273,7 +286,7 @@ static void laser_position(unsigned seat,int *x,int *y) {
 static bool frozen(unsigned seat) {
     uint8_t *s=seat_state(seat);unsigned t=get16(s+S_TIMER);
     switch(s[S_KIND]) {
-    case AB_SLASH: case AB_HAMMER: case AB_BAZOOKA: case AB_GREAT: return true;
+    case AB_SLASH: case AB_HAMMER: case AB_BAZOOKA: case AB_GREAT: case AB_BARRIER: return true;
     case AB_SHOT: return t<SHOT_FRAMES;
     case AB_LASER: return t<LADY_FRAMES;
     case AB_JET: return !(s[S_FLAGS]&1) || t<(unsigned)s[S_STOP]+JET_LANDING;
@@ -287,11 +300,17 @@ static bool frozen(unsigned seat) {
  * hook, which starts the next one or restores the registers. */
 static bool injecting;
 static CpuState saved_cpu;
-typedef struct { uint32_t routine;uint8_t a,x;bool rts; } Call;
+/* `ah` >= 0: the whole accumulator is (ah << 8) | a (a sound command);
+ * `ae` >= 0: direct-page $AE is set first (the item placer's cell). */
+typedef struct { uint32_t routine;uint8_t a,x;bool rts;int16_t ah,ae; } Call;
 static Call calls[24];
 static uint8_t call_count,call_next;
 static void queue_call(uint32_t routine,uint8_t a,uint8_t x,bool rts) {
-    if(call_count<sizeof(calls)/sizeof(*calls)) calls[call_count++]=(Call){routine,a,x,rts};
+    if(call_count<sizeof(calls)/sizeof(*calls)) calls[call_count++]=(Call){routine,a,x,rts,-1,-1};
+}
+static void queue_call_full(uint32_t routine,uint16_t a,int ae) {
+    if(call_count<sizeof(calls)/sizeof(*calls))
+        calls[call_count++]=(Call){routine,(uint8_t)a,0,false,(int16_t)(a>>8),(int16_t)ae};
 }
 static void push(CpuState *cpu,uint8_t v) { g_ram[cpu->S]=v;cpu->S=(uint16_t)(cpu->S-1); }
 /* A JSL-style routine gets a return frame for $C0:0AF9; an RTS routine in
@@ -299,7 +318,8 @@ static void push(CpuState *cpu,uint8_t v) { g_ram[cpu->S]=v;cpu->S=(uint16_t)(cp
 static void inject(CpuState *cpu,const Call *c) {
     push(cpu,(uint8_t)(PAD_HOOK>>16));push(cpu,(uint8_t)((PAD_HOOK-1)>>8));push(cpu,(uint8_t)(PAD_HOOK-1));
     if(c->rts) { push(cpu,(uint8_t)((RTL_C4-1)>>8));push(cpu,(uint8_t)(RTL_C4-1)); }
-    cpu->A=(uint16_t)((cpu->A&0xff00)|c->a);cpu->X=(uint16_t)c->x;
+    cpu->A=(uint16_t)(c->ah>=0?((unsigned)c->ah<<8)|c->a:(cpu->A&0xff00)|c->a);cpu->X=(uint16_t)c->x;
+    if(c->ae>=0) g_ram[(cpu->D+0xae)&0xffff]=(uint8_t)c->ae;
     interp_bridge_pre_opcode_redirect(c->routine);
 }
 static bool next_call(CpuState *cpu) {
@@ -308,13 +328,88 @@ static bool next_call(CpuState *cpu) {
     return true;
 }
 
+/* ---- Terrorin's barrier. ---- */
+/* Cells of the barrier around its centre (the table at $C3:4091): the
+ * 5 x 5 square without the four pillar positions inside it, so it fences
+ * the 3 x 3 square he stands in. */
+static const int8_t kWallDx[21]={-2,-1,0,1,2, -2,0,2, -2,-1,0,1,2, -2,0,2, -2,-1,0,1,2};
+static const int8_t kWallDy[21]={-2,-2,-2,-2,-2, -1,-1,-1, 0,0,0,0,0, 1,1,1, 2,2,2,2,2};
+static uint32_t wall_mask(const uint8_t *s) { return s[S_WALL_MASK]|(uint32_t)s[S_WALL_MASK+1]<<8|(uint32_t)s[S_WALL_MASK+2]<<16; }
+static int wall_cell(const uint8_t *s,unsigned k) {
+    int cx=s[S_WALL_CELL]%16+kWallDx[k],cy=s[S_WALL_CELL]/16+kWallDy[k];
+    return cx<0 || cx>15 || cy<0 || cy>12?-1:cy*16+cx;
+}
+/* Raises it: like the cartridge ($C3:3FAB: ORA #$0C) on every free cell
+ * (bit 2: lethal like fire, $C4:2CF0 via $1CCA; bit 3: solid). Cells with
+ * a block, bomb or item are left as they are. */
+static void raise_wall(unsigned seat) {
+    uint8_t *s=seat_state(seat);uint32_t mask=0;
+    s[S_WALL_CELL]=g_ram[0x16aa+seat];
+    for(unsigned k=0;k<21;++k) {
+        int c=wall_cell(s,k);
+        if(c<0) continue;
+        uint8_t *v=&g_ram[0x1052+c];
+        if(*v&0xfc) continue;
+        *v|=0x0c;mask|=1u<<k;
+    }
+    s[S_WALL_MASK]=(uint8_t)mask;s[S_WALL_MASK+1]=(uint8_t)(mask>>8);s[S_WALL_MASK+2]=(uint8_t)(mask>>16);
+}
+/* Drops the cells this seat raised. Fire that crossed them leaves its own
+ * low bits behind ($0F, then $08), so a cell still empty above them is
+ * cleared whole, as the cartridge does ($C3:4084). */
+static void drop_wall(unsigned seat) {
+    uint8_t *s=seat_state(seat);uint32_t mask=wall_mask(s);
+    for(unsigned k=0;k<21;++k) if(mask&(1u<<k)) {
+        int c=wall_cell(s,k);
+        if(c<0) continue;
+        uint8_t *v=&g_ram[0x1052+c];
+        *v=(uint8_t)((*v&0xf0)?*v&~0x0c:0);
+    }
+    s[S_WALL_MASK]=s[S_WALL_MASK+1]=s[S_WALL_MASK+2]=0;
+}
+/* True when `cell` is one of the barrier cells raised by a seat that does
+ * not fight `actor` (itself, a Normal Game ally, a Team Battle teammate). */
+static bool friendly_wall(unsigned actor,unsigned cell) {
+    for(unsigned t=0;t<5;++t) {
+        uint8_t *s=seat_state(t);uint32_t mask=wall_mask(s);
+        if(s[S_KIND]!=AB_BARRIER || !mask || (t!=actor && hostile(t,actor))) continue;
+        for(unsigned k=0;k<21;++k) if((mask&(1u<<k)) && wall_cell(s,k)==(int)cell) return true;
+    }
+    return false;
+}
+/* A free cell for the Clock, like the cartridge's drop ($C0:C9F0: map and
+ * flags clear, $7E2700 bit 6 clear), outside the barrier and away from
+ * players; picked by a hash of the frame so replays repeat it. */
+static int clock_cell(unsigned seat) {
+    unsigned candidates[13*11],n=0;
+    for(unsigned c=0;c<13*16;++c) {
+        if(c%16==0 || c%16>13 || c<16 || c>=12*16) continue;
+        if(g_ram[0x1052+c] || (g_ram[0x1152+c]&0x98) || (g_ram[0x2700+c]&0x40)) continue;
+        bool taken=false;
+        for(unsigned a=0;a<5;++a) if(alive(a) && g_ram[0x16aa+a]==c) taken=true;
+        int dx=(int)(c%16)-(int)(g_ram[0x16aa+seat]%16),dy=(int)(c/16)-(int)(g_ram[0x16aa+seat]/16);
+        if(dx>=-2 && dx<=2 && dy>=-2 && dy<=2) taken=true;
+        if(!taken && n<sizeof(candidates)/sizeof(*candidates)) candidates[n++]=c;
+    }
+    if(!n) return -1;
+    uint32_t h=(uint32_t)snes_frame_counter*2654435761u^(seat*0x9e3779b9u);
+    return (int)candidates[(h>>16)%n];
+}
+/* Blue of the barrier: the cartridge fades the fixed color's blue ($0317)
+ * from 0 to 16 and back. */
+static unsigned wall_blue(unsigned t) {
+    if(t<WALL_UP) return 0;
+    if(t<WALL_UP+WALL_FADE) return t-WALL_UP+1;
+    if(t<WALL_DOWN) return 16;
+    return t<WALL_FRAMES?WALL_FRAMES-t:0;
+}
 static void tick(unsigned seat) {
     uint8_t *s=seat_state(seat);
     if(get16(s+S_DEBUFF)) set16(s+S_DEBUFF,get16(s+S_DEBUFF)-1);
     if(get16(s+S_COOLDOWN)) set16(s+S_COOLDOWN,get16(s+S_COOLDOWN)-1);
     if(!s[S_KIND]) return;
     const Ability *a=ability_of(seat);
-    if(!a || !alive(seat)) { s[S_KIND]=0;return; }
+    if(!a || !alive(seat)) { if(s[S_KIND]==AB_BARRIER) drop_wall(seat);s[S_KIND]=0;return; }
     unsigned t=get16(s+S_TIMER),d=s[S_DIR]&3;
     set16(s+S_TIMER,t+1);
     int x=world_x(seat),y=world_y(seat),cx=cell_of(x),cy=cell_of(y);
@@ -352,6 +447,17 @@ static void tick(unsigned seat) {
         break;
     case AB_GREAT:
         if(t+1>=GREAT_FRAMES) finish(seat);
+        break;
+    case AB_BARRIER:
+        /* Terrorin spins in place (untouchable), raises the barrier around
+         * the 3 x 3 square he stands in, puts
+         * a Clock on a free cell and drops the barrier. */
+        if(t==WALL_UP) raise_wall(seat);
+        if(t==WALL_CLOCK) {
+            int c=clock_cell(seat);
+            if(c>=0) { queue_call_full(PLACE_ITEM,ITEM_CLOCK,c);s[S_CLOCK]=(uint8_t)c;s[S_CLOCK_SET]=1; }
+        }
+        if(t+1>=WALL_FRAMES) { drop_wall(seat);finish(seat); }
         break;
     case AB_HAMMER:
         if(t>=28 && t<=92 && (t-28)%16==0) Sb4SoundPlay(SND_MACE);
@@ -423,6 +529,59 @@ static void tick(unsigned seat) {
     }
 }
 
+/* Terrorin's Clock in Battle (the cartridge's rule in ZONE5 - J: the
+ * Clock he picks up paralyzes the players, $C3:3E06 -> $C4:3A94 ->
+ * $C4:4503; the one a player picks up paralyzes him). The item's own
+ * effect ($C5:42D3: freeze every enemy actor) has nothing to freeze in
+ * Battle; the pickup hook below records who took whose Clock and this
+ * applies the paralysis ($C4:4503, X = seat, 144 frames) on the next
+ * frame. In Normal Game the Clock keeps its stock effect on the enemies. */
+static void freeze_seat(unsigned seat) {
+    if(!alive(seat) || (g_ram[0x1782+seat]&0x82)) return;
+    queue_call(FREEZE_PLAYER,0,(uint8_t)seat,false);
+    g_ram[DAZED+seat]=DAZED_FRAMES;
+}
+static void clock_rules(void) {
+    for(unsigned i=0;i<5;++i) {
+        if(g_ram[DAZED+i]) --g_ram[DAZED+i];
+        uint8_t *s=seat_state(i);
+        /* A Clock that is gone (burnt, taken by the stock pickup) is forgotten. */
+        if(s[S_CLOCK_SET] && (g_ram[0x145a+s[S_CLOCK]]!=ITEM_CLOCK || !(g_ram[0x1052+s[S_CLOCK]]&0x10))) s[S_CLOCK_SET]=0;
+    }
+    unsigned owner=g_ram[CLOCK_EVENT],picker=g_ram[CLOCK_EVENT+1];
+    g_ram[CLOCK_EVENT]=g_ram[CLOCK_EVENT+1]=0;
+    if(!owner || !picker || owner>5 || picker>5) return;
+    --owner;--picker;
+    /* The item's own effect also stopped the Battle clock ($0E20, 960
+     * frames, for the enemies' freeze); Terrorin's Clock only paralyzes. */
+    g_ram[0xe20]=g_ram[0xe21]=0;
+    if(picker==owner) { for(unsigned a=0;a<5;++a) if(hostile(owner,a)) freeze_seat(a); }
+    else if(hostile(owner,picker)) freeze_seat(owner);
+}
+static void clock_hook(CpuState *cpu,uint32_t pc) {
+    (void)pc;
+    if(!ExtraCharactersInstalled() || !battle()) return;
+    unsigned picker=g_ram[(cpu->D+0x8d)&0xffff];
+    if(picker>=5) return;
+    unsigned cell=g_ram[0x16aa+picker];
+    for(unsigned t=0;t<5;++t) {
+        uint8_t *s=seat_state(t);
+        if(!s[S_CLOCK_SET] || s[S_CLOCK]!=cell) continue;
+        s[S_CLOCK_SET]=0;g_ram[CLOCK_EVENT]=(uint8_t)(t+1);g_ram[CLOCK_EVENT+1]=(uint8_t)(picker+1);
+        return;
+    }
+}
+/* $C4:2CFE AND #$04: A = $1CCA, the flags of the cell under player X (bit
+ * 2: fire, lethal). Terrorin is untouchable while he uses his barrier, and
+ * the barrier only hurts those who fight its owner. */
+static void death_hook(CpuState *cpu,uint32_t pc) {
+    (void)pc;
+    unsigned actor=cpu->X&0xff;
+    if(actor>=5 || !ExtraCharactersInstalled() || !(cpu->A&4)) return;
+    unsigned cell=g_ram[0x16aa+actor],v=g_ram[0x1052+cell];
+    if(seat_state(actor)[S_KIND]==AB_BARRIER || ((v&0x0f)==0x0c && friendly_wall(actor,cell)))
+        cpu->A=(uint16_t)(cpu->A&~4u);
+}
 /* $C0:0AF9: the pad reader has filled $2C/$31/$36/$3B+seat and the frame's
  * game logic has not consumed them yet. */
 static void pad_hook(CpuState *cpu,uint32_t pc) {
@@ -433,13 +592,14 @@ static void pad_hook(CpuState *cpu,uint32_t pc) {
         cpu->A=saved_cpu.A;cpu->X=saved_cpu.X;cpu->Y=saved_cpu.Y;cpu->D=saved_cpu.D;cpu->DB=saved_cpu.DB;
         return;
     }
-    if(!HoneyKotetsuInstalled() || !in_stage()) {
+    if(!ExtraCharactersInstalled() || !in_stage()) {
         /* Outside a stage every seat starts over (no debuff carried over). */
         for(unsigned b=STATE;b<STATE_END;++b) if(g_ram[b]) { memset(g_ram+STATE,0,STATE_END-STATE);break; }
         return;
     }
     if(!playing()) return;
     call_count=call_next=0;
+    clock_rules();
     for(unsigned i=0;i<5;++i) {
         uint8_t *s=seat_state(i);
         if(s[S_DROPS]) {
@@ -482,7 +642,7 @@ static void pad_hook(CpuState *cpu,uint32_t pc) {
 static void speed_hook(CpuState *cpu,uint32_t pc) {
     (void)pc;
     unsigned seat=cpu->X&0xff;
-    if(seat>=5 || !HoneyKotetsuInstalled() || !ability_of(seat)) return;
+    if(seat>=5 || !ExtraCharactersInstalled() || !ability_of(seat)) return;
     uint8_t *s=seat_state(seat);
     unsigned steps=cpu->A&0xff;
     if(s[S_KIND]==AB_JET && get16(s+S_TIMER)>JET_WINDUP && !(s[S_FLAGS]&1)) steps=JET_SPEED;
@@ -510,17 +670,22 @@ static const uint32_t kKillStores[]={
 static bool shielded(unsigned seat) {
     if(seat>=5 || !ability_of(seat)) return false;
     uint8_t *s=seat_state(seat);
-    return s[S_KIND]==AB_JET;
+    return s[S_KIND]==AB_JET || s[S_KIND]==AB_BARRIER;
 }
 static void kill_hook(CpuState *cpu,uint32_t pc) {
     unsigned op=g_rom[((pc>>16)&0x3f)<<16|(pc&0xffff)];
     unsigned actor=(op==0x99?cpu->Y:cpu->X)&0xff;
-    if(HoneyKotetsuInstalled() && shielded(actor)) cpu->A=(uint16_t)(cpu->A&~0x40u);
+    if(ExtraCharactersInstalled() && shielded(actor)) cpu->A=(uint16_t)(cpu->A&~0x40u);
 }
 void SpecialAbilitiesInstall(void) {
     if(hooks_installed) return;
     hooks_installed=interp_bridge_add_pre_opcode_hook(PAD_HOOK,pad_hook) &&
                     interp_bridge_add_pre_opcode_hook(SPEED_HOOK,speed_hook);
+    if(!g_rom) return;
+    /* Only on the expected instructions: AND #$04 and PHX / LDA $8D. */
+    unsigned death=((DEATH_HOOK>>16)&0x3f)<<16|(DEATH_HOOK&0xffff),clock=((CLOCK_HOOK>>16)&0x3f)<<16|(CLOCK_HOOK&0xffff);
+    if(g_rom[death]==0x29 && g_rom[death+1]==0x04) interp_bridge_add_pre_opcode_hook(DEATH_HOOK,death_hook);
+    if(g_rom[clock]==0xda && g_rom[clock+1]==0xa5 && g_rom[clock+2]==0x8d) interp_bridge_add_pre_opcode_hook(CLOCK_HOOK,clock_hook);
     if(!g_rom) return;
     for(unsigned k=0;k<sizeof(kKillStores)/sizeof(*kKillStores);++k) {
         uint32_t pc=kKillStores[k];unsigned at=((pc>>16)&0x3f)<<16|(pc&0xffff);
@@ -529,6 +694,7 @@ void SpecialAbilitiesInstall(void) {
     }
 }
 bool SpecialAbilityDebuffed(unsigned seat) { return seat<5 && get16(seat_state(seat)+S_DEBUFF)!=0; }
+bool SpecialAbilityDazed(unsigned seat) { return seat<5 && g_ram[DAZED+seat]!=0; }
 
 
 /* Lady's gun turns (k of $CA:A0B0 + k*$800 + dir*$80), measured frame by
@@ -569,6 +735,7 @@ int SpecialAbilityPose(unsigned seat,unsigned *step,uint32_t *sb4_frame) {
         *sb4_frame=0xcaa0b0+k*0x800+sb4_dir(d)*0x80;return (int)d;
     case AB_GREAT:
         *sb4_frame=Sb4FramePc(5,6);return 1;
+    case AB_BARRIER: *step=t;return (int)d;
     default: return -1;
     }
 }
@@ -600,7 +767,7 @@ static void draw_fire(int cx,int cy,unsigned d,bool end,unsigned phase,const uin
 static const uint8_t kBeamPhase[15]={2,2,4,4,6,6,8,8,8,8,6,6,4,4,2};
 static const uint8_t kTrailPhase[8]={2,4,6,8,8,6,4,2};
 void SpecialAbilityDraw(void) {
-    if(!HoneyKotetsuInstalled() || !in_stage()) return;
+    if(!ExtraCharactersInstalled() || !in_stage()) return;
     uint16_t fire[16];
     for(unsigned c=0;c<16;++c) fire[c]=Sb4FireColor(c);
     for(unsigned i=0;i<5;++i) {
@@ -610,7 +777,7 @@ void SpecialAbilityDraw(void) {
         int cx=cell_of(world_x(i)),cy=cell_of(world_y(i));
         uint16_t own[16];
         for(unsigned c=0;c<16;++c)
-            own[c]=choice>=KINGS_CHOICE_FIRST?Sb4Color(choice-KINGS_CHOICE_FIRST,ExtraCharacterSeatColor(i)%SB4_COLORS,c):0;
+            own[c]=choice>=KINGS_CHOICE_FIRST && choice<=KINGS_CHOICE_LAST?Sb4Color(choice-KINGS_CHOICE_FIRST,ExtraCharacterSeatColor(i)%SB4_COLORS,c):0;
         switch(s[S_KIND]) {
         case AB_BAZOOKA:
             if(t<BEAM_FROM || t>BEAM_TO) break;
@@ -627,6 +794,16 @@ void SpecialAbilityDraw(void) {
                 if(seg[2]&1) draw_fire(sx-kDx[d],sy-kDy[d],(d+2)&3,true,phase,fire);
             }
             break;
+        case AB_BARRIER: {
+            /* The cartridge's box: 40 pixels around him ($C3:3F4C). */
+            unsigned blue=wall_blue(t);
+            if(blue && wall_mask(s)) {
+                /* Inside the arena (its border row at most): never the HUD. */
+                int sx=screen_x((s[S_WALL_CELL]%16)*16),sy=screen_y((s[S_WALL_CELL]/16)*16),arena=screen_y(0)-8;
+                ExtraTintBox(sx-40,sy-40<arena?arena:sy-40,sx+39,sy+39,(uint16_t)(blue<<10));
+            }
+            break;
+        }
         case AB_SHOT:
             /* Honey's bullet: object set $0D anims $27-$2A (right, down,
              * left, up). */

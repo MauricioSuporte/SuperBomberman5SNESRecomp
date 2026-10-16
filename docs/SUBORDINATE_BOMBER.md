@@ -1,5 +1,12 @@
 # Subordinate Bomber / Subordinate Bomber jogável
 
+> **Atualização / Update:** este mod agora faz parte do mod **Super Bomberman 5
+> extra characters** ([docs/EXTRA_CHARACTERS.md](EXTRA_CHARACTERS.md)); o pacote
+> separado foi removido e a grade passou a ter sete colunas. This mod is now
+> part of the **Super Bomberman 5 extra characters** mod; the separate package
+> was removed and the grid has seven columns. The text below documents the
+> original research.
+
 ## Português
 
 Em **Mods**, ative **Play as Subordinate Bomber** e inicie o jogo. Na seleção de

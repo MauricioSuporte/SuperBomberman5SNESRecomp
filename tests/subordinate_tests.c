@@ -9,19 +9,18 @@
 #include <string.h>
 static SNESModActivationCallback activation,reset_callback;
 int snes_mod_register_reset_callback(SNESModActivationCallback fn) { reset_callback=fn;return 1; }
-int snes_mod_register_activation_plugin(const char *id,SNESModActivationCallback fn) {
-    if(strcmp(id,"superbomberman5.subordinate.character")) return 0;
-    activation=fn;return 1;
-}
+int snes_mod_register_activation_plugin(const char *id,SNESModActivationCallback fn) { (void)id;(void)fn;return 0; }
 #include "../src/subordinate_mod.c"
+/* The Super Bomberman 5 extra characters plugin turns the module on. */
+static void extras_plugin(void) { SubordinateActivate(); }
 uint8 g_ram[0x20000];
-/* Honey/Kotetsu mod not linked: stock ten-cell picker arrays. */
+/* Extra-character core not linked: stock ten-cell picker arrays. */
 uint8_t *PickerCellCharacters(void) { return g_ram+0x62c9; }
 uint8_t *PickerCellColors(void) { return g_ram+0x62d3; }
 unsigned PickerCellCount(void) { return 10; }
-unsigned HoneyKotetsuBaseChoice(unsigned choice) { return choice>=11 && choice<=18 ? 1 : choice; }
+unsigned ExtraBaseChoice(unsigned choice) { return choice>=11 && choice<=19 ? 1 : choice; }
 unsigned hk_seat_choice[5];
-void HoneyKotetsuSetSeatChoice(unsigned seat,unsigned choice) { if(seat<5) hk_seat_choice[seat]=choice; }
+void ExtraSetSeatChoice(unsigned seat,unsigned choice) { if(seat<5) hk_seat_choice[seat]=choice; }
 static uint8 cartridge[0x400000];
 const uint8 *g_rom=cartridge;
 uint8_t *SnesRomPtr(uint32_t pc) { return cartridge+(pc&0x3fffff); }
@@ -93,7 +92,7 @@ static bool same(const Snapshot *s,const Ppu *ppu) {
         !memcmp(s->cgram,ppu->cgram,sizeof(s->cgram)) && !memcmp(s->high,ppu->highOam,sizeof(s->high));
 }
 int main(void) {
-    CHECK(activation && reset_callback);
+    activation=extras_plugin;CHECK(reset_callback);
     stock_cartridge();
     /* No cartridge yet: nothing is installed. */
     activation();SubordinateBeforeFrame();CHECK(!installed);reset_callback();

@@ -1,5 +1,58 @@
 # Super Bomberman 5: estado do protótipo
 
+## Super Bomberman 5 extra characters + Emperor Terrorin / personagens extras + imperador Terrorin — 2026-10-16
+
+Branch `extra-characters` (from `main` v0.12.0; not released, VERSION
+unchanged). One mod, `superbomberman5.extra-characters` 0.1.0 (default
+disabled), replaces `superbomberman5.honey-kotetsu` and
+`superbomberman5.subordinate-bomber`: Honey, Kotetsu, Subordinate Bomber and
+the new **Emperor Terrorin** (on-foot phase of ZONE5 - J, stage `$6F`), with
+Honey/Kotetsu's B + direction abilities and Terrorin's barrier and Clock.
+`honey_kotetsu_mod.c` became `extra_characters_mod.c`; the picker has seven
+columns (Terrorin choice 19, top right; cursor skips empty cells), six with
+Bomber Kings alone. WRAM moved: cells `$7F:F800/$F814`, seats
+`$7F:F828/$F82D`, ability state `$7F:F840-$F8F0` (all zero in 453 research
+captures). Details in docs/EXTRA_CHARACTERS.md.
+
+Research (Linux LLE headless, isolated copies, local captures only): stage
+`$6F` forced from Zone 1-1 (`until 0x1031 == 0d`, `poke 0x1031 6f`); phases 1-2
+ended with `$1667=0`, `$15A7=$40`; phase 3 dumped every 8 frames (300 dumps).
+Terrorin archive found by matching phase-3 OBJ VRAM against every set-8
+archive entry (entry 56, 238 tiles); every frame of set `$0E` rendered to map
+the animations. Barrier routine found with a lab-only WRAM write watch on
+`$1052` (`$C3:3FB3`), Clock placement on `$145A` (`$C5:455D`). `$0C` cells
+kill a player (Zone 1-1 poke under P1: death through `$1CCA`, `$C4:2D58`).
+
+Evidence (same harness, SB4 ROM selected through `[[resource]]`):
+- Native tests: all thirteen programs pass; `extra_characters_tests`
+  (seven-column tables for extras only, Kings only, both; Terrorin archive,
+  frames, palette and poses; restoration), `special_abilities_tests` (barrier
+  timeline, 20 cells around a soft block and pillars, fire-cell hook for
+  owner/opponent/teammate, Clock placement through `$C5:4557`, pickup rules
+  and paralysis through `$C4:4503`, Battle clock not stopped, burnt Clock
+  forgotten, Normal Game stock effect), `subordinate_tests` (activation by the
+  new plugin). Python tests and the publication audit pass.
+- Battle picker (Bomber Kings + extras + colors, PT-BR too): seven columns,
+  Terrorin figure and portrait, cursor 5→11→19→1 and down 1→6→13.
+- Battle stage as Terrorin: walking, HUD face, death; B + down: spin, blue
+  barrier box (HUD excluded), 21-cell barrier with Terrorin standing on it
+  unharmed, Clock placed on a free cell, barrier dropped at frame 192.
+  Clock pickup by Terrorin froze seats 2-5; by an opponent froze Terrorin
+  (dazed halo pose); the Battle timer kept running.
+- Normal Game (normal character selection): Terrorin chosen, Zone 1-1 with
+  his skin and HUD face, barrier and Clock.
+
+Found and fixed: the stock Terrorin stream's last control byte is read at
+`$CC:8000`, so the checked end is `$CC:8001`; queuing the barrier sound
+(`$C0:0CED`, A = `$0288`) from the pad hook froze the game 37 frames later
+(APU handshake), so the barrier is silent; the native Clock pickup also stops
+the Battle timer (`$0E20` = 960), cleared for Terrorin's Clock.
+
+Not validated: Windows build and play, physical controllers, an opponent
+actually dying inside the barrier in a live match (the lethal cell and the
+hook are covered separately), five seats on Terrorin, score board/champion
+screen (the champion screen shows Bomberman, as for the Bomber Kings).
+
 ## v0.12.1 published / Publicada - 2026-10-16
 
 [Prerelease v0.12.1](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v0.12.1),

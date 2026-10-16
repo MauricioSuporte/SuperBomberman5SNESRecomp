@@ -76,7 +76,7 @@ def run(args, name: str, players: int, combined: bool) -> Path:
         mods.append(('normal-coop', 'five_players'))
     if combined:
         mods += [('ptbr', 'menus_ptbr'), ('selection-colors', 'color_controls'),
-                 ('subordinate-bomber', 'subordinate')]
+                 ('extra-characters', 'extra_characters')]
         if name != 'battle':
             mods += [('normal-characters', 'character_select'), ('infinite-time', 'infinite_time')]
     state = 'format_version = 1\n'

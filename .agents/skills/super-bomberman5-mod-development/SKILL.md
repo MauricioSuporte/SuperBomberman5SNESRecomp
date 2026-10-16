@@ -8,7 +8,7 @@ description: Create, extend, debug and validate native mods and gameplay/present
 Read `AGENTS.md` at the repository root first (hard rules, RAM map, build and
 pitfalls). This skill is the step-by-step recipe for a feature. Every existing
 mod (`ptbr`, `normal_character`, `selection_color`, `infinite_time`,
-`normal_coop`, `subordinate`, `honey_kotetsu` (extra-character core),
+`normal_coop`, `subordinate`, `extra_characters` (extra-character core),
 `bomber_kings` + `special_abilities` + `sb4_rom`/`sb4_sound`, `pause_menu`,
 `portal_labels`, `gold_battle`, `louie`)
 is a worked example; copy their structure instead of inventing a new one. For a
@@ -181,7 +181,7 @@ character 10 (`src/subordinate_mod.c`), reusable for the next ones:
 ### Adding a non-bomber playable character (Honey and Kotetsu, v0.9.0)
 
 Honey and Kotetsu are boss actors of the secret stages `$71-$73`, not bombers:
-there is no entry for them in any per-character table. `src/honey_kotetsu_mod.c`
+there is no entry for them in any per-character table. `src/extra_characters_mod.c` (formerly `honey_kotetsu_mod.c`)
 makes them choices 11/12 that **play as Bomberman** and are **drawn** with
 their own frames. Reuse this split for any future boss/NPC character.
 
@@ -259,7 +259,7 @@ their own frames. Reuse this split for any future boss/NPC character.
 
 The Bomber Kings mod adds Super Bomberman 4's Bomberman and five Bomber Kings
 (choices 13-18) on a third picker row, and B + direction abilities with SB4's
-debuff (also for Honey/Kotetsu). `src/honey_kotetsu_mod.c` is now the
+debuff (also for Honey/Kotetsu). `src/extra_characters_mod.c` is now the
 **extra-character core**; add future characters there as new skins, not as a
 second copy of the picker/skin code.
 
@@ -384,7 +384,7 @@ second copy of the picker/skin code.
     entries for six 32-line figures. The scanline renderer evaluates OAM line
     by line, so a figure low on the screen may reuse the entry of a native
     sprite that ends a few lines above it: write that entry when the observer
-    reaches the line (`late_places` in `honey_kotetsu_mod.c`), restore it on
+    reaches the line (`late_places` in `extra_characters_mod.c`), restore it on
     line 224 with the rest. Always test the picker with **all** picker mods
     enabled; a figure silently missing is the symptom.
 22. **Test damage in Normal with enemies placed on purpose.** `forcepoke`
@@ -480,3 +480,42 @@ second copy of the picker/skin code.
 - Then run `python tools/audit-publication.py --history`,
   `python -m unittest discover -s tests -v`, `git diff --check`, and hand over
   to the `super-bomberman5-repository` skill for commit/version/release.
+
+### A boss as a playable character with its boss move (Terrorin, extra characters mod)
+
+Emperor Terrorin (ZONE5 - J, stage `$6F`, choice 19) reuses the Honey/Kotetsu
+skin route and adds his barrier as a B + direction ability. Recipe:
+
+1. **Reach the phase you need.** Force the stage (`until 0x1031 == 0d`,
+   `poke 0x1031 6f`), keep P1 alive (`forcepoke 0x170a 80`, `0x15a2 04`) and
+   end earlier phases by killing the boss actor (`$1662+actor = 0`,
+   `$15A2+actor |= $40`). Dump densely (every 8 frames) through the phase.
+2. **Find the archive by matching VRAM, not by guessing.** Decompress every
+   entry of the stage's archive set (`$0AE7`, table `$C0:1C96`, bank `$E3`
+   entries) and count 32-byte tiles found in the phase's OBJ VRAM. The
+   decompressor reads one more control byte after the stream: the checked end
+   is one past the last data byte.
+3. **Render every frame of the object set** into a contact sheet and name the
+   animation groups before mapping poses (direction order R/D/L/U).
+4. **Trace the boss move with a lab-only write watch** (per-instruction PC
+   hook comparing a WRAM range, printing the PC ring; kept out of the repo).
+   That found the barrier store (`ORA #$0C` into `$1052`), its offset table and
+   the item placer. Then prove effects with pokes (a `$0C` cell under P1 in
+   Zone 1-1 kills through `$1CCA`).
+5. **Reimplement the timeline in the pad hook, call only safe natives.**
+   Calling `$C5:4557` (place item, `$AE` = cell) and `$C4:4503` (paralyze
+   seat X) through injected return frames works; the sound driver
+   (`$C0:0CED`) froze the game (APU handshake) and was dropped. Exclusive
+   effects that the cartridge applies to "P1/P2" (`$C4:3A94`) are applied per
+   seat yourself.
+6. **Hook the consumer, not the producer, for rules.** Fire-cell deaths are
+   decided at `$C4:2CFE` (`AND #$04` on `$1CCA`): sparing the owner and allies
+   there is cheaper and exact; item effects are dispatched through
+   `$C5:4184` with the picker in `$8D` (hook the handler entry, act next frame).
+7. **Screen effects through the color window** (`ExtraTintBox`): save
+   `cgwsel/cgadsub/fixedColor/windowsel/window*` on line 1, set them per line
+   inside the box, restore on line 224; skip frames that already use color
+   math or windows, and keep the HUD out.
+8. **Grid growth:** cells hold their own choice (0 = absent), tables are 20
+   entries, movement skips absent cells; `PickerCellCount()` stays the single
+   source for the other picker mods.

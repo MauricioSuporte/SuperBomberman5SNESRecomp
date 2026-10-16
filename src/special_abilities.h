@@ -1,7 +1,7 @@
 #pragma once
 #include <stdbool.h>
-/* B + direction special abilities of the extra characters (Honey, Kotetsu
- * and the Super Bomberman 4 Bomber Kings), with Super Bomberman 4's debuff. */
+/* B + direction special abilities of the extra characters (Honey, Kotetsu,
+ * Terrorin and the Super Bomberman 4 Bomber Kings), with Super Bomberman 4's debuff. */
 void SpecialAbilitiesInstall(void);
 #include <stdint.h>
 /* Pose a seat shows now for its ability: -1 for none, else the direction
@@ -10,5 +10,7 @@ void SpecialAbilitiesInstall(void);
  * the 32x32 Super Bomberman 4 frame to draw (0 = the plain pose). */
 int SpecialAbilityPose(unsigned seat,unsigned *step,uint32_t *sb4_frame);
 bool SpecialAbilityDebuffed(unsigned seat);
+/* The seat is frozen by a Terrorin Clock (dazed pose). */
+bool SpecialAbilityDazed(unsigned seat);
 /* Draws the active effects (called by the extra-character overlay). */
 void SpecialAbilityDraw(void);

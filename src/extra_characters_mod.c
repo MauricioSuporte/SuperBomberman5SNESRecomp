@@ -1,46 +1,59 @@
-/* Honey and Kotetsu as selectable characters.
+/* Extra characters: the extra-character core of the character picker.
  *
- * Both are boss actors of the secret stages ZONE1/2/3 - S (stage ids
- * $71-$73), not bombers: they have no entry in the per-character tables
- * read through $16C2. Their frames live in object set $0D (animations
- * $1E-$22 for Honey, $2B-$2F for Kotetsu, right/down/left/up/spin, the same
- * direction order as the bombers' walk animations 1-4), drawn from one
- * compressed graphics archive ($CC:289D, $1E00 bytes, format of $C0:1CCC)
- * with the palettes at $C1:8FC6 (Honey) and $C1:8FA6 (Kotetsu).
+ * Super Bomberman 5 extra characters (plugin "superbomberman5.extra-
+ * characters.characters"): Honey and Kotetsu, the bosses of the secret
+ * stages ZONE1/2/3 - S (stage ids $71-$73), Emperor Terrorin from the last
+ * phase of ZONE5 - J (stage $6F), and Subordinate Bomber (subordinate_mod.c,
+ * the stock X cell). Honey, Kotetsu and Terrorin are not bombers: they have
+ * no entry in the per-character tables read through $16C2.
+ *  - Honey/Kotetsu: object set $0D (animations $1E-$22 Honey, $2B-$2F
+ *    Kotetsu: right/down/left/up/spin), one compressed archive ($CC:289D,
+ *    $1E00 bytes, format of $C0:1CCC), palettes $C1:8FC6 / $C1:8FA6.
+ *  - Terrorin: object set $0E, archive $CC:657D ($1E80 bytes, ends exactly at
+ *    $CC:8000), palette $C1:906E (palette id $37, matched against the
+ *    phase-3 CGRAM). Animations (right/down/left/up groups): walk $39-$3C,
+ *    lift $3D-$40, carry walk $41-$44, throw $45-$48, stand $4A-$4D, spin
+ *    $49/$52, cheer $4E, clock-dazed $50, hurt $51, front $53. Verified by
+ *    phase-3 captures (actor 5, object 2) and by rendering every frame.
  *
- * Gameplay: a Honey/Kotetsu seat plays as Bomberman (native choice 1).
+ * Gameplay: an extra seat plays as Bomberman (native choice 1).
  * Rendering: the bomber's sprites are replaced, each frame, by the matching
- * Honey/Kotetsu frame decoded from the player's cartridge at runtime. No
- * cartridge graphics or palettes are stored in this source.
+ * frame decoded from the player's cartridge at runtime. No cartridge
+ * graphics or palettes are stored in this source.
  *
  * In-memory cartridge patches (restored on reset; ROM file and SRAM untouched):
  *  - Picker cell arrays ($62C9 character, $62D3 color; 10 cells) move to
- *    twelve-cell arrays at $7F:F800/$7F:F80C: every script operand and the
+ *    twenty-entry arrays at $7F:F800/$7F:F814: every script operand and the
  *    native readers $C2:1240/$C2:12B5/$C2:12C3.
  *  - Grid layout: $C2:12D2 (figure tile x per cell) packs the five stock
- *    columns into tiles 5/9/13/17/21; column six (tile 25) holds Honey
- *    (top, choice 11) and Kotetsu (bottom, choice 12). Cursor position
- *    tables $C0:C976/$C0:C980 are read from twelve-entry copies.
+ *    columns into tiles 3/7/11/15/19 (seven columns: 23 holds Honey above
+ *    Kotetsu, 27 Terrorin) or 5/9/13/17/21 (six columns, Bomber Kings only).
+ *    Cursor position tables $C0:C976/$C0:C980 are read from copies.
  *  - Cursor movement ($C6:8C02, $C6:8C78, $C6:8CEE, $C6:8D62) uses lookup
- *    tables for the 6x2 grid instead of the 5x2 arithmetic.
+ *    tables for the grid instead of the 5x2 arithmetic; cells without a
+ *    character (the end of the shorter rows) are skipped.
  *  - Seat portrait helpers FF.66/FF.67 ($C2:1356/$C2:13E7) clamp character
  *    indices above the ten-entry tables to Bomberman.
- *  - Battle stage init ($C4:2A3C) maps choices 11/12 to Bomberman and
- *    records each seat's choice at $7F:F818+seat for the renderer.
+ *  - Battle stage init ($C4:2A3C) maps choices 11-19 to Bomberman and
+ *    records each seat's choice at $7F:F828+seat for the renderer.
  *  - The score board sets $16C2 = choice - 1 through $C4:3BDE (script
  *    $C6:7736, FF.59); indices above the ten-entry tables become Bomberman.
  *
- * Victory/cheer poses alternate the two frames Honey and Kotetsu use on the
- * Battle champion screen (object set 6, animations $50 and $4E), decoded from
- * that screen's archive ($D6:D871, $0D40 bytes) at runtime.
+ * Victory/cheer poses of Honey/Kotetsu alternate the two frames they use on
+ * the Battle champion screen (object set 6, animations $50 and $4E), decoded
+ * from that screen's archive ($D6:D871, $0D40 bytes) at runtime.
  *
- * This file is also the extra-character core used by the Bomber Kings mod
- * (bomber_kings_mod.c): with it, a third grid row holds Super Bomberman 4's
- * Bomberman and the five Bomber Kings (choices 13-18), drawn from the
- * player's own Super Bomberman 4 image (sb4_rom.c). The grid then has three
- * rows (BG tile rows 12/16/20 instead of 15/20) and 18 cells. */
-#include "honey_kotetsu_mod.h"
+ * The Bomber Kings mod (bomber_kings_mod.c) adds a third grid row with Super
+ * Bomberman 4's Bomberman and the five Bomber Kings (choices 13-18), drawn
+ * from the player's own Super Bomberman 4 image (sb4_rom.c). The grid then
+ * has three rows (BG tile rows 12/16/20 instead of 15/20).
+ *
+ *   1  2  3  4  5 11 19     (Honey 11, Terrorin 19)
+ *   6  7  8  9 10 12  -     (Subordinate 10, Kotetsu 12)
+ *  13 14 15 16 17 18  -     (Bomber Kings) */
+#include "extra_characters_mod.h"
 #include "bomber_kings_mod.h"
+#include "subordinate_mod.h"
 #include "sb4_rom.h"
 #include "special_abilities.h"
 #include "selection_color_mod.h"
@@ -52,20 +65,29 @@
 #include <string.h>
 
 enum {
-    MAX_CELLS = 18, HK_CELLS = 12, STOCK_CELLS = 10, SKINS = 2+SB4_CHARACTERS,
-    CELL_CHARS = 0x1f800, CELL_COLORS = 0x1f812, SEAT_CHOICE = 0x1f824, SEAT_COLOR = 0x1f829,
+    MAX_CELLS = TERRORIN_CHOICE, TABLE_CELLS = 20, STOCK_CELLS = 10, MAX_COLS = 7,
+    SKIN_TERRORIN = 2+SB4_CHARACTERS, SKINS = SKIN_TERRORIN+1,
+    CELL_CHARS = 0x1f800, CELL_COLORS = 0x1f814, SEAT_CHOICE = 0x1f828, SEAT_COLOR = 0x1f82d,
     ARCHIVE = 0xcc289d, ARCHIVE_SIZE = 0x1e00, ARCHIVE_END = 0xcc40e4, OBJECT_SET = 0x0d,
     CHAMPION = 0xd6d871, CHAMPION_SIZE = 0xd40, CHAMPION_END = 0xd6e0bb, CHAMPION_SET = 0x06,
+    TERRORIN_ARCHIVE = 0xcc657d, TERRORIN_SIZE = 0x1e80, TERRORIN_END = 0xcc8001, TERRORIN_SET = 0x0e,
+    TERRORIN_PALETTE = 0xc1906e,
 };
 static const uint32_t kPalette[2]={0xc18fc6,0xc18fa6};  /* Honey, Kotetsu */
 static const uint8_t kAnimBase[2]={0x1e,0x2b};         /* right, down, left, up, spin */
 static const uint8_t kAttackBase[2]={0x23,0x30},kAttackStep[2]={5,2},kVictoryStep[2]={4,1};
 /* Champion screen (Battle winner): Honey $A2/$A3, Kotetsu $9E/$9F. */
 static const uint8_t kChampionAnim[2]={0x50,0x4e};
+/* Terrorin (object set $0E): four-way groups right, down, left, up. */
+enum { T_WALK = 0x39, T_LIFT = 0x3d, T_CARRY_WALK = 0x41, T_THROW = 0x45, T_SPIN = 0x49, T_STAND = 0x4a,
+       T_CHEER = 0x4e, T_DAZED = 0x50, T_HURT = 0x51, T_SPIN_GUARD = 0x52, T_FRONT = 0x53 };
 
-static bool hk_enabled,enabled,installed,patched,art_ready,champion_ready;
-/* Grid rows (2 without the Bomber Kings, 3 with them) and cells. */
-static unsigned rows=2,cells=HK_CELLS;
+/* sb5_extras: the Super Bomberman 5 extra characters plugin (Honey,
+ * Kotetsu, Terrorin; Subordinate Bomber has its own module). */
+static bool sb5_extras,enabled,installed,patched,art_ready,terrorin_ready,champion_ready;
+/* Grid rows (2 without the Bomber Kings, 3 with them), columns (7 with the
+ * Super Bomberman 5 extras, 6 with only the Bomber Kings) and cells. */
+static unsigned rows=2,cols=MAX_COLS,cells=MAX_CELLS;
 static const uint8_t kRowTiles[2][3]={{15,20,20},{12,16,20}};
 /* Each object's last distinct frame pointers ($7E2EEA/$7E2F4A), newest
  * first, sampled at the start of every frame. */
@@ -78,26 +100,27 @@ typedef struct { uint32_t pc; unsigned size; uint8_t original[24]; } Patch;
 static Patch patches[64];
 static unsigned patch_count;
 
-bool HoneyKotetsuEnabled(void) { return enabled; }
-bool HoneyKotetsuInstalled(void) { return enabled && patched; }
-uint8_t *PickerCellCharacters(void) { return g_ram+(HoneyKotetsuInstalled()?CELL_CHARS:0x62c9); }
-uint8_t *PickerCellColors(void) { return g_ram+(HoneyKotetsuInstalled()?CELL_COLORS:0x62d3); }
-unsigned PickerCellCount(void) { return HoneyKotetsuInstalled()?cells:STOCK_CELLS; }
-unsigned HoneyKotetsuBaseChoice(unsigned choice) {
+bool ExtraCharactersEnabled(void) { return enabled; }
+bool Sb5ExtrasEnabled(void) { return sb5_extras; }
+bool ExtraCharactersInstalled(void) { return enabled && patched; }
+uint8_t *PickerCellCharacters(void) { return g_ram+(ExtraCharactersInstalled()?CELL_CHARS:0x62c9); }
+uint8_t *PickerCellColors(void) { return g_ram+(ExtraCharactersInstalled()?CELL_COLORS:0x62d3); }
+unsigned PickerCellCount(void) { return ExtraCharactersInstalled()?cells:STOCK_CELLS; }
+unsigned ExtraBaseChoice(unsigned choice) {
     return choice>=HK_CHOICE_HONEY && choice<=EXTRA_CHOICE_LAST ? 1 : choice;
 }
-void HoneyKotetsuSetSeatChoice(unsigned seat,unsigned choice) {
-    if(seat<5 && HoneyKotetsuInstalled()) g_ram[SEAT_CHOICE+seat]=(uint8_t)choice;
+void ExtraSetSeatChoice(unsigned seat,unsigned choice) {
+    if(seat<5 && ExtraCharactersInstalled()) g_ram[SEAT_CHOICE+seat]=(uint8_t)choice;
 }
 unsigned ExtraCharacterSeatChoice(unsigned seat) {
-    return seat<5 && HoneyKotetsuInstalled()?g_ram[SEAT_CHOICE+seat]:0;
+    return seat<5 && ExtraCharactersInstalled()?g_ram[SEAT_CHOICE+seat]:0;
 }
 unsigned ExtraCharacterSeatColor(unsigned seat) {
-    return seat<5 && HoneyKotetsuInstalled()?g_ram[SEAT_COLOR+seat]:0;
+    return seat<5 && ExtraCharactersInstalled()?g_ram[SEAT_COLOR+seat]:0;
 }
 unsigned ExtraCharacterColorCount(unsigned choice) {
-    if(choice==HK_CHOICE_HONEY || choice==HK_CHOICE_KOTETSU) return 1;
-    if(choice>=KINGS_CHOICE_FIRST && choice<=EXTRA_CHOICE_LAST) return SB4_COLORS;
+    if(choice==HK_CHOICE_HONEY || choice==HK_CHOICE_KOTETSU || choice==TERRORIN_CHOICE) return 1;
+    if(choice>=KINGS_CHOICE_FIRST && choice<=KINGS_CHOICE_LAST) return SB4_COLORS;
     return 0;
 }
 
@@ -124,24 +147,31 @@ static const uint32_t kCellColorRefs[]={
     0xc212c3,0xc68ae5,0xc68b0c,0xc68b2a,0xc68c49,0xc68cbf,0xc68d33,0xc68da7,
     0xc69adf,0xc69bf4,0xc69c5d,0xc69cd0,0xc69d37,0xc69e3d,0xc6a684,
 };
-/* Grid (choice = cursor cell + 1), two or three rows of six ($C6:8CEE
- * moves up, $C6:8D62 down):
- *    1  2  3  4  5 11
- *    6  7  8  9 10 12
- *   13 14 15 16 17 18   (Bomber Kings)
- * Movement wraps inside a row and between rows. */
-static const uint8_t kGrid[3][6]={{1,2,3,4,5,11},{6,7,8,9,10,12},{13,14,15,16,17,18}};
-static const uint8_t kGridX[6]={5,9,13,17,21,25};
-static void cell_place(unsigned choice,unsigned *row,unsigned *col) {
-    for(unsigned r=0;r<3;++r) for(unsigned c=0;c<6;++c) if(kGrid[r][c]==choice) { *row=r;*col=c;return; }
-    *row=*col=0;
+/* Grid (choice = cursor cell + 1; $C6:8CEE moves up, $C6:8D62 down):
+ *    1  2  3  4  5 11 19     Honey 11, Terrorin 19
+ *    6  7  8  9 10 12  -     Kotetsu 12
+ *   13 14 15 16 17 18  -     Bomber Kings
+ * The Super Bomberman 5 extras add the sixth and seventh columns, the
+ * Bomber Kings the third row (in six columns without the extras). Movement
+ * wraps inside a row and between rows, skipping cells without a character. */
+static const uint8_t kGrid[3][MAX_COLS]={{1,2,3,4,5,11,19},{6,7,8,9,10,12,0},{13,14,15,16,17,18,0}};
+static const uint8_t kGridX[2][MAX_COLS]={{5,9,13,17,21,25,29},{3,7,11,15,19,23,27}};
+static const uint8_t *grid_x(void) { return kGridX[cols==MAX_COLS]; }
+/* A cell holds a character in the current layout. */
+static bool present(unsigned choice) {
+    if(choice>=1 && choice<=STOCK_CELLS) return true;
+    if(choice==HK_CHOICE_HONEY || choice==HK_CHOICE_KOTETSU) return sb5_extras;
+    if(choice==TERRORIN_CHOICE) return sb5_extras && terrorin_ready;
+    if(choice>=KINGS_CHOICE_FIRST && choice<=KINGS_CHOICE_LAST) return rows==3;
+    return false;
 }
-enum { TABLE_RIGHT=0xc260c0, TABLE_LEFT=0xc260d3, TABLE_DOWN=0xc260e6, TABLE_UP=0xc260f9,
-       TABLE_CURSOR_X=0xc2610c, TABLE_CURSOR_Y=0xc2611e, CLAMP=0xc26088, STAGE_INIT=0xc26094,
-       SET_CHARACTER=0xc260a4, PATCH_START=0xc26040, PATCH_END=0xc26130 };
+static unsigned grid_at(unsigned r,unsigned c) { unsigned v=kGrid[r][c];return c<cols && present(v)?v:0; }
+enum { TABLE_RIGHT=0xc260c0, TABLE_LEFT=0xc260d4, TABLE_DOWN=0xc260e8, TABLE_UP=0xc260fc,
+       TABLE_CURSOR_X=0xc26110, TABLE_CURSOR_Y=0xc26124, CLAMP=0xc26088, STAGE_INIT=0xc26094,
+       SET_CHARACTER=0xc260a4, PATCH_START=0xc26040, PATCH_END=0xc26140 };
 static const uint8_t kClamp[]={
     0x3a,             /* DEC A                                     */
-    0x29,0x0f,        /* AND #$0F                                  */
+    0x29,0x1f,        /* AND #$1F   (stock AND #$0F: choices 1-10)  */
     0xc9,0x0a,        /* CMP #$0A   ten-entry portrait tables       */
     0x90,0x02,        /* BCC +2                                    */
     0xa9,0x00,        /* LDA #$00   Bomberman                      */
@@ -150,7 +180,7 @@ static const uint8_t kClamp[]={
 };
 static const uint8_t kStageInit[]={
     0xbf,0x5f,0x62,0x7e, /* LDA $7E625F,X  seat choice                */
-    0x9f,0x24,0xf8,0x7f, /* STA $7FF824,X  remembered for rendering   */
+    0x9f,(uint8_t)SEAT_CHOICE,(uint8_t)(SEAT_CHOICE>>8),0x7f, /* STA $7FF828,X  remembered for rendering */
     0xc9,0x0b,           /* CMP #11                                   */
     0x90,0x02,           /* BCC +2                                    */
     0xa9,0x01,           /* LDA #1         extra characters play as 1 */
@@ -174,7 +204,7 @@ static void move_patch(uint32_t pc,uint32_t table,uint8_t rel) {
 }
 
 /* ---- Cartridge art: archive tiles, frame lists and palettes. ---- */
-static uint8_t archive[ARCHIVE_SIZE],champion[CHAMPION_SIZE];
+static uint8_t archive[ARCHIVE_SIZE],champion[CHAMPION_SIZE],terrorin[TERRORIN_SIZE];
 static bool decompress(uint32_t src,uint8_t *out,unsigned size,uint32_t end) {
     /* $C0:1CB0/$C0:1CCC: control byte = mode (bits 5-7) + count-1 (bits 0-4);
      * modes literal, previous+1, previous, then copies 2/4/16/32/64 back in a
@@ -217,6 +247,30 @@ static bool check_art(void) {
     }
     return true;
 }
+/* Terrorin (object set $0E): frame `step` of animation `anim`. Every
+ * animation the renderer uses must name frames of 1-24 pieces whose tiles
+ * lie inside the archive (pieces of other archives are skipped when drawn,
+ * not counted here). */
+static unsigned terrorin_frame(unsigned anim,unsigned step) { return rb(anim_script(TERRORIN_SET,anim)+step*2); }
+static const struct { uint8_t anim,steps; } kTerrorinAnims[]={
+    {T_WALK,8},{T_WALK+1,8},{T_WALK+2,8},{T_WALK+3,8},{T_LIFT,3},{T_LIFT+1,3},{T_LIFT+2,3},{T_LIFT+3,3},
+    {T_CARRY_WALK,8},{T_CARRY_WALK+1,8},{T_CARRY_WALK+2,8},{T_CARRY_WALK+3,8},
+    {T_THROW,3},{T_THROW+1,3},{T_THROW+2,3},{T_THROW+3,3},{T_SPIN,4},
+    {T_STAND,1},{T_STAND+1,1},{T_STAND+2,1},{T_STAND+3,1},{T_CHEER,2},{T_DAZED,18},{T_HURT,3},{T_SPIN_GUARD,4},{T_FRONT,1},
+};
+static bool check_terrorin(void) {
+    for(unsigned k=0;k<sizeof(kTerrorinAnims)/sizeof(*kTerrorinAnims);++k)
+        for(unsigned step=0;step<kTerrorinAnims[k].steps;++step) {
+            unsigned f=terrorin_frame(kTerrorinAnims[k].anim,step);
+            if(!f || f>200) return false;
+            uint32_t data=set_frame_data(TERRORIN_SET,f);unsigned n=rb(data);
+            if(!n || n>24) return false;
+            unsigned inside=0;
+            for(unsigned i=0;i<n;++i) inside+=rw(data+1+i*7+4)<TERRORIN_SIZE/32;
+            if(!inside) return false;
+        }
+    return true;
+}
 /* Champion frames: every step of both animations (frame, duration pairs
  * up to a zero frame) must hold 1-16 pieces with tiles inside the archive. */
 static bool check_champion(void) {
@@ -245,9 +299,11 @@ static unsigned champion_frame(unsigned skin) {
 }
 /* Palette keys: skin*8 + color (Honey/Kotetsu have one, Super Bomberman 4
  * characters five). */
+static bool sb4_skin(int skin) { return skin>=2 && skin<SKIN_TERRORIN; }
 static unsigned palette_color(unsigned key,unsigned index) {
     unsigned skin=key/8;
     if(skin<2) return rw(kPalette[skin]+index*2)&0x7fff;
+    if(skin==SKIN_TERRORIN) return rw(TERRORIN_PALETTE+index*2)&0x7fff;
     return Sb4Color(skin-2,key%8,index);
 }
 
@@ -290,11 +346,11 @@ static void compose_data(uint32_t data,const uint8_t *art,unsigned art_size,int 
 }
 static void compose(unsigned frame,int ox,int oy) { compose_data(frame_data(frame),archive,ARCHIVE_SIZE,ox,oy,true); }
 
-static void reset_plugin(void) { uninstall();enabled=hk_enabled=false; }
-static void activate(void) { hk_enabled=enabled=true; }
-SNES_MOD_CONSTRUCTOR(register_honey_kotetsu) {
+static void reset_plugin(void) { uninstall();enabled=sb5_extras=false; }
+static void activate(void) { sb5_extras=enabled=true;SubordinateActivate(); }
+SNES_MOD_CONSTRUCTOR(register_extra_characters) {
     snes_mod_register_reset_callback(reset_plugin);
-    snes_mod_register_activation_plugin("superbomberman5.honey-kotetsu.characters",activate);
+    snes_mod_register_activation_plugin("superbomberman5.extra-characters.characters",activate);
 }
 
 static void bomber_anchor(void);
@@ -310,38 +366,49 @@ static void install(void) {
     static const uint8_t vert[]={0x5d,0x34,0x10,0x96,0x06,0x49,0x0a,0x5d,0x34,0x10,0x61};
     static const uint8_t portrait[]={0x3a,0x29,0x0f,0xaa},init[]={0xbf,0x5f,0x62,0x7e,0x3a};
     static const uint8_t cursor_x[]={0xbf,0x76,0xc9,0x80},cursor_y[]={0xbf,0x80,0xc9,0x80};
-    static const uint8_t grid_x[]={5,10,15,20,25,5,10,15,20,25},grid_y[]={15,15,15,15,15,20,20,20,20,20};
+    static const uint8_t stock_x[]={5,10,15,20,25,5,10,15,20,25},grid_y[]={15,15,15,15,15,20,20,20,20,20};
     static const uint8_t set_character[]={0x9c,0xe7,0x0a,0x9d,0xc2,0x16};
     if(!stock(0xc68c02,right,sizeof(right)) || !stock(0xc68c78,left,sizeof(left)) ||
        !stock(0xc68cee,vert,sizeof(vert)) || !stock(0xc68d62,vert,sizeof(vert)) ||
        !stock(0xc213e7,portrait,4) || !stock(0xc21356,portrait,4) || !stock(0xc42a3c,init,5) ||
-       !stock(0xc0c93a,cursor_x,4) || !stock(0xc0c941,cursor_y,4) || !stock(0xc212d2,grid_x,10) || !stock(0xc212dc,grid_y,10) ||
+       !stock(0xc0c93a,cursor_x,4) || !stock(0xc0c941,cursor_y,4) || !stock(0xc212d2,stock_x,10) || !stock(0xc212dc,grid_y,10) ||
        !stock(0xc43bdf,set_character,6)) return;
     for(uint32_t pc=PATCH_START;pc<PATCH_END;++pc) if(*rom(pc)!=0xff) return;
     art_ready=decompress(ARCHIVE,archive,ARCHIVE_SIZE,ARCHIVE_END) && check_art();
     if(!art_ready) return;
     /* Optional: without it, victory poses use a still attack frame. */
     champion_ready=decompress(CHAMPION,champion,CHAMPION_SIZE,CHAMPION_END) && check_champion();
-    rows=BomberKingsReady()?3:2;cells=rows==3?MAX_CELLS:HK_CELLS;
+    /* Optional: without a verified archive the Terrorin cell stays empty. */
+    terrorin_ready=decompress(TERRORIN_ARCHIVE,terrorin,TERRORIN_SIZE,TERRORIN_END) && check_terrorin();
+    rows=BomberKingsReady()?3:2;cols=sb5_extras?MAX_COLS:6;cells=MAX_CELLS;
+    if(!sb5_extras && rows==2) return; /* Bomber Kings without its image: nothing to add. */
 
     uint8_t chars[]={(uint8_t)CELL_CHARS,(uint8_t)(CELL_CHARS>>8),0x7f};
     uint8_t colors[]={(uint8_t)CELL_COLORS,(uint8_t)(CELL_COLORS>>8),0x7f};
     for(unsigned i=0;i<sizeof(kCellCharRefs)/sizeof(*kCellCharRefs);++i) patch(kCellCharRefs[i],chars,3);
     for(unsigned i=0;i<sizeof(kCellColorRefs)/sizeof(*kCellColorRefs);++i) patch(kCellColorRefs[i],colors,3);
-    uint8_t to_right[MAX_CELLS+1]={0},to_left[MAX_CELLS+1]={0},down[MAX_CELLS+1]={0},up[MAX_CELLS+1]={0};
-    uint8_t cx[MAX_CELLS],cy[MAX_CELLS];
-    for(unsigned r=0;r<rows;++r) for(unsigned c=0;c<6;++c) {
-        unsigned choice=kGrid[r][c];
-        to_right[choice]=kGrid[r][(c+1)%6];to_left[choice]=kGrid[r][(c+5)%6];
-        down[choice]=kGrid[(r+1)%rows][c];up[choice]=kGrid[(r+rows-1)%rows][c];
-        cx[choice-1]=(uint8_t)(kGridX[c]*8);cy[choice-1]=(uint8_t)(kRowTiles[rows-2][r]*8+24);
+    uint8_t to_right[TABLE_CELLS]={0},to_left[TABLE_CELLS]={0},down[TABLE_CELLS]={0},up[TABLE_CELLS]={0};
+    uint8_t cx[TABLE_CELLS-1]={0},cy[TABLE_CELLS-1]={0};
+    for(unsigned r=0;r<rows;++r) for(unsigned c=0;c<cols;++c) {
+        unsigned choice=grid_at(r,c);
+        if(!choice) continue;
+        unsigned k;
+        for(k=1;k<=cols && !grid_at(r,(c+k)%cols);++k) {}
+        to_right[choice]=(uint8_t)grid_at(r,(c+k)%cols);
+        for(k=1;k<=cols && !grid_at(r,(c+cols-k)%cols);++k) {}
+        to_left[choice]=(uint8_t)grid_at(r,(c+cols-k)%cols);
+        for(k=1;k<=rows && !grid_at((r+k)%rows,c);++k) {}
+        down[choice]=(uint8_t)grid_at((r+k)%rows,c);
+        for(k=1;k<=rows && !grid_at((r+rows-k)%rows,c);++k) {}
+        up[choice]=(uint8_t)grid_at((r+rows-k)%rows,c);
+        cx[choice-1]=(uint8_t)(grid_x()[c]*8);cy[choice-1]=(uint8_t)(kRowTiles[rows-2][r]*8+24);
     }
-    patch(TABLE_RIGHT,to_right,cells+1);patch(TABLE_LEFT,to_left,cells+1);
-    patch(TABLE_DOWN,down,cells+1);patch(TABLE_UP,up,cells+1);
-    patch(TABLE_CURSOR_X,cx,cells);patch(TABLE_CURSOR_Y,cy,cells);
+    patch(TABLE_RIGHT,to_right,TABLE_CELLS);patch(TABLE_LEFT,to_left,TABLE_CELLS);
+    patch(TABLE_DOWN,down,TABLE_CELLS);patch(TABLE_UP,up,TABLE_CELLS);
+    patch(TABLE_CURSOR_X,cx,TABLE_CELLS-1);patch(TABLE_CURSOR_Y,cy,TABLE_CELLS-1);
     patch(CLAMP,kClamp,sizeof(kClamp));patch(STAGE_INIT,kStageInit,sizeof(kStageInit));
     uint8_t new_x[STOCK_CELLS],new_y[STOCK_CELLS];
-    for(unsigned c=0;c<STOCK_CELLS;++c) { new_x[c]=kGridX[c%5];new_y[c]=kRowTiles[rows-2][c/5]; }
+    for(unsigned c=0;c<STOCK_CELLS;++c) { new_x[c]=grid_x()[c%5];new_y[c]=kRowTiles[rows-2][c/5]; }
     patch(0xc212d2,new_x,STOCK_CELLS);
     if(rows==3) patch(0xc212dc,new_y,STOCK_CELLS);
     uint8_t read_x[]={0xbf,(uint8_t)TABLE_CURSOR_X,(uint8_t)(TABLE_CURSOR_X>>8),0xc2};
@@ -361,18 +428,19 @@ static void install(void) {
     else bomber_anchor();
 }
 
-void HoneyKotetsuBeforeFrame(void) {
+void ExtraCharactersBeforeFrame(void) {
     if(!enabled && BomberKingsWanted()) enabled=true;
     if(!enabled) return;
     install();
     if(!patched) return;
     SpecialAbilitiesInstall();
-    /* The picker script fills cells 0-9; cells 10/11 are Honey/Kotetsu and
-     * 12-17 the Super Bomberman 4 characters. Its exit code copies the cell
-     * character into $625F ($C6:A575), and the portrait helpers show
-     * Bomberman for choices above 10 (clamp patch). */
+    /* The picker script fills cells 0-9; cells 10/11 are Honey/Kotetsu,
+     * 12-17 the Super Bomberman 4 characters and 18 Terrorin (0 when the
+     * layout has no such character: the cursor never reaches it). Its exit
+     * code copies the cell character into $625F ($C6:A575), and the portrait
+     * helpers show Bomberman for choices above 10 (clamp patch). */
     for(unsigned c=STOCK_CELLS;c<cells;++c) {
-        g_ram[CELL_CHARS+c]=(uint8_t)(c+1);
+        g_ram[CELL_CHARS+c]=(uint8_t)(present(c+1)?c+1:0);
         unsigned count=ExtraCharacterColorCount(c+1);
         if(g_ram[CELL_COLORS+c]>=(count>1?count:7)) g_ram[CELL_COLORS+c]=0;
     }
@@ -556,7 +624,8 @@ static bool emit(Ppu *ppu,int x,int y,unsigned palette,unsigned priority,
 static int skin_of(unsigned choice) {
     if(choice==HK_CHOICE_HONEY) return 0;
     if(choice==HK_CHOICE_KOTETSU) return 1;
-    if(choice>=KINGS_CHOICE_FIRST && choice<=EXTRA_CHOICE_LAST && rows==3) return 2+(int)(choice-KINGS_CHOICE_FIRST);
+    if(choice>=KINGS_CHOICE_FIRST && choice<=KINGS_CHOICE_LAST && rows==3) return 2+(int)(choice-KINGS_CHOICE_FIRST);
+    if(choice==TERRORIN_CHOICE && terrorin_ready) return SKIN_TERRORIN;
     return -1;
 }
 /* Bomber animations (object set $10, four-way groups in the order right,
@@ -605,6 +674,35 @@ static unsigned pose_frame(unsigned skin,unsigned object,int ability,unsigned st
     case POSE_STAND: case POSE_CARRY: case POSE_AIR: return anim_frame(kAnimBase[skin]+(unsigned)direction,0);
     default: return anim_frame(kAnimBase[skin]+4,(snes_frame_counter/6)&3);
     }
+}
+/* Terrorin (object set $0E). The bomber's walk position ($07FF, ten steps)
+ * runs through his eight-step walk; the ability pose is his guarded spin
+ * ($52, the move he makes before the barrier rises); a seat frozen by a
+ * Clock shows his dazed frames ($50 from step 7, the halo). */
+static unsigned terrorin_walk(unsigned object) { return (g_ram[0x7ff+object]/2u*8u/10u)&7; }
+static unsigned terrorin_pose_frame(unsigned seat,unsigned object,int ability,unsigned step) {
+    int d;int pose=bomber_pose(g_ram[0x79f+object],&d);
+    if(ability>=0) return terrorin_frame(T_SPIN_GUARD,(step/6)&3);
+    if(SpecialAbilityDazed(seat)) return terrorin_frame(T_DAZED,7+(snes_frame_counter/3)%11);
+    unsigned dir=(unsigned)d&3;
+    switch(pose) {
+    case POSE_WALK: return terrorin_frame(T_WALK+dir,terrorin_walk(object));
+    case POSE_CARRY_WALK: return terrorin_frame(T_CARRY_WALK+dir,terrorin_walk(object));
+    case POSE_CARRY: return terrorin_frame(T_LIFT+dir,2);
+    case POSE_ACTION: return terrorin_frame(T_THROW+dir,(g_ram[0x7ff+object]/2u)<2?1:2);
+    case POSE_VICTORY: return terrorin_frame(T_CHEER,(snes_frame_counter/8)&1);
+    case POSE_STAND: case POSE_AIR: return terrorin_frame(T_STAND+dir,0);
+    case POSE_DEATH: { unsigned k=g_ram[0x7ff+object]/2;return terrorin_frame(T_HURT,k>2?2:k); }
+    case POSE_STUN: return terrorin_frame(T_DAZED,7+(snes_frame_counter/3)%11);
+    case POSE_TIME_UP: return terrorin_frame(T_FRONT,0);
+    default: return terrorin_frame(T_SPIN,(snes_frame_counter/4)&3);
+    }
+}
+/* Terrorin's standing anchor (front standing frame): centre and lowest line,
+ * put on the bomber's own anchor so his feet stand where the bomber's do. */
+static int terrorin_cx=0,terrorin_bottom=0;
+static void compose_terrorin(unsigned frame,int cx,int bottom) {
+    compose_data(set_frame_data(TERRORIN_SET,frame),terrorin,TERRORIN_SIZE,cx-terrorin_cx,bottom-terrorin_bottom,true);
 }
 /* Super Bomberman 4 battle frames (all six characters share the layout;
  * verified by the cartridge's own walking uploads): directions up, right,
@@ -763,6 +861,10 @@ static void bomber_anchor(void) {
     if(rb(data)<1 || rb(data)>16) return;
     int l,r,b;frame_box(data,&l,&r,&b);
     if(r>l && b>-64 && b<64) { bomber_cx=(l+r)/2;bomber_bottom=b; }
+    if(terrorin_ready) {
+        frame_box(set_frame_data(TERRORIN_SET,terrorin_frame(T_STAND+1,0)),&l,&r,&b);
+        if(r>l && b>-64 && b<64) { terrorin_cx=(l+r)/2;terrorin_bottom=b; }
+    }
 }
 /* First and last canvas lines with a drawn pixel. */
 static int canvas_top(void) {
@@ -849,7 +951,11 @@ static void draw_players(Ppu *ppu,bool *taken) {
         int direction;unsigned key=(unsigned)skin*8;
         memset(canvas,0,sizeof(canvas));
         int lift=0;
-        if(skin>=2) {
+        if(skin==SKIN_TERRORIN) {
+            /* A rider stands where the native rider frame ends. */
+            compose_terrorin(terrorin_pose_frame(i,object,ability,step),ORIGIN_X+bomber_cx,
+                             rider?ORIGIN_Y+bottom-1:ORIGIN_Y+bomber_bottom-1);
+        } else if(sb4_skin(skin)) {
             key+=g_ram[SEAT_COLOR+i]%SB4_COLORS;
             /* Bad Bomber ($15A2 bit 7): the Super Bomberman 4 Bad Bomber on
              * its board, its feet where the native cart ends. */
@@ -881,6 +987,17 @@ static bool compose_head(unsigned key) {
     memset(canvas,0,sizeof(canvas));
     unsigned skin=key/8;
     if(skin<2) { compose(anim_frame(kAnimBase[skin]+1,0),ORIGIN_X,ORIGIN_Y+22);return true; }
+    if(skin==SKIN_TERRORIN) {
+        /* The top 16 lines of his front standing frame. */
+        compose_terrorin(terrorin_frame(T_STAND+1,0),ORIGIN_X,CANVAS_H-1);
+        int top=canvas_top();
+        if(top>=CANVAS_H) return false;
+        uint8_t head[16][CANVAS_W];
+        for(int y=0;y<16;++y) memcpy(head[y],top+y<CANVAS_H?canvas[top+y]:canvas[0],CANVAS_W);
+        memset(canvas,0,sizeof(canvas));
+        for(int y=0;y<16 && top+y<CANVAS_H;++y) for(int x=ORIGIN_X-8;x<ORIGIN_X+8;++x) canvas[ORIGIN_Y+y][x]=head[y][x];
+        return true;
+    }
     uint8_t px[32][32];int cx,b;
     if(!Sb4Frame(skin-2,6,px) || !sb4_box(px,&cx,&b)) return false;
     int top=0;
@@ -900,7 +1017,7 @@ static void draw_faces(Ppu *ppu) {
     for(unsigned i=0;i<5;++i) {
         int skin=skin_of(g_ram[SEAT_CHOICE+i]);
         if(skin<0 || g_ram[0x16c2+i]!=0) continue;
-        unsigned key=(unsigned)skin*8+(skin>=2?g_ram[SEAT_COLOR+i]%SB4_COLORS:0);
+        unsigned key=(unsigned)skin*8+(sb4_skin(skin)?g_ram[SEAT_COLOR+i]%SB4_COLORS:0);
         unsigned object=g_ram[0x35c5+i];
         if(object>=0x60 || g_ram[0x4ff+object]!=6) continue;
         unsigned anim=g_ram[0x79f+object];
@@ -943,6 +1060,7 @@ static bool compose_grid_figure(unsigned cell) {
     int skin=skin_of(cell+1);
     if(skin<0) return false;
     if(skin<2) { compose(anim_frame(kAnimBase[skin]+1,0),ORIGIN_X,ORIGIN_Y);return true; }
+    if(skin==SKIN_TERRORIN) { compose_terrorin(terrorin_frame(T_STAND+1,0),ORIGIN_X,ORIGIN_Y+7);return true; }
     /* The native figure's bottom line is canvas ORIGIN_Y+7: Super
      * Bomberman 4 figures keep the front standing frame's lowest line there. */
     return compose_sb4((unsigned)skin-2,6,ORIGIN_X,ORIGIN_Y+7,false);
@@ -956,19 +1074,19 @@ static void draw_grid(Ppu *ppu,bool *taken) {
         unsigned row_tile=kRowTiles[rows-2][r];
         int py=(int)((((row_tile+1)*8+24)-scroll_y)&0xff);
         if(py>216) continue;
-        unsigned keys[6],cols[6],count=0;int top=1000,bottom=-1000;
-        for(unsigned c=0;c<6;++c) {
-            unsigned choice=kGrid[r][c];
-            if(choice<=STOCK_CELLS || choice>cells || !compose_grid_figure(choice-1)) continue;
+        unsigned keys[MAX_COLS],columns[MAX_COLS],count=0;int top=1000,bottom=-1000;
+        for(unsigned c=0;c<cols;++c) {
+            unsigned choice=grid_at(r,c);
+            if(choice<=STOCK_CELLS || !compose_grid_figure(choice-1)) continue;
             int skin=skin_of(choice);
-            keys[count]=(unsigned)skin*8+(skin>=2?g_ram[CELL_COLORS+choice-1]%SB4_COLORS:0);cols[count++]=c;
+            keys[count]=(unsigned)skin*8+(sb4_skin(skin)?g_ram[CELL_COLORS+choice-1]%SB4_COLORS:0);columns[count++]=c;
             int t=py-8-ORIGIN_Y+canvas_top(),b=py-8-ORIGIN_Y+canvas_bottom();
             if(t<top) top=t;
             if(b>bottom) bottom=b;
         }
         if(!count) continue;
         if(top<1) top=1;
-        int palettes[6];
+        int palettes[MAX_COLS];
         for(unsigned k=0;k<count;++k) {
             palettes[k]=-1;
             for(unsigned j=0;j<k && palettes[k]<0;++j) if(keys[j]==keys[k]) palettes[k]=palettes[j];
@@ -984,8 +1102,8 @@ static void draw_grid(Ppu *ppu,bool *taken) {
         late_line=top-2;
         for(unsigned k=0;k<count;++k) {
             if(palettes[k]<0) continue;
-            unsigned c=cols[k];
-            int px=(int)((kGridX[c]*8-scroll_x)&0x1ff);
+            unsigned c=columns[k];
+            int px=(int)((grid_x()[c]*8-scroll_x)&0x1ff);
             if(px>240) continue;
             compose_grid_figure(kGrid[r][c]-1);
             emit(ppu,px-ORIGIN_X+8,py-8-ORIGIN_Y,(unsigned)palettes[k],3,NULL,0,taken);
@@ -998,7 +1116,7 @@ static void draw_portraits(Ppu *ppu) {
     for(unsigned i=0;i<5;++i) {
         int skin=skin_of(g_ram[0x625f+i]);
         if(skin<0) continue;
-        unsigned key=(unsigned)skin*8+(skin>=2?g_ram[SEAT_COLOR+i]%SB4_COLORS:0);
+        unsigned key=(unsigned)skin*8+(sb4_skin(skin)?g_ram[SEAT_COLOR+i]%SB4_COLORS:0);
         unsigned object=g_ram[0x62bf+i];
         if(object>=0x60 || g_ram[0x6df+object]>=8) continue;
         unsigned slot=g_ram[0x6df+object];
@@ -1014,7 +1132,7 @@ static void draw_portraits(Ppu *ppu) {
         for(unsigned s=0;s<128;++s) if(visible(ppu,s) && sprite_palette(ppu,s)==slot && !mine[s]) usable=false;
         if(!usable) continue;
         if(blocks[key][0]<0) {
-            /* Honey/Kotetsu: head and shoulders of the front standing frame,
+            /* Honey/Kotetsu/Terrorin: head and shoulders of the front standing frame,
              * its top 24 lines centred in the 32x32 portrait (native faces sit
              * at 4..27). Super Bomberman 4: the character's own Battle picker
              * portrait, with its palette for the player color. */
@@ -1023,6 +1141,15 @@ static void draw_portraits(Ppu *ppu) {
             if(skin<2) {
                 compose(anim_frame(kAnimBase[skin]+1,0),16,4+22);
                 for(unsigned y=28;y<CANVAS_H;++y) memset(canvas[y],0,CANVAS_W);
+            } else if(skin==SKIN_TERRORIN) {
+                /* Terrorin: the top 24 lines of his front standing frame. */
+                compose_terrorin(terrorin_frame(T_STAND+1,0),16,CANVAS_H-1);
+                int t=canvas_top();
+                if(t>=CANVAS_H) return;
+                for(int y=0;y<CANVAS_H;++y) {
+                    if(y>=4 && y<28 && t+y-4<CANVAS_H) memcpy(canvas[y],canvas[t+y-4],CANVAS_W);
+                    else if(y<4 || y>=28) memset(canvas[y],0,CANVAS_W);
+                }
             } else {
                 uint8_t px[32][32];
                 if(!Sb4Portrait((unsigned)skin-2,px)) return;
@@ -1030,7 +1157,7 @@ static void draw_portraits(Ppu *ppu) {
             }
             for(unsigned q=0;q<4;++q) paint_block(ppu,(unsigned)blocks[key][q],(q&1)*16,(q>>1)*16);
         }
-        if(skin<2) load_palette(ppu,slot,key);
+        if(!sb4_skin(skin)) load_palette(ppu,slot,key);
         else for(unsigned c=1;c<16;++c) put(&ppu->cgram[0x80+slot*16+c],Sb4PortraitColor((unsigned)skin-2,key%8,c));
         for(unsigned q=0;q<4;++q)
             put(&ppu->oam[quarter[q]*2+1],(uint16_t)((ppu->oam[quarter[q]*2+1]&~0x1ffu)|(unsigned)blocks[key][q]));
@@ -1075,10 +1202,56 @@ bool ExtraEmitSkinFrame(unsigned skin,unsigned anim,unsigned step,int x,int y) {
     return ExtraEmitPixels(x-ORIGIN_X,y-ORIGIN_Y,&pixels[0][0],CANVAS_W,CANVAS_H,colors,3);
 }
 
-void HoneyKotetsuObserve(const Ppu *view,unsigned line,void *context) {
+/* Tinted boxes (Terrorin's barrier): color math half-adds the fixed color
+ * to BG1/BG2/OBJ inside the color window (window 1 for the first box, 2 for
+ * the second), only on the lines of each box. The registers the frame
+ * started with come back on line 224. */
+typedef struct { int left,top,right,bottom; } TintBox;
+static TintBox tints[2];
+static unsigned tint_count;
+static bool tinting;
+static uint8_t tint_cgwsel,tint_cgadsub,tint_w1l,tint_w1r,tint_w2l,tint_w2r;
+static uint16_t tint_fixed,tint_color;
+static uint32_t tint_windowsel;
+bool ExtraTintBox(int left,int top,int right,int bottom,uint16_t color) {
+    Ppu *ppu=effect_ppu;
+    if(!ppu || tint_count>=2) return false;
+    if(left<0) left=0;
+    if(right>255) right=255;
+    if(top<1) top=1;
+    if(bottom>223) bottom=223;
+    if(left>right || top>bottom) return false;
+    if(!tint_count) {
+        /* Leave frames that already use color math or a window alone. */
+        if(ppu->cgadsub || (ppu->cgwsel&0x30) || (ppu->windowsel&0xaaaaaa)) return false;
+        tint_cgwsel=ppu->cgwsel;tint_cgadsub=ppu->cgadsub;tint_fixed=ppu->fixedColor;tint_windowsel=ppu->windowsel;
+        tint_w1l=ppu->window1left;tint_w1r=ppu->window1right;tint_w2l=ppu->window2left;tint_w2r=ppu->window2right;
+    }
+    tints[tint_count++]=(TintBox){left,top,right,bottom};tint_color=color;
+    return true;
+}
+static void apply_tints(Ppu *ppu,unsigned line) {
+    if(!tint_count) return;
+    ppu->cgwsel=(uint8_t)((tint_cgwsel&0x0d)|0x10);ppu->cgadsub=0x53;ppu->fixedColor=tint_color;
+    ppu->windowsel=(tint_windowsel&0x0fffff)|(tint_count>1?0xa00000u:0x200000u);
+    for(unsigned k=0;k<tint_count;++k) {
+        bool inside=(int)line>=tints[k].top && (int)line<=tints[k].bottom;
+        uint8_t l=inside?(uint8_t)tints[k].left:255,r=inside?(uint8_t)tints[k].right:0;
+        if(k) { ppu->window2left=l;ppu->window2right=r; } else { ppu->window1left=l;ppu->window1right=r; }
+    }
+    tinting=true;
+}
+static void restore_tints(Ppu *ppu) {
+    if(!tinting) return;
+    ppu->cgwsel=tint_cgwsel;ppu->cgadsub=tint_cgadsub;ppu->fixedColor=tint_fixed;ppu->windowsel=tint_windowsel;
+    ppu->window1left=tint_w1l;ppu->window1right=tint_w1r;ppu->window2left=tint_w2l;ppu->window2right=tint_w2r;
+    tinting=false;
+}
+void ExtraCharactersObserve(const Ppu *view,unsigned line,void *context) {
     (void)context;Ppu *ppu=(Ppu *)view;
     if(line==224) {
         line_load_count=0;late_count=0;
+        restore_tints(ppu);tint_count=0;
         if(!drawn) return;
         while(saved_count) { Saved w=saved[--saved_count];*w.word=w.value; }
         memcpy(ppu->highOam,saved_high,sizeof(saved_high));
@@ -1086,6 +1259,7 @@ void HoneyKotetsuObserve(const Ppu *view,unsigned line,void *context) {
     }
     if(line!=1) {
         if(drawn && line_load_count) apply_line_loads(ppu,line);
+        if(tint_count) apply_tints(ppu,line);
         if(drawn) for(unsigned k=0;k<late_count;++k) if(late_places[k].line==(int)line) {
             const LatePlace *l=&late_places[k];
             place(ppu,l->slot,l->x,l->y,l->tile,l->palette,l->priority);++ppu->oamWriteCount;
@@ -1093,6 +1267,7 @@ void HoneyKotetsuObserve(const Ppu *view,unsigned line,void *context) {
         return;
     }
     if(!enabled || !patched || !art_ready || PPU_objSize(ppu)!=0) return;
+    restore_tints(ppu);tint_count=0;
     saved_count=0;borrowed_count=0;line_load_count=0;late_count=0;late_line=-1;memcpy(saved_high,ppu->highOam,sizeof(saved_high));
     memcpy(frame_obj_colors,&ppu->cgram[0x80],sizeof(frame_obj_colors));
     bool taken[128]={false};
@@ -1102,7 +1277,7 @@ void HoneyKotetsuObserve(const Ppu *view,unsigned line,void *context) {
     else if(stage()) {
         draw_players(ppu,taken);draw_faces(ppu);
         effect_ppu=ppu;effect_taken=taken;SpecialAbilityDraw();effect_ppu=NULL;effect_taken=NULL;
-        apply_line_loads(ppu,1);
+        apply_line_loads(ppu,1);apply_tints(ppu,1);
     }
-    if(saved_count || line_load_count || late_count) { drawn=true;++ppu->vramWriteCount;++ppu->oamWriteCount; }
+    if(saved_count || line_load_count || late_count || tint_count) { drawn=true;++ppu->vramWriteCount;++ppu->oamWriteCount; }
 }

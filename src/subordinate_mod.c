@@ -21,7 +21,7 @@
  *  - $C5:129B/$C5:1319/$C5:12EE: the HUD face tables $C2:1470/$C5:12FE have
  *    nine entries; read ten-entry copies at $C2:6020/$C2:6030 instead. */
 #include "subordinate_mod.h"
-#include "honey_kotetsu_mod.h"
+#include "extra_characters_mod.h"
 #include "common_rtl.h"
 #include "common_cpu_infra.h"
 #include "mod_runtime.h"
@@ -86,10 +86,11 @@ static void install(void) {
     installed=true;patched=patch_count==11;
 }
 static void reset_plugin(void) { uninstall();enabled=false; }
-static void activate(void) { enabled=true; }
+/* Part of the Super Bomberman 5 extra characters mod: its plugin
+ * (extra_characters_mod.c) turns this module on. */
+void SubordinateActivate(void) { enabled=true; }
 SNES_MOD_CONSTRUCTOR(register_subordinate) {
     snes_mod_register_reset_callback(reset_plugin);
-    snes_mod_register_activation_plugin("superbomberman5.subordinate.character",activate);
 }
 void SubordinateBeforeFrame(void) { if(enabled) install(); }
 

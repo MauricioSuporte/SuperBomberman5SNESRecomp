@@ -34,7 +34,7 @@ python -m unittest discover -s tests -v
 git diff --check
 ```
 
-Run all thirteen native tests in the release source (`ptbr_render_tests`, `normal_character_tests`, `selection_color_tests`, `infinite_time_tests`, `normal_coop_tests`, `subordinate_tests`, `pause_menu_tests`, `portal_labels_tests`, `honey_kotetsu_tests`, `special_abilities_tests`, `sb4_rom_tests`, `gold_battle_tests`, `louie_tests`). Test package extraction, the native analyzer, first/repeat launcher startup and local ROM generation/rebuild. Exercise a real-ROM route locally and record its platform/frames and limitations in STATUS.md. No ROM enters CI or public artifacts.
+Run all thirteen native tests in the release source (`ptbr_render_tests`, `normal_character_tests`, `selection_color_tests`, `infinite_time_tests`, `normal_coop_tests`, `subordinate_tests`, `pause_menu_tests`, `portal_labels_tests`, `extra_characters_tests`, `special_abilities_tests`, `sb4_rom_tests`, `gold_battle_tests`, `louie_tests`). Test package extraction, the native analyzer, first/repeat launcher startup and local ROM generation/rebuild. Exercise a real-ROM route locally and record its platform/frames and limitations in STATUS.md. No ROM enters CI or public artifacts.
 
 ## Build and package
 

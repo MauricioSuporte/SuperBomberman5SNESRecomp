@@ -10,12 +10,14 @@ from pause_menu_runtime import BATTLE_ENTER, press
 ROOT=Path(__file__).resolve().parents[1]
 
 def run(args,kind,unlocked,subordinate,honey):
+    # The Super Bomberman 5 extra characters mod carries Subordinate Bomber
+    # and Honey/Kotetsu together; the cases differ only by enabling it.
+    honey=subordinate
     folder=Path(tempfile.mkdtemp(prefix=kind+'-',dir=args.out))
     shutil.copy2(args.exe,folder/'game.exe');shutil.copytree(ROOT/'mods',folder/'mods')
     state='format_version = 1\n'
     mods=[('ptbr','menus_ptbr'),('selection-colors','color_controls'),('gold-battle','gold_battle')]
-    if subordinate:mods.append(('subordinate-bomber','subordinate'))
-    if honey:mods.append(('honey-kotetsu','honey_kotetsu'))
+    if subordinate:mods.append(('extra-characters','extra_characters'))
     if kind=='normal':mods.append(('normal-characters','character_select'))
     for mod,feature in mods:
         state+=f'[[package]]\nid="superbomberman5.{mod}"\nversion="0.1.0"\n[[feature]]\npackage_id="superbomberman5.{mod}"\nid="{feature}"\nenabled=true\n'

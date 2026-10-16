@@ -44,7 +44,7 @@
 #include "portal_labels_mod.h"
 #include "selection_color_mod.h"
 #include "subordinate_mod.h"
-#include "honey_kotetsu_mod.h"
+#include "extra_characters_mod.h"
 #include "gold_battle_mod.h"
 #include "louie_mod.h"
 #include <stdbool.h>
@@ -64,7 +64,7 @@ void GameRunOneFrame(void)
     CoopInputFixture();
 #endif
     SubordinateBeforeFrame();
-    HoneyKotetsuBeforeFrame();
+    ExtraCharactersBeforeFrame();
     NormalCharacterBeforeFrame();
     SelectionColorBeforeFrame();
     NormalCoopBeforeFrame();
@@ -87,13 +87,13 @@ static void ObserveOverlays(const struct Ppu *ppu, unsigned line, void *context)
     if (line == 224) {
         PauseMenuObserve(ppu, line, context);
         PortalLabelsObserve(ppu, line, context);
-        HoneyKotetsuObserve(ppu, line, context);
+        ExtraCharactersObserve(ppu, line, context);
         SubordinateObserve(ppu, line, context);
         SelectionColorObserve(ppu, line, context);
     } else {
         SelectionColorObserve(ppu, line, context);
         SubordinateObserve(ppu, line, context);
-        HoneyKotetsuObserve(ppu, line, context);
+        ExtraCharactersObserve(ppu, line, context);
         PortalLabelsObserve(ppu, line, context);
         PauseMenuObserve(ppu, line, context);
     }
@@ -101,7 +101,7 @@ static void ObserveOverlays(const struct Ppu *ppu, unsigned line, void *context)
 
 void GameDrawPpuFrame(void)
 {
-    bool overlays = SelectionColorEnabled() || SubordinateEnabled() || HoneyKotetsuEnabled() ||
+    bool overlays = SelectionColorEnabled() || SubordinateEnabled() || ExtraCharactersEnabled() ||
                     PauseMenuEnabled() || PortalLabelsEnabled();
     PtbrDrawPpuFrameObserved(overlays ? ObserveOverlays : NULL, NULL);
 }

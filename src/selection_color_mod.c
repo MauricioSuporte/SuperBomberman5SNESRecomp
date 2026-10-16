@@ -4,7 +4,7 @@
 #include "mod_runtime.h"
 #include "ptbr_mod.h"
 #include "subordinate_mod.h"
-#include "honey_kotetsu_mod.h"
+#include "extra_characters_mod.h"
 #include "snes/ppu.h"
 #include "snes/saveload.h"
 #include <stdbool.h>
@@ -73,7 +73,7 @@ static void apply_color(unsigned player) {
      * Bomberman 4 characters have five; the core draws them, this keeps the
      * seat's choice and the cell's color. */
     unsigned extra=ExtraCharacterColorCount(character);
-    if(extra==1 || (extra==0 && HoneyKotetsuBaseChoice(character)!=character)) { colors[player]=0;g_ram[0x6264+player]=0;return; }
+    if(extra==1 || (extra==0 && ExtraBaseChoice(character)!=character)) { colors[player]=0;g_ram[0x6264+player]=0;return; }
     if(extra>1) {
         colors[player]=(uint8_t)(colors[player]%extra);g_ram[0x6264+player]=colors[player];
         uint8_t *cells=PickerCellCharacters(),*cell_colors=PickerCellColors();
@@ -145,7 +145,7 @@ void SelectionColorAfterFrame(void) {
             bool consumed=true;
             for(unsigned i=0;i<5;++i) {
                 g_ram[0x6264+i]=colors[i];
-                unsigned character=HoneyKotetsuBaseChoice(g_ram[0x625f+i]);
+                unsigned character=ExtraBaseChoice(g_ram[0x625f+i]);
                 if(character<1 || character>last_character() || g_ram[0x16c2+i]!=character-1 ||
                    g_ram[0x16da+i]!=g_rom[0xbb4e + character-1]+colors[i]) consumed=false;
             }

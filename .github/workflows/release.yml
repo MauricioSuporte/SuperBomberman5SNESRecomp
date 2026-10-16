@@ -65,7 +65,7 @@ jobs:
           ./build-ci/subordinate_tests.exe
           ./build-ci/pause_menu_tests.exe
           ./build-ci/portal_labels_tests.exe
-          ./build-ci/honey_kotetsu_tests.exe
+          ./build-ci/extra_characters_tests.exe
           ./build-ci/special_abilities_tests.exe
           ./build-ci/sb4_rom_tests.exe
           ./build-ci/gold_battle_tests.exe
