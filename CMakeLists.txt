@@ -61,6 +61,7 @@ add_executable(SuperBomberman5SNESRecomp
     src/bomber_kings_mod.c
     src/sb4_rom.c
     src/sb4_sound.c
+    src/sb5_sound.c
     src/special_abilities.c
     src/gen_stubs.c
 )

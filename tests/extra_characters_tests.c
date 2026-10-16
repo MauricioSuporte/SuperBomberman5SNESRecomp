@@ -528,7 +528,15 @@ int main(void) {
     for(unsigned c=1;c<16;++c) CHECK(ppu->cgram[0x80+7*16+c]==(0x3000+c*5));
     ExtraCharactersObserve(ppu,224,NULL);CHECK(same(before,ppu));
     ability_pose=1;CHECK(terrorin_pose_frame(0,8,1,13)==terrorin_frame(T_SPIN_GUARD,2));ability_pose=-1;
-    dazed=true;CHECK(terrorin_pose_frame(0,8,-1,0)>=terrorin_frame(T_DAZED,7));dazed=false;
+    /* A Clock paralysis keeps his standing frame (down: the walk's first step). */
+    dazed=true;CHECK(terrorin_pose_frame(0,8,-1,0)==terrorin_frame(T_WALK+1,0));dazed=false;
+    /* Defeat ($16): the $50 steps by time since the death began; the
+     * flying head (piece 0 of frames 153-165) is drawn apart. */
+    g_ram[0x79f+8]=0x16;snes_frame_counter=1000;track_death(0,8);
+    CHECK(terrorin_pose_frame(0,8,-1,0)==152);
+    snes_frame_counter=1000+6;CHECK(terrorin_pose_frame(0,8,-1,0)==153 && terrorin_head_dx(152)<0);   /* the synthetic frames have no head piece */
+    snes_frame_counter=1000+500;CHECK(terrorin_pose_frame(0,8,-1,0)==169);
+    g_ram[0x79f+8]=0x01;track_death(0,8);CHECK(!death_seen[0]);snes_frame_counter=0;
     g_ram[0x79f+8]=0x20;CHECK(terrorin_pose_frame(0,8,-1,0)==terrorin_frame(T_CHEER,0) || terrorin_pose_frame(0,8,-1,0)==terrorin_frame(T_CHEER,1));
     g_ram[0x1031]=0x74;
     memcpy(at(0xc4f000),stock_rom+file(0xc4f000),32);

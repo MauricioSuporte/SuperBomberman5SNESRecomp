@@ -15,7 +15,7 @@ rom_sha256 = "5251e6491872dc51879b630a34d76a92e29ea0c39026c4f8773c1fe006d047c4"
 [[feature]]
 id = "bomber_kings"
 name = "Play as the Bomber Kings"
-description = "Three-row character selection: the Super Bomberman 4 Bomberman and the five Bomber Kings below the stock characters (and, with that mod, the Super Bomberman 5 extra characters). Select your own Super Bomberman 4 ROM below."
+description = "Three-row character selection: the Super Bomberman 4 Bomberman and the five Bomber Kings below the stock characters (and, with that mod, the Super Bomberman 5 Extra Characters). Select your own Super Bomberman 4 ROM below."
 group = "Gameplay"
 default_enabled = false
 presentation_only = false

@@ -125,7 +125,7 @@ line and restored at the end of the frame.
 The character selection gets a **third row**: the two stock rows move up and a
 new bottom row holds Super Bomberman 4's Bomberman, Hammer, Jet, Lady, Bazooka
 and Great Bomber. Honey, Kotetsu, Terrorin and Subordinate Bomber come from the
-**Super Bomberman 5 extra characters** mod ([EXTRA_CHARACTERS.md](EXTRA_CHARACTERS.md));
+**Super Bomberman 5 Extra Characters** mod ([EXTRA_CHARACTERS.md](EXTRA_CHARACTERS.md));
 with it the grid has seven columns, without it six (their cells stay empty and
 the cursor skips them). Honey's and Kotetsu's abilities below need that mod.
 

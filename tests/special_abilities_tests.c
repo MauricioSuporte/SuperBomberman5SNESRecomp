@@ -15,6 +15,8 @@ unsigned ExtraCharacterSeatChoice(unsigned seat) { return seat<5?choices[seat]:0
 unsigned ExtraCharacterSeatColor(unsigned seat) { (void)seat;return 0; }
 bool ExtraCharactersInstalled(void) { return installed; }
 bool Sb5ExtrasEnabled(void) { return true; }
+static unsigned stage_sounds;static uint32_t stage_sound;
+void Sb5StageSoundPlay(unsigned set,uint16_t effect) { ++stage_sounds;stage_sound=set<<16|effect; }
 int snes_frame_counter;
 static unsigned tints;static uint16_t tint_color;static int tint_box[4];
 bool ExtraTintBox(int left,int top,int right,int bottom,uint16_t color) {
@@ -298,12 +300,16 @@ int main(void) {
     g_ram[0x15a2+1]=0x08;cpu.X=1;cpu.A=0x0004;death_hook(&cpu,DEATH_HOOK);CHECK(cpu.A==4); /* other team */
     g_ram[0x625d]=0;g_ram[0x15a2+1]=0x18;
     tints=0;SpecialAbilityDraw();CHECK(tints==1 && tint_color==(2u<<10) && tint_box[2]-tint_box[0]==79);
-    idle(WALL_CLOCK-WALL_UP);
-    CHECK(injecting && redirected==PLACE_ITEM && (cpu.A&0xff)==ITEM_CLOCK && g_ram[0xae]==seat_state(0)[S_CLOCK]);
-    unsigned clock=seat_state(0)[S_CLOCK];
-    CHECK(seat_state(0)[S_CLOCK_SET] && (clock%16<1 || clock%16>5 || clock/16<1 || clock/16>5) && !g_ram[0x1052+clock]);
-    cpu.S=0x1ff;redirected=0;pad_hook(&cpu,PAD_HOOK);CHECK(!injecting);
-    g_ram[0x145a+clock]=ITEM_CLOCK;g_ram[0x1052+clock]=0x10;     /* what $C5:4557 does */
+    CHECK(stage_sounds==1 && stage_sound==((0x0fu<<16)|0x0288));          /* barrier sound, set $0F */
+    idle(WALL_CLOCK-WALL_UP-1);
+    /* The Clock flies off like a lost item: $C4:398C (RTS in bank C4) with
+     * A = 8, $8D = seat and $1CC7 = 0, both restored afterwards. */
+    g_ram[0x8d]=0x44;g_ram[0x1cc7]=0x55;
+    frame(0,0,0);
+    CHECK(injecting && redirected==THROW_ITEM && (cpu.A&0xff)==ITEM_CLOCK && g_ram[0x8d]==0 && !g_ram[0x1cc7]);
+    CHECK(g_ram[0x1fd]==0xf8 && g_ram[0x1fc]==0x36 && g_ram[0x1fb]==0xd0 && g_ram[CLOCK_OWNER]==1);
+    cpu.S=0x1ff;redirected=0;pad_hook(&cpu,PAD_HOOK);
+    CHECK(!injecting && g_ram[0x8d]==0x44 && g_ram[0x1cc7]==0x55);
     while(seat_state(0)[S_KIND]) frame(0,0,0);
     CHECK(timer(0)==WALL_FRAMES && g_ram[0x1052+0x33]==0 && g_ram[0x1052+0x55]==0x30);
     for(unsigned c=0;c<13*16;++c) CHECK(g_ram[0x1052+c]!=0x0c);
@@ -311,23 +317,22 @@ int main(void) {
     /* Seat 1 takes Terrorin's Clock ($C5:42D3, picker in $8D): Terrorin is
      * paralyzed on the next frame ($C4:4503, X = 0) and the Battle clock
      * keeps running. */
-    g_ram[0x16ab]=(uint8)clock;g_ram[0x8d]=1;g_ram[0xe20]=0xc0;g_ram[0xe21]=3;
-    clock_hook(&cpu,CLOCK_HOOK);CHECK(!seat_state(0)[S_CLOCK_SET]);
+    g_ram[0x8d]=1;g_ram[0xe20]=0xc0;g_ram[0xe21]=3;
+    clock_hook(&cpu,CLOCK_HOOK);CHECK(!g_ram[CLOCK_OWNER]);
     frame(0,0,0);
     CHECK(injecting && redirected==FREEZE_PLAYER && cpu.X==0 && SpecialAbilityDazed(0) && !SpecialAbilityDazed(1));
     CHECK(!g_ram[0xe20] && !g_ram[0xe21]);
     cpu.S=0x1ff;redirected=0;pad_hook(&cpu,PAD_HOOK);CHECK(!injecting);
     /* His own Clock paralyzes every other player (Free-for-All). */
-    seat_state(0)[S_CLOCK]=0x77;seat_state(0)[S_CLOCK_SET]=1;g_ram[0x145a+0x77]=ITEM_CLOCK;g_ram[0x1052+0x77]=0x10;
-    g_ram[0x16aa]=0x77;g_ram[0x8d]=0;clock_hook(&cpu,CLOCK_HOOK);
+    g_ram[CLOCK_OWNER]=1;g_ram[0x8d]=0;clock_hook(&cpu,CLOCK_HOOK);
     frame(0,0,0);
     unsigned frozen_seats=0;
     for(unsigned k=0;k<8 && injecting;++k) { if(redirected==FREEZE_PLAYER) frozen_seats|=1u<<cpu.X;cpu.S=0x1ff;redirected=0;pad_hook(&cpu,PAD_HOOK); }
     CHECK(frozen_seats==0x1e && SpecialAbilityDazed(4));
-    /* A Clock that burnt is forgotten; Normal Game keeps the stock effect. */
-    seat_state(0)[S_CLOCK_SET]=1;g_ram[0x145a+0x77]=0;frame(0,0,0);CHECK(!seat_state(0)[S_CLOCK_SET]);
-    g_ram[0x1d1a]=0;g_ram[0x1031]=0x0d;seat_state(0)[S_CLOCK_SET]=1;g_ram[0x145a+0x77]=ITEM_CLOCK;
-    clock_hook(&cpu,CLOCK_HOOK);CHECK(seat_state(0)[S_CLOCK_SET] && !g_ram[CLOCK_EVENT]);
+    /* No Clock of his out: nothing; Normal Game keeps the stock effect. */
+    clock_hook(&cpu,CLOCK_HOOK);CHECK(!g_ram[CLOCK_EVENT]);
+    g_ram[0x1d1a]=0;g_ram[0x1031]=0x0d;g_ram[CLOCK_OWNER]=1;
+    clock_hook(&cpu,CLOCK_HOOK);CHECK(g_ram[CLOCK_OWNER]==1 && !g_ram[CLOCK_EVENT]);
     choices[0]=11;choices[1]=12;
 
     /* Leaving the stage clears every seat. */

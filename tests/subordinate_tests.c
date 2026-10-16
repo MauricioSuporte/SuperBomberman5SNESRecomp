@@ -11,7 +11,7 @@ static SNESModActivationCallback activation,reset_callback;
 int snes_mod_register_reset_callback(SNESModActivationCallback fn) { reset_callback=fn;return 1; }
 int snes_mod_register_activation_plugin(const char *id,SNESModActivationCallback fn) { (void)id;(void)fn;return 0; }
 #include "../src/subordinate_mod.c"
-/* The Super Bomberman 5 extra characters plugin turns the module on. */
+/* The Super Bomberman 5 Extra Characters plugin turns the module on. */
 static void extras_plugin(void) { SubordinateActivate(); }
 uint8 g_ram[0x20000];
 /* Extra-character core not linked: stock ten-cell picker arrays. */

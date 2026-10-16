@@ -86,7 +86,7 @@ static void install(void) {
     installed=true;patched=patch_count==11;
 }
 static void reset_plugin(void) { uninstall();enabled=false; }
-/* Part of the Super Bomberman 5 extra characters mod: its plugin
+/* Part of the Super Bomberman 5 Extra Characters mod: its plugin
  * (extra_characters_mod.c) turns this module on. */
 void SubordinateActivate(void) { enabled=true; }
 SNES_MOD_CONSTRUCTOR(register_subordinate) {

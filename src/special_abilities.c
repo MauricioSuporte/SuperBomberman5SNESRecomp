@@ -55,16 +55,17 @@
 #include "extra_characters_mod.h"
 #include "sb4_rom.h"
 #include "sb4_sound.h"
+#include "sb5_sound.h"
 #include "common_rtl.h"
 #include "snes/interp_bridge.h"
 #include <string.h>
 
 enum {
     STATE = 0x1f840, SEAT_BYTES = 32, PENDING = 0x1f8e0, SPEED_ACC = 0x1f8e5, DAZED = 0x1f8ea,
-    CLOCK_EVENT = 0x1f8ef, STATE_END = 0x1f8f1,
+    CLOCK_EVENT = 0x1f8ef, CLOCK_OWNER = 0x1f8f1, STATE_END = 0x1f8f2,
     PAD_HOOK = 0xc00af9, SPEED_HOOK = 0xc43180, DEATH_HOOK = 0xc42cfe, CLOCK_HOOK = 0xc542d3,
     LOSE_ITEM = 0xc437cd, RTL_C4 = 0xc436d1, BURN_BLOCK = 0xc5441d,
-    PLACE_ITEM = 0xc54557, FREEZE_PLAYER = 0xc44503, ITEM_CLOCK = 0x08,
+    BARRIER_SET = 0x0f, BARRIER_SOUND = 0x0288, THROW_ITEM = 0xc4398c, FREEZE_PLAYER = 0xc44503, ITEM_CLOCK = 0x08,
     DEBUFF_FRAMES = 640, B_WINDOW = 8, TRAILS = 3,
 };
 /* Per seat: +0/1 debuff, +2/3 cooldown, +4 kind, +5/6 timer, +7 direction
@@ -74,9 +75,9 @@ enum {
  * to lose, +18..26 Jet trail (TRAILS x: cell, age, flags), +27 beam tiles. */
 enum { S_DEBUFF = 0, S_COOLDOWN = 2, S_KIND = 4, S_TIMER = 5, S_DIR = 7, S_DIST = 8, S_HIT = 10,
        S_FLAGS = 13, S_STOP = 14, S_LAST = 15, S_DROPS = 17, S_TRAIL = 18, S_BEAM = 27, S_SHOT = 28,
-       /* Terrorin (over the Jet trail bytes): barrier centre cell, the 21
-        * barrier cells this seat raised (bit mask), his Clock's cell. */
-       S_WALL_CELL = 18, S_WALL_MASK = 19, S_CLOCK = 22, S_CLOCK_SET = 23 };
+       /* Terrorin (over the Jet trail bytes): barrier centre cell and the
+        * 21 barrier cells this seat raised (bit mask). */
+       S_WALL_CELL = 18, S_WALL_MASK = 19 };
 enum { AB_NONE, AB_SHOT, AB_SLASH, AB_HAMMER, AB_JET, AB_LASER, AB_BAZOOKA, AB_GREAT, AB_BARRIER };
 typedef struct { uint8_t kind; uint16_t debuff; uint16_t cooldown; } Ability;
 /* Index: choice - 11 (Honey, Kotetsu, Bomberman, Hammer, Jet, Lady, Bazooka,
@@ -97,9 +98,9 @@ enum { SHOT_FRAMES = 55, SHOT_AT = 32, SHOT_SPEED = 4, SLASH_FRAMES = 61, SLASH_
        LASER_FROM = 48, LADY_FRAMES = 109, GREAT_FRAMES = 160, JET_LANDING = 24, JET_GUARD_AFTER = 60,
        /* Terrorin's barrier, as in ZONE5 - J ($C3:3F2D-$C3:4090): spin
         * $40 frames, raise the barrier and fade the blue in over 16, hold
-        * $40, the Clock comes out ($C3:4010; it lands about 30 frames
-        * later), fade out over 16 from frame 176 and drop it at 192. */
-       WALL_UP = 64, WALL_FADE = 16, WALL_CLOCK = 174, WALL_DOWN = 176, WALL_FRAMES = 192, DAZED_FRAMES = 0x90 };
+        * $40, the Clock flies off ($C3:4010), fade out over 16 from frame
+        * 176 and drop it at 192. */
+       WALL_UP = 64, WALL_FADE = 16, WALL_CLOCK = 144, WALL_DOWN = 176, WALL_FRAMES = 192, DAZED_FRAMES = 0x90 };
 /* Super Bomberman 4 sound effects ($C0:071D numbers). */
 enum { SND_EXPLOSION = 0x39, SND_MACE = 0x4e, SND_LASER = 0x5a, SND_GUARD = 0x5f };
 static uint8_t *seat_state(unsigned i) { return g_ram+STATE+i*SEAT_BYTES; }
@@ -231,9 +232,9 @@ static void extend_invulnerability(unsigned seat,unsigned frames) {
 static void start(unsigned seat,int direction) {
     const Ability *a=ability_of(seat);
     uint8_t *s=seat_state(seat);
-    uint8_t drops=s[S_DROPS],clock=s[S_CLOCK],clock_set=s[S_CLOCK_SET];
+    uint8_t drops=s[S_DROPS];
     memset(s+S_KIND,0,SEAT_BYTES-S_KIND);
-    s[S_DROPS]=drops;s[S_CLOCK]=clock;s[S_CLOCK_SET]=clock_set;
+    s[S_DROPS]=drops;
     s[S_KIND]=a->kind;s[S_DIR]=(uint8_t)direction;
     /* Super Bomberman 4 starts the debuff counter with the move ($E2,X =
      * 160 on the trigger frame), not when it ends. */
@@ -298,19 +299,21 @@ static bool frozen(unsigned seat) {
  * Bazooka's beam ($C5:441D, A = cell; RTL). Return frames for $C0:0AF9 (and
  * for an RTL in bank $C4) are pushed, so each routine comes back to the
  * hook, which starts the next one or restores the registers. */
-static bool injecting;
+static bool injecting,scratch_saved;
+static uint8_t saved_8d,saved_1cc7;
 static CpuState saved_cpu;
 /* `ah` >= 0: the whole accumulator is (ah << 8) | a (a sound command);
  * `ae` >= 0: direct-page $AE is set first (the item placer's cell). */
-typedef struct { uint32_t routine;uint8_t a,x;bool rts;int16_t ah,ae; } Call;
+typedef struct { uint32_t routine;uint8_t a,x;bool rts;int16_t ah,ae,actor; } Call;
 static Call calls[24];
 static uint8_t call_count,call_next;
 static void queue_call(uint32_t routine,uint8_t a,uint8_t x,bool rts) {
-    if(call_count<sizeof(calls)/sizeof(*calls)) calls[call_count++]=(Call){routine,a,x,rts,-1,-1};
+    if(call_count<sizeof(calls)/sizeof(*calls)) calls[call_count++]=(Call){routine,a,x,rts,-1,-1,-1};
 }
-static void queue_call_full(uint32_t routine,uint16_t a,int ae) {
-    if(call_count<sizeof(calls)/sizeof(*calls))
-        calls[call_count++]=(Call){routine,(uint8_t)a,0,false,(int16_t)(a>>8),(int16_t)ae};
+/* $C4:398C (RTS, bank C4) with A = item, $8D = seat, $1CC7 = 0: the item
+ * flies off from the seat's cell. $8D and $1CC7 are restored afterwards. */
+static void queue_throw(unsigned seat,uint8_t item) {
+    if(call_count<sizeof(calls)/sizeof(*calls)) calls[call_count++]=(Call){THROW_ITEM,item,(uint8_t)seat,true,-1,-1,(int16_t)seat};
 }
 static void push(CpuState *cpu,uint8_t v) { g_ram[cpu->S]=v;cpu->S=(uint16_t)(cpu->S-1); }
 /* A JSL-style routine gets a return frame for $C0:0AF9; an RTS routine in
@@ -320,6 +323,10 @@ static void inject(CpuState *cpu,const Call *c) {
     if(c->rts) { push(cpu,(uint8_t)((RTL_C4-1)>>8));push(cpu,(uint8_t)(RTL_C4-1)); }
     cpu->A=(uint16_t)(c->ah>=0?((unsigned)c->ah<<8)|c->a:(cpu->A&0xff00)|c->a);cpu->X=(uint16_t)c->x;
     if(c->ae>=0) g_ram[(cpu->D+0xae)&0xffff]=(uint8_t)c->ae;
+    if(c->actor>=0) {
+        if(!scratch_saved) { saved_8d=g_ram[(cpu->D+0x8d)&0xffff];saved_1cc7=g_ram[0x1cc7];scratch_saved=true; }
+        g_ram[(cpu->D+0x8d)&0xffff]=(uint8_t)c->actor;g_ram[0x1cc7]=0;
+    }
     interp_bridge_pre_opcode_redirect(c->routine);
 }
 static bool next_call(CpuState *cpu) {
@@ -376,24 +383,6 @@ static bool friendly_wall(unsigned actor,unsigned cell) {
         for(unsigned k=0;k<21;++k) if((mask&(1u<<k)) && wall_cell(s,k)==(int)cell) return true;
     }
     return false;
-}
-/* A free cell for the Clock, like the cartridge's drop ($C0:C9F0: map and
- * flags clear, $7E2700 bit 6 clear), outside the barrier and away from
- * players; picked by a hash of the frame so replays repeat it. */
-static int clock_cell(unsigned seat) {
-    unsigned candidates[13*11],n=0;
-    for(unsigned c=0;c<13*16;++c) {
-        if(c%16==0 || c%16>13 || c<16 || c>=12*16) continue;
-        if(g_ram[0x1052+c] || (g_ram[0x1152+c]&0x98) || (g_ram[0x2700+c]&0x40)) continue;
-        bool taken=false;
-        for(unsigned a=0;a<5;++a) if(alive(a) && g_ram[0x16aa+a]==c) taken=true;
-        int dx=(int)(c%16)-(int)(g_ram[0x16aa+seat]%16),dy=(int)(c/16)-(int)(g_ram[0x16aa+seat]/16);
-        if(dx>=-2 && dx<=2 && dy>=-2 && dy<=2) taken=true;
-        if(!taken && n<sizeof(candidates)/sizeof(*candidates)) candidates[n++]=c;
-    }
-    if(!n) return -1;
-    uint32_t h=(uint32_t)snes_frame_counter*2654435761u^(seat*0x9e3779b9u);
-    return (int)candidates[(h>>16)%n];
 }
 /* Blue of the barrier: the cartridge fades the fixed color's blue ($0317)
  * from 0 to 16 and back. */
@@ -452,10 +441,14 @@ static void tick(unsigned seat) {
         /* Terrorin spins in place (untouchable), raises the barrier around
          * the 3 x 3 square he stands in, puts
          * a Clock on a free cell and drops the barrier. */
-        if(t==WALL_UP) raise_wall(seat);
+        if(t==WALL_UP) { raise_wall(seat);Sb5StageSoundPlay(BARRIER_SET,BARRIER_SOUND); }
         if(t==WALL_CLOCK) {
-            int c=clock_cell(seat);
-            if(c>=0) { queue_call_full(PLACE_ITEM,ITEM_CLOCK,c);s[S_CLOCK]=(uint8_t)c;s[S_CLOCK_SET]=1; }
+            /* The Clock flies off like an item a player loses ($C4:398C
+             * with $1CC7 = 0: flight script $73-$76 or $77-$7A, a random
+             * side, landing on a random free cell; the boss's own flight is
+             * script $74 with the same item drop). */
+            queue_throw(seat,ITEM_CLOCK);
+            g_ram[CLOCK_OWNER]=(uint8_t)(seat+1);
         }
         if(t+1>=WALL_FRAMES) { drop_wall(seat);finish(seat); }
         break;
@@ -542,12 +535,7 @@ static void freeze_seat(unsigned seat) {
     g_ram[DAZED+seat]=DAZED_FRAMES;
 }
 static void clock_rules(void) {
-    for(unsigned i=0;i<5;++i) {
-        if(g_ram[DAZED+i]) --g_ram[DAZED+i];
-        uint8_t *s=seat_state(i);
-        /* A Clock that is gone (burnt, taken by the stock pickup) is forgotten. */
-        if(s[S_CLOCK_SET] && (g_ram[0x145a+s[S_CLOCK]]!=ITEM_CLOCK || !(g_ram[0x1052+s[S_CLOCK]]&0x10))) s[S_CLOCK_SET]=0;
-    }
+    for(unsigned i=0;i<5;++i) if(g_ram[DAZED+i]) --g_ram[DAZED+i];
     unsigned owner=g_ram[CLOCK_EVENT],picker=g_ram[CLOCK_EVENT+1];
     g_ram[CLOCK_EVENT]=g_ram[CLOCK_EVENT+1]=0;
     if(!owner || !picker || owner>5 || picker>5) return;
@@ -563,13 +551,11 @@ static void clock_hook(CpuState *cpu,uint32_t pc) {
     if(!ExtraCharactersInstalled() || !battle()) return;
     unsigned picker=g_ram[(cpu->D+0x8d)&0xffff];
     if(picker>=5) return;
-    unsigned cell=g_ram[0x16aa+picker];
-    for(unsigned t=0;t<5;++t) {
-        uint8_t *s=seat_state(t);
-        if(!s[S_CLOCK_SET] || s[S_CLOCK]!=cell) continue;
-        s[S_CLOCK_SET]=0;g_ram[CLOCK_EVENT]=(uint8_t)(t+1);g_ram[CLOCK_EVENT+1]=(uint8_t)(picker+1);
-        return;
-    }
+    /* Only Terrorin brings Clocks into Battle: the last one he threw is
+     * the one taken (a burnt Clock is replaced by his next). */
+    unsigned owner=g_ram[CLOCK_OWNER];
+    if(!owner || owner>5) return;
+    g_ram[CLOCK_OWNER]=0;g_ram[CLOCK_EVENT]=(uint8_t)owner;g_ram[CLOCK_EVENT+1]=(uint8_t)(picker+1);
 }
 /* $C4:2CFE AND #$04: A = $1CCA, the flags of the cell under player X (bit
  * 2: fire, lethal). Terrorin is untouchable while he uses his barrier, and
@@ -590,6 +576,7 @@ static void pad_hook(CpuState *cpu,uint32_t pc) {
         if(next_call(cpu)) return;
         injecting=false;
         cpu->A=saved_cpu.A;cpu->X=saved_cpu.X;cpu->Y=saved_cpu.Y;cpu->D=saved_cpu.D;cpu->DB=saved_cpu.DB;
+        if(scratch_saved) { g_ram[(cpu->D+0x8d)&0xffff]=saved_8d;g_ram[0x1cc7]=saved_1cc7;scratch_saved=false; }
         return;
     }
     if(!ExtraCharactersInstalled() || !in_stage()) {

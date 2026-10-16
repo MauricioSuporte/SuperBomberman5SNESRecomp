@@ -1,4 +1,4 @@
-"""Build the ROM-free package for the native Super Bomberman 5 extra characters plugin."""
+"""Build the ROM-free package for the native Super Bomberman 5 Extra Characters plugin."""
 import argparse
 from pathlib import Path
 import zipfile

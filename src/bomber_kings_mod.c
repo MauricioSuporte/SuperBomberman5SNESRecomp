@@ -5,7 +5,7 @@
  * to its three-row picker and enables the Super Bomberman 4 skins; their
  * frames and palettes are read at runtime from the player's own Super
  * Bomberman 4 image (sb4_rom.c). Without a verified image the picker keeps
- * the layout of the Super Bomberman 5 extra characters mod (or the stock
+ * the layout of the Super Bomberman 5 Extra Characters mod (or the stock
  * one) and nothing else changes. Their special
  * abilities (B + direction) live in special_abilities.c. */
 #include "bomber_kings_mod.h"

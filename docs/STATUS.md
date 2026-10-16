@@ -1,6 +1,6 @@
 # Super Bomberman 5: estado do protótipo
 
-## Super Bomberman 5 extra characters + Emperor Terrorin / personagens extras + imperador Terrorin — 2026-10-16
+## Super Bomberman 5 Extra Characters + Emperor Terrorin / personagens extras + imperador Terrorin — 2026-10-16
 
 Branch `extra-characters` (from `main` v0.12.0; not released, VERSION
 unchanged). One mod, `superbomberman5.extra-characters` 0.1.0 (default
@@ -28,9 +28,10 @@ Evidence (same harness, SB4 ROM selected through `[[resource]]`):
   (seven-column tables for extras only, Kings only, both; Terrorin archive,
   frames, palette and poses; restoration), `special_abilities_tests` (barrier
   timeline, 20 cells around a soft block and pillars, fire-cell hook for
-  owner/opponent/teammate, Clock placement through `$C5:4557`, pickup rules
-  and paralysis through `$C4:4503`, Battle clock not stopped, burnt Clock
-  forgotten, Normal Game stock effect), `subordinate_tests` (activation by the
+  owner/opponent/teammate, barrier sound request, Clock flight through
+  `$C4:398C` with `$8D`/`$1CC7` restored, pickup rules and paralysis through
+  `$C4:4503`, Battle clock not stopped, Normal Game stock effect; Terrorin
+  standing/paralysis frame and defeat steps), `subordinate_tests` (activation by the
   new plugin). Python tests and the publication audit pass.
 - Battle picker (Bomber Kings + extras + colors, PT-BR too): seven columns,
   Terrorin figure and portrait, cursor 5→11→19→1 and down 1→6→13.
@@ -38,7 +39,15 @@ Evidence (same harness, SB4 ROM selected through `[[resource]]`):
   barrier box (HUD excluded), 21-cell barrier with Terrorin standing on it
   unharmed, Clock placed on a free cell, barrier dropped at frame 192.
   Clock pickup by Terrorin froze seats 2-5; by an opponent froze Terrorin
-  (dazed halo pose); the Battle timer kept running.
+  (frozen standing); the Battle timer kept running.
+- Follow-up (same day): mod renamed "Super Bomberman 5 Extra Characters";
+  standing uses the walk's first step (the `$4A-$4D` frames are a crouch,
+  shorter than walking); the barrier fades in over 16 frames like the boss
+  and plays `$0288`, rendered in a private APU (`src/sb5_sound.c`, about
+  2.6 s; sending `$74` to the game's own driver in Battle froze it, since the
+  Battle set lacks it); the Clock flies off him like a lost item (`$C4:398C`)
+  and landed on a random free cell; defeat replays the boss's animation `$50`
+  (head flying right, body falling), kept after the native sprite vanishes.
 - Normal Game (normal character selection): Terrorin chosen, Zone 1-1 with
   his skin and HUD face, barrier and Clock.
 

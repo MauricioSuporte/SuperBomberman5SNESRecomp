@@ -10,7 +10,7 @@ from pause_menu_runtime import BATTLE_ENTER, press
 ROOT=Path(__file__).resolve().parents[1]
 
 def run(args,kind,unlocked,subordinate,honey):
-    # The Super Bomberman 5 extra characters mod carries Subordinate Bomber
+    # The Super Bomberman 5 Extra Characters mod carries Subordinate Bomber
     # and Honey/Kotetsu together; the cases differ only by enabling it.
     honey=subordinate
     folder=Path(tempfile.mkdtemp(prefix=kind+'-',dir=args.out))

@@ -1,6 +1,6 @@
 /* Extra characters: the extra-character core of the character picker.
  *
- * Super Bomberman 5 extra characters (plugin "superbomberman5.extra-
+ * Super Bomberman 5 Extra Characters (plugin "superbomberman5.extra-
  * characters.characters"): Honey and Kotetsu, the bosses of the secret
  * stages ZONE1/2/3 - S (stage ids $71-$73), Emperor Terrorin from the last
  * phase of ZONE5 - J (stage $6F), and Subordinate Bomber (subordinate_mod.c,
@@ -79,10 +79,12 @@ static const uint8_t kAttackBase[2]={0x23,0x30},kAttackStep[2]={5,2},kVictorySte
 /* Champion screen (Battle winner): Honey $A2/$A3, Kotetsu $9E/$9F. */
 static const uint8_t kChampionAnim[2]={0x50,0x4e};
 /* Terrorin (object set $0E): four-way groups right, down, left, up. */
-enum { T_WALK = 0x39, T_LIFT = 0x3d, T_CARRY_WALK = 0x41, T_THROW = 0x45, T_SPIN = 0x49, T_STAND = 0x4a,
-       T_CHEER = 0x4e, T_DAZED = 0x50, T_HURT = 0x51, T_SPIN_GUARD = 0x52, T_FRONT = 0x53 };
+/* He stands on the first step of his walk (the $4A-$4D frames are a lower
+ * crouch, not his standing pose). */
+enum { T_WALK = 0x39, T_LIFT = 0x3d, T_CARRY_WALK = 0x41, T_THROW = 0x45, T_SPIN = 0x49, T_STAND = T_WALK,
+       T_CHEER = 0x4e, T_DEATH = 0x50, T_HURT = 0x51, T_SPIN_GUARD = 0x52, T_FRONT = 0x53 };
 
-/* sb5_extras: the Super Bomberman 5 extra characters plugin (Honey,
+/* sb5_extras: the Super Bomberman 5 Extra Characters plugin (Honey,
  * Kotetsu, Terrorin; Subordinate Bomber has its own module). */
 static bool sb5_extras,enabled,installed,patched,art_ready,terrorin_ready,champion_ready;
 /* Grid rows (2 without the Bomber Kings, 3 with them), columns (7 with the
@@ -256,12 +258,14 @@ static const struct { uint8_t anim,steps; } kTerrorinAnims[]={
     {T_WALK,8},{T_WALK+1,8},{T_WALK+2,8},{T_WALK+3,8},{T_LIFT,3},{T_LIFT+1,3},{T_LIFT+2,3},{T_LIFT+3,3},
     {T_CARRY_WALK,8},{T_CARRY_WALK+1,8},{T_CARRY_WALK+2,8},{T_CARRY_WALK+3,8},
     {T_THROW,3},{T_THROW+1,3},{T_THROW+2,3},{T_THROW+3,3},{T_SPIN,4},
-    {T_STAND,1},{T_STAND+1,1},{T_STAND+2,1},{T_STAND+3,1},{T_CHEER,2},{T_DAZED,18},{T_HURT,3},{T_SPIN_GUARD,4},{T_FRONT,1},
+    {T_STAND,1},{T_STAND+1,1},{T_STAND+2,1},{T_STAND+3,1},{T_CHEER,2},{T_HURT,3},{T_SPIN_GUARD,4},{T_FRONT,1},
 };
+enum { DEATH_FIRST = 152, DEATH_LAST = 169 };   /* the frames of animation $50 (defeat) */
 static bool check_terrorin(void) {
-    for(unsigned k=0;k<sizeof(kTerrorinAnims)/sizeof(*kTerrorinAnims);++k)
-        for(unsigned step=0;step<kTerrorinAnims[k].steps;++step) {
-            unsigned f=terrorin_frame(kTerrorinAnims[k].anim,step);
+    unsigned count=sizeof(kTerrorinAnims)/sizeof(*kTerrorinAnims);
+    for(unsigned k=0;k<count+1;++k)
+        for(unsigned step=0;step<(k<count?kTerrorinAnims[k].steps:DEATH_LAST-DEATH_FIRST+1u);++step) {
+            unsigned f=k<count?terrorin_frame(kTerrorinAnims[k].anim,step):DEATH_FIRST+step;
             if(!f || f>200) return false;
             uint32_t data=set_frame_data(TERRORIN_SET,f);unsigned n=rb(data);
             if(!n || n>24) return false;
@@ -324,9 +328,12 @@ static void archive_pixels(const uint8_t *art,unsigned tile,uint8_t out[8][8]) {
 /* Draws frame `data` (count + 7-byte pieces) from `art` with its origin at
  * canvas (ox, oy). Without `shadow`, the 8x8 pieces below the feet (dy >= 2,
  * the ground shadow of set $0D frames) are left out. */
-static void compose_data(uint32_t data,const uint8_t *art,unsigned art_size,int ox,int oy,bool shadow) {
+/* Pieces drawn: all, or only those in `pieces` (bit k = piece k). */
+enum { ALL_PIECES = 0xffffffffu };
+static void compose_pieces(uint32_t data,const uint8_t *art,unsigned art_size,int ox,int oy,bool shadow,uint32_t pieces) {
     unsigned n=rb(data);
     for(unsigned k=n;k-->0;) { /* First piece on top. */
+        if(k<32 && !((pieces>>k)&1)) continue;
         uint32_t piece=data+1+k*7;
         int dx=(int16_t)rw(piece),dy=(int16_t)rw(piece+2);
         unsigned tile=rw(piece+4),attr=rb(piece+6),size=(attr&1)?2:1;
@@ -343,6 +350,9 @@ static void compose_data(uint32_t data,const uint8_t *art,unsigned art_size,int 
             }
         }
     }
+}
+static void compose_data(uint32_t data,const uint8_t *art,unsigned art_size,int ox,int oy,bool shadow) {
+    compose_pieces(data,art,art_size,ox,oy,shadow,ALL_PIECES);
 }
 static void compose(unsigned frame,int ox,int oy) { compose_data(frame_data(frame),archive,ARCHIVE_SIZE,ox,oy,true); }
 
@@ -680,11 +690,41 @@ static unsigned pose_frame(unsigned skin,unsigned object,int ability,unsigned st
  * ($52, the move he makes before the barrier rises); a seat frozen by a
  * Clock shows his dazed frames ($50 from step 7, the halo). */
 static unsigned terrorin_walk(unsigned object) { return (g_ram[0x7ff+object]/2u*8u/10u)&7; }
+/* His defeat in ZONE5 - J ($50, 194 frames): his head flies off to the right
+ * and bounces while the body stands, then the body falls. A bomber's death
+ * ($16) lasts far less, so the same steps run faster: frame number and
+ * duration pairs, the last one held. Counted from the first frame the seat
+ * shows its death animation. */
+static const uint8_t kDeathSteps[][2]={
+    {152,6},{153,4},{154,4},{155,4},{156,4},{157,4},{158,4},{159,2},{160,2},{161,2},{162,2},
+    {163,2},{164,2},{165,2},{166,3},{167,3},{166,3},{167,3},{168,6},{169,255},
+};
+/* Where his figure was last matched to the bomber's sprites (screen offset
+ * of the object): the bomber's own death sprites disappear before the death
+ * animation ends, and his defeat goes on at that place. */
+static int last_ox[5],last_oy[5],last_bottom[5];
+static uint32_t death_start[5];
+static bool death_seen[5];
+static unsigned terrorin_death_frame(unsigned seat) {
+    unsigned t=seat<5 && death_seen[seat]?(unsigned)(snes_frame_counter-death_start[seat]):0;
+    for(unsigned k=0;k<sizeof(kDeathSteps)/sizeof(*kDeathSteps);++k) {
+        if(t<kDeathSteps[k][1] || kDeathSteps[k][1]==255) return kDeathSteps[k][0];
+        t-=kDeathSteps[k][1];
+    }
+    return 169;
+}
+static void track_death(unsigned seat,unsigned object) {
+    if(seat>=5) return;
+    bool dying=object<0x60 && g_ram[0x79f+object]==0x16;
+    if(dying && !death_seen[seat]) { death_seen[seat]=true;death_start[seat]=(uint32_t)snes_frame_counter; }
+    if(!dying) death_seen[seat]=false;
+}
 static unsigned terrorin_pose_frame(unsigned seat,unsigned object,int ability,unsigned step) {
     int d;int pose=bomber_pose(g_ram[0x79f+object],&d);
     if(ability>=0) return terrorin_frame(T_SPIN_GUARD,(step/6)&3);
-    if(SpecialAbilityDazed(seat)) return terrorin_frame(T_DAZED,7+(snes_frame_counter/3)%11);
     unsigned dir=(unsigned)d&3;
+    /* Paralyzed by a Clock: frozen in his standing frame, like the boss. */
+    if(SpecialAbilityDazed(seat)) return terrorin_frame(T_STAND+dir,0);
     switch(pose) {
     case POSE_WALK: return terrorin_frame(T_WALK+dir,terrorin_walk(object));
     case POSE_CARRY_WALK: return terrorin_frame(T_CARRY_WALK+dir,terrorin_walk(object));
@@ -692,8 +732,8 @@ static unsigned terrorin_pose_frame(unsigned seat,unsigned object,int ability,un
     case POSE_ACTION: return terrorin_frame(T_THROW+dir,(g_ram[0x7ff+object]/2u)<2?1:2);
     case POSE_VICTORY: return terrorin_frame(T_CHEER,(snes_frame_counter/8)&1);
     case POSE_STAND: case POSE_AIR: return terrorin_frame(T_STAND+dir,0);
-    case POSE_DEATH: { unsigned k=g_ram[0x7ff+object]/2;return terrorin_frame(T_HURT,k>2?2:k); }
-    case POSE_STUN: return terrorin_frame(T_DAZED,7+(snes_frame_counter/3)%11);
+    case POSE_DEATH: return terrorin_death_frame(seat);
+    case POSE_STUN: return terrorin_frame(T_HURT,(snes_frame_counter/8)%3);
     case POSE_TIME_UP: return terrorin_frame(T_FRONT,0);
     default: return terrorin_frame(T_SPIN,(snes_frame_counter/4)&3);
     }
@@ -701,8 +741,17 @@ static unsigned terrorin_pose_frame(unsigned seat,unsigned object,int ability,un
 /* Terrorin's standing anchor (front standing frame): centre and lowest line,
  * put on the bomber's own anchor so his feet stand where the bomber's do. */
 static int terrorin_cx=0,terrorin_bottom=0;
-static void compose_terrorin(unsigned frame,int cx,int bottom) {
-    compose_data(set_frame_data(TERRORIN_SET,frame),terrorin,TERRORIN_SIZE,cx-terrorin_cx,bottom-terrorin_bottom,true);
+static void compose_terrorin_pieces(unsigned frame,int cx,int bottom,uint32_t pieces) {
+    compose_pieces(set_frame_data(TERRORIN_SET,frame),terrorin,TERRORIN_SIZE,cx-terrorin_cx,bottom-terrorin_bottom,true,pieces);
+}
+static void compose_terrorin(unsigned frame,int cx,int bottom) { compose_terrorin_pieces(frame,cx,bottom,ALL_PIECES); }
+/* Death frames $99-$A5 (153-165) draw his flying head as piece 0, up to
+ * 56 pixels right of him: wider than the canvas, so it is drawn apart.
+ * Returns its x offset, or a negative value when the frame has none. */
+static int terrorin_head_dx(unsigned frame) {
+    if(frame<153 || frame>165) return -1;
+    uint32_t data=set_frame_data(TERRORIN_SET,frame);
+    return rb(data)==3?(int16_t)rw(data+1)+8:-1;
 }
 /* Super Bomberman 4 battle frames (all six characters share the layout;
  * verified by the cartridge's own walking uploads): directions up, right,
@@ -937,11 +986,16 @@ static void draw_players(Ppu *ppu,bool *taken) {
         unsigned slot=g_ram[0x6df+object];
         if(slot>=8) continue;
         unsigned mine[16];int ox=0,oy=0,bottom=0;
+        if(skin==SKIN_TERRORIN) track_death(i,object);
         unsigned count=match_native(ppu,object,slot,mine,&ox,&oy,&bottom);
-        if(!count) continue; /* Bomber not drawn (blinking, dead). */
-        /* Death ($16): the last step is the burnt-out debris; leave it native. */
-        if(g_ram[0x79f+object]==0x16 && g_ram[0x7ff+object]/2>=4) continue;
-        unsigned priority=(ppu->oam[mine[0]*2+1]>>12)&3;
+        bool dying=skin==SKIN_TERRORIN && death_seen[i];
+        if(count) { last_ox[i]=ox;last_oy[i]=oy;last_bottom[i]=bottom; }
+        else if(dying) { ox=last_ox[i];oy=last_oy[i];bottom=last_bottom[i]; }
+        else continue; /* Bomber not drawn (blinking, dead). */
+        /* Death ($16): the last step is the burnt-out debris; leave it native
+         * (Terrorin has his own defeat: his body falls). */
+        if(skin!=SKIN_TERRORIN && g_ram[0x79f+object]==0x16 && g_ram[0x7ff+object]/2>=4) continue;
+        unsigned priority=count?(ppu->oam[mine[0]*2+1]>>12)&3:2;
         /* $1782+seat: bit 7 riding a mount, bit 1 jumping onto it. A rider
          * stands with its feet where the native rider frame ends; neither
          * keeps the ground shadow (the jump has its own native one). */
@@ -950,11 +1004,13 @@ static void draw_players(Ppu *ppu,bool *taken) {
         int ability=SpecialAbilityPose(i,&step,&sb4_frame);
         int direction;unsigned key=(unsigned)skin*8;
         memset(canvas,0,sizeof(canvas));
-        int lift=0;
+        int lift=0,head_dx=-1;unsigned terrorin_shown=0;
         if(skin==SKIN_TERRORIN) {
             /* A rider stands where the native rider frame ends. */
-            compose_terrorin(terrorin_pose_frame(i,object,ability,step),ORIGIN_X+bomber_cx,
-                             rider?ORIGIN_Y+bottom-1:ORIGIN_Y+bomber_bottom-1);
+            terrorin_shown=terrorin_pose_frame(i,object,ability,step);
+            head_dx=terrorin_head_dx(terrorin_shown);
+            compose_terrorin_pieces(terrorin_shown,ORIGIN_X+bomber_cx,rider?ORIGIN_Y+bottom-1:ORIGIN_Y+bomber_bottom-1,
+                                    head_dx>=0?ALL_PIECES&~1u:ALL_PIECES);
         } else if(sb4_skin(skin)) {
             key+=g_ram[SEAT_COLOR+i]%SB4_COLORS;
             /* Bad Bomber ($15A2 bit 7): the Super Bomberman 4 Bad Bomber on
@@ -975,9 +1031,16 @@ static void draw_players(Ppu *ppu,bool *taken) {
         }
         int y=g_ram[0x5bf+object]+oy-ORIGIN_Y+lift;
         int top=screen_line(y+canvas_top()),low=top+(canvas_bottom()-canvas_top());
-        int palette=figure_palette(ppu,key,slot,mine,count,top,low);
+        /* His flying head leaves the body's lines: one palette for the frame. */
+        int palette=head_dx>=0 || !count?choose_palette(ppu,key,(int)slot):figure_palette(ppu,key,slot,mine,count,top,low);
         if(palette<0) continue;
-        emit(ppu,g_ram[0x55f+object]+ox-ORIGIN_X,y,(unsigned)palette,priority,mine,count,taken);
+        int x=g_ram[0x55f+object]+ox-ORIGIN_X;
+        emit(ppu,x,y,(unsigned)palette,priority,mine,count,taken);
+        if(head_dx>=0) {
+            memset(canvas,0,sizeof(canvas));
+            compose_terrorin_pieces(terrorin_shown,ORIGIN_X+bomber_cx-head_dx,ORIGIN_Y+bomber_bottom-1,1);
+            emit(ppu,x+head_dx,y,(unsigned)palette,priority,NULL,0,taken);
+        }
     }
 }
 /* Head of a character in a 16x16 block at canvas (ORIGIN_X-8, ORIGIN_Y):

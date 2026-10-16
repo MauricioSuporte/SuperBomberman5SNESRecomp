@@ -11,7 +11,7 @@ enum { HK_CHOICE_HONEY = 11, HK_CHOICE_KOTETSU = 12, KINGS_CHOICE_FIRST = 13, KI
        TERRORIN_CHOICE = 19, EXTRA_CHOICE_LAST = 19 };
 /* The core runs (either plugin enabled). */
 bool ExtraCharactersEnabled(void);
-/* The Super Bomberman 5 extra characters plugin is enabled. */
+/* The Super Bomberman 5 Extra Characters plugin is enabled. */
 bool Sb5ExtrasEnabled(void);
 /* True once the picker patches are installed: the grid has up to nineteen
  * cells and the cell arrays live at PickerCellCharacters()/PickerCellColors(). */
