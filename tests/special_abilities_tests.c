@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <string.h>
 uint8 g_ram[0x20000];
+static uint8 rom_image[0x400000];
+const uint8 *g_rom=rom_image;
 static unsigned choices[5];
 static bool installed=true;
 unsigned ExtraCharacterSeatChoice(unsigned seat) { return seat<5?choices[seat]:0; }
@@ -24,9 +26,9 @@ uint32_t Sb4FramePc(unsigned character,unsigned frame) { return 0xd00000|charact
 static unsigned sounds[128],skin_frames;
 bool ExtraEmitSkinFrame(unsigned skin,unsigned anim,unsigned step,int x,int y) { (void)skin;(void)anim;(void)step;(void)x;(void)y;++skin_frames;return true; }
 void Sb4SoundPlay(uint8_t id) { ++sounds[id&0x7f]; }
-static InterpPreOpcodeHook hooks[2];static uint32_t hook_pcs[2];static unsigned hook_count;
+static InterpPreOpcodeHook hooks[32];static uint32_t hook_pcs[32];static unsigned hook_count;
 bool interp_bridge_add_pre_opcode_hook(uint32_t pc24,InterpPreOpcodeHook hook) {
-    if(hook_count<2) { hook_pcs[hook_count]=pc24;hooks[hook_count++]=hook; }
+    if(hook_count<32) { hook_pcs[hook_count]=pc24;hooks[hook_count++]=hook; }
     return true;
 }
 static uint32_t redirected;
@@ -65,8 +67,13 @@ static unsigned speed(unsigned seat,unsigned steps) {
 }
 static unsigned timer(unsigned seat) { return get16(seat_state(seat)+S_TIMER); }
 int main(void) {
+    /* The kill stores are hooked only where the image holds STA $15A2,X/Y. */
+    for(unsigned k=0;k<sizeof(kKillStores)/sizeof(*kKillStores);++k) {
+        unsigned at=((kKillStores[k]>>16)&0x3f)<<16|(kKillStores[k]&0xffff);
+        if(k) { rom_image[at]=kKillStores[k]>=0xc02000 && k>=9?0x9d:0x99;rom_image[at+1]=0xa2;rom_image[at+2]=0x15; }
+    }
     SpecialAbilitiesInstall();
-    CHECK(hook_count==2 && hook_pcs[0]==PAD_HOOK && hook_pcs[1]==SPEED_HOOK);
+    CHECK(hook_count==2+21 && hook_pcs[0]==PAD_HOOK && hook_pcs[1]==SPEED_HOOK && hook_pcs[2]==kKillStores[1]);
     unsigned step;uint32_t pc;
     /* Honey (seat 0), Kotetsu (1), SB4 Bomberman (2, no ability), Bazooka (3), Great (4). */
     choices[0]=11;choices[1]=12;choices[2]=13;choices[3]=17;choices[4]=18;
@@ -196,6 +203,17 @@ int main(void) {
         x+=JET_SPEED;g_ram[0x182a+1]=(uint8)x;
     }
     CHECK(g_ram[0x15a2+2]&0x40); /* seat 2 (x 112, tile 7) was in the trail */
+    /* Enemy contact and blasts do not kill him: the cartridge's kill store
+     * loses bit 6 for his seat only (STA $15A2,Y at $C3:1197, STA $15A2,X at
+     * $C4:42E5). */
+    cpu.Y=1;cpu.A=0x45;hooks[2](&cpu,kKillStores[1]);CHECK(cpu.A==0x05);
+    cpu.Y=3;cpu.A=0x45;hooks[2](&cpu,kKillStores[1]);CHECK(cpu.A==0x45);
+    cpu.X=1;cpu.A=0x4c;hooks[22](&cpu,kKillStores[21]);CHECK(cpu.A==0x0c);
+    /* His body hits an enemy next to him (actor 10, 8 px ahead). */
+    g_ram[0x17fa+10]=0x20;g_ram[0x182a+10]=(uint8)(x+8);g_ram[0x1872+10]=16;g_ram[0x1662+10]=1;
+    frame(1,0,0);x+=JET_SPEED;g_ram[0x182a+1]=(uint8)x;
+    CHECK(g_ram[0x1662+10]==0 || (g_ram[0x15a2+10]&0x40));
+    g_ram[0x17fa+10]=0xff;
     CHECK(sounds[SND_EXPLOSION]==3);                        /* a segment every 8 frames */
     /* The invulnerability countdown runs (it blinks) and is never frozen. */
     { unsigned a=g_ram[0x170a+1];frame(1,0,0);CHECK(g_ram[0x170a+1]!=a || a>=8);x+=JET_SPEED;g_ram[0x182a+1]=(uint8)x; }

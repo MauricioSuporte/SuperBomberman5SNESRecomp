@@ -55,7 +55,7 @@ seguem os ataques deles na luta contra eles no Normal Game:
 | Honey | fica parada na animação de tiro da luta contra ela (0,9 s) e dispara um projétil que segue sozinho até um bloco e mata quem acertar | debuff |
 | Kotetsu | estocada de espada da luta contra ele (1 s), atingindo o bloco da frente | debuff |
 | Hammer Bomber | fica parado girando a maça em volta de si (~2 s); quem ela toca fica atordoado e perde um item | — |
-| Jet Bomber | preparação de 0,8 s, depois voa a 4 px por quadro até bater deixando um rastro de fogo; ao bater fica parado no obstáculo na pose de voo por 24 quadros (como no SB4) e só então volta a andar; pisca invencível do começo até cerca de 1 s depois de bater | debuff |
+| Jet Bomber | preparação de 0,8 s, depois voa a 4 px por quadro até bater deixando um rastro de fogo; ao bater fica parado no obstáculo na pose de voo por 24 quadros (como no SB4) e só então volta a andar; pisca invencível do começo até cerca de 1 s depois de bater; durante a habilidade o corpo dele também acerta inimigos e jogadores que toca e ele é imune ao contato com inimigos | debuff |
 | Lady Bomber | gira a arma, dispara o laser (sai aos 0,8 s, 2 px por quadro, segue sozinho até um bloco ou alvo), gira a arma de novo e volta a andar (1,8 s); o alvo fica atordoado e perde dois itens | — |
 | Bazooka Bomber | fica parado 1,6 s mirando (gira nas quatro direções) e dispara um raio de fogo para a frente como a chama de uma bomba: queima o primeiro soft block, para em blocos fixos e detona bombas no caminho | debuff |
 | Great Bomber | fica parado, piscando e invencível, por 2,7 s | debuff |
@@ -75,7 +75,7 @@ seguem os ataques deles na luta contra eles no Normal Game:
   detonar.
 - **Montado no Louie**, B + direção não usa a habilidade (a habilidade do Louie
   continua no Y).
-- **Dano:** o raio do Bazooka, o rastro do Jet, o tiro da Honey e o corte do
+- **Dano:** o raio do Bazooka, o rastro e o corpo do Jet, o tiro da Honey e o corte do
   Kotetsu são letais como uma explosão (nos inimigos e chefes, um ponto de vida
   com a invencibilidade temporária do próprio cartucho). A maça e o laser
   atordoam e fazem perder itens com a reação do próprio SB5 (o item sai voando).
@@ -145,7 +145,9 @@ attacks in their Normal Game boss fight:
 - **Jet**: 0.8 s wind-up, then flies 4 px per frame until stopped, leaving a
   fire trail; after the crash he stays at the obstacle in the flying pose for
   24 frames (as in SB4) before walking again. He blinks
-  invulnerable from the start until about 1 s after the crash.
+  invulnerable from the start until about 1 s after the crash. During the
+  ability his body also hits enemies and players it touches, and enemy
+  contact cannot kill him.
 - **Lady**: turns her gun, fires the laser (leaves at 0.8 s, 2 px per frame and
   flies on its own up to a block or a target), turns the gun again and walks
   again (1.8 s); the target is stunned and loses two items.
@@ -167,7 +169,7 @@ attacks in their Normal Game boss fight:
   ability ready, the game waits a few frames for a direction before detonating.
 - **Riding Louie**, B + direction does not trigger the ability (Louie's own
   skill stays on Y).
-- **Damage:** Bazooka's beam, Jet's trail, Honey's shot and Kotetsu's cut are
+- **Damage:** Bazooka's beam, Jet's trail and body, Honey's shot and Kotetsu's cut are
   lethal like an explosion (enemies and bosses lose one hit point with the
   cartridge's temporary invulnerability). The mace and the laser stun and take
   items with Super Bomberman 5's own reaction (the item flies off). **Normal
@@ -228,6 +230,11 @@ requires host v0.11.0 or newer.
   after the crash (frame 96 → 120).
 - Jet invulnerability is the native one (`$15A2` bit 2 + `$170A`), extended in
   steps of 4 so its blink (low bits of `$170A`, `$C4:2E42`) keeps running.
+  Enemy contact ignores that bit, so the cartridge's 22 kill stores
+  (`STA $15A2,Y` at `$C1:19A6`, `$C3:1197`... and `STA $15A2,X` at `$C0:2DAA`,
+  `$C4:42E5`..., found by scanning for `LDA/ORA #$40` before them) get a
+  pre-opcode hook that drops bit 6 for a seat in Jet's ability; each site is
+  hooked only if the image holds the expected `99/9D A2 15` bytes.
 - Ability poses (32x32, same layout as the sheets): Bazooka aiming
   `$CA:98B0 + dir*$80`; Jet `$CA:D0B0 + dir*$800 + k*$80` (k 0-3); Lady
   `$CA:A0B0 + k*$800 + dir*$80` (k 0-5); Hammer `$CD:0900`, `$CD:0980`,

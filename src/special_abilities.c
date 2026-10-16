@@ -391,6 +391,11 @@ static void tick(unsigned seat) {
         /* Invulnerable (blinking) from the wind-up until about a second
          * after he lands, as in Super Bomberman 4. */
         if(t<JET_WINDUP) { extend_invulnerability(seat,8);break; }
+        /* His body (flying, and against the obstacle) hits what it touches. */
+        if(!(s[S_FLAGS]&1) || t<(unsigned)s[S_STOP]+JET_LANDING) {
+            unsigned found[24],n=near(seat,x+kDx[d]*4,y+kDy[d]*4,14,found,24);
+            for(unsigned k=0;k<n;++k) damage(found[k]);
+        }
         if(!(s[S_FLAGS]&1)) {
             extend_invulnerability(seat,8);
             /* A block stops the flight: the position along the flight stays
@@ -491,10 +496,37 @@ static void speed_hook(CpuState *cpu,uint32_t pc) {
      * must see the new count (zero = no movement this frame). */
     cpu->_flag_Z=steps==0;cpu->_flag_N=0;
 }
+/* Jet is untouchable while he uses his ability (SB4: invulnerable): the
+ * cartridge's kill stores ($15A2 |= $40 for actor X or Y; enemy contact,
+ * explosions, gimmicks) leave bit 6 out for his seat. Found by scanning the
+ * JPN image for LDA #$40 / ORA $15A2,idx / STA $15A2,idx and ORA #$40 /
+ * STA $15A2,X; verified in Zone 1-1 (an enemy in his path used to kill
+ * him). */
+static const uint32_t kKillStores[]={
+    0xc119a6,0xc31197,0xc313a4,0xc315b6,0xc32cae,0xc33ca2,0xc34d0a,0xc5594a,0xc5595b,
+    0xc02daa,0xc03748,0xc03775,0xc32422,0xc32699,0xc326b7,0xc3363e,0xc337d4,
+    0xc316da,0xc317f2,0xc317fb,0xc32133,0xc442e5,
+};
+static bool shielded(unsigned seat) {
+    if(seat>=5 || !ability_of(seat)) return false;
+    uint8_t *s=seat_state(seat);
+    return s[S_KIND]==AB_JET;
+}
+static void kill_hook(CpuState *cpu,uint32_t pc) {
+    unsigned op=g_rom[((pc>>16)&0x3f)<<16|(pc&0xffff)];
+    unsigned actor=(op==0x99?cpu->Y:cpu->X)&0xff;
+    if(HoneyKotetsuInstalled() && shielded(actor)) cpu->A=(uint16_t)(cpu->A&~0x40u);
+}
 void SpecialAbilitiesInstall(void) {
     if(hooks_installed) return;
     hooks_installed=interp_bridge_add_pre_opcode_hook(PAD_HOOK,pad_hook) &&
                     interp_bridge_add_pre_opcode_hook(SPEED_HOOK,speed_hook);
+    if(!g_rom) return;
+    for(unsigned k=0;k<sizeof(kKillStores)/sizeof(*kKillStores);++k) {
+        uint32_t pc=kKillStores[k];unsigned at=((pc>>16)&0x3f)<<16|(pc&0xffff);
+        if((g_rom[at]==0x99 || g_rom[at]==0x9d) && g_rom[at+1]==0xa2 && g_rom[at+2]==0x15)
+            interp_bridge_add_pre_opcode_hook(pc,kill_hook);
+    }
 }
 bool SpecialAbilityDebuffed(unsigned seat) { return seat<5 && get16(seat_state(seat)+S_DEBUFF)!=0; }
 

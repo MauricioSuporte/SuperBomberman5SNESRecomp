@@ -38,6 +38,10 @@ Evidence (Linux LLE headless, fixture build, SB4 ROM via `SB5_SB4_ROM`):
   (`$6269` bit 7 / `$625D` bit 0).
 - Normal Game (five-player coop, Zone 1-1): flames killed two enemies; no
   player was hit by an ability.
+- Normal Game, Zone 1-1, enemies poked into the paths of Jet (P1, down),
+  Bazooka (P2, left), Honey (P3, up) and Kotetsu (P4, up): all four enemies
+  died (`$15A2` = `$C0`); Jet touched his enemy and survived (`$15A2` stayed
+  `$05`; before the kill-store hooks he died on contact and never hit it).
 
 SB4-faithful abilities (second pass, same day): the moves were ported from
 Super Bomberman 4 frame captures instead of SB5 approximations. Hammer and
