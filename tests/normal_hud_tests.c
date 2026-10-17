@@ -45,6 +45,12 @@ int main(void){
     CHECK(r[0x5727e]==0x6b && r[0x5727f]==255);
     uint8 copy[256];memcpy(copy,r+0x57200,256);
     NormalHudBeforeFrame();CHECK(!memcmp(copy,r+0x57200,256));
+    /* Boss stages keep the stock heads: the face archive left no OBJ VRAM
+     * for ZONE3 - D's exit gates. The patches come back on the next stage. */
+    g_ram[0x1031]=0x6a;NormalHudBeforeFrame();
+    CHECK(!installed && r[0x505f1]==0x22 && r[0x505f2]==0x86 && r[0x436ff]==0xad && r[0x57200]==0xff);
+    g_ram[0x1031]=0x73;NormalHudBeforeFrame();CHECK(!installed);
+    g_ram[0x1031]=13;NormalHudBeforeFrame();CHECK(installed && !memcmp(copy,r+0x57200,256));
     Ppu *p=calloc(1,sizeof(Ppu));p->bgmode=1;p->bgTileAdr=0x500;p->obsel=3;
     for(unsigned i=0;i<0x8000;++i)p->vram[i]=(uint16_t)i;
     uint16_t before[0x8000];memcpy(before,p->vram,sizeof(before));

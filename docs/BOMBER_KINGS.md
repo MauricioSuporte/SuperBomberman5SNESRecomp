@@ -63,7 +63,7 @@ personagens extras do Super Bomberman 5, que também traz a barreira do Terrorin
 | Honey | fica parada na animação de tiro da luta contra ela (0,9 s) e dispara um projétil que segue sozinho até um bloco e mata quem acertar | debuff |
 | Kotetsu | estocada de espada da luta contra ele (1 s), atingindo o bloco da frente | debuff |
 | Hammer Bomber | fica parado girando a maça em volta de si (~2 s); quem ela toca fica atordoado e perde um item | — |
-| Jet Bomber | preparação de 0,8 s, depois voa a 4 px por quadro até bater deixando um rastro de fogo; ao bater fica parado no obstáculo na pose de voo por 24 quadros (como no SB4) e só então volta a andar; pisca invencível do começo até cerca de 1 s depois de bater; durante a habilidade o corpo dele também acerta inimigos e jogadores que toca e ele é imune ao contato com inimigos | debuff |
+| Jet Bomber | preparação de 0,8 s, depois voa a 4 px por quadro até bater deixando um rastro de fogo (um par de chamas a cada 8 quadros); ao bater fica parado no obstáculo na pose de voo por 24 quadros, ainda soltando fogo para trás nos primeiros 20 (como no SB4), e só então volta a andar; pisca invencível do começo até cerca de 1 s depois de bater; durante a habilidade o corpo dele também acerta inimigos e jogadores que toca e ele é imune ao contato com inimigos | debuff |
 | Lady Bomber | gira a arma, dispara o laser (sai aos 0,8 s, 2 px por quadro, segue sozinho até um bloco ou alvo), gira a arma de novo e volta a andar (1,8 s); o alvo fica atordoado e perde dois itens | — |
 | Bazooka Bomber | fica parado 1,6 s mirando (gira nas quatro direções) e dispara um raio de fogo para a frente como a chama de uma bomba: queima o primeiro soft block, para em blocos fixos e detona bombas no caminho | debuff |
 | Great Bomber | fica parado, piscando e invencível, por 2,7 s | debuff |
@@ -88,6 +88,9 @@ personagens extras do Super Bomberman 5, que também traz a barreira do Terrorin
   com a invencibilidade temporária do próprio cartucho). A maça e o laser
   atordoam e fazem perder itens com a reação do próprio SB5 (o item sai voando).
   No **Normal Game** atingem só inimigos e chefes, **nunca** outros jogadores.
+  Os chefes bombers (o pirata do ZONE3 - D e os outros) só se machucam com fogo:
+  o golpe passa pelo teste de fogo do próprio cartucho, então primeiro derruba o
+  Louie e depois tira vida; o Louie nunca é atingido sozinho.
   No **Battle** atingem todos os outros jogadores no Free-for-All e só o **time
   adversário** no Team Battle.
 - **Retratos:** na seleção, os jogadores com um Rei Bomber mostram o retrato do
@@ -158,8 +161,9 @@ attacks in their Normal Game boss fight:
 - **Hammer**: stands still swinging his mace around himself (about 2 s); a
   player it touches is stunned and loses an item.
 - **Jet**: 0.8 s wind-up, then flies 4 px per frame until stopped, leaving a
-  fire trail; after the crash he stays at the obstacle in the flying pose for
-  24 frames (as in SB4) before walking again. He blinks
+  fire trail (a pair of flames every 8 frames); after the crash he stays at
+  the obstacle in the flying pose for 24 frames, still blowing fire behind him
+  for the first 20 (as in SB4), before walking again. He blinks
   invulnerable from the start until about 1 s after the crash. During the
   ability his body also hits enemies and players it touches, and enemy
   contact cannot kill him.
@@ -188,7 +192,10 @@ attacks in their Normal Game boss fight:
   lethal like an explosion (enemies and bosses lose one hit point with the
   cartridge's temporary invulnerability). The mace and the laser stun and take
   items with Super Bomberman 5's own reaction (the item flies off). **Normal
-  Game** hits enemies and bosses only, **never** other players. **Battle** hits
+  Game** hits enemies and bosses only, **never** other players; the bomber
+  bosses (ZONE3 - D's Pirate Bomber and the others) are hurt only by fire, so a
+  hit goes through the cartridge's own fire test: their Louie first, then a hit
+  point; a Louie is never hit on its own. **Battle** hits
   every other player in Free-for-All and only the **other team** in Team
   Battle.
 - **Portraits:** in the picker, seats with a Bomber King show the character's

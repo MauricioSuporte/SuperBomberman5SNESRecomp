@@ -12,6 +12,15 @@ static bool campaign(void) {
     unsigned m=g_ram[0x1031];
     return (m==8 || (m>=13 && m<116)) && !(g_ram[0x1d1a]&1);
 }
+/* Boss stages ($67-$70) and the secret boss stages ($71-$73) keep the stock
+ * HUD heads. A face object loads its archive ($64) into static OBJ VRAM
+ * ($7E30AA/$30EA/$314A); after ZONE3 - D's rivals died the exit gates' own
+ * archive no longer fitted ($C0:18FC -> $C0:1A0A failed), $C5:3B60 retried
+ * the gate objects every frame and the portals never appeared. */
+static bool boss_stage(void) {
+    unsigned m=g_ram[0x1031];
+    return m>=0x67 && m<=0x73;
+}
 bool NormalHudEnabled(void) { return enabled; }
 void NormalHudReset(void) {
     if(installed) {
@@ -26,7 +35,7 @@ void NormalHudReset(void) {
 }
 void NormalHudBeforeFrame(void) {
     if(!enabled || !g_rom) return;
-    if(!campaign()) { NormalHudReset();return; }
+    if(!campaign() || boss_stage()) { NormalHudReset();return; }
     /* Resuming an older scene or an extra-seat reentry can leave a face on
      * another character's animation. Let the native updater repair it. */
     if(installed) {
@@ -166,7 +175,7 @@ void NormalHudObserve(const struct Ppu *view,unsigned line,void *context) {
         }
         return;
     }
-    if(line!=1 || drawn || !enabled || !campaign() || PPU_mode(p)!=1 ||
+    if(line!=1 || drawn || !enabled || !campaign() || boss_stage() || PPU_mode(p)!=1 ||
         PPU_bgTileAdr(p,2)!=0x5000 || PPU_objTileAdr1(p)!=0x6000 ||
         PPU_bgTilemapWider(p,2)) return;
     unsigned base=PPU_bgTilemapAdr(p,2);

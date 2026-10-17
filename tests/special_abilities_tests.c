@@ -336,6 +336,27 @@ int main(void) {
     clock_hook(&cpu,CLOCK_HOOK);CHECK(g_ram[CLOCK_OWNER]==1 && !g_ram[CLOCK_EVENT]);
     choices[0]=11;choices[1]=12;
 
+    /* Boss rivals ($101F set, ZONE3 - D and the other boss stages) ignore
+     * the death bit: Kotetsu's cut hands them to their own fire check
+     * ($C4:2CFE) on that frame instead. */
+    arena();g_ram[0x1d1a]=0;g_ram[0x1031]=0x6a;g_ram[0x1d25]=0x03;g_ram[0x1cbf]=4;
+    g_ram[0x182a]=200;g_ram[0x182a+2]=48;g_ram[0x1872+2]=16;g_ram[0x101f+2]=1;g_ram[0x15a2+2]=0x02;
+    frame(1,0,0x02);frame(1,0x08,0x02);
+    for(unsigned k=0;k<SLASH_FROM+1;++k) frame(1,0,0);
+    CHECK(!(g_ram[0x15a2+2]&0x40) && (fire_hits&0x04));
+    cpu.X=2;cpu.A=0;death_hook(&cpu,DEATH_HOOK);CHECK(cpu.A==4 && !(fire_hits&0x04));
+    cpu.X=2;cpu.A=0;death_hook(&cpu,DEATH_HOOK);CHECK(cpu.A==0);             /* once */
+    g_ram[0x15a2+2]=0x06;fire_hits=0;damage(2);CHECK(!fire_hits);              /* invulnerable */
+    /* A Louie (rider + $1CBF) is never hit itself; its rider takes it. */
+    arena();g_ram[0x1cbf]=5;g_ram[0x1782+3]=0x80;
+    g_ram[0x182a]=200;g_ram[0x182a+3]=200;g_ram[0x17fa+8]=0x10;g_ram[0x15a2+8]=0;g_ram[0x1662+8]=1;
+    g_ram[0x182a+8]=48;g_ram[0x1872+8]=16;
+    frame(1,0,0x02);frame(1,0x08,0x02);
+    for(unsigned k=0;k<SLASH_FROM+1;++k) frame(1,0,0);
+    CHECK(!(g_ram[0x15a2+8]&0x40) && g_ram[0x1662+8]==1);
+    g_ram[0x1782+3]=0;CHECK(mount(8));                                         /* also while it is lost */
+    g_ram[0x17fa+3]=0xff;CHECK(!mount(8));
+
     /* Leaving the stage clears every seat. */
     arena();frame(3,0x08,0x02);
     g_ram[0x1031]=4;frame(0,0,0);

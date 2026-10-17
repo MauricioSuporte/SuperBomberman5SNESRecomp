@@ -95,7 +95,7 @@ static const Ability kAbility[9]={
 };
 enum { SHOT_FRAMES = 55, SHOT_AT = 32, SHOT_SPEED = 4, SLASH_FRAMES = 61, SLASH_FROM = 13, BAZOOKA_FRAMES = 98, BEAM_FROM = 68, BEAM_TO = 82,
        JET_WINDUP = 48, JET_SPEED = 4, TRAIL_LIFE = 16, HAMMER_FRAMES = 125, MACE_FROM = 29, MACE_TO = 106,
-       LASER_FROM = 48, LADY_FRAMES = 109, GREAT_FRAMES = 160, JET_LANDING = 24, JET_GUARD_AFTER = 60,
+       LASER_FROM = 48, LADY_FRAMES = 109, GREAT_FRAMES = 160, JET_LANDING = 24, JET_GUARD_AFTER = 60, JET_TRAIL_STOP = 4,
        /* Terrorin's barrier, as in ZONE5 - J ($C3:3F2D-$C3:4090): spin
         * $40 frames, raise the barrier and fade the blue in over 16, hold
         * $40, the Clock flies off ($C3:4010), fade out over 16 from frame
@@ -135,9 +135,29 @@ static bool hostile(unsigned seat,unsigned actor) {
     if(g_ram[0x625d]&1) return (g_ram[0x15a2+actor]&0x18)!=(g_ram[0x15a2+seat]&0x18);
     return true;
 }
+/* Rival bombers of the boss stages ($101F set: ZONE3 - D's Pirate Bomber
+ * and his partner, the other rival bosses) ignore the death bit: their
+ * update clears $15A2 bit 6 every frame ($C4:0164), and only a flame on
+ * their cell hurts them ($C4:2CFE: $1CCA bit 2 -> mount lost, HP $1662,
+ * 120 frames of invulnerability, death and the boss script's ending).
+ * Their hits wait here until their own fire check on this frame. */
+static uint8_t fire_hits;
+static bool rival(unsigned actor) { return actor<5 && g_ram[0x101f+actor]; }
+/* A Louie lives in its rider's mount slot (rider + $1CBF, the rider a
+ * bomber 0-4) and is never a target of its own: the rider takes the hit and
+ * the cartridge plays the Louie's loss ($C4:2D05 -> $C4:51AB, removed about
+ * 47 frames later). Setting the mount's death bit, mounted or during that
+ * loss, left ZONE3 - D without its exit gates. */
+static bool mount(unsigned actor) {
+    unsigned base=g_ram[0x1cbf];
+    if(actor<base || actor-base>=5 || actor-base==actor) return false;
+    return g_ram[0x17fa+actor-base]<0x80;
+}
 static void damage(unsigned actor) {
     if(actor<5) {
-        if(!(g_ram[0x15a2+actor]&0x04)) g_ram[0x15a2+actor]|=0x40;
+        if(g_ram[0x15a2+actor]&0x04) return;
+        if(rival(actor)) fire_hits|=(uint8_t)(1u<<actor);
+        else g_ram[0x15a2+actor]|=0x40;
         return;
     }
     unsigned object=g_ram[0x17fa+actor];
@@ -165,7 +185,7 @@ static int cell_of(int world) { return (world+8)>>4; }
 static unsigned near(unsigned seat,int x,int y,int reach,unsigned *found,unsigned max) {
     unsigned n=0;
     for(unsigned a=0;a<24 && n<max;++a) {
-        if(!alive(a) || !hostile(seat,a)) continue;
+        if(!alive(a) || !hostile(seat,a) || mount(a)) continue;
         int dx=world_x(a)-x,dy=world_y(a)-y;
         if(dx<0) dx=-dx;
         if(dy<0) dy=-dy;
@@ -177,7 +197,7 @@ static unsigned near(unsigned seat,int x,int y,int reach,unsigned *found,unsigne
 static bool strike_cell(unsigned seat,int cx,int cy) {
     bool hit=false;
     for(unsigned a=0;a<24;++a) {
-        if(!alive(a) || !hostile(seat,a)) continue;
+        if(!alive(a) || !hostile(seat,a) || mount(a)) continue;
         if(cell_of(world_x(a))==cx && cell_of(world_y(a))==cy) { damage(a);hit=true; }
     }
     return hit;
@@ -505,7 +525,14 @@ static void tick(unsigned seat) {
                 extend_invulnerability(seat,JET_LANDING+JET_GUARD_AFTER);
             }
             set16(s+S_LAST,here);
-            if(!(s[S_FLAGS]&1) && f%8==0) {
+        }
+        /* A flame pair every 8 frames behind him, also while he is pressed
+         * against the obstacle: Super Bomberman 4 keeps blowing fire there
+         * until he lands (stop at frame 96, new pairs up to about 116,
+         * the last one gone at 136; arena tilemap $7E2000). */
+        if(t>=JET_WINDUP && (!(s[S_FLAGS]&1) || t+JET_TRAIL_STOP<(unsigned)s[S_STOP]+JET_LANDING)) {
+            unsigned f=t-JET_WINDUP;
+            if(f%8==0) {
                 uint8_t *seg=trail+((f/8)%TRAILS)*3;
                 seg[0]=(uint8_t)(cy*16+cx);seg[1]=1;seg[2]=f?1:0;live=true;
                 strike_cell(seat,cx,cy);
@@ -563,7 +590,9 @@ static void clock_hook(CpuState *cpu,uint32_t pc) {
 static void death_hook(CpuState *cpu,uint32_t pc) {
     (void)pc;
     unsigned actor=cpu->X&0xff;
-    if(actor>=5 || !ExtraCharactersInstalled() || !(cpu->A&4)) return;
+    if(actor>=5 || !ExtraCharactersInstalled()) return;
+    if((fire_hits>>actor)&1) { fire_hits&=(uint8_t)~(1u<<actor);if(rival(actor)) { cpu->A|=4;return; } }
+    if(!(cpu->A&4)) return;
     unsigned cell=g_ram[0x16aa+actor],v=g_ram[0x1052+cell];
     if(seat_state(actor)[S_KIND]==AB_BARRIER || ((v&0x0f)==0x0c && friendly_wall(actor,cell)))
         cpu->A=(uint16_t)(cpu->A&~4u);
@@ -584,6 +613,7 @@ static void pad_hook(CpuState *cpu,uint32_t pc) {
         for(unsigned b=STATE;b<STATE_END;++b) if(g_ram[b]) { memset(g_ram+STATE,0,STATE_END-STATE);break; }
         return;
     }
+    fire_hits=0;
     if(!playing()) return;
     call_count=call_next=0;
     clock_rules();

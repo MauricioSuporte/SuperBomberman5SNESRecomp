@@ -16,6 +16,11 @@ criado. O retorno dos jogadores extras não altera os dois retratos. Combine com
 e cores para escolher outros bombers; Subordinate e os personagens do Extra Characters/Bomber Kings reutilizam
 seus overlays existentes. O mod começa desativado.
 
+Nas fases de chefe (ZONE1 - A a ZONE5 - J e as três fases secretas, `$67`-`$73`)
+a HUD fica com os ícones originais: o gráfico do rosto ocupava a VRAM de que os
+portais de saída precisam e, no ZONE3 - D (pirata e parceiro), os portais não
+apareciam depois de vencer o chefe.
+
 As rotinas nativas criam somente os objetos dos rostos, sem carregar o layout
 do Battle. O desenho limpa o rosto fixo nos seis tiles BG2 de cada ícone ocupado,
 preservando as linhas da moldura e o fundo azul,
@@ -38,6 +43,11 @@ With three to five players only P1/P2 own HUD faces. Extra seats cannot
 create, update or repaint these portraits; without a P2 participant, no P2
 portrait is created. Character/color selection and the existing
 Subordinate, Honey and Kotetsu overlays can be combined. Disabled by default.
+
+Boss stages (ZONE1 - A to ZONE5 - J and the three secret stages, `$67`-`$73`)
+keep the stock HUD icons: the face's graphics took the OBJ VRAM the exit gates
+need, and in ZONE3 - D (Pirate Bomber and partner) the gates never appeared
+after the boss was defeated.
 
 Native routines create only the face objects. Render observers clear each
 occupied fixed BG2 head across all three tile rows, preserving the blue

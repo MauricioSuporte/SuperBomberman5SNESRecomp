@@ -1,5 +1,44 @@
 # Super Bomberman 5: estado do protótipo
 
+## Boss gates with HUD faces, abilities against boss rivals / Portais dos chefes com rostos na HUD, habilidades contra chefes - 2026-10-17
+
+Reported: after ZONE3 - D (Pirate Bomber and partner) was won as Jet, no exit
+gates appeared; Jet's rocket did not hurt bosses and its trail looked shorter
+than in Super Bomberman 4.
+
+Gates: when the last rival dies in `$6A` (`$C4:3DA6`, `$102F` = `$6A` branch,
+`$1D50` = 0) the gate objects queued in `$7E4DA3` are created by `$C5:3B60`
+→ `$C2:265C`; with the HUD-faces mod the face archive `$64` held static OBJ
+VRAM (`$7E30AA/$30EA/$314A`), the gates' archive did not fit (`$C0:18FC` →
+`$C0:1A0A` fails), and the gate object was created and freed every frame.
+HUD faces now stay off in boss stages `$67`-`$73` (stock heads there).
+
+Bosses `$67`-`$6E` are rival bombers in slot 2 with `$101F` set; their update
+clears `$15A2` bit 6 every frame (`$C4:0164`), so ability hits (which set that
+bit) did nothing. Those hits now force the rival's own fire test (`$C4:2CFE`,
+A |= 4 once): Louie lost first (`$C4:2D05`), then HP `$1662`, 120 frames of
+invulnerability, death and the boss ending. Abilities also no longer hit a
+Louie actor (rider + `$1CBF`), which had set its death bit during the loss.
+Jet keeps spawning trail pairs for 20 of his 24 frames against the obstacle
+(SB4 arena tilemap `$7E2000`: new pairs until ~20 frames after the stop);
+flight speed, pair size (2 cells) and life (16 frames) already matched.
+
+Evidence (Linux LLE headless, local research hooks not committed): forced
+stage `$6A` from Zone 1-1 with `$102F` = `$6A`. Native kills (no mods)
+show the three gates; with all of the maintainer's mods they never appeared
+before the fix and appear after it (same route, leave-one-out isolated
+hud-faces). Jet (choice 15) with all mods dismounts and kills the Pirate
+Bomber and kills the partner through the native fire path; gates with labels
+`Z4-2/3/4` appear. All 14 native tests pass (new rival/Louie and boss-HUD
+cases). Not verified: Windows build, a played (not forced) route, other boss
+stages at runtime, co-op boss fights with abilities.
+
+Portais: com o mod de rostos na HUD, o gráfico do rosto ocupava a VRAM dos
+portais e no ZONE3 - D eles não apareciam; nas fases de chefe a HUD fica com
+os ícones originais. As habilidades agora machucam os chefes bombers (primeiro
+o Louie, depois a vida, como o fogo de uma bomba). O Jet continua soltando
+fogo para trás enquanto está parado no obstáculo, como no SB4. Validado no
+Linux com a fase forçada; falta conferir no Windows.
 ## v1.0.1 setup pack / Pacote de setup v1.0.1 - 2026-10-16
 
 The v1.0.0 Windows ZIP had two root executables, and Generate & rebuild failed to configure when the folder path had accents ("Área de Trabalho" reached cmd.exe as "┴rea"). v1.0.1 ships only SuperBomberman5Recomp.exe (the setup host itself; rebuild/relaunch stay on build/SuperBomberman5SNESRecomp.exe through SNESRECOMP_GAME_TARGET) and the framework's rebuild helper writes paths in the console code page and builds non-ASCII folders through an ASCII junction under %PUBLIC%\retcomm-builds (CMake's own UTF-8 post-build scripts otherwise skipped the mods and launcher assets). Verified by the maintainer on Windows under OneDrive "Área de Trabalho": configure, build, 12 mods and assets staged, renamed setup host handing off to the rebuilt game. Published as the first full release: the maintainer has completed the campaign on Windows; mod combinations, physical five-player play and broad Linux remain unqualified.
