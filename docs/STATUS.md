@@ -1,5 +1,22 @@
 # Super Bomberman 5: estado do protótipo
 
+## PT-BR menu label over a boss arena / Rótulo de menu sobre a arena do chefe - 2026-10-17
+
+Reported: "Continuar" appeared over the blocks of ZONE2's boss arena (`$68`).
+Menu labels were matched only by two BG tile ids at a fixed map position;
+that arena has tiles 328/329 at the file menu's "Continue" position (BG1 row
+13, column 12). While a stage is played (mode `$0D`-`$73`, or Battle `$74`+,
+with `$0AEE` set or a bomber on the field) only the HUD labels (BG3 row 0)
+apply now. Linux LLE headless, all of the maintainer's mods plus PT-BR,
+forced `$68`: the old code draws "Continuar" in the arena, the new one does
+not; HUD "APERTE START" and the Normal file menu labels still appear. Native
+render test covers stage, intro, players-gone and menu cases. Windows not
+built here.
+
+O "Continuar" no meio da arena do chefe era o rótulo do menu de arquivos
+encaixando por acaso nos tiles da arena; durante a fase só os textos da HUD
+são traduzidos.
+
 ## Boss gates with HUD faces, abilities against boss rivals / Portais dos chefes com rostos na HUD, habilidades contra chefes - 2026-10-17
 
 Reported: after ZONE3 - D (Pirate Bomber and partner) was won as Jet, no exit

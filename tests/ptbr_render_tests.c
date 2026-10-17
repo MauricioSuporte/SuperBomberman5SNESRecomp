@@ -7,6 +7,7 @@ int snes_mod_register_presentation_plugin(const char *id, SNESModActivationCallb
 static bool gold_fixture;
 bool GoldBattleHyper(void) { return gold_fixture; }
 const uint8_t *g_rom;
+uint8 g_ram[0x20000];
 #include "../src/ptbr_mod.c"
 static bool coop_fixture;
 bool NormalCoopPlayerMenu(void) { return coop_fixture; }
@@ -254,6 +255,16 @@ int main(int argc,char **argv) {
     apply_labels(&fixture);
     for(unsigned x=12;x<22;++x) if((fixture.vram[0x3140+x]&0x3C00)!=0x3000) return 6;
     restore_labels(&fixture);
+    /* A stage arena holding a menu guard pair (ZONE2's boss arena showed
+     * "Continuar") keeps its tiles while gameplay runs. */
+    memset(g_ram+0x17fa,0xff,5);g_ram[0x1031]=0x68;g_ram[0x0aee]=1;
+    memcpy(original,fixture.vram,sizeof(original));apply_labels(&fixture);
+    if(s_saved_count || memcmp(original,fixture.vram,sizeof(original))) return 12;
+    g_ram[0x0aee]=0;g_ram[0x17fa]=0;apply_labels(&fixture);if(s_saved_count) return 13; /* intro, P1 on the field */
+    g_ram[0x17fa]=0xff;apply_labels(&fixture);if(!s_saved_count) return 14;              /* players gone */
+    restore_labels(&fixture);g_ram[0x1031]=3;g_ram[0x17fa]=0;
+    apply_labels(&fixture);if(!s_saved_count) return 15;                                 /* file menu */
+    restore_labels(&fixture);g_ram[0x1031]=0;
     /* Screen context is checked before replacements: translating Player 1
      * must not make Player 2 or the Human value fail their common guard. */
     memset(&fixture,0,sizeof(fixture)); fixture.bgmode=9; fixture.bgXsc[0]=0x31;

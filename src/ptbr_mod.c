@@ -436,9 +436,24 @@ static void apply_battle_arena(Ppu *p) {
     ++p->oamWriteCount;
 }
 
+/* While a stage is being played the arena's BG1 can hold a menu label's
+ * guard tiles by chance: ZONE2's boss arena put 328/329 at the file menu's
+ * "Continue" position and "Continuar" appeared over the blocks. In a stage
+ * mode ($0D-$73 Normal, $74+ Battle) with the gameplay byte $0AEE set or a
+ * bomber on the field, only the HUD labels (BG3 row 0) apply. Game Over and
+ * its password reward run after the players are gone. */
+static bool playing_stage(void) {
+    unsigned mode=g_ram[0x1031];
+    bool battle=(g_ram[0x1d1a]&1)!=0;
+    if(battle?mode<0x74:(mode<0x0d || mode>0x73)) return false;
+    if(g_ram[0x0aee]) return true;
+    for(unsigned i=0;i<5;++i) if(g_ram[0x17fa+i]<0x80) return true;
+    return false;
+}
 static void apply_labels(Ppu *ppu) {
     if(s_enabled) { apply_defeat(ppu);apply_endings(ppu); }
     if ((ppu->bgmode & 7) != 1) return;
+    bool stage=playing_stage();
     enum { count=sizeof(kLabels)/sizeof(kLabels[0]) };
     bool matched[count];
     uint16_t palette[count];
@@ -448,7 +463,8 @@ static void apply_labels(Ppu *ppu) {
         const PtbrLabel *label=&kLabels[n];
         unsigned map=PPU_bgTilemapAdr(ppu,label->layer);
         unsigned start=map+label->row*32+label->column;
-        matched[n]=map==(0x3000u+label->layer*0x800u) &&
+        matched[n]=(!stage || (label->layer==2 && label->row==0)) &&
+            map==(0x3000u+label->layer*0x800u) &&
             (ppu->vram[start]&0x3FF)==label->guard0 &&
             (ppu->vram[start+1]&0x3FF)==label->guard1 &&
             (!label->context_tile || (ppu->vram[map+label->context_row*32+label->context_column]&0x3FF)==label->context_tile);

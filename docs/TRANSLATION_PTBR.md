@@ -277,3 +277,15 @@ selected row with the native gap; all writes remain render-only.
 Nos builds atuais de fonte, o menu inglês usa 1 PLAYER / 2–5 PLAYERS. Y usa
 os glifos originais do título; T remove o contorno vizinho abaixo da barra.
 O cursor acompanha a linha nos dois idiomas, sem alterar a memória do jogo.
+
+## Rótulos durante a fase / Labels during a stage — 2026-10-17
+
+Durante uma fase (Normal `$0D`-`$73` ou arena do Battle, com o jogo rodando ou
+um bomber em campo) só os textos da HUD (linha 0 do BG3) são traduzidos. A
+arena do chefe do ZONE2 tinha, por acaso, os tiles do "Continue" do menu de
+arquivos e mostrava "Continuar" sobre os blocos.
+
+While a stage is played (Normal `$0D`-`$73` or a Battle arena, with gameplay
+running or a bomber on the field) only the HUD labels (BG3 row 0) are
+translated. ZONE2's boss arena held the file menu's "Continue" tiles by chance
+and showed "Continuar" over its blocks.
