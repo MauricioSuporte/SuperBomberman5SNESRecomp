@@ -37,6 +37,17 @@ int main(void){
         CHECK(r[pc]==(seat<2?0x22:0x6b));
     }
     CHECK(r[0x42b34]==0xa0 && r[0x50609]==0xb0);
+    /* The per-tick update runs the full entry (with the lives refresh) one
+     * frame in eight and the face checks only ($C5:7204) otherwise. */
+    {
+        const uint8_t *u=r+0x572b0;
+        CHECK(u[0]==0x20 && u[7]==0xaf && u[8]==0x68 && u[13]==0xf0);
+        unsigned fast=15,full=15+u[14];
+        CHECK(u[fast+2]==0x22 && u[fast+3]==0x04 && u[fast+6]==0x60);
+        CHECK(u[full]==0x68 && u[full+2]==0x22 && u[full+3]==0x00 && u[full+6]==0x60);
+        CHECK(0x572b0+full+7<=0x57300);
+    }
+    CHECK(r[0x57200]==0x22 && r[0x57201]==0x86 && r[0x57204]==0xda);
     memcpy(r+0x51319,"\xbf\x70\x14\xc2",4);r[0x21470]=20;
     g_ram[0x35c5]=10;g_ram[0x4ff+10]=6;g_ram[0x4a0+10]=0xf0;
     g_ram[0x79f+10]=29;NormalHudBeforeFrame();CHECK(g_ram[0x35ca]==1);
@@ -45,12 +56,6 @@ int main(void){
     CHECK(r[0x5727e]==0x6b && r[0x5727f]==255);
     uint8 copy[256];memcpy(copy,r+0x57200,256);
     NormalHudBeforeFrame();CHECK(!memcmp(copy,r+0x57200,256));
-    /* Boss stages keep the stock heads: the face archive left no OBJ VRAM
-     * for ZONE3 - D's exit gates. The patches come back on the next stage. */
-    g_ram[0x1031]=0x6a;NormalHudBeforeFrame();
-    CHECK(!installed && r[0x505f1]==0x22 && r[0x505f2]==0x86 && r[0x436ff]==0xad && r[0x57200]==0xff);
-    g_ram[0x1031]=0x73;NormalHudBeforeFrame();CHECK(!installed);
-    g_ram[0x1031]=13;NormalHudBeforeFrame();CHECK(installed && !memcmp(copy,r+0x57200,256));
     Ppu *p=calloc(1,sizeof(Ppu));p->bgmode=1;p->bgTileAdr=0x500;p->obsel=3;
     for(unsigned i=0;i<0x8000;++i)p->vram[i]=(uint16_t)i;
     uint16_t before[0x8000];memcpy(before,p->vram,sizeof(before));

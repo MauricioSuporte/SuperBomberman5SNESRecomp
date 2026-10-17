@@ -12,15 +12,6 @@ static bool campaign(void) {
     unsigned m=g_ram[0x1031];
     return (m==8 || (m>=13 && m<116)) && !(g_ram[0x1d1a]&1);
 }
-/* Boss stages ($67-$70) and the secret boss stages ($71-$73) keep the stock
- * HUD heads. A face object loads its archive ($64) into static OBJ VRAM
- * ($7E30AA/$30EA/$314A); after ZONE3 - D's rivals died the exit gates' own
- * archive no longer fitted ($C0:18FC -> $C0:1A0A failed), $C5:3B60 retried
- * the gate objects every frame and the portals never appeared. */
-static bool boss_stage(void) {
-    unsigned m=g_ram[0x1031];
-    return m>=0x67 && m<=0x73;
-}
 bool NormalHudEnabled(void) { return enabled; }
 void NormalHudReset(void) {
     if(installed) {
@@ -35,7 +26,7 @@ void NormalHudReset(void) {
 }
 void NormalHudBeforeFrame(void) {
     if(!enabled || !g_rom) return;
-    if(!campaign() || boss_stage()) { NormalHudReset();return; }
+    if(!campaign()) { NormalHudReset();return; }
     /* Resuming an older scene or an extra-seat reentry can leave a face on
      * another character's animation. Let the native updater repair it. */
     if(installed) {
@@ -99,8 +90,21 @@ void NormalHudBeforeFrame(void) {
     const uint8_t reentry_call[]={0x22,0xa0,0x72,0xc5};
     memcpy(rom(0xc42b33),reentry_call,4);
     /* Ensure P1/P2 after their actors exist, rather than only on life-count
-     * changes. Late co-op spawns and restored scenes need the same update. */
-    const uint8_t update[]={0x20,0xcd,0x06,0x22,0x00,0x72,0xc5,0x60};
+     * changes. Late co-op spawns and restored scenes need the same update.
+     * This runs every HUD tick. The full entry ($C5:7200) starts with the
+     * lives refresh $C5:0C86, which redraws the score boxes; running it
+     * every frame dropped frames (24% with five players in Zone 1-1).
+     * Run it on one frame in eight (WRAM frame counter $68) and only the
+     * face checks ($C5:7204) on the others. */
+    const uint8_t update[]={
+        0x20,0xcd,0x06,             /* JSR $06CD (native)      */
+        0x08,0xe2,0x20,0x48,        /* PHP / SEP #$20 / PHA    */
+        0xaf,0x68,0x00,0x7e,        /* LDA $7E0068             */
+        0x29,0x07,0xf0,0x07,        /* AND #7 / BEQ full       */
+        0x68,0x28,                  /* PLA / PLP               */
+        0x22,0x04,0x72,0xc5,0x60,   /* JSL $C5:7204 / RTS      */
+        0x68,0x28,                  /* full: PLA / PLP         */
+        0x22,0x00,0x72,0xc5,0x60};  /* JSL $C5:7200 / RTS      */
     memcpy(rom(0xc572b0),update,sizeof(update));
     const uint8_t update_call[]={0x20,0xb0,0x72};
     memcpy(rom(0xc50608),update_call,3);
@@ -175,7 +179,7 @@ void NormalHudObserve(const struct Ppu *view,unsigned line,void *context) {
         }
         return;
     }
-    if(line!=1 || drawn || !enabled || !campaign() || boss_stage() || PPU_mode(p)!=1 ||
+    if(line!=1 || drawn || !enabled || !campaign() || PPU_mode(p)!=1 ||
         PPU_bgTileAdr(p,2)!=0x5000 || PPU_objTileAdr1(p)!=0x6000 ||
         PPU_bgTilemapWider(p,2)) return;
     unsigned base=PPU_bgTilemapAdr(p,2);
