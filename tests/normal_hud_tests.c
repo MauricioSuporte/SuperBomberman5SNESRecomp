@@ -37,6 +37,17 @@ int main(void){
         CHECK(r[pc]==(seat<2?0x22:0x6b));
     }
     CHECK(r[0x42b34]==0xa0 && r[0x50609]==0xb0);
+    /* The per-tick update runs the full entry (with the lives refresh) one
+     * frame in eight and the face checks only ($C5:7204) otherwise. */
+    {
+        const uint8_t *u=r+0x572b0;
+        CHECK(u[0]==0x20 && u[7]==0xaf && u[8]==0x69 && u[13]==0xf0);
+        unsigned fast=15,full=15+u[14];
+        CHECK(u[fast+2]==0x22 && u[fast+3]==0x04 && u[fast+6]==0x60);
+        CHECK(u[full]==0x68 && u[full+2]==0x22 && u[full+3]==0x00 && u[full+6]==0x60);
+        CHECK(0x572b0+full+7<=0x57300);
+    }
+    CHECK(r[0x57200]==0x22 && r[0x57201]==0x86 && r[0x57204]==0xda);
     memcpy(r+0x51319,"\xbf\x70\x14\xc2",4);r[0x21470]=20;
     g_ram[0x35c5]=10;g_ram[0x4ff+10]=6;g_ram[0x4a0+10]=0xf0;
     g_ram[0x79f+10]=29;NormalHudBeforeFrame();CHECK(g_ram[0x35ca]==1);

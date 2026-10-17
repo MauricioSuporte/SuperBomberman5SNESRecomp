@@ -99,8 +99,22 @@ void NormalHudBeforeFrame(void) {
     const uint8_t reentry_call[]={0x22,0xa0,0x72,0xc5};
     memcpy(rom(0xc42b33),reentry_call,4);
     /* Ensure P1/P2 after their actors exist, rather than only on life-count
-     * changes. Late co-op spawns and restored scenes need the same update. */
-    const uint8_t update[]={0x20,0xcd,0x06,0x22,0x00,0x72,0xc5,0x60};
+     * changes. Late co-op spawns and restored scenes need the same update.
+     * This runs every HUD tick. The full entry ($C5:7200) starts with the
+     * lives refresh $C5:0C86, which redraws the score boxes; running it
+     * every frame dropped frames (24% with five players in Zone 1-1).
+     * Run it on one tick in eight (main-loop counter $69, which advances
+     * once per tick; the NMI counter $68 can keep one parity at this call)
+     * and only the face checks ($C5:7204) on the others. */
+    const uint8_t update[]={
+        0x20,0xcd,0x06,             /* JSR $06CD (native)      */
+        0x08,0xe2,0x20,0x48,        /* PHP / SEP #$20 / PHA    */
+        0xaf,0x69,0x00,0x7e,        /* LDA $7E0069             */
+        0x29,0x07,0xf0,0x07,        /* AND #7 / BEQ full       */
+        0x68,0x28,                  /* PLA / PLP               */
+        0x22,0x04,0x72,0xc5,0x60,   /* JSL $C5:7204 / RTS      */
+        0x68,0x28,                  /* full: PLA / PLP         */
+        0x22,0x00,0x72,0xc5,0x60};  /* JSL $C5:7200 / RTS      */
     memcpy(rom(0xc572b0),update,sizeof(update));
     const uint8_t update_call[]={0x20,0xb0,0x72};
     memcpy(rom(0xc50608),update_call,3);
