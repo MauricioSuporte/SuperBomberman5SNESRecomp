@@ -6,6 +6,8 @@
 static SNESModActivationCallback activation,reset_callback;
 int snes_mod_register_reset_callback(SNESModActivationCallback fn) { reset_callback=fn;return 1; }
 int snes_mod_register_activation_plugin(const char *id,SNESModActivationCallback fn) { (void)id;activation=fn;return 1; }
+static bool corner_spawns;
+bool CoopCornerSpawnsEnabled(void) { return corner_spawns; }
 #include "../src/normal_coop_mod.c"
 uint8 g_ram[0x20000];
 static uint8 cartridge[0x400000];
@@ -79,6 +81,8 @@ int main(void) {
         count=n;map();g_ram[0x1031]=3;instruction(0xc4289d,1,1);CHECK(g_ram[0x1d23]==n+2);
         instruction(0xc428b4,1,1);CHECK(g_ram[0x1d25]==(1u<<n)-1);
     }
+    /* Corner spawn mod: P3 lower left, P4 lower right, P5 centre. */
+    corner_spawns=true;
     CHECK(spawn_tile(2,false)==0xb1 && spawn_tile(3,false)==0xbd && spawn_tile(4,false)==0x67);
     g_ram[0x1052+0xb1]=0x30;CHECK(spawn_tile(2,false)==0xa1);
     g_ram[0x1052+0xbd]=0x80;CHECK(spawn_tile(3,false)==0xad);
@@ -123,6 +127,19 @@ int main(void) {
     CHECK(!spawn_check && g_ram[0x16ac]==0xb5 && g_ram[0x4e8f]==5 && g_ram[0x4ea7]==11);
     CHECK(g_ram[0x182c]==80 && g_ram[0x1874]==176 && g_ram[0x055f+16]==96 && g_ram[0x05bf+16]==204);
     spawn_check=true;instruction(0xc53d5d,1,1);CHECK(g_ram[0x16ac]==0xb5); /* Safe seats stay. */
+    /* Default layout: P3/P5 beside P1, P4 beside P2, stepping inward. */
+    corner_spawns=false;
+    map();g_ram[0x4e8d]=1;g_ram[0x4ea5]=1;g_ram[0x4e8e]=13;g_ram[0x4ea6]=11;
+    CHECK(spawn_tile(2,false)==0x12 && spawn_tile(4,false)==0x21 && spawn_tile(3,false)==0xbc);
+    map();g_ram[0x4e8d]=13;g_ram[0x4ea5]=11;g_ram[0x4e8e]=1;g_ram[0x4ea6]=1;
+    CHECK(spawn_tile(2,false)==0xbc && spawn_tile(4,false)==0xad && spawn_tile(3,false)==0x12);
+    /* A blocked neighbour falls back to safe floor, never onto P1. */
+    map();g_ram[0x4e8d]=1;g_ram[0x4ea5]=1;g_ram[0x17fa]=10;g_ram[0x16aa]=0x11;
+    g_ram[0x1052+0x12]=0x30;CHECK(spawn_tile(2,false)==0x13);
+    /* Boss layout is the same with or without the corner mod. */
+    map();g_ram[0x1d1a]=4;g_ram[0x4e8d]=5;g_ram[0x4e8e]=9;g_ram[0x4ea5]=9;
+    CHECK(spawn_tile(2,false)==0x93 && spawn_tile(3,false)==0x9b && spawn_tile(4,false)==0x97);
+    corner_spawns=true;
     /* Dead players stay out across stages, including a sole P5 participant.
      * The last participant remains eligible for the original retry flow. */
     map();g_ram[0x1031]=13;active_mask=31;

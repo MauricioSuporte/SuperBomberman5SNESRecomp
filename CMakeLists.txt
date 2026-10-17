@@ -56,6 +56,7 @@ add_executable(SuperBomberman5SNESRecomp
     src/pause_menu_mod.c
     src/infinite_time_mod.c
     src/normal_coop_mod.c
+    src/coop_corner_spawns_mod.c
     src/selection_color_mod.c
     src/subordinate_mod.c
     src/extra_characters_mod.c

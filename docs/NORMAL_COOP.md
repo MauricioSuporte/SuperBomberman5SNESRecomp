@@ -7,7 +7,7 @@ modo de título. Endereços de retorno dos scripts podem conservar o histórico
 da demonstração e não são usados para decidir se essa tela está aberta.
 
 O mod opcional `superbomberman5.normal-coop` v0.1.0 está incluído nos pacotes
-Windows e Linux a partir da v0.5.0. Em **Mods → Gameplay**, ative **Play Normal Game
+Windows e Linux a partir da v0.5.0. Em **Mods → 5 Players**, ative **Play Normal Game
 with up to five players**. O menu oferece um a cinco jogadores; use cima/baixo
 e Start. A tradução PT-BR funciona junto. As opções, o aviso de Start, o cursor
 e o copyright cabem na tela. Como no menu original, as opções são brancas, o
@@ -23,8 +23,13 @@ opções continuam na tela até o fade-out.
 | 4 | 6 |
 | 5 | 7 |
 
-Nas fases comuns, P3 aparece no canto inferior esquerdo, P4 no inferior
-direito e P5 no centro. Nos bosses, P3 usa dois tiles à esquerda do spawn
+Nas fases comuns, P3 e P5 aparecem junto do P1 e P4 junto do P2: P3 e P4
+um tile ao lado do spawn original de P1/P2 e P5 um tile acima ou abaixo de P1,
+sempre na direção do meio do mapa. O mod opcional
+`superbomberman5.coop-corner-spawns` (**Mods → 5 Players → Spawn P3-P5 in
+the corners and centre**) troca esse padrão pelo layout anterior: P3 no canto
+inferior esquerdo, P4 no inferior direito e P5 no centro. Ele só funciona
+junto com o mod de cinco jogadores. Nos bosses, P3 usa dois tiles à esquerda do spawn
 original de P1, P4 dois à direita de P2 e P5 o ponto intermediário. P1/P2
 mantêm os spawns originais. Um ponto bloqueado é substituído pelo chão seguro
 mais próximo, sem soft/hard blocks, com uma saída e sem outro jogador.
@@ -66,7 +71,8 @@ dispositivo: escolha Gamepad ou Teclado e configure as teclas de cada um.
 O `.snesmod` contém manifesto e licença, sem gráficos ou bytes da ROM. Exige
 o host v0.5.0 ou superior; importar em uma release antiga não atualiza o
 executável. O mod fica desabilitado
-por padrão. Para empacotar: `python tools/package-normal-coop.py`.
+por padrão. Para empacotar: `python tools/package-normal-coop.py` e
+`python tools/package-coop-corner-spawns.py`.
 
 Com 5 jogadores, os Louies aparecem normalmente e as animações de quem está
 montado não travam mais.
@@ -88,12 +94,18 @@ decide whether this screen is open.
 
 Optional `superbomberman5.normal-coop` v0.1.0 is preloaded in the v0.5.0 and
 newer Windows/Linux setup packs. Enable **Play Normal Game with up to five players** under **Mods →
-Gameplay**, select 1–5 players with Up/Down and confirm with Start. Initial
+5 Players**, select 1–5 players with Up/Down and confirm with Start. Initial
 shared lives equal player count + 2. PT-BR supports the new layout. The
 launcher shows PLAYER 1–5 tabs; players 3–5 start with no device, so assign
 each a gamepad or its own keyboard keys (`keybinds.ini` `[player3]`..).
 
-P3/P4 start in the lower corners and P5 in the center. Boss spawns use the
+In regular stages P3 and P5 start next to P1 and P4 next to P2: P3/P4 one
+tile beside the original P1/P2 spawn and P5 one tile above or below P1, always
+toward the middle of the field. The optional
+`superbomberman5.coop-corner-spawns` mod (**Mods → 5 Players → Spawn P3-P5 in
+the corners and centre**) replaces this with the earlier layout: P3 in the
+lower-left corner, P4 in the lower-right corner and P5 in the centre. It only
+works together with the five-player mod. Boss spawns use the
 original P1/P2 coordinates: P3 two tiles left of P1, P4 two right of P2 and
 P5 between them. Blocked or enclosed positions move to the nearest safe floor;
 blocks and the original P1/P2 spawns are preserved. Positions are checked

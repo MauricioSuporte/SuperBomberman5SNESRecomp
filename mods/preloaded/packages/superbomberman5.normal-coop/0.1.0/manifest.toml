@@ -3,7 +3,7 @@ id = "superbomberman5.normal-coop"
 version = "0.1.0"
 name = "Normal Game — five players"
 author = "MauricioSuporte"
-description = "Adds up to five human players to Normal Game, safe campaign spawns, shared lives and Start to rejoin. Supports the Normal character and color selection mods. Requires host v0.5.0 or newer."
+description = "Adds up to five human players to Normal Game, campaign spawns beside P1/P2, shared lives and Start to rejoin. Supports the Normal character and color selection mods. Requires host v0.5.0 or newer."
 license = "PolyForm-Noncommercial-1.0.0"
 resolver = "declarative"
 save_compatibility = "shared"
@@ -16,7 +16,7 @@ rom_sha256 = "5251e6491872dc51879b630a34d76a92e29ea0c39026c4f8773c1fe006d047c4"
 id = "five_players"
 name = "Play Normal Game with up to five players"
 description = "Choose 1–5 players. Initial shared lives equal player count + 2. Dead players press Start to spend a life and rejoin while a teammate is alive."
-group = "Gameplay"
+group = "5 Players"
 default_enabled = false
 presentation_only = false
 

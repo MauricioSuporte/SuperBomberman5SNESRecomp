@@ -1,0 +1,25 @@
+format_version = 1
+id = "superbomberman5.coop-corner-spawns"
+version = "0.1.0"
+name = "Normal Game — five players: corner spawns"
+author = "MauricioSuporte"
+description = "Alternative spawn layout for the five-player Normal Game mod: in regular stages P3 starts in the lower-left corner, P4 in the lower-right corner and P5 in the centre, instead of beside P1/P2. Boss stages keep their layout. Needs the five-player mod enabled. Requires a native host built with this mod."
+license = "PolyForm-Noncommercial-1.0.0"
+resolver = "declarative"
+save_compatibility = "shared"
+
+[[target]]
+game_id = "superbomberman5-jpn"
+rom_sha256 = "5251e6491872dc51879b630a34d76a92e29ea0c39026c4f8773c1fe006d047c4"
+
+[[feature]]
+id = "corner_spawns"
+name = "Spawn P3-P5 in the corners and centre"
+description = "Regular stages: P3 lower left, P4 lower right, P5 centre (nearest safe floor). Without this, P3 and P5 start next to P1 and P4 next to P2. Only works together with Play Normal Game with up to five players."
+group = "5 Players"
+default_enabled = false
+presentation_only = false
+
+[[plugin]]
+feature = "corner_spawns"
+id = "superbomberman5.normal.coop.corner-spawns"

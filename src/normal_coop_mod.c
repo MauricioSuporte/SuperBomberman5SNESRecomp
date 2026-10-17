@@ -3,6 +3,7 @@
  * Trampolines below are authored instructions, installed only in the in-memory
  * cartridge. The cartridge file and the original SRAM layout are preserved. */
 #include "normal_coop_mod.h"
+#include "coop_corner_spawns_mod.h"
 #include "common_rtl.h"
 #include "common_cpu_infra.h"
 #include "mod_runtime.h"
@@ -103,6 +104,8 @@ static int nearest(int x,int y,unsigned player) {
     }
     return best;
 }
+/* One step from an edge spawn toward the middle of the playfield. */
+static int inward(int value,int middle) { return value<middle?1:-1; }
 static int spawn_tile(unsigned player,bool retry) {
     int x,y;
     if(retry) { x=g_ram[0x4e8d+player];y=g_ram[0x4ea5+player]; }
@@ -110,7 +113,16 @@ static int spawn_tile(unsigned player,bool retry) {
         int p1x=g_ram[0x4e8d],p2x=g_ram[0x4e8e];
         x=player==2?p1x-2:player==3?p2x+2:(p1x+p2x)/2;
         y=g_ram[0x4ea5];
-    } else { x=player==2?1:player==3?13:7;y=player==4?6:11; }
+    } else if(CoopCornerSpawnsEnabled()) {
+        /* Corner layout mod: P3 lower left, P4 lower right, P5 centre. */
+        x=player==2?1:player==3?13:7;y=player==4?6:11;
+    } else {
+        /* Default: P3 beside P1, P5 below/above P1, P4 beside P2, each one
+         * tile from the cartridge spawn toward the middle of the field. */
+        unsigned anchor=player==3?1:0;
+        x=g_ram[0x4e8d+anchor];y=g_ram[0x4ea5+anchor];
+        if(player==4) y+=inward(y,6); else x+=inward(x,7);
+    }
     return nearest(x,y,player);
 }
 static void position(unsigned player,bool retry) {
