@@ -1122,6 +1122,28 @@ Instale numa pasta nova e gravável e faça **Generate & rebuild** com sua ROM J
 As correções foram verificadas no Linux com rotas roteirizadas de fase forçada (ZONE3 - D e chefe do ZONE2) e testes nativos; ainda não numa campanha jogada no Windows. Recompilação parcial, principalmente interpretada; combinações de mods, cinco controles físicos e compatibilidade ampla no Linux não qualificados; sem netplay. Downloads sem ROM, código/executável gerado do jogo, assets extraídos, saves ou capturas brutas.
 '''
 
+if version == '1.0.3':
+    notes = f'''# Super Bomberman 5 v{version}
+
+## English
+
+- **Abilities in every Battle arena:** the B + direction abilities (Super Bomberman 4 characters with **Bomber Kings**, Honey, Kotetsu and Emperor Terrorin) only worked in Battle arena 1. They now work in all arenas, including the Gold Cartridge ones.
+- **Five-player slowdown:** with **Battle character faces in Normal HUD** enabled, the HUD refreshed the lives display every frame and five-player stages dropped up to 24% of frames. The full refresh now runs once every eight HUD updates (about 4% of frames with every gameplay mod on, against 9% before).
+
+Install into a new writable folder and run **Generate & rebuild** with your own supported JPN SB5 ROM; an older generated game does not get these fixes. Download the Windows x64 ZIP or experimental Linux x86_64 AppImage and verify SHA256SUMS. Internet is needed for the first tools; Rust is not required.
+
+The fixes were verified on Linux with scripted five-player Normal and Battle routes and native tests; not yet in a played Windows campaign or with physical controllers. Partial recompilation with mostly interpreted gameplay; all mod combinations, physical five-player play and broad Linux compatibility remain unqualified; no netplay. Downloads contain no ROM, generated game code/binary, extracted assets, saves or raw captures.
+
+## Português
+
+- **Habilidades em todas as arenas do Battle:** as habilidades de B + direção (personagens do Super Bomberman 4 com o **Bomber Kings**, Honey, Kotetsu e Imperador Terrorin) só funcionavam na arena 1 do Battle. Agora funcionam em todas, inclusive nas do Gold Cartridge.
+- **Lentidão com cinco jogadores:** com **Battle character faces in Normal HUD** ligado, a HUD atualizava o contador de vidas a cada quadro e as fases com cinco jogadores perdiam até 24% dos quadros. A atualização completa agora roda uma vez a cada oito atualizações da HUD (cerca de 4% dos quadros com todos os mods de jogo ligados, contra 9% antes).
+
+Instale numa pasta nova e gravável e faça **Generate & rebuild** com sua ROM JPN compatível do SB5; um jogo gerado antes não recebe estas correções. Baixe o ZIP Windows x64 ou o AppImage Linux x86_64 experimental e confira SHA256SUMS. Internet para as primeiras ferramentas; Rust não é necessário.
+
+As correções foram verificadas no Linux com rotas roteirizadas de cinco jogadores no Normal e no Battle e testes nativos; ainda não numa campanha jogada no Windows nem com controles físicos. Recompilação parcial, principalmente interpretada; combinações de mods, cinco controles físicos e compatibilidade ampla no Linux não qualificados; sem netplay. Downloads sem ROM, código/executável gerado do jogo, assets extraídos, saves ou capturas brutas.
+'''
+
 if args.output:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(notes, encoding='utf-8', newline='\n')

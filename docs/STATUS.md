@@ -1,5 +1,11 @@
 # Super Bomberman 5: estado do protótipo
 
+## v1.0.3 release / Release v1.0.3 - 2026-10-17
+
+v1.0.3 packages the two fixes below on top of v1.0.2: B + direction abilities in every Battle arena (they only worked in arena 1) and the five-player slowdown caused by Normal Game HUD faces. The README only changes its download links; the fixes are in the release notes and this log. Verified on Linux LLE headless with the release commit: 14 native tests, `tests/normal_hud_runtime.py`, `tests/normal_hud_coop_runtime.py --players 5`, a five-seat Zone 1-1 lag measurement (4.0% of 1,808 frames with all gameplay mods) and a five-seat Battle route in Gold arena 13 with abilities firing. Not checked in a played Windows campaign or with physical controllers.
+
+A v1.0.3 traz as duas correções abaixo sobre a v1.0.2: habilidades de B + direção em todas as arenas do Battle (só funcionavam na arena 1) e a lentidão com cinco jogadores causada pelos rostos no HUD do Normal Game. O README só muda os links de download. Verificadas no Linux com o commit da release; ainda não numa campanha jogada no Windows.
+
 ## Battle abilities in every arena / Habilidades do Battle em todas as arenas - 2026-10-17
 
 B + direction abilities (Honey, Kotetsu, Terrorin, Bomber Kings) only worked in Battle arena 1: `in_stage()` in `src/special_abilities.c` required `$1031 == $74`, but each arena runs as mode `$74+4*(arena-1)` (arena 5 = `$84`, Gold arena 13 = `$A4`). The Battle check now accepts `$74-$A7`; the picker (mode 4) still is not a stage. Evidence (Linux LLE, JPN ROM, local): native special-abilities test extended with modes `$84`/`$A4` (start) and `$A8` (no start); headless five-seat Battle routes in arena 13 (Bazooka, Jet, Hammer, Lady, Great) and arena 5 (Honey, Kotetsu, Terrorin, two Subordinates) recorded ability states `$7F:F844+32*seat` going non-zero, where before the fix they stayed 0 for 24 s. Windows build and physical play not checked.

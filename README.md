@@ -2,7 +2,7 @@
 
 An unofficial, noncommercial **Super Bomberman 5** PC port built with [SNESRecomp](https://github.com/RetroPortingToolKit/snesrecomp) and [recomp-ui](https://github.com/RetroPortingToolKit/recomp-ui), following the game-repository architecture of [Mega Man X Recompiled](https://github.com/mstan/MegaManXSNESRecomp).
 
-[Download v1.0.2](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v1.0.2) · [English](#english) · [Português](#português) · [Technical status](docs/STATUS.md) · [Contributing](CONTRIBUTING.md)
+[Download v1.0.3](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v1.0.3) · [English](#english) · [Português](#português) · [Technical status](docs/STATUS.md) · [Contributing](CONTRIBUTING.md)
 
 > **Partial recompilation.** Most game logic still runs on the framework's interpreter. Supply your own legally obtained ROM; no ROM, generated game code or extracted assets are distributed. v1.0.1 is the first full release: the maintainer has played the campaign through to the end on Windows.
 
@@ -18,12 +18,12 @@ An unofficial, noncommercial **Super Bomberman 5** PC port built with [SNESRecom
 
 ### Install
 
-1. Download **superbomberman5-1.0.2-windows-x64.zip** (Windows 10+ x64) or **superbomberman5-1.0.2-linux-x86_64.AppImage** (glibc 2.35+, Ubuntu 22.04 baseline) from [v1.0.2](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v1.0.2) and check **SHA256SUMS**.
-2. Windows: extract the **entire** ZIP into a new writable folder and open `SuperBomberman5Recomp.exe`. Linux: `chmod +x` the AppImage and run it (without FUSE, add `--appimage-extract-and-run`); its setup lives in `~/.local/share/superbomberman5/1.0.2`.
+1. Download **superbomberman5-1.0.3-windows-x64.zip** (Windows 10+ x64) or **superbomberman5-1.0.3-linux-x86_64.AppImage** (glibc 2.35+, Ubuntu 22.04 baseline) from [v1.0.3](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v1.0.3) and check **SHA256SUMS**.
+2. Windows: extract the **entire** ZIP into a new writable folder and open `SuperBomberman5Recomp.exe`. Linux: `chmod +x` the AppImage and run it (without FUSE, add `--appimage-extract-and-run`); its setup lives in `~/.local/share/superbomberman5/1.0.3`.
 3. Let the launcher fetch the portable build tools (internet needed once; Rust is not required), select your own ROM and choose **Generate & rebuild**.
 4. Open **Mods** to enable features, configure controls and select **Play**.
 
-**Upgrading:** install 1.0.2 into a new folder and run **Generate & rebuild** again; an older generated executable cannot load new native mod code. Leave several GB free.
+**Upgrading:** install 1.0.3 into a new folder and run **Generate & rebuild** again; an older generated executable cannot load new native mod code. Leave several GB free.
 
 ### Supported ROM
 
@@ -102,12 +102,12 @@ Thanks to Matthew Stanley and the RetroPorting ToolKit contributors for SNESReco
 
 ### Instalação
 
-1. Baixe **superbomberman5-1.0.2-windows-x64.zip** (Windows 10+ x64) ou **superbomberman5-1.0.2-linux-x86_64.AppImage** (glibc 2.35+, base Ubuntu 22.04) na [v1.0.2](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v1.0.2) e confira o **SHA256SUMS**.
-2. Windows: extraia o ZIP **inteiro** numa pasta nova e gravável e abra `SuperBomberman5Recomp.exe`. Linux: dê `chmod +x` no AppImage e execute (sem FUSE, use `--appimage-extract-and-run`); o setup fica em `~/.local/share/superbomberman5/1.0.2`.
+1. Baixe **superbomberman5-1.0.3-windows-x64.zip** (Windows 10+ x64) ou **superbomberman5-1.0.3-linux-x86_64.AppImage** (glibc 2.35+, base Ubuntu 22.04) na [v1.0.3](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v1.0.3) e confira o **SHA256SUMS**.
+2. Windows: extraia o ZIP **inteiro** numa pasta nova e gravável e abra `SuperBomberman5Recomp.exe`. Linux: dê `chmod +x` no AppImage e execute (sem FUSE, use `--appimage-extract-and-run`); o setup fica em `~/.local/share/superbomberman5/1.0.3`.
 3. Deixe o launcher baixar as ferramentas portáteis (internet só na primeira vez; Rust não é necessário), escolha sua própria ROM e clique em **Generate & rebuild**.
 4. Abra **Mods** para ativar funções, configure os controles e clique em **Play**.
 
-**Atualizando:** instale a 1.0.2 numa pasta nova e faça **Generate & rebuild** de novo; um executável gerado antigo não carrega o código nativo novo. Deixe alguns GB livres.
+**Atualizando:** instale a 1.0.3 numa pasta nova e faça **Generate & rebuild** de novo; um executável gerado antigo não carrega o código nativo novo. Deixe alguns GB livres.
 
 ### ROM compatível
 
