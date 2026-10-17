@@ -137,6 +137,10 @@ int main(void) {
     /* Paused or outside a stage: nothing. */
     arena();g_ram[0x1d1d]=1;frame(1,0x08,0x02);CHECK(!seat_state(1)[S_KIND]);
     arena();g_ram[0x1031]=4;frame(1,0x08,0x02);CHECK(!seat_state(1)[S_KIND]);
+    /* Every arena's mode ($74+4*(arena-1)+variant) is a stage. */
+    arena();g_ram[0x1031]=0x84;frame(1,0x08,0x02);CHECK(seat_state(1)[S_KIND]!=0);
+    arena();g_ram[0x1031]=0xa4;frame(1,0x08,0x02);CHECK(seat_state(1)[S_KIND]!=0);
+    arena();g_ram[0x1031]=0xa8;frame(1,0x08,0x02);CHECK(!seat_state(1)[S_KIND]);
 
     /* Bazooka (seat 3, x 160) fires left along row 1. He stands still for
      * 98 frames, the aiming pose turns every 8 frames, then holds. */

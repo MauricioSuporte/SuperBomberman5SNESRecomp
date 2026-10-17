@@ -1,5 +1,11 @@
 # Super Bomberman 5: estado do protótipo
 
+## Battle abilities in every arena / Habilidades do Battle em todas as arenas - 2026-10-17
+
+B + direction abilities (Honey, Kotetsu, Terrorin, Bomber Kings) only worked in Battle arena 1: `in_stage()` in `src/special_abilities.c` required `$1031 == $74`, but each arena runs as mode `$74+4*(arena-1)` (arena 5 = `$84`, Gold arena 13 = `$A4`). The Battle check now accepts `$74-$A7`; the picker (mode 4) still is not a stage. Evidence (Linux LLE, JPN ROM, local): native special-abilities test extended with modes `$84`/`$A4` (start) and `$A8` (no start); headless five-seat Battle routes in arena 13 (Bazooka, Jet, Hammer, Lady, Great) and arena 5 (Honey, Kotetsu, Terrorin, two Subordinates) recorded ability states `$7F:F844+32*seat` going non-zero, where before the fix they stayed 0 for 24 s. Windows build and physical play not checked.
+
+As habilidades B + direção só funcionavam na arena 1 do Battle: cada arena roda num modo próprio (`$74+4*(arena-1)`) e o mod exigia `$74`. Agora valem em todas as arenas, inclusive as do Gold Cartridge. Verificado no Linux LLE; Windows não testado.
+
 ## v1.0.1 setup pack / Pacote de setup v1.0.1 - 2026-10-16
 
 The v1.0.0 Windows ZIP had two root executables, and Generate & rebuild failed to configure when the folder path had accents ("Área de Trabalho" reached cmd.exe as "┴rea"). v1.0.1 ships only SuperBomberman5Recomp.exe (the setup host itself; rebuild/relaunch stay on build/SuperBomberman5SNESRecomp.exe through SNESRECOMP_GAME_TARGET) and the framework's rebuild helper writes paths in the console code page and builds non-ASCII folders through an ASCII junction under %PUBLIC%\retcomm-builds (CMake's own UTF-8 post-build scripts otherwise skipped the mods and launcher assets). Verified by the maintainer on Windows under OneDrive "Área de Trabalho": configure, build, 12 mods and assets staged, renamed setup host handing off to the rebuilt game. Published as the first full release: the maintainer has completed the campaign on Windows; mod combinations, physical five-player play and broad Linux remain unqualified.
