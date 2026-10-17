@@ -2,7 +2,7 @@
 
 An unofficial, noncommercial **Super Bomberman 5** PC port built with [SNESRecomp](https://github.com/RetroPortingToolKit/snesrecomp) and [recomp-ui](https://github.com/RetroPortingToolKit/recomp-ui), following the game-repository architecture of [Mega Man X Recompiled](https://github.com/mstan/MegaManXSNESRecomp).
 
-[Download v1.0.3](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v1.0.3) · [English](#english) · [Português](#português) · [Technical status](docs/STATUS.md) · [Contributing](CONTRIBUTING.md)
+[Download v1.1.0](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v1.1.0) · [English](#english) · [Português](#português) · [Technical status](docs/STATUS.md) · [Contributing](CONTRIBUTING.md)
 
 > **Partial recompilation.** Most game logic still runs on the framework's interpreter. Supply your own legally obtained ROM; no ROM, generated game code or extracted assets are distributed. v1.0.1 is the first full release: the maintainer has played the campaign through to the end on Windows.
 
@@ -14,16 +14,16 @@ An unofficial, noncommercial **Super Bomberman 5** PC port built with [SNESRecom
 
 - Windows x64 setup and an experimental Linux x86_64 AppImage; the game is generated and compiled locally from your ROM.
 - Launcher with **PLAYER 1–5** input tabs (keyboard or gamepad per player, including several identical controllers such as two DualSense pads).
-- Twelve optional mods, all disabled by default: five-player Normal Game, character and color selection in Normal, extra characters, Super Bomberman 4 Bomber Kings, Louie improvements, PT-BR menus and more.
+- Thirteen optional mods, all disabled by default: five-player Normal Game (with an optional corner spawn layout), character and color selection in Normal, extra characters, Super Bomberman 4 Bomber Kings, Louie improvements, PT-BR menus and more.
 
 ### Install
 
-1. Download **superbomberman5-1.0.3-windows-x64.zip** (Windows 10+ x64) or **superbomberman5-1.0.3-linux-x86_64.AppImage** (glibc 2.35+, Ubuntu 22.04 baseline) from [v1.0.3](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v1.0.3) and check **SHA256SUMS**.
-2. Windows: extract the **entire** ZIP into a new writable folder and open `SuperBomberman5Recomp.exe`. Linux: `chmod +x` the AppImage and run it (without FUSE, add `--appimage-extract-and-run`); its setup lives in `~/.local/share/superbomberman5/1.0.3`.
+1. Download **superbomberman5-1.1.0-windows-x64.zip** (Windows 10+ x64) or **superbomberman5-1.1.0-linux-x86_64.AppImage** (glibc 2.35+, Ubuntu 22.04 baseline) from [v1.1.0](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v1.1.0) and check **SHA256SUMS**.
+2. Windows: extract the **entire** ZIP into a new writable folder and open `SuperBomberman5Recomp.exe`. Linux: `chmod +x` the AppImage and run it (without FUSE, add `--appimage-extract-and-run`); its setup lives in `~/.local/share/superbomberman5/1.1.0`.
 3. Let the launcher fetch the portable build tools (internet needed once; Rust is not required), select your own ROM and choose **Generate & rebuild**.
 4. Open **Mods** to enable features, configure controls and select **Play**.
 
-**Upgrading:** install 1.0.3 into a new folder and run **Generate & rebuild** again; an older generated executable cannot load new native mod code. Leave several GB free.
+**Upgrading:** install 1.1.0 into a new folder and run **Generate & rebuild** again; an older generated executable cannot load new native mod code. Leave several GB free.
 
 ### Supported ROM
 
@@ -42,7 +42,8 @@ Each setup package already includes these mods (no separate download). They can 
 
 | Mod | What it does |
 |---|---|
-| **Normal Game — five players** | 1–5 player campaign with shared lives (players + 2), Start to rejoin, items carried over per seat. [Details](docs/NORMAL_COOP.md) |
+| **Normal Game — five players** | 1–5 player campaign with shared lives (players + 2), Start to rejoin, items carried over per seat. P3/P5 start next to P1 and P4 next to P2. Listed under **Mods → 5 Players**. [Details](docs/NORMAL_COOP.md) |
+| **Normal Game — five players: corner spawns** | With the five-player mod: P3 starts in the lower-left corner, P4 in the lower-right corner and P5 in the centre of regular stages. [Details](docs/NORMAL_COOP.md) |
 | **Normal Game — character selection** | Battle character picker after choosing a Normal save file. [Details](docs/NORMAL_CHARACTERS.md) |
 | **Character selection — color controls** | Six palettes per character with L/R (keyboard C/V, gamepad LB/RB). [Details](docs/SELECTION_COLORS.md) |
 | **Super Bomberman 5 Extra Characters** | Seven-column picker with Honey, Kotetsu, Subordinate Bomber and Emperor Terrorin, each with a B + direction ability. [Details](docs/EXTRA_CHARACTERS.md) |
@@ -98,16 +99,16 @@ Thanks to Matthew Stanley and the RetroPorting ToolKit contributors for SNESReco
 
 - Setup Windows x64 e AppImage Linux x86_64 experimental; o jogo é gerado e compilado localmente a partir da sua ROM.
 - Launcher com abas **PLAYER 1–5** (teclado ou controle por jogador, inclusive vários controles iguais, como dois DualSense).
-- Doze mods opcionais, desligados por padrão: Normal Game com cinco jogadores, seleção de personagem e cor no Normal, personagens extras, Reis Bomber do Super Bomberman 4, melhorias dos Louies, menus em PT-BR e mais.
+- Treze mods opcionais, desligados por padrão: Normal Game com cinco jogadores (com layout opcional de spawn nos cantos), seleção de personagem e cor no Normal, personagens extras, Reis Bomber do Super Bomberman 4, melhorias dos Louies, menus em PT-BR e mais.
 
 ### Instalação
 
-1. Baixe **superbomberman5-1.0.3-windows-x64.zip** (Windows 10+ x64) ou **superbomberman5-1.0.3-linux-x86_64.AppImage** (glibc 2.35+, base Ubuntu 22.04) na [v1.0.3](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v1.0.3) e confira o **SHA256SUMS**.
-2. Windows: extraia o ZIP **inteiro** numa pasta nova e gravável e abra `SuperBomberman5Recomp.exe`. Linux: dê `chmod +x` no AppImage e execute (sem FUSE, use `--appimage-extract-and-run`); o setup fica em `~/.local/share/superbomberman5/1.0.3`.
+1. Baixe **superbomberman5-1.1.0-windows-x64.zip** (Windows 10+ x64) ou **superbomberman5-1.1.0-linux-x86_64.AppImage** (glibc 2.35+, base Ubuntu 22.04) na [v1.1.0](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v1.1.0) e confira o **SHA256SUMS**.
+2. Windows: extraia o ZIP **inteiro** numa pasta nova e gravável e abra `SuperBomberman5Recomp.exe`. Linux: dê `chmod +x` no AppImage e execute (sem FUSE, use `--appimage-extract-and-run`); o setup fica em `~/.local/share/superbomberman5/1.1.0`.
 3. Deixe o launcher baixar as ferramentas portáteis (internet só na primeira vez; Rust não é necessário), escolha sua própria ROM e clique em **Generate & rebuild**.
 4. Abra **Mods** para ativar funções, configure os controles e clique em **Play**.
 
-**Atualizando:** instale a 1.0.3 numa pasta nova e faça **Generate & rebuild** de novo; um executável gerado antigo não carrega o código nativo novo. Deixe alguns GB livres.
+**Atualizando:** instale a 1.1.0 numa pasta nova e faça **Generate & rebuild** de novo; um executável gerado antigo não carrega o código nativo novo. Deixe alguns GB livres.
 
 ### ROM compatível
 
@@ -119,7 +120,8 @@ Todos já vêm no pacote de setup (sem download separado) e podem ser ativados j
 
 | Mod | O que faz |
 |---|---|
-| **Normal Game — five players** | Campanha de 1 a 5 jogadores com vidas compartilhadas (jogadores + 2), Start para voltar e itens mantidos por jogador. [Detalhes](docs/NORMAL_COOP.md) |
+| **Normal Game — five players** | Campanha de 1 a 5 jogadores com vidas compartilhadas (jogadores + 2), Start para voltar e itens mantidos por jogador. P3/P5 nascem junto do P1 e P4 junto do P2. Fica em **Mods → 5 Players**. [Detalhes](docs/NORMAL_COOP.md) |
+| **Normal Game — five players: corner spawns** | Com o mod de cinco jogadores: P3 nasce no canto inferior esquerdo, P4 no inferior direito e P5 no centro das fases comuns. [Detalhes](docs/NORMAL_COOP.md) |
 | **Normal Game — character selection** | Seletor de personagens do Battle depois de escolher o arquivo do Normal. [Detalhes](docs/NORMAL_CHARACTERS.md) |
 | **Character selection — color controls** | Seis paletas por personagem com L/R (teclado C/V, controle LB/RB). [Detalhes](docs/SELECTION_COLORS.md) |
 | **Super Bomberman 5 Extra Characters** | Seleção de sete colunas com Honey, Kotetsu, Subordinate Bomber e imperador Terrorin, cada um com habilidade em B + direção. [Detalhes](docs/EXTRA_CHARACTERS.md) |

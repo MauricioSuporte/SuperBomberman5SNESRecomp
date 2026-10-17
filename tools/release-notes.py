@@ -1144,6 +1144,30 @@ Instale numa pasta nova e gravável e faça **Generate & rebuild** com sua ROM J
 As correções foram verificadas no Linux com rotas roteirizadas de cinco jogadores no Normal e no Battle e testes nativos; ainda não numa campanha jogada no Windows nem com controles físicos. Recompilação parcial, principalmente interpretada; combinações de mods, cinco controles físicos e compatibilidade ampla no Linux não qualificados; sem netplay. Downloads sem ROM, código/executável gerado do jogo, assets extraídos, saves ou capturas brutas.
 '''
 
+if version == '1.1.0':
+    notes = f'''# Super Bomberman 5 v{version}
+
+## English
+
+- **Five-player spawns next to P1/P2:** with **Play Normal Game with up to five players**, P3 and P5 now start next to P1 and P4 next to P2 in regular stages (one tile beside the original spawn, toward the middle of the field). Blocked tiles still fall back to the nearest safe floor. Boss stages keep their layout.
+- **New optional mod — corner spawns:** **Spawn P3-P5 in the corners and centre** brings back the previous layout (P3 lower left, P4 lower right, P5 centre). It only works together with the five-player mod. Thirteen optional mods are now included, all disabled by default.
+- **5 Players group:** both five-player mods are listed in their own **5 Players** section on the Mods page.
+
+Install into a new writable folder and run **Generate & rebuild** with your own supported JPN SB5 ROM; an older generated game does not get these changes. Download the Windows x64 ZIP or experimental Linux x86_64 AppImage and verify SHA256SUMS. Internet is needed for the first tools; Rust is not required.
+
+The spawn change is covered by native tests and was checked by the maintainer in a Windows build; physical five-player play is not qualified. Partial recompilation with mostly interpreted gameplay; all mod combinations and broad Linux compatibility remain unqualified; no netplay. Downloads contain no ROM, generated game code/binary, extracted assets, saves or raw captures.
+
+## Português
+
+- **Spawns de cinco jogadores junto de P1/P2:** com **Play Normal Game with up to five players**, P3 e P5 agora nascem junto do P1 e P4 junto do P2 nas fases comuns (um tile ao lado do spawn original, na direção do meio do mapa). Um tile bloqueado continua indo para o chão seguro mais próximo. As fases de chefe mantêm o layout.
+- **Novo mod opcional — spawns nos cantos:** **Spawn P3-P5 in the corners and centre** traz de volta o layout anterior (P3 no canto inferior esquerdo, P4 no inferior direito, P5 no centro). Só funciona junto com o mod de cinco jogadores. Agora são treze mods opcionais, todos desligados por padrão.
+- **Grupo 5 Players:** os dois mods de cinco jogadores ficam numa seção própria, **5 Players**, na página Mods.
+
+Instale numa pasta nova e gravável e faça **Generate & rebuild** com sua ROM JPN compatível do SB5; um jogo gerado antes não recebe estas mudanças. Baixe o ZIP Windows x64 ou o AppImage Linux x86_64 experimental e confira SHA256SUMS. Internet para as primeiras ferramentas; Rust não é necessário.
+
+A mudança de spawn tem testes nativos e foi conferida pelo mantenedor num build Windows; cinco controles físicos não foram qualificados. Recompilação parcial, principalmente interpretada; combinações de mods e compatibilidade ampla no Linux não qualificadas; sem netplay. Downloads sem ROM, código/executável gerado do jogo, assets extraídos, saves ou capturas brutas.
+'''
+
 if args.output:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(notes, encoding='utf-8', newline='\n')

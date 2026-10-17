@@ -1,5 +1,29 @@
 # Super Bomberman 5: estado do protótipo
 
+## v1.1.0 release / Release v1.1.0 - 2026-10-17
+
+v1.1.0 packages the spawn change below on top of v1.0.3 and adds a thirteenth optional mod. README, PUBLISHING and the release notes list it. Native coop test built and run with gcc on Linux; the maintainer confirmed the new spawns in a Windows build of his working tree. CI builds both platforms before publication.
+
+A v1.1.0 traz a mudança de spawn abaixo sobre a v1.0.3 e um 13º mod opcional. O mantenedor confirmou os spawns novos num build Windows.
+
+## Five-player spawns beside P1/P2, corner layout as a separate mod / Spawns junto de P1/P2, layout dos cantos como mod separado - 2026-10-17
+
+Requested by the maintainer. The five-player mod moved to its own **5 Players**
+group on the Mods page. In regular campaign stages P3 and P5 now start next to
+P1 and P4 next to P2 (P3/P4 one tile beside the cartridge spawn of P1/P2, P5
+one tile above/below P1, each toward the middle of the field), still through
+the nearest-safe-floor search and the post-map settle at `$C5:3D5D`. The old
+layout (P3 lower left, P4 lower right, P5 centre) is the new optional package
+`superbomberman5.coop-corner-spawns` (feature `corner_spawns`, same group),
+which only works with the five-player mod. Boss layouts are unchanged in both
+modes. `normal_coop_tests` covers both layouts, inward stepping from opposite
+corners, a blocked neighbour and the unchanged boss pattern. The maintainer
+checked the result in his Windows build; no scripted runtime route was added.
+
+Pedido do mantenedor: P3 e P5 nascem junto do P1 e P4 junto do P2; o layout
+antigo dos cantos virou um mod separado no grupo **5 Players**. Conferido pelo
+mantenedor no Windows; teste nativo cobre os dois layouts.
+
 ## v1.0.3 release / Release v1.0.3 - 2026-10-17
 
 v1.0.3 packages the two fixes below on top of v1.0.2: B + direction abilities in every Battle arena (they only worked in arena 1) and the five-player slowdown caused by Normal Game HUD faces. The README only changes its download links; the fixes are in the release notes and this log. Verified on Linux LLE headless with the release commit: 14 native tests, `tests/normal_hud_runtime.py`, `tests/normal_hud_coop_runtime.py --players 5`, a five-seat Zone 1-1 lag measurement (4.0% of 1,808 frames with all gameplay mods) and a five-seat Battle route in Gold arena 13 with abilities firing. Not checked in a played Windows campaign or with physical controllers.
