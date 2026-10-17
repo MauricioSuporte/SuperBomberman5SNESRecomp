@@ -1,5 +1,36 @@
 # Super Bomberman 5: estado do protótipo
 
+## ZONE3 - 1 exit gate with HUD faces / Portal da ZONE3 - 1 com rostos na HUD - 2026-10-17
+
+Reported after v1.1.0: no exit gate in ZONE3 - 1 (`$2B`) after all enemies were
+defeated. Same cause as the ZONE3 - D fix, in a regular stage: when the last
+enemy dies its archive `$13` is released and the gate's archive `$63` must take
+its static OBJ VRAM, but with face archive `$64` resident `$C0:18FC` fails
+(`$C0:1A0A` carry → `$C0:193C`), the gate stays queued in `$7E4DA3` (`$41`)
+and its object never gets a frame. The queue alone is no signal (ZONE1 - 1
+keeps its covered gates queued until revealed). Pre-opcode hooks on the
+allocator's failure exits `$C0:193A/$193C` now flag a failure for any archive
+other than `$64`; the HUD mod then runs one HUD tick through `$C5:7300` (free
+FF padding, saved/restored) that deletes each live P1/P2 face object with the
+native `$C0:1342` (object, archive and palette) and sets `$35C5+seat` = `$FF`,
+restores its patches and keeps the stock heads until the stage id changes.
+
+Evidence (Linux LLE headless, local only): forced `$2B` from the first-stage
+route, native restart, P1 invulnerable, enemies 5-8 killed with `$15A2` bit 6.
+No mods: gate object at screen (216,68) = cell (13,2), frame 22. HUD faces
+before the fix: gate object at frame 0, queue stuck at `$41`. After the fix
+(HUD faces alone and with co-op, PT-BR, portal labels, pause, Louie, infinite
+time, Gold Battle, corner spawns): gate visible at (216,68), faces released.
+ZONE1 - 1 with the same mods: three gates revealed (frame 17) and the P1 face
+kept. All 14 native tests pass (new allocator-hook, release-routine and
+suspension cases). Not verified: Windows build, a played route, other regular
+stages (which ones hit the limit is unknown; the fix applies to any).
+
+O portal da ZONE3 - 1 não aparecia com os rostos na HUD: o gráfico do rosto
+ocupava a VRAM do portal. Agora, se o jogo não consegue carregar um gráfico por
+falta de espaço, os rostos saem até a próxima fase e o portal aparece.
+Validado no Linux com a fase forçada; falta conferir no Windows.
+
 ## v1.1.0 release / Release v1.1.0 - 2026-10-17
 
 v1.1.0 packages the spawn change below on top of v1.0.3 and adds a thirteenth optional mod. README, PUBLISHING and the release notes list it. Native coop test built and run with gcc on Linux; the maintainer confirmed the new spawns in a Windows build of his working tree. CI builds both platforms before publication.

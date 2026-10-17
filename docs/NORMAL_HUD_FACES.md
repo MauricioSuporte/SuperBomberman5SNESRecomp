@@ -21,6 +21,13 @@ a HUD fica com os ícones originais: o gráfico do rosto ocupava a VRAM de que o
 portais de saída precisam e, no ZONE3 - D (pirata e parceiro), os portais não
 apareciam depois de vencer o chefe.
 
+Algumas fases comuns batem no mesmo limite: na ZONE3 - 1 o portal não aparecia
+depois de derrotar todos os inimigos. Quando o jogo não consegue carregar um
+gráfico (como o do portal) por falta de VRAM enquanto os rostos estão na tela,
+os rostos são removidos pelo próprio jogo e a HUD volta aos ícones originais
+até a próxima fase; o portal então aparece normalmente. Nas fases em que o
+portal cabe (como a ZONE1 - 1) os rostos continuam.
+
 As rotinas nativas criam somente os objetos dos rostos, sem carregar o layout
 do Battle. O desenho limpa o rosto fixo nos seis tiles BG2 de cada ícone ocupado,
 preservando as linhas da moldura e o fundo azul,
@@ -48,6 +55,13 @@ Boss stages (ZONE1 - A to ZONE5 - J and the three secret stages, `$67`-`$73`)
 keep the stock HUD icons: the face's graphics took the OBJ VRAM the exit gates
 need, and in ZONE3 - D (Pirate Bomber and partner) the gates never appeared
 after the boss was defeated.
+
+Some regular stages hit the same limit: in ZONE3 - 1 the exit gate did not
+appear after every enemy was defeated. When the game cannot load a graphic
+(such as the gate's) for lack of VRAM while faces are shown, the faces are
+deleted through the game's own object routine and the HUD returns to the stock
+icons until the next stage; the gate then appears. Stages whose gate fits (such
+as ZONE1 - 1) keep their faces.
 
 Native routines create only the face objects. Render observers clear each
 occupied fixed BG2 head across all three tile rows, preserving the blue

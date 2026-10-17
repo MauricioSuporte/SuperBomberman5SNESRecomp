@@ -4,9 +4,14 @@
 #include "common_cpu_infra.h"
 #include "mod_runtime.h"
 #include "snes/ppu.h"
+#include "snes/interp_bridge.h"
 #include <string.h>
 static bool enabled, installed;
-static uint8_t original[4], guard[2], death[5], respawn[4], tick[3], scratch[256];
+static uint8_t original[4], guard[2], death[5], respawn[4], tick[3], scratch[256], release[96];
+/* Static OBJ allocation failures seen this frame: see vram_full(). */
+static bool alloc_failed, hooks_added;
+static bool releasing;
+static uint8_t suspended_stage;
 static uint8_t *rom(unsigned pc) { return SnesRomPtr(pc); }
 static bool campaign(void) {
     unsigned m=g_ram[0x1031];
@@ -21,6 +26,30 @@ static bool boss_stage(void) {
     unsigned m=g_ram[0x1031];
     return m>=0x67 && m<=0x73;
 }
+/* Regular stages hit the same limit: in ZONE3 - 1 (`$2B`) the enemies'
+ * archive `$13` is released when the last enemy dies and the exit gate's
+ * archive `$63` must take its VRAM, but with face archive `$64` loaded it
+ * does not fit; the gate stays queued in `$7E4DA3` and never appears. The
+ * static allocator `$C0:18FC` reaches `$C0:193C` when no VRAM block fits
+ * (`$C0:1A0A` carry) and `$C0:193A` when all 32 entries are taken. On such
+ * a failure for another archive while a face is live, the face objects are
+ * deleted through the native `$C0:1342` (which also releases their archive
+ * and palette) and the stock heads return until the next stage; the native
+ * retry then succeeds. Stages whose gates fit keep their faces (the queue
+ * alone is no signal: covered gates stay queued until revealed). */
+static void vram_full(CpuState *cpu,uint32_t pc) {
+    (void)cpu;(void)pc;
+    if(enabled && installed && g_ram[0xadf]!=0x64) alloc_failed=true;
+}
+static bool suspended(void) {
+    if(suspended_stage && g_ram[0x1031]!=suspended_stage) suspended_stage=0;
+    return suspended_stage!=0;
+}
+static bool face_live(unsigned seat) {
+    unsigned o=g_ram[0x35c5+seat];
+    return o<0x60 && g_ram[0x4ff+o]==6 && g_ram[0x4a0+o]==0xf0;
+}
+
 bool NormalHudEnabled(void) { return enabled; }
 void NormalHudReset(void) {
     if(installed) {
@@ -30,15 +59,30 @@ void NormalHudReset(void) {
         memcpy(rom(0xc42b33),respawn,4);
         memcpy(rom(0xc50608),tick,3);
         memcpy(rom(0xc57200),scratch,sizeof(scratch));
+        memcpy(rom(0xc57300),release,sizeof(release));
     }
-    installed=false;
+    installed=false;alloc_failed=false;releasing=false;
 }
 void NormalHudBeforeFrame(void) {
     if(!enabled || !g_rom) return;
-    if(!campaign() || boss_stage()) { NormalHudReset();return; }
+    if(!campaign() || boss_stage() || suspended()) { NormalHudReset();return; }
     /* Resuming an older scene or an extra-seat reentry can leave a face on
      * another character's animation. Let the native updater repair it. */
     if(installed) {
+        if(releasing) {
+            /* The HUD tick ran the release routine: back to stock heads. */
+            if(!face_live(0) && !face_live(1)) {
+                suspended_stage=(uint8_t)g_ram[0x1031];NormalHudReset();
+            }
+            return;
+        }
+        if(alloc_failed) {
+            alloc_failed=false;
+            if(!face_live(0) && !face_live(1)) { suspended_stage=(uint8_t)g_ram[0x1031];NormalHudReset();return; }
+            static const uint8_t release_call[]={0x20,0x00,0x73};
+            memcpy(rom(0xc50608),release_call,3);releasing=true;
+            return;
+        }
         uint8_t *lookup=rom(0xc51319);
         unsigned table=lookup[1]|lookup[2]<<8|lookup[3]<<16;
         if(lookup[0]==0xbf)for(unsigned i=0;i<2;++i) {
@@ -53,6 +97,15 @@ void NormalHudBeforeFrame(void) {
     static const uint8_t death_stock[]={0xad,0x1a,0x1d,0x89,0x01};
     if(memcmp(rom(0xc50608),"\x20\xcd\x06",3) || memcmp(rom(0xc42b33),"\x22\x07\x13\xc5",4) || memcmp(rom(0xc436ff),death_stock,5) || memcmp(rom(0xc505f1),call,4) || memcmp(rom(0xc5126b),"\xf0\x52",2)) return;
     for(unsigned i=0;i<sizeof(scratch);++i) if(rom(0xc57200)[i]!=0xff)return;
+    for(unsigned i=0;i<sizeof(release);++i) if(rom(0xc57300)[i]!=0xff)return;
+    /* Allocator failure exits (see vram_full); both are BRA $193E. */
+    if(memcmp(rom(0xc0193a),"\x80\x02\x80\x00",4)) return;
+    if(!hooks_added) {
+        if(!interp_bridge_add_pre_opcode_hook(0xc0193a,vram_full) ||
+           !interp_bridge_add_pre_opcode_hook(0xc0193c,vram_full)) return;
+        hooks_added=true;
+    }
+    memcpy(release,rom(0xc57300),sizeof(release));
     memcpy(original,rom(0xc505f1),4);memcpy(guard,rom(0xc5126b),2);
     memcpy(scratch,rom(0xc57200),sizeof(scratch));
     memcpy(death,rom(0xc436ff),5);memcpy(respawn,rom(0xc42b33),4);memcpy(tick,rom(0xc50608),3);
@@ -116,12 +169,31 @@ void NormalHudBeforeFrame(void) {
         0x68,0x28,                  /* full: PLA / PLP         */
         0x22,0x00,0x72,0xc5,0x60};  /* JSL $C5:7200 / RTS      */
     memcpy(rom(0xc572b0),update,sizeof(update));
+    /* Gate room ($C5:7300, called instead of $C5:72B0 once): run the native
+     * tick, then delete each live P1/P2 face object ($04FF = 6, $04A0 = $F0)
+     * with $C0:1342 and forget it in $35C5. */
+    uint8_t *q=rom(0xc57300);
+    const uint8_t enter[]={0x20,0xcd,0x06,0x08,0xc2,0x30,0x48,0xda,0x5a,0xe2,0x30};
+    memcpy(q,enter,sizeof(enter));q+=sizeof(enter);
+    for(unsigned seat=0;seat<2;++seat) {
+        const uint8_t drop[]={
+            0xaf,0xc5+seat,0x35,0x7e,  /* LDA $7E35C5+seat */
+            0xc9,0x60,0xb0,26,         /* CMP #$60 / BCS next */
+            0xaa,                      /* TAX */
+            0xbd,0xff,0x04,0xc9,0x06,0xd0,18, /* LDA $04FF,X / CMP #6 / BNE */
+            0xbd,0xa0,0x04,0xc9,0xf0,0xd0,11, /* LDA $04A0,X / CMP #$F0 / BNE */
+            0x8a,0x22,0x42,0x13,0xc0,  /* TXA / JSL $C0:1342 */
+            0xa9,0xff,0x8f,0xc5+seat,0x35,0x7e}; /* LDA #$FF / STA $7E35C5+seat */
+        memcpy(q,drop,sizeof(drop));q+=sizeof(drop);
+    }
+    const uint8_t leave[]={0xc2,0x30,0x7a,0xfa,0x68,0x28,0x60};
+    memcpy(q,leave,sizeof(leave));
     const uint8_t update_call[]={0x20,0xb0,0x72};
     memcpy(rom(0xc50608),update_call,3);
     installed=true;
 }
 static void activate(void) { enabled=true; }
-static void reset_plugin(void) { NormalHudReset();enabled=false; }
+static void reset_plugin(void) { NormalHudReset();enabled=false;suspended_stage=0; }
 SNES_MOD_CONSTRUCTOR(register_normal_hud) {
     snes_mod_register_reset_callback(reset_plugin);
     snes_mod_register_activation_plugin("superbomberman5.normal.hud-faces",activate);

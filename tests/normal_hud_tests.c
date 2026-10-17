@@ -5,6 +5,9 @@ static SNESModActivationCallback activation, cleanup;
 int snes_mod_register_reset_callback(SNESModActivationCallback f){cleanup=f;return 1;}
 int snes_mod_register_activation_plugin(const char *id,SNESModActivationCallback f){(void)id;activation=f;return 1;}
 #include "../src/normal_hud_mod.c"
+static InterpPreOpcodeHook hooks[2];static uint32_t hook_pcs[2];static unsigned hook_count;
+bool interp_bridge_add_pre_opcode_hook(uint32_t pc,InterpPreOpcodeHook h){
+    if(hook_count>=2)return false;hook_pcs[hook_count]=pc;hooks[hook_count++]=h;return true;}
 uint8 g_ram[0x20000];
 const uint8 *g_rom;
 uint8 *SnesRomPtr(uint32 pc){return (uint8 *)g_rom+(pc&0x3fffff);}
@@ -15,6 +18,8 @@ int main(void){
     memcpy(r+0x5126b,"\xf0\x52",2);
     memcpy(r+0x436ff,"\xad\x1a\x1d\x89\x01",5);
     memset(r+0x57200,255,256);
+    memset(r+0x57300,255,96);
+    memcpy(r+0x193a,"\x80\x02\x80\x00",4);
     memcpy(r+0x50608,"\x20\xcd\x06",3);
     memcpy(r+0x42b33,"\x22\x07\x13\xc5",4);
     g_ram[0x1031]=13;
@@ -62,6 +67,34 @@ int main(void){
     CHECK(!installed && r[0x505f1]==0x22 && r[0x505f2]==0x86 && r[0x436ff]==0xad && r[0x57200]==0xff);
     g_ram[0x1031]=0x73;NormalHudBeforeFrame();CHECK(!installed);
     g_ram[0x1031]=13;NormalHudBeforeFrame();CHECK(installed && !memcmp(copy,r+0x57200,256));
+    /* Allocator failure exits are watched; hooks are added once. */
+    CHECK(hook_count==2 && hook_pcs[0]==0xc0193a && hook_pcs[1]==0xc0193c && hooks[0]==vram_full);
+    /* Gate room routine: branches land on the next seat or the epilogue. */
+    {
+        const uint8_t *q=r+0x57300;
+        CHECK(q[0]==0x20 && q[1]==0xcd && q[2]==0x06 && q[10]==0x30);
+        for(unsigned seat=0;seat<2;++seat) {
+            unsigned b=11+seat*34;
+            CHECK(q[b]==0xaf && q[b+1]==0xc5+seat && q[b+6]==0xb0 && b+8+q[b+7]==b+34);
+            CHECK(q[b+14]==0xd0 && b+16+q[b+15]==b+34 && q[b+21]==0xd0 && b+23+q[b+22]==b+34);
+            CHECK(q[b+24]==0x22 && q[b+25]==0x42 && q[b+26]==0x13 && q[b+27]==0xc0);
+            CHECK(q[b+30]==0x8f && q[b+31]==0xc5+seat);
+        }
+        CHECK(q[79]==0xc2 && q[85]==0x60 && q[86]==0xff);
+    }
+    /* A failed face allocation itself is ignored. */
+    g_ram[0xadf]=0x64;hooks[1](NULL,0xc0193c);NormalHudBeforeFrame();
+    CHECK(installed && !releasing && r[0x50609]==0xb0);
+    /* Another archive failing (ZONE3 - 1's gate, $63) releases the faces:
+     * one HUD tick through $C5:7300, then the stock HUD for this stage. */
+    g_ram[0xadf]=0x63;hooks[0](NULL,0xc0193a);NormalHudBeforeFrame();
+    CHECK(releasing && r[0x50608]==0x20 && r[0x50609]==0x00 && r[0x5060a]==0x73);
+    NormalHudBeforeFrame();CHECK(releasing && installed); /* face still live */
+    g_ram[0x35c5]=0xff;NormalHudBeforeFrame();
+    CHECK(!installed && suspended_stage==13 && r[0x50609]==0xcd && r[0x57300]==0xff && r[0x57200]==0xff);
+    NormalHudBeforeFrame();CHECK(!installed);
+    g_ram[0x1031]=8;NormalHudBeforeFrame();CHECK(installed && !suspended_stage);
+    g_ram[0x1031]=13;g_ram[0x35c5]=10;NormalHudBeforeFrame();CHECK(installed && !memcmp(copy,r+0x57200,256));
     Ppu *p=calloc(1,sizeof(Ppu));p->bgmode=1;p->bgTileAdr=0x500;p->obsel=3;
     for(unsigned i=0;i<0x8000;++i)p->vram[i]=(uint16_t)i;
     uint16_t before[0x8000];memcpy(before,p->vram,sizeof(before));
@@ -102,6 +135,7 @@ int main(void){
     CHECK(r[0x42b34]==0x07 && r[0x50609]==0xcd);
     CHECK(r[0x505f2]==0x86 && r[0x5126b]==0xf0 && r[0x436ff]==0xad);
     for(unsigned i=0;i<256;++i)CHECK(r[0x57200+i]==255);
+    for(unsigned i=0;i<96;++i)CHECK(r[0x57300+i]==255);
     g_ram[0x1031]=13;r[0x57280]=0;NormalHudBeforeFrame();CHECK(!installed);
     cleanup();CHECK(!NormalHudEnabled());free(r);free(p);
     puts("Normal HUD context, patches, refusal and exact render restoration passed.");return 0;
