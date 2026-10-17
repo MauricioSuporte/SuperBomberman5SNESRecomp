@@ -1,6 +1,6 @@
 # Versions and publication / Versões e publicação
 
-Public repository: `MauricioSuporte/SuperBomberman5SNESRecomp`. VERSION is **1.0.0**. Publish prereleases while full-game accuracy remains unqualified. Preserve existing published tags and assets.
+Public repository: `MauricioSuporte/SuperBomberman5SNESRecomp`. VERSION is **1.0.1**. Publish prereleases while full-game accuracy remains unqualified. Preserve existing published tags and assets.
 
 ## Release contents
 
@@ -44,7 +44,7 @@ The Windows packager remains scripts/package_release.sh, followed by tools/final
 
 ```bash
 python3 tools/package-appimage.py \
-  --zip dist/superbomberman5-1.0.0-linux-x64.zip \
+  --zip dist/superbomberman5-1.0.1-linux-x64.zip \
   --build-dir build-ci \
   --analyzer snesrecomp/recompiler-rs/target/release/snesrecomp-analyze \
   --rust-sysroot "$(rustup run 1.97.1 rustc --print sysroot)" \
@@ -65,7 +65,7 @@ Verify the default branch, tag target, successful workflow, prerelease state, UT
 
 Toda nova release exige README.md atualizado nas duas línguas, com informações úteis: downloads, formatos, instalação/atualização, recursos, requisitos e limites reais de validação. Atualize VERSION, STATUS.md, este documento e o gerador de notas.
 
-A v1.0.0 distribui **ZIP Windows x64**, **AppImage Linux x86_64 experimental** e **SHA256SUMS**. Ambos incluem setup sem ROM, fontes, analisador, licenças e os doze mods opcionais desligados por padrão (incluindo Super Bomberman 5 Extra Characters, que substitui Honey and Kotetsu e Subordinate Bomber, e Bomber Kings, que lê o Super Bomberman 4 da ROM do próprio jogador; nada do SB4 entra nos pacotes). O jogo é gerado apenas na máquina do jogador. Use checkout limpo, LLE e setup host; nunca publique o executável de desenvolvimento, ROM, código gerado, saves ou capturas.
+A v1.0.1 distribui **ZIP Windows x64**, **AppImage Linux x86_64 experimental** e **SHA256SUMS**. Ambos incluem setup sem ROM, fontes, analisador, licenças e os doze mods opcionais desligados por padrão (incluindo Super Bomberman 5 Extra Characters, que substitui Honey and Kotetsu e Subordinate Bomber, e Bomber Kings, que lê o Super Bomberman 4 da ROM do próprio jogador; nada do SB4 entra nos pacotes). O jogo é gerado apenas na máquina do jogador. Use checkout limpo, LLE e setup host; nunca publique o executável de desenvolvimento, ROM, código gerado, saves ou capturas.
 
 A workflow Release é manual e só publica quando os dois builds e verificações passam. Valide os pacotes extraídos, analisador, primeira abertura/reabertura e geração/rebuild local. O AppImage copia o setup para a pasta XDG gravável da versão e reutiliza o jogo gerado; sem FUSE, use --appimage-extract-and-run. Registre plataforma, rota/frames e limitações no STATUS.md. Preserve fontes, licenças, revisões e checksums. Não reescreva tags ou assets públicos automaticamente. Confirme notas UTF-8, estado de pré-release e hashes dos arquivos no GitHub.
 
@@ -75,6 +75,6 @@ Gameplay screenshots under `docs/images/` are authorized for README/docs/release
 
 Capturas são opcionais; não é exigida uma imagem por mod.
 
-Windows v0.13.1 includes SuperBomberman5Recomp.exe, a ROM-independent entry with the existing “5” icon. It locates the sibling setup/game executable or the source tree build-lle executable, forwarding arguments and exit status. It replaced play.cmd, removed after v0.13.1. The audited Windows ZIP includes this native entry.
+Windows v0.13.1 includes SuperBomberman5Recomp.exe, a ROM-independent entry with the existing “5” icon. It locates the sibling setup/game executable or the source tree build-lle executable, forwarding arguments and exit status. It replaced play.cmd, removed after v0.13.1. Since v1.0.1 the audited Windows ZIP has a single root executable: tools/finalize-release.py ships the setup host itself as SuperBomberman5Recomp.exe (built with SNESRECOMP_GAME_TARGET, so Generate & rebuild still targets and relaunches build/SuperBomberman5SNESRecomp.exe). The forwarding entry remains for source trees.
 
-O Windows v0.13.1 inclui SuperBomberman5Recomp.exe com o ícone atual do “5”. A entrada localiza o setup/jogo ao lado ou o build local em build-lle e repassa argumentos e código de saída. Ele substituiu o play.cmd, removido depois da v0.13.1.
+O Windows v0.13.1 inclui SuperBomberman5Recomp.exe com o ícone atual do “5”. A entrada localiza o setup/jogo ao lado ou o build local em build-lle e repassa argumentos e código de saída. Ele substituiu o play.cmd, removido depois da v0.13.1. Desde a v1.0.1 o ZIP Windows tem um único executável na raiz: o próprio setup, publicado como SuperBomberman5Recomp.exe; o Generate & rebuild continua gerando e abrindo build/SuperBomberman5SNESRecomp.exe.

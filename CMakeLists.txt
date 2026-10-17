@@ -197,6 +197,9 @@ target_link_libraries(SuperBomberman5SNESRecomp PRIVATE ${SNESRECOMP_RUNNER_LIBR
 target_compile_definitions(SuperBomberman5SNESRecomp PRIVATE
     SNES_GAME_VERSION="${SNESRECOMP_BUILD_VERSION}"
     SNES_GAME_TITLE="Super Bomberman 5"
+    # Release ZIPs ship this setup host as SuperBomberman5Recomp.exe; rebuilds
+    # still target and relaunch the game under the target's own name.
+    SNESRECOMP_GAME_TARGET="SuperBomberman5SNESRecomp"
 )
 snesrecomp_target_sdl(SuperBomberman5SNESRecomp)
 

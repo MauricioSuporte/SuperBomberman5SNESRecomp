@@ -1072,6 +1072,30 @@ Baixe o ZIP Windows x64 ou o AppImage Linux x86_64 experimental e confira SHA256
 Ainda é pré-release: recompilação parcial, principalmente interpretada. Campanha completa, todas as combinações de mods, cinco controles físicos e compatibilidade ampla no Linux não qualificados; sem netplay. Evidências em docs/STATUS.md. Downloads sem ROM, código/executável gerado do jogo, assets extraídos, saves ou capturas brutas.
 '''
 
+if version == '1.0.1':
+    notes = f'''# Super Bomberman 5 v{version}
+
+## English
+
+- The Windows ZIP now has a single executable at its root, **SuperBomberman5Recomp.exe**: it is the setup program and, after Generate & rebuild, it opens the rebuilt game.
+- Generate & rebuild works in folders whose path has accents or other non-English letters (for example OneDrive's "Área de Trabalho"); it previously stopped at "Configure failed".
+- Includes all v1.0.0 changes: five-player Louies, ZONE3 - D co-op, mounted boss entry, portal labels after bosses and identical controllers on different players.
+
+Install into a new writable folder and run **Generate & rebuild** with your own supported JPN SB5 ROM. Download the Windows x64 ZIP or experimental Linux x86_64 AppImage and verify SHA256SUMS. Internet is needed for the first tools; Rust is not required.
+
+Still a prerelease: partial recompilation with mostly interpreted gameplay. Full campaign, all mod combinations, physical five-player play and broad Linux compatibility remain unqualified; no netplay. Downloads contain no ROM, generated game code/binary, extracted assets, saves or raw captures.
+
+## Português
+
+- O ZIP Windows agora tem um único executável na raiz, **SuperBomberman5Recomp.exe**: ele é o setup e, depois do Generate & rebuild, abre o jogo recompilado.
+- O Generate & rebuild funciona em pastas com acento ou outras letras fora do inglês (por exemplo a "Área de Trabalho" do OneDrive); antes parava em "Configure failed".
+- Inclui todas as mudanças da v1.0.0: Louies com cinco jogadores, ZONE3 - D em co-op, entrada montada em chefes, destinos dos portais após chefes e controles iguais em jogadores diferentes.
+
+Instale numa pasta nova e gravável e faça **Generate & rebuild** com sua ROM JPN compatível do SB5. Baixe o ZIP Windows x64 ou o AppImage Linux x86_64 experimental e confira SHA256SUMS. Internet para as primeiras ferramentas; Rust não é necessário.
+
+Ainda é pré-release: recompilação parcial, principalmente interpretada. Campanha completa, combinações de mods, cinco controles físicos e compatibilidade ampla no Linux não qualificados; sem netplay. Downloads sem ROM, código/executável gerado do jogo, assets extraídos, saves ou capturas brutas.
+'''
+
 if args.output:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(notes, encoding='utf-8', newline='\n')

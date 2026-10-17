@@ -66,6 +66,7 @@ def main() -> None:
         raise SystemExit('Rust standard-library copyright/license notices missing.')
     temp = args.zip.with_suffix('.auditing.zip')
     with zipfile.ZipFile(args.zip) as src, zipfile.ZipFile(temp, 'w', zipfile.ZIP_DEFLATED) as out:
+        setup_host = None
         roots = {i.filename.split('/')[0] for i in src.infolist()}
         if len(roots) != 1:
             raise SystemExit('Expected a single package directory.')
@@ -74,11 +75,31 @@ def main() -> None:
             # These upstream assets are not needed to generate or run the game.
             if '/docs/assets/games/' in item.filename or '/test_data/' in item.filename or '/docs/images/' in item.filename:
                 continue
-            out.writestr(item, src.read(item))
-        entry = args.build_dir / 'SuperBomberman5Recomp.exe'
-        if not entry.is_file():
-            raise SystemExit('Missing native Windows entry point')
-        out.write(entry, root + '/SuperBomberman5Recomp.exe')
+            if item.filename == root + '/SuperBomberman5SNESRecomp.exe':
+                setup_host = (item, src.read(item))
+                continue
+            data = src.read(item)
+            if item.filename == root + '/README.txt':
+                text = data.decode('utf-8')
+                for old, new in (('Start SuperBomberman5SNESRecomp.exe.', 'Start SuperBomberman5Recomp.exe.'),
+                                 ('started for you; run it from there afterwards.',
+                                  'started for you; afterwards SuperBomberman5Recomp.exe opens it.')):
+                    if old not in text:
+                        raise SystemExit(f'README.txt changed upstream; update finalize-release.py: {old}')
+                    text = text.replace(old, new)
+                data = text.encode('utf-8')
+            out.writestr(item, data)
+        # One executable at the package root: the setup host itself, under the
+        # player-facing name (it rebuilds and relaunches SuperBomberman5SNESRecomp
+        # through SNESRECOMP_GAME_TARGET). The forwarding entry stays a
+        # source-tree convenience.
+        if setup_host is None:
+            raise SystemExit('Missing setup host executable')
+        item, data = setup_host
+        info = zipfile.ZipInfo(root + '/SuperBomberman5Recomp.exe', date_time=item.date_time)
+        info.compress_type = zipfile.ZIP_DEFLATED
+        info.external_attr = item.external_attr
+        out.writestr(info, data)
         analyzer_dir = root + '/snesrecomp/recompiler-rs/target/release/'
         out.write(args.analyzer, analyzer_dir + 'snesrecomp-analyze.exe')
         out.write(args.toolchain / 'bin/libunwind.dll', analyzer_dir + 'libunwind.dll')

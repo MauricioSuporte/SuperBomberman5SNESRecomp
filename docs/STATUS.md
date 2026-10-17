@@ -1,5 +1,11 @@
 # Super Bomberman 5: estado do protótipo
 
+## v1.0.1 setup pack / Pacote de setup v1.0.1 - 2026-10-16
+
+The v1.0.0 Windows ZIP had two root executables, and Generate & rebuild failed to configure when the folder path had accents ("Área de Trabalho" reached cmd.exe as "┴rea"). v1.0.1 ships only SuperBomberman5Recomp.exe (the setup host itself; rebuild/relaunch stay on build/SuperBomberman5SNESRecomp.exe through SNESRECOMP_GAME_TARGET) and the framework's rebuild helper now uses code page 65001 with UTF-8 paths. Checked: mingw syntax build of the host and the CI package; the accented-folder rebuild on Windows is pending the maintainer's test of the CI package.
+
+O ZIP Windows v1.0.0 tinha dois executáveis na raiz e o Generate & rebuild falhava em pastas com acento. A v1.0.1 traz só o SuperBomberman5Recomp.exe e o script de rebuild usa UTF-8 (chcp 65001).
+
 ## v1.0.0 release / Release v1.0.0 - 2026-10-16
 
 v1.0.0 packages the fixes below (Louies with five seats, identical controllers, ZONE3 - D co-op, mounted boss entry, portal labels after bosses, retired mod pruning, SuperBomberman5Recomp.exe only) and a shorter bilingual README. It stays a prerelease: the full campaign, all mod combinations, physical five-player play and broad Linux compatibility remain unqualified. The identical-controller seating was verified by code paths and build only, not with two physical DualSense pads.
