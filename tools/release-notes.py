@@ -1096,6 +1096,32 @@ Instale numa pasta nova e gravável e faça **Generate & rebuild** com sua ROM J
 Primeira versão completa: o mantenedor zerou a campanha no Windows. Recompilação parcial, principalmente interpretada; combinações de mods, cinco controles físicos e compatibilidade ampla no Linux não qualificados; sem netplay. Downloads sem ROM, código/executável gerado do jogo, assets extraídos, saves ou capturas brutas.
 '''
 
+if version == '1.0.2':
+    notes = f'''# Super Bomberman 5 v{version}
+
+## English
+
+- **ZONE3 - D exit gates:** with **Battle character faces in Normal HUD** enabled, the gates did not appear after defeating the Pirate Bomber and his partner (the face's graphics took the gates' video memory). Boss stages now keep the stock HUD icons.
+- **Abilities against bosses:** the B + direction abilities (Bomber Kings, Honey, Kotetsu, Terrorin) now hurt the rival bomber bosses, through the game's own fire hit: first their Louie, then a hit point. A Louie is no longer hit on its own.
+- **Jet:** keeps blowing fire behind him while pressed against the obstacle, as in Super Bomberman 4.
+- **PT-BR menus:** "Continuar" no longer appears over the blocks of ZONE2's boss arena; during a stage only the HUD texts are translated.
+
+Install into a new writable folder and run **Generate & rebuild** with your own supported JPN SB5 ROM; an older generated game does not get these fixes. Download the Windows x64 ZIP or experimental Linux x86_64 AppImage and verify SHA256SUMS. Internet is needed for the first tools; Rust is not required.
+
+The fixes were verified on Linux with scripted, forced-stage routes (ZONE3 - D and ZONE2's boss) and native tests; not yet in a played Windows campaign. Partial recompilation with mostly interpreted gameplay; all mod combinations, physical five-player play and broad Linux compatibility remain unqualified; no netplay. Downloads contain no ROM, generated game code/binary, extracted assets, saves or raw captures.
+
+## Português
+
+- **Portais do ZONE3 - D:** com **Battle character faces in Normal HUD** ligado, os portais não apareciam depois de vencer o pirata e o parceiro (o gráfico do rosto ocupava a memória de vídeo dos portais). Nas fases de chefe a HUD fica com os ícones originais.
+- **Habilidades contra chefes:** as habilidades de B + direção (Bomber Kings, Honey, Kotetsu, Terrorin) agora machucam os chefes bombers, pelo dano de fogo do próprio jogo: primeiro o Louie, depois a vida. O Louie não é mais atingido sozinho.
+- **Jet:** continua soltando fogo para trás enquanto está parado no obstáculo, como no Super Bomberman 4.
+- **Menus em PT-BR:** o "Continuar" não aparece mais sobre os blocos da arena do chefe do ZONE2; durante a fase só os textos da HUD são traduzidos.
+
+Instale numa pasta nova e gravável e faça **Generate & rebuild** com sua ROM JPN compatível do SB5; um jogo gerado antes não recebe estas correções. Baixe o ZIP Windows x64 ou o AppImage Linux x86_64 experimental e confira SHA256SUMS. Internet para as primeiras ferramentas; Rust não é necessário.
+
+As correções foram verificadas no Linux com rotas roteirizadas de fase forçada (ZONE3 - D e chefe do ZONE2) e testes nativos; ainda não numa campanha jogada no Windows. Recompilação parcial, principalmente interpretada; combinações de mods, cinco controles físicos e compatibilidade ampla no Linux não qualificados; sem netplay. Downloads sem ROM, código/executável gerado do jogo, assets extraídos, saves ou capturas brutas.
+'''
+
 if args.output:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(notes, encoding='utf-8', newline='\n')

@@ -1,5 +1,11 @@
 # Super Bomberman 5: estado do protótipo
 
+## v1.0.2 release / Release v1.0.2 - 2026-10-17
+
+v1.0.2 packages the three fixes below on top of v1.0.1: ZONE3 - D exit gates with HUD faces enabled (stock HUD icons in boss stages), ability hits on rival bomber bosses through their fire test (Louie, then HP) and Jet's trail at the obstacle, and PT-BR menu labels kept off stage arenas. The README only changes its download links; the fixes are in the release notes and this log. The fixes were verified on Linux LLE headless with forced-stage routes and native tests, not in a played Windows campaign.
+
+A v1.0.2 traz as três correções abaixo sobre a v1.0.1. O README só muda os links de download; as correções estão nas notas da release e neste registro. Verificadas no Linux com rotas de fase forçada e testes nativos, ainda não numa campanha jogada no Windows.
+
 ## PT-BR menu label over a boss arena / Rótulo de menu sobre a arena do chefe - 2026-10-17
 
 Reported: "Continuar" appeared over the blocks of ZONE2's boss arena (`$68`).
