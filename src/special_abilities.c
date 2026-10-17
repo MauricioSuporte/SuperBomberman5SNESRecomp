@@ -118,7 +118,9 @@ static const Ability *ability_of(unsigned seat) {
 static bool battle(void) { return (g_ram[0x1d1a]&1)!=0; }
 static bool in_stage(void) {
     unsigned mode=g_ram[0x1031];
-    if(battle()) return mode==0x74;
+    /* Battle arenas run as mode $74+4*(arena-1) plus variant (0-3):
+     * $74-$A7 for the 13 arenas (Gold included); the picker is 4. */
+    if(battle()) return mode>=0x74 && mode<0xa8;
     return mode>=0x0d && mode<=0x73;
 }
 static bool playing(void) { return in_stage() && g_ram[0x0aee] && !g_ram[0x1d1d]; }

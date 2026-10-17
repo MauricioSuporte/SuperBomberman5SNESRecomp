@@ -1,5 +1,11 @@
 # Super Bomberman 5: estado do protótipo
 
+## Battle abilities in every arena / Habilidades do Battle em todas as arenas - 2026-10-17
+
+B + direction abilities (Honey, Kotetsu, Terrorin, Bomber Kings) only worked in Battle arena 1: `in_stage()` in `src/special_abilities.c` required `$1031 == $74`, but each arena runs as mode `$74+4*(arena-1)` (arena 5 = `$84`, Gold arena 13 = `$A4`). The Battle check now accepts `$74-$A7`; the picker (mode 4) still is not a stage. Evidence (Linux LLE, JPN ROM, local): native special-abilities test extended with modes `$84`/`$A4` (start) and `$A8` (no start); headless five-seat Battle routes in arena 13 (Bazooka, Jet, Hammer, Lady, Great) and arena 5 (Honey, Kotetsu, Terrorin, two Subordinates) recorded ability states `$7F:F844+32*seat` going non-zero, where before the fix they stayed 0 for 24 s. Windows build and physical play not checked.
+
+As habilidades B + direção só funcionavam na arena 1 do Battle: cada arena roda num modo próprio (`$74+4*(arena-1)`) e o mod exigia `$74`. Agora valem em todas as arenas, inclusive as do Gold Cartridge. Verificado no Linux LLE; Windows não testado.
+
 ## v1.0.2 release / Release v1.0.2 - 2026-10-17
 
 v1.0.2 packages the three fixes below on top of v1.0.1: ZONE3 - D exit gates with HUD faces enabled (stock HUD icons in boss stages), ability hits on rival bomber bosses through their fire test (Louie, then HP) and Jet's trail at the obstacle, and PT-BR menu labels kept off stage arenas. The README only changes its download links; the fixes are in the release notes and this log. The fixes were verified on Linux LLE headless with forced-stage routes and native tests, not in a played Windows campaign.
