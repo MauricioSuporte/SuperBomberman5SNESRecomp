@@ -1168,6 +1168,26 @@ Instale numa pasta nova e gravável e faça **Generate & rebuild** com sua ROM J
 A mudança de spawn tem testes nativos e foi conferida pelo mantenedor num build Windows; cinco controles físicos não foram qualificados. Recompilação parcial, principalmente interpretada; combinações de mods e compatibilidade ampla no Linux não qualificadas; sem netplay. Downloads sem ROM, código/executável gerado do jogo, assets extraídos, saves ou capturas brutas.
 '''
 
+if version == '1.1.1':
+    notes = f'''# Super Bomberman 5 v{version}
+
+## English
+
+- **ZONE3 - 1 exit gate with HUD faces:** with **Battle character faces in Normal HUD** enabled, the exit gate of ZONE3 - 1 never appeared after every enemy was defeated: the face graphics took the sprite memory the gate needs. When the game cannot load a graphic for lack of sprite memory while faces are shown, the faces are now removed through the game's own routine and the HUD returns to the stock icons until the next stage, so the gate appears. Stages whose gate fits (such as ZONE1 - 1) keep their faces.
+
+Includes everything from v1.1.0 (five-player spawns next to P1/P2 and the optional corner spawn mod). Install into a new writable folder and run **Generate & rebuild** with your own supported JPN SB5 ROM; an older generated game does not get this fix. Download the Windows x64 ZIP or experimental Linux x86_64 AppImage and verify SHA256SUMS. Internet is needed for the first tools; Rust is not required.
+
+The fix was verified on Linux with scripted, forced-stage routes (ZONE3 - 1 and ZONE1 - 1, alone and with most gameplay mods) and native tests; not yet in a played Windows campaign. Other regular stages that hit the same limit are not catalogued. Partial recompilation with mostly interpreted gameplay; all mod combinations, physical five-player play and broad Linux compatibility remain unqualified; no netplay. Downloads contain no ROM, generated game code/binary, extracted assets, saves or raw captures.
+
+## Português
+
+- **Portal da ZONE3 - 1 com rostos na HUD:** com **Battle character faces in Normal HUD** ligado, o portal de saída da ZONE3 - 1 não aparecia depois de derrotar todos os inimigos: o gráfico dos rostos ocupava a memória de sprites de que o portal precisa. Agora, quando o jogo não consegue carregar um gráfico por falta dessa memória enquanto os rostos estão na tela, os rostos são removidos pela rotina do próprio jogo e a HUD volta aos ícones originais até a próxima fase, e o portal aparece. Fases em que o portal cabe (como a ZONE1 - 1) mantêm os rostos.
+
+Inclui tudo da v1.1.0 (spawns de cinco jogadores junto de P1/P2 e o mod opcional de spawns nos cantos). Instale numa pasta nova e gravável e faça **Generate & rebuild** com sua ROM JPN compatível do SB5; um jogo gerado antes não recebe esta correção. Baixe o ZIP Windows x64 ou o AppImage Linux x86_64 experimental e confira SHA256SUMS. Internet para as primeiras ferramentas; Rust não é necessário.
+
+A correção foi verificada no Linux com rotas roteirizadas de fase forçada (ZONE3 - 1 e ZONE1 - 1, sozinha e com a maioria dos mods de jogo) e testes nativos; ainda não numa campanha jogada no Windows. Outras fases comuns que batem no mesmo limite não foram catalogadas. Recompilação parcial, principalmente interpretada; combinações de mods, cinco controles físicos e compatibilidade ampla no Linux não qualificados; sem netplay. Downloads sem ROM, código/executável gerado do jogo, assets extraídos, saves ou capturas brutas.
+'''
+
 if args.output:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(notes, encoding='utf-8', newline='\n')

@@ -1,5 +1,11 @@
 # Super Bomberman 5: estado do protótipo
 
+## v1.1.1 release / Release v1.1.1 - 2026-10-17
+
+v1.1.1 packages the ZONE3 - 1 exit-gate fix for HUD faces (below) on top of v1.1.0. The README only changes its download links; the fix is in the release notes, docs/NORMAL_HUD_FACES.md and this log. Evidence is the Linux LLE forced-stage routes and 14 native tests listed below; CI builds both platforms before publication. Not checked in a played Windows campaign.
+
+A v1.1.1 traz a correção do portal da ZONE3 - 1 com rostos na HUD sobre a v1.1.0. O README só muda os links de download.
+
 ## ZONE3 - 1 exit gate with HUD faces / Portal da ZONE3 - 1 com rostos na HUD - 2026-10-17
 
 Reported after v1.1.0: no exit gate in ZONE3 - 1 (`$2B`) after all enemies were
