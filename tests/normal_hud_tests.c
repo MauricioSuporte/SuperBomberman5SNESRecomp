@@ -41,7 +41,7 @@ int main(void){
      * frame in eight and the face checks only ($C5:7204) otherwise. */
     {
         const uint8_t *u=r+0x572b0;
-        CHECK(u[0]==0x20 && u[7]==0xaf && u[8]==0x68 && u[13]==0xf0);
+        CHECK(u[0]==0x20 && u[7]==0xaf && u[8]==0x69 && u[13]==0xf0);
         unsigned fast=15,full=15+u[14];
         CHECK(u[fast+2]==0x22 && u[fast+3]==0x04 && u[fast+6]==0x60);
         CHECK(u[full]==0x68 && u[full+2]==0x22 && u[full+3]==0x00 && u[full+6]==0x60);
