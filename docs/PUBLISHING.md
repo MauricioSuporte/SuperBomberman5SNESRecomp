@@ -1,6 +1,6 @@
 # Versions and publication / Versões e publicação
 
-Public repository: `MauricioSuporte/SuperBomberman5SNESRecomp`. VERSION is **1.0.1**. Publish prereleases while full-game accuracy remains unqualified. Preserve existing published tags and assets.
+Public repository: `MauricioSuporte/SuperBomberman5SNESRecomp`. VERSION is **1.0.1**. Since v1.0.1 releases are full (non-prerelease) releases, marked latest: the maintainer completed the campaign on Windows. Keep describing the partial recompilation and the unqualified areas. Preserve existing published tags and assets.
 
 ## Release contents
 
@@ -38,7 +38,7 @@ Run all thirteen native tests in the release source (`ptbr_render_tests`, `norma
 
 ## Build and package
 
-The manual **Release** workflow builds on Windows and Ubuntu 22.04 using portable toolchain v1.0.14, Rust 1.97.1 for the analyzer and Python 3.12 for Linux checks. Both platform jobs must pass before the publish job runs. Dispatch with the version matching VERSION; `publish_release=false` produces test artifacts, `true` publishes after the same checks. Releases are prereleases and existing assets cannot be overwritten.
+The manual **Release** workflow builds on Windows and Ubuntu 22.04 using portable toolchain v1.0.14, Rust 1.97.1 for the analyzer and Python 3.12 for Linux checks. Both platform jobs must pass before the publish job runs. Dispatch with the version matching VERSION; `publish_release=false` produces test artifacts, `true` publishes after the same checks. Releases are published as full releases (latest) and existing assets cannot be overwritten.
 
 The Windows packager remains scripts/package_release.sh, followed by tools/finalize-release.py with the analyzer, libunwind DLL, toolchain and Rust license paths. The Linux job first builds the same ROM-independent setup ZIP, then invokes:
 
@@ -59,7 +59,7 @@ AppRun installs a versioned writable copy under `${XDG_DATA_HOME:-$HOME/.local/s
 
 Generate bilingual notes with `python tools/release-notes.py --output .bootstrap/notes.md`; read/send UTF-8 bytes, then verify the remote body exactly matches and has no U+FFFD. Stage explicit paths and preserve the user's working tree. Push reviewed commits, create a new version tag at the release commit and publish only audited assets. Never move published tags or overwrite assets without explicit authorization.
 
-Verify the default branch, tag target, successful workflow, prerelease state, UTF-8 notes, asset sizes and SHA-256 digests. SHA256SUMS covers both public packages; FILE_SHA256SUMS covers the setup payload. GitHub also exposes each uploaded asset digest. Check remote state before retrying an API failure to avoid duplicates.
+Verify the default branch, tag target, successful workflow, release state (not prerelease, latest), UTF-8 notes, asset sizes and SHA-256 digests. SHA256SUMS covers both public packages; FILE_SHA256SUMS covers the setup payload. GitHub also exposes each uploaded asset digest. Check remote state before retrying an API failure to avoid duplicates.
 
 ## Português
 
@@ -67,7 +67,7 @@ Toda nova release exige README.md atualizado nas duas línguas, com informaçõe
 
 A v1.0.1 distribui **ZIP Windows x64**, **AppImage Linux x86_64 experimental** e **SHA256SUMS**. Ambos incluem setup sem ROM, fontes, analisador, licenças e os doze mods opcionais desligados por padrão (incluindo Super Bomberman 5 Extra Characters, que substitui Honey and Kotetsu e Subordinate Bomber, e Bomber Kings, que lê o Super Bomberman 4 da ROM do próprio jogador; nada do SB4 entra nos pacotes). O jogo é gerado apenas na máquina do jogador. Use checkout limpo, LLE e setup host; nunca publique o executável de desenvolvimento, ROM, código gerado, saves ou capturas.
 
-A workflow Release é manual e só publica quando os dois builds e verificações passam. Valide os pacotes extraídos, analisador, primeira abertura/reabertura e geração/rebuild local. O AppImage copia o setup para a pasta XDG gravável da versão e reutiliza o jogo gerado; sem FUSE, use --appimage-extract-and-run. Registre plataforma, rota/frames e limitações no STATUS.md. Preserve fontes, licenças, revisões e checksums. Não reescreva tags ou assets públicos automaticamente. Confirme notas UTF-8, estado de pré-release e hashes dos arquivos no GitHub.
+A workflow Release é manual e só publica quando os dois builds e verificações passam. Valide os pacotes extraídos, analisador, primeira abertura/reabertura e geração/rebuild local. O AppImage copia o setup para a pasta XDG gravável da versão e reutiliza o jogo gerado; sem FUSE, use --appimage-extract-and-run. Registre plataforma, rota/frames e limitações no STATUS.md. Preserve fontes, licenças, revisões e checksums. Não reescreva tags ou assets públicos automaticamente. Confirme notas UTF-8, estado de release completa (latest) e hashes dos arquivos no GitHub.
 
 A skill instalada é `$super-bomberman5-repository`, com cópia versionada em `.agents/skills/super-bomberman5-repository/`.
 

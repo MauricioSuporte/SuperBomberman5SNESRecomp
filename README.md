@@ -4,7 +4,7 @@ An unofficial, noncommercial **Super Bomberman 5** PC port built with [SNESRecom
 
 [Download v1.0.1](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v1.0.1) · [English](#english) · [Português](#português) · [Technical status](docs/STATUS.md) · [Contributing](CONTRIBUTING.md)
 
-> **Partial recompilation.** Most game logic still runs on the framework's interpreter. Supply your own legally obtained ROM; no ROM, generated game code or extracted assets are distributed. Releases remain prereleases until full-campaign accuracy is validated.
+> **Partial recompilation.** Most game logic still runs on the framework's interpreter. Supply your own legally obtained ROM; no ROM, generated game code or extracted assets are distributed. v1.0.1 is the first full release: the maintainer has played the campaign through to the end on Windows.
 
 <p align="center"><img src="docs/images/five-player-showcase.png" width="820" alt="Five-player Normal Game title menu; seven-column character selection with Emperor Terrorin, Honey and Super Bomberman 4 Bomber Kings in changed colors; a Normal Game stage with green Subordinate Bomber riding Black Louie, Jet flying with his fire trail, Bazooka's fire beam, Hammer's mace and Terrorin's barrier; Battle Mode with Kotetsu's sword, Bazooka's fire beam, Hammer's mace, Honey and Terrorin's barrier"></p>
 
@@ -84,7 +84,7 @@ Then open `SuperBomberman5Recomp.exe` at the repository root. Tools go to the ig
 
 ### Status and limits
 
-SNESRecomp translates analyzable 65816 routines into C and runs the rest through an interpreter, with PPU, APU, DMA and cartridge hardware modeled. AOT coverage is small and reset/NMI remain interpreted. Gameplay is verified with scripted routes on Linux LLE and maintainer play on Windows; the full campaign, all mod combinations, physical five-player play and broad Linux compatibility are not qualified. No netplay, widescreen or macOS. Details: [STATUS.md](docs/STATUS.md).
+SNESRecomp translates analyzable 65816 routines into C and runs the rest through an interpreter, with PPU, APU, DMA and cartridge hardware modeled. AOT coverage is small and reset/NMI remain interpreted. Gameplay is verified with scripted routes on Linux LLE and maintainer play on Windows, including a full campaign playthrough; all mod combinations, physical five-player play and broad Linux compatibility are not qualified. No netplay, widescreen or macOS. Details: [STATUS.md](docs/STATUS.md).
 
 [Open an issue](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/issues) with version, OS, ROM hash and steps to reproduce. Never upload the ROM, extracted assets or save states.
 
@@ -142,7 +142,7 @@ Instale Git for Windows e Python 3.11+ e execute os comandos de [Build from sour
 
 ### Estado e limites
 
-A recompilação é parcial: rotinas analisáveis viram C e o restante roda no interpretador; reset/NMI continuam interpretados. A jogabilidade é verificada com rotas roteirizadas no Linux LLE e testes do mantenedor no Windows; campanha completa, todas as combinações de mods, cinco controles físicos e compatibilidade ampla no Linux não foram qualificados. Sem netplay, widescreen ou macOS. Detalhes em [STATUS.md](docs/STATUS.md).
+A recompilação é parcial: rotinas analisáveis viram C e o restante roda no interpretador; reset/NMI continuam interpretados. A jogabilidade é verificada com rotas roteirizadas no Linux LLE e testes do mantenedor no Windows, que já zerou a campanha; todas as combinações de mods, cinco controles físicos e compatibilidade ampla no Linux não foram qualificados. Sem netplay, widescreen ou macOS. Detalhes em [STATUS.md](docs/STATUS.md).
 
 [Abra uma issue](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/issues) com versão, sistema, hash da ROM e passos. Nunca publique ROM, recursos extraídos ou save states.
 

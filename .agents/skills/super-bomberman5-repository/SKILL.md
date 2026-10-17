@@ -17,7 +17,7 @@ Use the user's current request and earlier authorization for commits, pushing, r
 
 - Inspect the diff and relevant tests before committing. Commits describe the resulting behavior, not the chat history. Stage explicit paths; exclude unrelated changes.
 - Keep submodules pinned by committed gitlinks. Update framework_pins.txt with the framework's record_pins.sh after an intentional dependency change and verify the pins before release. Branch names in .gitmodules are not version pins.
-- VERSION is the project version. Coordinate it with tag names, package names, binary version and GitHub release title. Until accuracy and broader gameplay are validated, keep releases marked as prereleases and explain the remaining interpreter coverage. Do not invent full-game, multiplayer, netplay or platform support.
+- VERSION is the project version. Coordinate it with tag names, package names, binary version and GitHub release title. Since v1.0.1 (maintainer completed the campaign on Windows) releases are full releases marked latest; still explain the remaining interpreter coverage and unqualified areas. Do not invent full-game, multiplayer, netplay or platform support.
 - Create a tag only after its package and publication audit pass. Never move an existing published tag, rewrite shared history, force-push or overwrite a release asset without explicit authorization for that particular replacement. For an existing version, inspect its tag/release before deciding whether to finish an incomplete release or create a new version.
 
 ## Keep documentation and observations accurate
@@ -42,7 +42,7 @@ Read docs/PUBLISHING.md for current commands. Release a clean-source **setup hos
 
 Test the extracted package: its root setup host and launcher open; the packaged analyzer runs with its bundled DLL; ROM selection/code generation/rebuild produces a local playable executable. Keep the generated C and resulting game build local. New packaging logic warrants meaningful tests with synthetic forbidden files; do not treat a green filename audit as a guarantee about copyright ownership or every binary's contents.
 
-When authorized, create or reuse the public game repository, push reviewed commits and the verified tag, then publish a prerelease with the audited Windows ZIP, Linux AppImage, SHA256SUMS, bilingual release notes, precise platform coverage and known limitations. Verify the remote default branch, tag target, release state, uploaded asset sizes/digests and workflow result. Do not advertise Linux/macOS packages until built and checked. On an API/auth failure, inspect state before retrying to avoid duplicate repositories, tags or releases; stop after repeated identical failures and report the remaining step.
+When authorized, create or reuse the public game repository, push reviewed commits and the verified tag, then publish a release with the audited Windows ZIP, Linux AppImage, SHA256SUMS, bilingual release notes, precise platform coverage and known limitations. Verify the remote default branch, tag target, release state, uploaded asset sizes/digests and workflow result. Do not advertise Linux/macOS packages until built and checked. On an API/auth failure, inspect state before retrying to avoid duplicate repositories, tags or releases; stop after repeated identical failures and report the remaining step.
 
 End with links to the repository/release, version, installed skill and material limitations or outstanding work. Never say publication completed unless GitHub confirms it.
 
