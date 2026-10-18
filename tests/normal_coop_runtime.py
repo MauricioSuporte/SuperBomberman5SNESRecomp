@@ -124,7 +124,9 @@ if args.fixture and args.cases in ['five', 'all']:
     chars, palettes = initial[0x16c2:0x16c7], initial[0x16da:0x16df]
     source = rom.read_bytes()
     assert len(set(chars)) == 5
-    assert list(palettes) == [source[0xbb4e + chars[i]] + i + 1 for i in range(5)]
+    # Each stage palette is the character's base plus the color the seat confirmed.
+    assert list(palettes) == [source[0xbb4e + chars[i]] + initial[0x6264 + i] for i in range(5)]
+    assert len(set(palettes)) == 5
     for seat in range(1, 6):
         assert not alive(ram(folder, f'dead{seat}'), seat)
         returned = ram(folder, f'rejoined{seat}')

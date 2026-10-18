@@ -1,5 +1,88 @@
 # Super Bomberman 5: estado do protótipo
 
+## Five-player stage objects: actors, palettes and pages / Objetos de fase com cinco jogadores - 2026-10-17
+
+Reported with the five-player mod: garbled egg/Louie sprite, ZONE5 - 1's
+electric tower without its core and beams (and a freeze after destroying it),
+slowdown in Zone 5, broken gimmicks (5-24 platforms, ZONE2 - 6's fire rail,
+a red block at ZONE3 - 9's sand pits), no exit gate in 5-3 and a garbled,
+slow first form of the final boss.
+
+Causes found (Linux LLE headless, forced stages, lab-only allocator and
+script hooks under ignored `.bootstrap/`):
+- **Actors.** Co-op moved enemies to actor 10+ so P1/P2 mount backups could
+  live at 5-9. Stage scripts name enemies by absolute actor: the tower core
+  script (`$C6:CE94`-`$CEEE`) attaches to actor 9, which was empty. Enemies now
+  keep the cartridge's numbering (5-18, allocator capped at 19) and the mounts
+  move to rider + 19 (`$1CBF` = 19); point damage (`$C0:374D` → `$C2:4350`)
+  skips the mounts. ZONE5 - 1 with five seats: tower actors 9/10 as in 2P.
+- **Palettes.** Eight OBJ slots: 0 stage, 1/2 P1/P2, 3-5 enemies, 6-7 large
+  stage objects. Seats 3-5 held 7/6/5, so the tower's two-slot palette `$38`
+  (mask `$C0`) failed every frame (`$C0:0303`). Failed non-player requests now
+  take slots held by seats 3-5 when that makes them fit (those seats share
+  P1's slot and colors until the next stage); a seat without a slot shares
+  P1's; a sharing seat does not write its colors into P1's slot (`$C4:37B0`).
+  ZONE5 - 1: tower core and beams created (10 script objects, as in 2P), no
+  palette failure; destroying the tower actors kept the main loop running.
+  Seats 3-5 now use slots 6/5/4, never 7: the palette save/restore used when
+  objects blink (`$C1:0015/$C1:0035`) moves 33 bytes, so for OBJ palette 15
+  it overwrote `$2B10` (slot 0's palette id) and `$2EEA` (object 0's frame
+  pointer). With P3 in slot 7, ZONE5 - J's first form drew garbage pieces,
+  filled OAM (P2-P5 vanished) and ran at 0.49 game ticks per frame (2P:
+  0.89); now 0.88 and clean through ten 150-frame captures. Found by
+  disabling co-op patch groups one by one and a WRAM watch on `$2B10`.
+- **Mounts.** `$C4:53F0` gave a mount slot = rider seat + 1, i.e. an enemy
+  slot for seats 3-5. It now uses the rider object's slot (`$C4:5B40`).
+- **Pages.** Five seats own the five animation pages; no 1 KiB of OBJ VRAM is
+  free in campaign stages. Co-op records refused page requests (`$C5:714E`);
+  the page-less overlay draws them from the cartridge sheet (hidden when too
+  large). The mount overlay now matches the mount's own pieces, so the
+  jump onto a Louie (rider 24 lines up) no longer leaves garbage.
+
+- **Distance arrays.** The five-entry enemy→player distance copies sat at
+  `$1FC0-$1FDD`, inside the flame-thrower's segment-object table (`$1FAB,Y`)
+  and the actor array `$1FBB,X`. In ZONE5 - 27 the distances overwrote flame
+  object ids, the flame deleted P4's object (`$C3:2F08` → `$C0:1342`) and the
+  object list (`$043B`) became a cycle: the animation pass ran ~170 times per
+  tick (0.43 ticks per frame) and the stage looked frozen. They now live at
+  `$0100-$011D` (the stack never went below `$01BB` in 1263 lab dumps).
+- **Enemy cost.** `$C3:FF70` (clear + `$C3:46CC` for seats 3-5, per enemy) is
+  run natively by a pre-opcode hook that writes the same bytes, scratch,
+  A and flags and resumes at its RTS. A lab shadow check (native result
+  saved, interpreted code run, compared at the RTS) matched on ~24k calls
+  in ZONE5 - 22/27 except bytes owned by interrupts (`$6D`, one NMI frame).
+- **Cell attacks.** `CPY #$02` seat loops over `$16AA,Y` at `$C3:15BF`,
+  `$1937`, `$27AE`, `$296B`, `$2EE8` (flame columns), `$3CA6`, `$48AD` now
+  cover the roster, so those attacks reach P3-P5.
+- **HUD faces, ZONE5 - 3.** The gate archive `$3A` failed to load at stage
+  start with faces on (also with one player) and is never retried. The
+  failure exit now deletes the faces and re-enters the allocator
+  (`$C5:7360`); the static archive table then matches a run without mods.
+
+Evidence (Linux LLE headless, forced stages, 1906 frames per run, ticks =
+main-loop `$C0:0B3E` per NMI `$C0:F431`): all 47 stages `$49-$73` plus
+`$21/$33/$35/$43`, 2P vs 5P co-op: no stage more than 0.02 below 2P (worst
+`$6F/$70` 0.877/0.890 vs 0.894/0.908); before, `$58` 0.49, `$5A` 0.61,
+`$63` 0.46, `$6F` 0.49, `$43` 0.73. No palette, page or static-allocation
+failure and no BRK/interp_cap in those runs. Native tests (all 14) and
+`tests/normal_coop_runtime.py` counts/five/lifecycle pass (the five case's
+palette check now uses each seat's confirmed color, `$6264`; it failed the
+same way on v1.1.1). Egg pickup with five seats (with and without Extra
+Characters) shows a clean Louie through the jump; ZONE3 - 9's sand pit sink
+shows no red block; ZONE2 - 6's fire rail and 5-24's platforms run like 2P
+in idle captures, but a bomb on the rail was not scripted. Not checked in a
+played Windows campaign or with five physical controllers.
+
+Objetos de fase com cinco jogadores: inimigos voltam à numeração original
+(scripts chamam atores pelo número), a fase tem prioridade nas paletas
+(P3-P5 podem ficar com as cores do P1 enquanto um objeto grande precisa da
+paleta deles; P3-P5 nunca usam a paleta 7, cuja cópia ao piscar estragava o
+chefe final), o Louie usa a paleta do cavaleiro, objetos sem página de
+animação são desenhados a partir da ROM, as distâncias inimigo→jogador saem
+da tabela do lança-chamas (que congelava a 5-27) e são calculadas em código
+nativo (Zona 5 sem lentidão extra), ataques por casa atingem P3-P5 e, com os
+rostos na HUD, o portal da 5-3 volta a aparecer.
+
 ## v1.1.1 release / Release v1.1.1 - 2026-10-17
 
 v1.1.1 packages the ZONE3 - 1 exit-gate fix for HUD faces (below) on top of v1.1.0. The README only changes its download links; the fix is in the release notes, docs/NORMAL_HUD_FACES.md and this log. Evidence is the Linux LLE forced-stage routes and 14 native tests listed below; CI builds both platforms before publication. Not checked in a played Windows campaign.

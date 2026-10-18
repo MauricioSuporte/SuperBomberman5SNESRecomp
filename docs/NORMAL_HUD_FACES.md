@@ -26,7 +26,10 @@ depois de derrotar todos os inimigos. Quando o jogo não consegue carregar um
 gráfico (como o do portal) por falta de VRAM enquanto os rostos estão na tela,
 os rostos são removidos pelo próprio jogo e a HUD volta aos ícones originais
 até a próxima fase; o portal então aparece normalmente. Nas fases em que o
-portal cabe (como a ZONE1 - 1) os rostos continuam.
+portal cabe (como a ZONE1 - 1) os rostos continuam. Na ZONE5 - 3 o gráfico do
+portal é carregado uma única vez, no início da fase, e o jogo não tenta de novo:
+nesse caso os rostos são removidos na hora e o carregamento é refeito, então o
+portal aparece.
 
 As rotinas nativas criam somente os objetos dos rostos, sem carregar o layout
 do Battle. O desenho limpa o rosto fixo nos seis tiles BG2 de cada ícone ocupado,
@@ -61,7 +64,12 @@ appear after every enemy was defeated. When the game cannot load a graphic
 (such as the gate's) for lack of VRAM while faces are shown, the faces are
 deleted through the game's own object routine and the HUD returns to the stock
 icons until the next stage; the gate then appears. Stages whose gate fits (such
-as ZONE1 - 1) keep their faces.
+as ZONE1 - 1) keep their faces. ZONE5 - 3 loads its gate archive (`$3A`) once,
+at stage start, and never retries; on a failure with a live face the
+allocator's failure exit (`$C0:193A/$193C`) now runs `$C5:7360`, which deletes
+the faces like `$C5:7300` and re-enters `$C0:18FC` with the same archive and
+registers, so the gate is loaded (static archive table identical to a run
+without the mod).
 
 Native routines create only the face objects. Render observers clear each
 occupied fixed BG2 head across all three tile rows, preserving the blue

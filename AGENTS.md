@@ -231,8 +231,13 @@ File 1 (A = keyboard X) → Start on Zone 1 map.
 | `$101F+i`, `$C4:0164`, `$C4:3DA6` | Rival-bomber flag of boss stages `$67`-`$6E` (slot 2, `$6A` also 3): their update clears `$15A2` bit 6 every frame, only a flame on their cell (`$C4:2CFE`, `$1CCA` bit 2) hurts them (Louie, then HP `$1662`). Death: `$C4:3DA6` decrements `$1D50`; with `$102F` = `$6A` the last death starts the gates (`$7E4DA3` queue, `$C5:3B60` → `$C2:265C` retried each frame). Verified by watch/stack logs on forced `$6A` |
 | `$C0:18FC`, `$7E30AA/$30EA/$314A` | Static OBJ archive allocation for created objects (VRAM block, archive id, refcount; `$C0:1A0A` fails when no block fits). A Normal HUD face (archive `$64`) blocked ZONE3 - D's gate archive. Verified by stack logs |
 | `$0300` / `$67` | INIDISP shadow / NMI busy latch (`$C0:F3D4`) |
-| `$1FF4-$1FFF` | Enemy→player distance arrays (6 × 2 entries: dx, dy, dx hi, dy hi, dir codes) from `$C3:46CC`; coop relocates to 6 × 5 at `$1FC0-$1FDD` (+`$C3:FF70` seat loop). Verified by contact runs on P1/P3 |
-| `$C0:18FC`, `$C0:193A/$193C`, `$C0:1342`, `$C0:196D` | Static OBJ archive allocator (`$0ADF` = archive) / its failure exits (no free entry / no VRAM block from `$C0:1A0A`) / native object delete (A = object; releases `$06E0` archive entry and `$06DF` palette) / archive entry release (refcount `$7E314A`). Gate archive `$63` in ZONE3 - 1; HUD-faces mod hooks the failure exits and frees its faces through `$C0:1342` from FF padding `$C5:7300-$735F`. Verified by ZONE3 - 1/ZONE1 - 1 forced routes and disassembly |
+| `$1FF4-$1FFF` | Enemy→player distance arrays (6 × 2 entries: dx, dy, dx hi, dy hi, dir codes) from `$C3:46CC`; coop relocates to 6 × 5 at `$0100-$011D` (+`$C3:FF70` seat loop, run natively by a pre-opcode hook). `$1FC0-$1FDD` is NOT free: `$1FAB,Y` is the flame-thrower's segment-object table (ZONE5 - 27), `$1FBB,X` an actor array. Stack never below `$01BB` in 1263 dumps. Verified by contact runs on P1/P3 and a native/interpreted shadow check |
+| `$C1:0015` / `$C1:0035` | OBJ/BG palette save (`$2910`→`$2CEA`) / restore (blink, flash), `MVN` with A=`$20` = 33 bytes: palette 15 overruns into `$2B10` (slot 0 palette id) and `$2EEA` (object 0 frame pointer). Never give a flashing object OBJ slot 7. Verified by WRAM watch on forced `$6F` |
+| `$C0:18FC`, `$C0:193A/$193C`, `$C0:1342`, `$C0:196D` | Static OBJ archive allocator (`$0ADF` = archive) / its failure exits (no free entry / no VRAM block from `$C0:1A0A`) / native object delete (A = object; releases `$06E0` archive entry and `$06DF` palette) / archive entry release (refcount `$7E314A`). Gate archive `$63` in ZONE3 - 1; HUD-faces mod hooks the failure exits and frees its faces through `$C0:1342` from FF padding `$C5:7300-$735F`; a failure with a live face redirects to `$C5:7360-$73B8` (drop faces, `JML $C0:18FC` retry) because ZONE5 - 3's gate archive `$3A` is loaded once at stage start. Verified by ZONE3 - 1/ZONE1 - 1 forced routes and disassembly |
+| `$C0:0295`, `$0346/$0347/$0348`, `$C0:0303`, `$2B10/$2B18/$2B20`, `$0349` | OBJ palette allocator: palette id / slot count / slot mask; reuse a masked slot with the same id and set, else `$0347` consecutive free slots (`$2B10` = 0), else fail at `$C0:0303` (`LDA #$FF`). Slots: 0 stage (`$58`), 1/2 P1/P2, 3-5 enemies (mask `$38`), 6-7 large stage objects (mask `$C0`: ZONE5 - 1 tower `$38`, two slots). Final boss `$6F` palette `$36` takes 3-6. Co-op hooks `$C0:0303` (seat 3-5 slots shared into P1's) and `$C4:37B0` (per-object palette writer). Verified by allocator logs on forced `$49`/`$6F` |
+| `$C4:53EB`/`$C4:53F0` | Mount palette: slot = `$16DA` of the mount (rider seat) + 1, then the mount colors at +8 of that slot. Seats 3-5 landed on enemy slots 3-5; co-op redirects to the rider object's slot (`$C4:5B40`). Verified by egg routes with five seats |
+| `$C3:0458`, `$C4:2256/$2260` | First enemy actor (`LDA #$05`) / actor allocator from `$A5` up to `CPX #$18`. Mounts are allocated with `$A5` = rider + `$1CBF`. Co-op keeps enemies at 5 and caps the search at 19 (mounts 19-23). Stage scripts reference enemies by absolute actor: ZONE5 - 1's tower core script (`$C6:CE94`-`$CEEE`, script tasks 9/`$0B`) attaches to actor 9. Verified by forced `$49` routes |
+| `$C5:6AE3`, `$C5:6B77`, `$1CCC/$1CEA/$1CD6` | Page request service / upload (fixed `$0400` bytes from sheet entry `$85:E22D + (archive-1)*8` bytes 4-6, + `$1CEA` * 512) / queue archive, half, object. With five seats all five pages are owned by players; co-op records refused requests (`$C5:714E`) so the overlay draws those objects from the sheet. No 1 KiB of OBJ VRAM is free in campaign stages (audited on `$0D`/`$49`) |
 | `$C5:3D3F` | Copies stage collision map to `$1052` after player spawns; coop settles P3-P5 at its RTL `$C5:3D5D` |
 | `$1D1D`, `$0AEE`, `$C5:00B7/$00C8/$009E` | Native in-stage pause latch / gameplay-ready byte / living-seat Start test and paused poll. Verified by Windows/LLE Normal and Battle pause/resume dumps and disassembly. Pause-menu trampoline uses free `$C5:7180-$719A`; resume sound call `$C5:0096` is suppressed while enabled. |
 | `$C2:1AEC`, `$C7:0B8B/$0B97`, `$1036=4` | Native Normal menu entry store / New Game and Continue initialization / direct map state. VM `$0A` already points after the store (`$C7:0B8E/$0B9A`). Verified by Normal map return and reentry with 1/2/5 seats; skips the file menu. |
@@ -305,8 +310,9 @@ Verified by disassembly, a 30-exit ROM audit and a Zone 1-A route-flag-7 run.
 - `0x...e+N` in C parses as a float exponent: write `g_rom[0xbb4e + i]`.
 - Final picker cleanup restores stock CPU colors; keep choices pending until
   the stage initializer consumes them (`$16C2/$16DA` match).
-- P1/P2 mount backup actor slots overlapped P3/P4; coop moves mounts to 5–9
-  and NPCs to 10+ (only 14 NPC slots remain).
+- P1/P2 mount backup actor slots overlapped P3/P4; coop moves the mounts to
+  rider + 19 (actors 19-23) and keeps NPCs at 5-18 (14 slots, the
+  cartridge's numbering; an earlier 5-9/10+ layout broke stage scripts).
 - The five-player menu forces the accurate compositor for that frame because
   `NewRenderer=1` showed only two rows.
 - Title script return slots can retain attract-mode `$C7:1B3B`. Detect the
@@ -332,6 +338,19 @@ Verified by disassembly, a 30-exit ROM audit and a Zone 1-A route-flag-7 run.
   choreography (`LDX #2`, `LDA $17FC`) all needed explicit five-seat handling;
   each fix is listed in §6 and docs/NORMAL_COOP.md. Check new features for the
   same assumption with P3–P5, not just P1.
+- Never move enemy actors. Stage scripts name enemies and gimmicks by
+  absolute actor number (ZONE5 - 1's tower core attaches to actor 9); with
+  enemies shifted to 10+ the tower lost its core and beams and froze when
+  destroyed. Co-op keeps the cartridge numbering and moves the extra mounts
+  to the end of the table instead (`$1CBF` = 19).
+- Five seats exhaust the 8 OBJ palette slots and the 5 animation pages. Give
+  stage objects priority (palette arbitration at `$C0:0303`) and draw
+  page-less objects from the cartridge; check palette/page failures with a
+  lab log when a stage looks wrong only with 3+ players. Players never take
+  OBJ slot 7 (`$C1:0015/$0035` copy 33 bytes).
+- "Zero in every recorded dump" is not proof that WRAM is free: `$1FC0` was
+  the flame-thrower's table in one stage. Prefer ranges no code can reach
+  (the never-used bottom of the stack page) and audit ROM operands nearby.
 - Bomber tables hold five slots. Boss rivals use them, so five players cannot
   all fight rival-bomber bosses; slot 5 jumps into data and freezes the game.
 - Player spawns run before the stage collision map exists; anything reading

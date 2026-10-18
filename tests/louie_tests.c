@@ -34,11 +34,13 @@ static void actor(unsigned a,unsigned object,unsigned cell) {
 static void scene(unsigned count,unsigned type) {
     memset(g_ram,0,sizeof(g_ram));memset(&state,0,sizeof(state));
     memset(g_ram+0x17fa,255,24);
-    g_ram[0x1031]=13;g_ram[0xaee]=1;g_ram[0x1cbf]=(uint8_t)count;
+    /* Mounts: stock rider + 2; five-seat co-op rider + 19 (enemies 5-18). */
+    unsigned base=count>2?19:count;
+    g_ram[0x1031]=13;g_ram[0xaee]=1;g_ram[0x1cbf]=(uint8_t)base;
     g_ram[0x1d25]=(uint8_t)((1u<<count)-1);
     for(unsigned a=0;a<count;++a) {
-        actor(a,a*2,0x33+a);actor(a+count,20+a*2,0x33+a);
-        g_ram[0x16c2+a+count]=(uint8_t)type;g_ram[0x1782+a]=0x80;g_ram[0x1632+a]=1;
+        actor(a,a*2,0x33+a);actor(a+base,20+a*2,0x33+a);
+        g_ram[0x16c2+a+base]=(uint8_t)type;g_ram[0x1782+a]=0x80;g_ram[0x1632+a]=1;
     }
 }
 int main(void) {
@@ -49,7 +51,7 @@ int main(void) {
     CpuState cpu={0};
     for(unsigned count=2;count<=5;count+=3) for(unsigned a=0;a<count;++a) {
         scene(count,RED);g_ram[0x8d]=(uint8_t)a;g_ram[0x1782+a]|=4;
-        unsigned enemy=2*count;actor(enemy,40,0x34+a);cpu.A=(uint16_t)(0x34+a);
+        unsigned enemy=5+count;actor(enemy,40,0x34+a);cpu.A=(uint16_t)(0x34+a);
         hook(&cpu,0xc45560);CHECK(state.freeze[enemy]==180 && !state.freeze[a]);
         redirect_pc=0;cpu._flag_C=1;hook(&cpu,0xc45563);CHECK(redirect_pc==0xc45576 && !red_hit);
         redirect_pc=0;hook(&cpu,0xc45563);CHECK(!redirect_pc);

@@ -52,7 +52,37 @@ O HUD original (moldura, ícones, coração e placares de P1/P2) continua sendo
 desenhado. As animações usam cinco páginas de sprites; um alocador próprio
 reaproveita a página do próprio jogador quando não há página livre, então os
 personagens animam e quem volta com Start reaparece com gráficos. P3, P4 e P5
-usam as paletas de sprite 7, 6 e 5; os inimigos ficam com as paletas 3 e 4.
+usam as paletas de sprite 6, 5 e 4 quando estão livres; os inimigos ficam com
+as paletas 3 a 5 e objetos grandes da fase (como a torre elétrica da ZONE5-1 e
+seus raios) com as 6 e 7. Jogadores nunca usam a paleta 7: a cópia de paleta do
+jogo ao piscar escreve um byte além dela e estragava o desenho do primeiro
+objeto da fase (o chefe final da ZONE5-J aparecia em pedaços e lento). Como não há paletas para todos, a fase tem
+prioridade: quando um objeto da fase não cabe, P3-P5 que ocupam a paleta dele
+passam a usar a paleta do P1 (ficam com as cores do P1) até a próxima fase ou
+até voltarem com Start. O Louie de P3-P5 usa a paleta do próprio cavaleiro
+(antes usava a de um inimigo e aparecia embaralhado ao sair do ovo).
+
+Os inimigos mantêm a numeração do jogo original (atores 5-18); os Louies dos
+jogadores ficam nos atores 19-23. Os scripts das fases chamam inimigos e
+gimmicks pelo número do ator; quando os inimigos começavam no 10, a torre da
+ZONE5-1 ficava sem o núcleo e os raios, travando ao ser destruída, e outros
+gimmicks agiam sobre o ator errado.
+
+Com cinco jogadores as cinco páginas de animação ficam com eles. Objetos que
+ficam sem página (o Louie e efeitos da fase) são desenhados a partir da ROM
+pelo mesmo desenho dos Louies sem página, em vez de mostrar os tiles de outro
+objeto; um objeto grande demais para esse desenho fica escondido em vez de
+embaralhado.
+
+Os inimigos guardam a distância até cada jogador em tabelas próprias. A cópia
+de cinco jogadores ficava numa área da RAM que o lança-chamas da ZONE5-27 usa
+para os objetos das chamas: as distâncias apagavam esses objetos (inclusive o
+do P4) e o jogo ficava lento e congelado. As tabelas agora ficam no fundo da
+página da pilha, que o jogo nunca usa. O cálculo dessas distâncias para P3-P5
+é feito em código nativo, com o mesmo resultado, para que fases com muitos
+inimigos (as cobras da Zona 5) não fiquem mais lentas que com dois jogadores.
+As chamas do lança-chamas e outros ataques de inimigos por casa agora atingem
+P3-P5 também.
 
 Depois da animação de morte, Start no controle do jogador morto consome uma
 vida para voltar, desde que haja um companheiro vivo. Esse Start não pausa a
@@ -127,6 +157,35 @@ Start, and return in the next stage with their character, color and items.
 The original HUD frame, icons and score boxes remain visible. Animated
 sprites, Start rejoin graphics and P3's palette work with all five seats.
 
+Enemies keep the cartridge's numbering (actors 5-18); the players' Louies
+live in actors 19-23. Stage scripts name enemies and gimmicks by actor number;
+when enemies started at 10, ZONE5-1's tower lost its core and beams and froze
+when destroyed, and other gimmicks acted on the wrong actor.
+
+OBJ palettes: slot 0 stage, 1/2 P1/P2, 3-5 enemies, 6-7 large stage objects
+(the tower and its beams need both). P3-P5 take 6, 5 and 4 when free, never
+7: the cartridge's palette save/restore for blinking copies one byte past
+palette 15 into slot 0's palette id and object 0's frame pointer (ZONE5-J's
+final boss showed garbage pieces and slowed down). There
+are not enough slots for everyone, so the stage wins: when a stage object does
+not fit, seats 3-5 holding its slots borrow P1's palette (they show P1's
+colors) until the next stage or a Start rejoin. A seat 3-5 Louie uses its
+rider's palette (it used an enemy's and looked garbled when hatching).
+
+With five seats the five animation pages belong to the players. Objects left
+without a page (Louies and stage effects) are drawn from the cartridge by the
+page-less mount overlay instead of showing another object's tiles; an object
+too large for it is hidden rather than garbled.
+
+Enemy→player distance arrays for five seats used to live at `$1FC0-$1FDD`,
+which is also the flame-thrower's segment-object table (`$1FAB,Y`, ZONE5-27):
+distances overwrote its object ids, the flame deleted P4's object and the
+object list looped (slowdown, frozen-looking stage). They now live at
+`$0100-$011D`, the bottom of the stack page (never used in any recorded dump).
+The seat 3-5 distances are computed natively at `$C3:FF70` with identical
+results, so enemy-heavy stages (Zone 5 snakes) run like two-player games.
+Flame columns and other cell attacks now hit P3-P5 too.
+
 A dead player can press Start after cleanup to spend one shared life and
 rejoin while a teammate is alive. Rejoin does not pause. Simultaneous requests
 cannot overspend the last life. Stock retry, Game Over, Continue and End remain
@@ -160,10 +219,17 @@ Enemy code keeps per-player distances in six interleaved two-entry arrays at
 `$1FF4-$1FFF` (filled by `$C3:46CC`, cleared by `$C3:475C`). Contact damage
 (`$C3:47C9`, `$C3:4800`) and the large enemies' area hits (`$C3:1120`,
 `$C3:1330`, `$C3:2C20`) looped over two entries. In co-op the 58 operands move
-to five-entry arrays at `$1FC0-$1FDD` (never written in any recorded campaign
-dump), the loops cover the roster and `$C3:FF70` fills seats 3-5 before the
-stock P1/P2 pass. The nearest-player chooser `$C3:4641` keeps its two-entry
-direct-page buffers, so enemies still steer toward P1/P2.
+to five-entry arrays at `$0100-$011D` (bottom of the stack page; the stack
+never went below `$01BB` in 1263 recorded dumps; the earlier `$1FC0-$1FDD`
+collided with the flame-thrower table `$1FAB,Y`), the loops cover the roster
+and `$C3:FF70` fills seats 3-5 before the stock P1/P2 pass. A pre-opcode hook
+performs that trampoline natively (clear, `$C3:46CC` per seat including its
+scratch `$9F-$A6`/`$1D28-$1D2D`, final A/flags) and resumes at its RTS; a lab
+shadow check compared it with the interpreted code on 24k calls in ZONE5 -
+22/27 with no difference besides interrupt-owned bytes. Cell-attack loops
+`$C3:15BF/$1937/$27AE/$296B/$2EE8/$3CA6/$48AD` (`CPY #$02` over `$16AA,Y`)
+also cover the roster. The nearest-player chooser `$C3:4641` keeps its
+two-entry direct-page buffers, so enemies still steer toward P1/P2.
 
 Five seats own the campaign's five OBJ pages, so a Louie gets no page of its
 own. The stock page service (`$C5:6AE3`) kept retrying that request first in
@@ -201,10 +267,14 @@ roster is `min(players, 5 - rivals)`. Benched seats keep their bomber fields
 `$4EBD`, `$4ED5`) in the snapshot extension and get them back at the next
 regular stage.
 
-Player actors occupy 0–4; mount companions and character backups move to
-5–9; NPC allocation starts at 10. This prevents original P1/P2 mount backups
-from overwriting P3/P4 characters. Fourteen NPC actor slots remain; unusually
-large NPC/companion workloads need campaign validation. The original two-score
+Player actors occupy 0–4; NPCs keep the cartridge's numbering from actor 5
+(`$C3:0458`) and the allocator stops below 19 (`$C4:2260` = 19); mount
+companions and their character backups move to rider + 19 (`$1CBF` = 19,
+actors 19–23, `$C4:3D3D…` literals +17). Stage scripts reference NPCs by
+absolute actor (ZONE5 - 1's tower core attaches to actor 9), so they keep
+working. Point damage (`$C0:374D`, JML to `$C2:4350`) treats only actors
+5–18 as NPCs. Fourteen NPC actor slots remain; unusually large NPC/companion
+workloads need campaign validation. The original two-score
 HUD remains. No five-score HUD or enemy difficulty scaling is added.
 
 The stock HUD selector at `$C5:066C` keeps running, so the frame, icons, heart

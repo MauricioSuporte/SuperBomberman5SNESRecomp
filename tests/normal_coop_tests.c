@@ -9,6 +9,10 @@ int snes_mod_register_activation_plugin(const char *id,SNESModActivationCallback
 static bool corner_spawns;
 bool CoopCornerSpawnsEnabled(void) { return corner_spawns; }
 #include "../src/normal_coop_mod.c"
+static InterpPreOpcodeHook pre_hooks[4];static uint32_t pre_pcs[4];static unsigned pre_count;static uint32_t redirected;
+bool interp_bridge_add_pre_opcode_hook(uint32_t pc,InterpPreOpcodeHook h){
+    if(pre_count>=4)return false;pre_pcs[pre_count]=pc;pre_hooks[pre_count++]=h;return true;}
+void interp_bridge_pre_opcode_redirect(uint32_t pc){redirected=pc;}
 uint8 g_ram[0x20000];
 static uint8 cartridge[0x400000];
 const uint8 *g_rom=cartridge;
@@ -147,7 +151,7 @@ int main(void) {
     CHECK(active_mask==16);
     g_ram[0x8d]=4;instruction(0xc43794,1,1);CHECK(active_mask==16);
     instruction(0xc21697,1,1);CHECK(rom(0xc24300)[2]==0xa2 && rom(0xc24300)[3]==4);
-    CHECK(g_ram[0x1cbf]==5 && rom(0xc30458)[1]==10);
+    CHECK(g_ram[0x1cbf]==19 && rom(0xc42261)[0]==19 && rom(0xc43c76)[0]==19);
     /* The stock HUD selector stays live; sprite pages use the authored
      * allocator only while three or more seats are configured. */
     CHECK(rom(0xc5066c)[0]==0xff);
@@ -164,14 +168,18 @@ int main(void) {
      * value is undone. */
     g_ram[0x1cbf]=3;g_ram[0x1031]=0x6c;configure();CHECK(g_ram[0x1cbf]==3);
     g_ram[0x1cbf]=4;g_ram[0x1031]=0x6a;configure();CHECK(g_ram[0x1cbf]==4);
-    g_ram[0x1031]=13;g_ram[0x1cbf]=5;configure();CHECK(g_ram[0x1cbf]==2);
+    g_ram[0x1031]=13;g_ram[0x1cbf]=19;configure();CHECK(g_ram[0x1cbf]==2 && rom(0xc42261)[0]!=19 && rom(0xc0374d)[0]!=0x5c);
     count=5;configure();CHECK(rom(0xc56af5)[0]==0x4c);
     /* Every P1/P2-only loop covers the roster; point damage skips companions. */
     CHECK(rom(0xc20c9f)[1]==5 && rom(0xc56195)[1]==5 && rom(0xc561c6)[1]==5);
-    CHECK(rom(0xc16ba1)[1]==5 && rom(0xc0373f)[1]==5 && rom(0xc0374d)[1]==10);
+    CHECK(rom(0xc16ba1)[1]==5 && rom(0xc0373f)[1]==5);
+    /* Point damage: JML to the range check; actors 5-18 are enemies. */
+    CHECK(rom(0xc0374d)[0]==0x5c && rom(0xc0374e)[0]==0x50 && rom(0xc0374f)[0]==0x43 && rom(0xc03750)[0]==0xc2);
+    CHECK(rom(0xc24350)[1]==5 && rom(0xc24355)[0]==19 && 0x4354+rom(0xc24353)[0]==0x435c && 0x4358+rom(0xc24357)[0]==0x435c);
+    CHECK(rom(0xc24359)[0]==0x51 && rom(0xc2435a)[0]==0x37 && rom(0xc2435d)[0]==0x78);
     CHECK(rom(0xc216ee)[0]==0xff && rom(0xc526d8)[0]==2);
     /* Enemy contact sees every seat through five-entry distance arrays. */
-    CHECK(rom(0xc31147)[0]==0xc5 && rom(0xc34754)[0]==0xd9 && rom(0xc34766)[0]==30);
+    CHECK(rom(0xc31147)[0]==0x05 && rom(0xc31148)[0]==0x01 && rom(0xc34754)[0]==0x19 && rom(0xc34755)[0]==0x01 && rom(0xc34766)[0]==30);
     CHECK(rom(0xc347fb)[0]==5 && rom(0xc3119c)[0]==5 && rom(0xc34696)[0]==0xff);
     CHECK(rom(0xc34b8f)[0]==0x20 && rom(0xc34b8f)[1]==0x70 && rom(0xc34b8f)[2]==0xff);
     CHECK(rom(0xc3ff70)[0]==0x20 && rom(0xc3ff77)[0]==5 && rom(0xc3ff88)[0]==0x60);
@@ -187,7 +195,7 @@ int main(void) {
     /* ZONE3 - D's rival rides its Black Louie from its moved slot, with the
      * five-seat mount offset; P3 keeps its own seat. */
     CHECK(rom(0xc43c83)[0]==3 && rom(0xc43c8c)[0]==4 && rom(0xc43c98)[0]==3 && rom(0xc43c9f)[0]==3);
-    CHECK(rom(0xc43c75)[0]==0xa9 && rom(0xc43c76)[0]==5 && rom(0xc43c78)[0]==0x8d);
+    CHECK(rom(0xc43c75)[0]==0xa9 && rom(0xc43c76)[0]==19 && rom(0xc43c78)[0]==0x8d);
     active_mask=16;CHECK(stage_mask()==1);
     count=3;g_ram[0x1031]=0x67;configure();CHECK(seats()==3 && rom(0xc24349)[0]==1 && rom(0xc526de)[0]==3);
     count=5;g_ram[0x1031]=13;active_mask=saved_active;configure();build_spawn();
@@ -210,11 +218,45 @@ int main(void) {
     g_ram[0x16c6]=9;g_ram[0x17ce]=1;NormalCoopPrepareWorldMapReturn();
     CHECK(!benched_mask && g_ram[0x16c6]==3 && g_ram[0x17ce]==7);
     g_ram[0x1031]=13;
-    /* Seats 3-5 request idle OBJ palette slots 7, 6 and 5; P1/P2 keep theirs. */
+    /* Seats 3-5 request OBJ palette slots 6, 5 and 4 (never 7: the $21-byte
+     * palette copies at $C1:0015/$0035 overrun palette 15); P1/P2 keep theirs. */
     g_ram[0x8d]=1;g_ram[0x348]=4;instruction(0xc42adc,1,1);CHECK(g_ram[0x348]==4);
-    g_ram[0x8d]=2;g_ram[0x348]=8;instruction(0xc42adc,1,1);CHECK(g_ram[0x348]==0x80);
-    g_ram[0x8d]=3;g_ram[0x348]=0x10;instruction(0xc42b90,1,1);CHECK(g_ram[0x348]==0x40);
-    g_ram[0x8d]=4;g_ram[0x348]=0x20;instruction(0xc42adc,1,1);CHECK(g_ram[0x348]==0x20);
+    g_ram[0x8d]=2;g_ram[0x348]=8;instruction(0xc42adc,1,1);CHECK(g_ram[0x348]==0x40);
+    g_ram[0x8d]=3;g_ram[0x348]=0x10;instruction(0xc42b90,1,1);CHECK(g_ram[0x348]==0x20);
+    g_ram[0x8d]=4;g_ram[0x348]=0x20;instruction(0xc42adc,1,1);CHECK(g_ram[0x348]==0x10);
+    /* Palette arbitration: stage objects win slots held by seats 3-5. */
+    {
+        CpuState cpu={0};installed=true;enabled=true;count=5;active_mask=31;g_ram[0x1031]=13;
+        static const uint8_t ids[8]={0x58,1,2,0x26,5,4,3,0},refs[8]={1,2,1,1,1,1,2,0};
+        memcpy(g_ram+0x2b10,ids,8);memcpy(g_ram+0x349,refs,8);
+        static const uint8_t seat_slot[5]={1,2,6,5,4};
+        for(unsigned i=0;i<5;++i) { g_ram[0x17fa+i]=(uint8_t)(0x10+2*i);g_ram[0x6df+0x10+2*i]=seat_slot[i]; }
+        g_ram[0x6df+0x20]=6; /* P3's mount shares P3's slot. */
+        /* ZONE5 - 1's tower: two slots in mask $C0, slot 6 held by P3. */
+        g_ram[0x346]=0x38;g_ram[0x347]=2;g_ram[0x348]=0xc0;pending_seat=-1;redirected=0;
+        palette_full(&cpu,0xc00303);
+        CHECK(redirected==0xc002e2 && !g_ram[0x2b16] && !g_ram[0x349+6]);
+        CHECK(g_ram[0x6df+0x14]==1 && g_ram[0x6df+0x20]==1 && g_ram[0x349+1]==4);
+        /* P4/P5 outside the mask keep their slots. */
+        CHECK(g_ram[0x6df+0x16]==5 && g_ram[0x6df+0x18]==4 && g_ram[0x2b15]==4 && g_ram[0x2b14]==5);
+        /* Enemy slots full of enemies: nothing to take, the failure stands. */
+        g_ram[0x2b14]=0x40;g_ram[0x2b15]=0x41;g_ram[0x6df+0x16]=1;g_ram[0x6df+0x18]=1;
+        g_ram[0x348]=0x38;g_ram[0x347]=1;redirected=0;
+        palette_full(&cpu,0xc00303);CHECK(!redirected && g_ram[0x2b14]==0x40 && g_ram[0x2b15]==0x41);
+        /* A seat whose own slot is taken shares P1's ($C0:033D counts it). */
+        g_ram[0x2b16]=0x38;g_ram[0x349+6]=1;pending_seat=2;g_ram[0x348]=0x40;cpu.X=0;redirected=0;
+        palette_full(&cpu,0xc00303);CHECK(redirected==0xc0033d && cpu.X==1);
+        pending_seat=-1;
+        /* A sharing seat never writes its colors into P1's slot. */
+        cpu.Y=0x14;redirected=0;seat_colors(&cpu,0xc437b0);CHECK(redirected==0xc437cc);
+        g_ram[0x6df+0x14]=6;redirected=0;seat_colors(&cpu,0xc437b0);CHECK(!redirected);
+        cpu.Y=0x10;g_ram[0x6df+0x10]=1;redirected=0;seat_colors(&cpu,0xc437b0);CHECK(!redirected);
+        /* Mounts take their rider's slot (C4:53F0 -> $C4:5B40). */
+        CHECK(rom(0xc453f0)[0]==0x20 && rom(0xc453f1)[0]==0x40 && rom(0xc453f2)[0]==0x5b && rom(0xc453f3)[0]==0xea);
+        CHECK(!memcmp(rom(0xc45b40),mount_slot,sizeof(mount_slot)));
+        CHECK(0x5b4a+mount_slot[9]==0x5b55 && 0x5b52+mount_slot[17]==0x5b55 && mount_slot[19]==0x60 && mount_slot[26]==0x60);
+        memset(g_ram+0x349,0,8);memset(g_ram+0x2b10,0,8);memset(g_ram+0x17fa,0xff,5);
+    }
     /* A dead player's held Start rejoins without becoming a pause edge on
      * the following frame after their actor has been recreated. */
     memset(previous_seats,0,sizeof(previous_seats));pad=8;
@@ -229,10 +271,10 @@ int main(void) {
     NormalCoopLoad(&s.base,10);CHECK(!s.failed && count==5 && active_mask==31 && rom(0xc57000)[0]==0xa2);
     s.at=0;s.reading=false;NormalCoopSave(&s.base);CHECK(s.end==length);
     s.bytes[4]=6;s.at=0;s.reading=true;NormalCoopLoad(&s.base,10);CHECK(s.failed);
-    unsigned saved_patch_count=patch_count;
+    unsigned saved_patch_count=patch_count;CHECK(patch_count<=sizeof(patches)/sizeof(*patches));
     reset_callback();CHECK(!enabled && !installed && !g_interp_bridge_pc_hook);
     for(unsigned i=0;i<saved_patch_count;++i) CHECK(!memcmp(rom(patches[i].pc),patches[i].original,patches[i].size));
-    CHECK(cartridge[0x31147]==0xf6 && cartridge[0x34754]==0xfe);
+    CHECK(cartridge[0x31147]==0xf6 && cartridge[0x31148]==0x1f && cartridge[0x34754]==0xfe && cartridge[0x34755]==0x1f);
     CHECK(!memcmp(cartridge+0x526d7,choreography,sizeof(choreography)) && cartridge[0x526f4]==0xfd);
     puts("Normal co-op: menu, lives, collision, bosses, boss slots, rejoin gating and snapshots passed.");return 0;
 }

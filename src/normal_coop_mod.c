@@ -35,11 +35,12 @@ static uint8_t benched_mask,benched[5][SEAT_FIELDS];
 static bool campaign(void);
 static void (*previous_hook)(uint32_t,int,int);
 typedef struct { uint32_t pc; unsigned size; uint8_t original[128]; } Patch;
-static Patch patches[64];
+static Patch patches[96];
 static unsigned patch_count;
 
 static uint8_t *rom(uint32_t pc) { return SnesRomPtr(pc); }
 static void reserve(uint32_t pc,unsigned size) {
+    if(patch_count>=sizeof(patches)/sizeof(*patches) || size>sizeof(patches[0].original)) return;
     Patch *p=&patches[patch_count++];p->pc=pc;p->size=size;
     memcpy(p->original,rom(pc),size);
 }
@@ -226,13 +227,23 @@ static void find_boss_sites(void) {
  * $C3:46CC for P1/P2 only. Contact damage ($C3:47C9, $C3:4800) and the large
  * enemies' area hits ($C3:1120, $C3:1330, $C3:2C20) loop over those two
  * entries, so P3-P5 never took contact damage. The arrays move to five-entry
- * copies at $1FC0-$1FDD (unused WRAM in every recorded campaign dump), the
- * loops cover the roster, and $C3:FF70 fills the extra seats. The nearest-
- * player chooser at $C3:4641 keeps its two-entry direct-page buffers. */
+ * copies at $0100-$011D, the bottom of the stack page: the stack never went
+ * below $01BB in any of 1263 recorded dumps (boot, menus, every stage).
+ * $1FC0-$1FDD, used before, is the flame-thrower's segment-object table
+ * ($1FAB,Y, ZONE5 - 27): the distances overwrote its object ids and the
+ * flame deleted P4's object, corrupting the object list. The loops cover the
+ * roster, and $C3:FF70 fills the extra seats. The nearest-player chooser at
+ * $C3:4641 keeps its two-entry direct-page buffers. */
+enum { DIST_BASE=0x0100 };
 static uint32_t enemy_sites[64];
 static uint8_t enemy_original[64];
 static unsigned enemy_site_count;
-static const uint32_t enemy_loops[]={0xc3119c,0xc313a9,0xc32cb3,0xc347fb,0xc34817};
+/* Seat loops of enemy code (`CPY #$02` operands): distance-based contact
+ * and area hits above, then cell tests on $16AA,Y: $C3:15BF/$C3:3CA6 grab
+ * ($15A2 bit 6), $C3:1937/$C3:296B/$C3:2EE8 cell hits (ZONE5 flame-thrower
+ * columns), $C3:27AE $15BA bit 7, $C3:48AD player blocking a move. */
+static const uint32_t enemy_loops[]={0xc3119c,0xc313a9,0xc32cb3,0xc347fb,0xc34817,
+    0xc315c0,0xc31938,0xc327af,0xc3296c,0xc32ee9,0xc33ca7,0xc348ae};
 static const uint8_t enemy_distances[]={
     0x20,0x5c,0x47,   /* FF70 JSR $475C   clear all distances       */
     0x5a,             /* FF73 PHY                                   */
@@ -257,6 +268,48 @@ static void find_enemy_sites(void) {
         }
     }
 }
+/* Actor layout with three or more seats. The cartridge keeps P1/P2 in actors
+ * 0/1, their mounts at rider + $1CBF (2 → actors 2/3) and enemies from actor
+ * 5 ($C3:0458) up to 23 ($C4:2260). Seats 3-5 need actors 2-4, so the mounts
+ * move to the end of the table (rider + 19 → actors 19-23) and enemies keep
+ * starting at 5, capped below the mounts. Stage scripts name enemies and
+ * gimmicks by absolute actor (ZONE5 - 1's tower attaches its core to actor
+ * 9), so enemies must keep the cartridge's numbering; an earlier layout with
+ * mounts at 5-9 and enemies from 10 left those scripts pointing at empty
+ * actors (missing tower core and beams, gimmicks acting on the wrong actor).
+ * Boss rivals move to actor 4 (3/4 in ZONE3 - D), mounts 23 (22/23). */
+enum { MOUNT_BASE=19 };
+static const uint8_t point_damage[]={
+    0xe0,0x05,        /* 4350 CPX #$05    players and boss rivals    */
+    0x90,0x08,        /* 4352 BCC skip                               */
+    0xe0,MOUNT_BASE,  /* 4354 CPX #19     mounts are not enemies     */
+    0xb0,0x04,        /* 4356 BCS skip                               */
+    0x5c,0x51,0x37,0xc0, /* 4358 JML $C0:3751 enemy point damage     */
+    0x5c,0x78,0x37,0xc0, /* 435C skip: JML $C0:3778                  */
+};
+/* A mount's palette slot ($C4:53EB) is its rider's seat + 1 ($16DA of the
+ * mount holds the rider): 1/2 for P1/P2, but 3-5 (the enemies' slots) for
+ * seats 3-5, whose mounts then wrote their colors into an enemy palette and
+ * were drawn with it (the egg/Louie looked garbled). Use the rider object's
+ * own slot instead ($C4:53F0 LDA $16DA,X / INC A -> JSR $5B40 / NOP). */
+static const uint8_t mount_slot[]={
+    0xda,             /* 5B40 PHX                                   */
+    0xbd,0xda,0x16,   /* 5B41 LDA $16DA,X  rider seat               */
+    0xaa,             /* 5B44 TAX                                   */
+    0xbd,0xfa,0x17,   /* 5B45 LDA $17FA,X  rider object             */
+    0x30,0x0b,        /* 5B48 BMI $5B55    no rider: seat + 1       */
+    0xaa,             /* 5B4A TAX                                   */
+    0xbd,0xdf,0x06,   /* 5B4B LDA $06DF,X  rider's palette slot     */
+    0xc9,0x08,        /* 5B4E CMP #$08                              */
+    0xb0,0x03,        /* 5B50 BCS $5B55                             */
+    0xfa,             /* 5B52 PLX                                   */
+    0x60,             /* 5B53 RTS                                   */
+    0xea,             /* 5B54 NOP                                   */
+    0xfa,             /* 5B55 PLX                                   */
+    0xbd,0xda,0x16,   /* 5B56 LDA $16DA,X  stock: seat + 1          */
+    0x1a,             /* 5B59 INC A                                 */
+    0x60,             /* 5B5A RTS                                   */
+};
 static const uint32_t mount_backups[]={
     0xc43d3d,0xc43d43,0xc43d54,0xc43d5a,
     0xc43d71,0xc43d77,0xc43d89,0xc43d8f
@@ -337,14 +390,14 @@ static void build_rejoin(void) {
 static void configure(void) {
     bool coop=campaign() && count>2;
     restore(0xc4286f);restore(0xc502ff);restore(0xc5060e);restore(0xc56af5);restore(0xc56ae3);
-    restore(0xc21697);restore(0xc43794);restore(0xc21f2b);restore(0xc30458);
+    restore(0xc21697);restore(0xc43794);restore(0xc21f2b);
     for(unsigned i=0;i<sizeof(seat_loops)/sizeof(*seat_loops);++i) restore(seat_loops[i]);
-    restore(0xc0374d);restore(0xc24340);
+    restore(0xc0374d);restore(0xc24340);restore(0xc24350);restore(0xc42260);restore(0xc453f0);restore(0xc45b40);
     for(unsigned i=0;i<sizeof(bomber_ops)/sizeof(*bomber_ops);++i) restore(bomber_ops[i]);
     for(unsigned i=0;i<sizeof(boss_rider_sites)/sizeof(*boss_rider_sites);++i) restore(boss_rider_sites[i]);
     restore(0xc43c75);
     for(unsigned i=0;i<boss_site_count;++i) rom(boss_sites[i])[0]=boss_original[i];
-    for(unsigned i=0;i<enemy_site_count;++i) rom(enemy_sites[i])[0]=enemy_original[i];
+    for(unsigned i=0;i<enemy_site_count;++i) { rom(enemy_sites[i])[0]=enemy_original[i];rom(enemy_sites[i])[1]=0x1f; }
     for(unsigned i=0;i<sizeof(enemy_loops)/sizeof(*enemy_loops);++i) restore(enemy_loops[i]);
     restore(0xc34766);restore(0xc34b8f);restore(0xc3ff70);
     for(unsigned i=0;i<sizeof(mount_backups)/sizeof(*mount_backups);++i) restore(mount_backups[i]);
@@ -353,12 +406,15 @@ static void configure(void) {
      * slot 2 (and 3). Only undo the five-player value set below; forcing 2
      * every frame put a carried mount on the boss's slot (ZONE4 - G: boss
      * never appeared, rider stuck). */
-    if(!coop) { if(campaign() && g_ram[0x1cbf]==5) g_ram[0x1cbf]=2;return; }
-    set_masks();g_ram[0x1cbf]=5;
-    { static const uint8_t keep[]={0xa9,0x05,0xea,0x8d,0xbf,0x1c}; /* LDA #5; NOP; STA $1CBF */
+    if(!coop) { if(campaign() && g_ram[0x1cbf]==MOUNT_BASE) g_ram[0x1cbf]=2;return; }
+    set_masks();g_ram[0x1cbf]=MOUNT_BASE;
+    { static const uint8_t keep[]={0xa9,MOUNT_BASE,0xea,0x8d,0xbf,0x1c}; /* LDA #19; NOP; STA $1CBF */
       memcpy(rom(0xc43c75),keep,sizeof(keep)); }
-    rom(0xc30458)[1]=10; /* 0–4 players, 5–9 mount companions, 10–23 enemies. */
-    for(unsigned i=0;i<sizeof(mount_backups)/sizeof(*mount_backups);++i) rom(mount_backups[i])[1]+=3;
+    /* 0–4 players, 5–18 enemies (cartridge numbering), 19–23 mounts. */
+    rom(0xc42261)[0]=MOUNT_BASE;
+    memcpy(rom(0xc45b40),mount_slot,sizeof(mount_slot));
+    { static const uint8_t to[]={0x20,0x40,0x5b,0xea}; memcpy(rom(0xc453f0),to,sizeof(to)); }
+    for(unsigned i=0;i<sizeof(mount_backups)/sizeof(*mount_backups);++i) rom(mount_backups[i])[1]+=MOUNT_BASE-2;
     /* Initialize all selected seats with the cartridge's equipment reset. */
     uint8_t *p=rom(0xc45b00);
     for(unsigned i=0;i<count;++i) {
@@ -378,7 +434,8 @@ static void configure(void) {
     for(unsigned i=0;i<sizeof(seat_loops)/sizeof(*seat_loops);++i) rom(seat_loops[i])[1]=(uint8_t)seats();
     for(unsigned i=0;i<enemy_site_count;++i) {
         unsigned slot=(unsigned)(enemy_original[i]-0xf4);
-        rom(enemy_sites[i])[0]=(uint8_t)(0xc0+5*(slot/2)+slot%2);
+        unsigned address=DIST_BASE+5*(slot/2)+slot%2;
+        rom(enemy_sites[i])[0]=(uint8_t)address;rom(enemy_sites[i])[1]=(uint8_t)(address>>8);
     }
     rom(0xc34766)[0]=30; /* CPX #$0C: clear the six five-entry arrays. */
     for(unsigned i=0;i<sizeof(enemy_loops)/sizeof(*enemy_loops);++i) rom(enemy_loops[i])[0]=(uint8_t)seats();
@@ -393,16 +450,147 @@ static void configure(void) {
         for(unsigned i=0;i<boss_site_count;++i) rom(boss_sites[i])[0]=(uint8_t)(boss_original[i]+shift);
         for(unsigned i=0;i<sizeof(boss_rider_sites)/sizeof(*boss_rider_sites);++i) rom(boss_rider_sites[i])[0]+=(uint8_t)shift;
     }
-    rom(0xc0374d)[1]=10; /* Point damage: actors 5-9 are mount companions, not enemies. */
+    /* Point damage: enemies are actors 5-18; mounts 19-23 are not. */
+    memcpy(rom(0xc24350),point_damage,sizeof(point_damage));
+    { static const uint8_t to[]={0x5c,0x50,0x43,0xc2}; memcpy(rom(0xc0374d),to,sizeof(to)); }
     /* Story scripts distinguish one/two-player choreography, not hardware
      * seats. Expose their legacy branch while the adapter owns the roster. */
     rom(0xc21f2b)[1]=0x24;
     jump(0xc21697,0xc24300);
 }
+/* OBJ palette slots ($C0:0295: reuse a slot of the same palette in the
+ * request mask $0348, else $0347 consecutive free slots, else fail at
+ * $C0:0303). The cartridge uses slot 0 for the stage, 1/2 for P1/P2, 3-5 for
+ * enemies (mask $38) and 6-7 for large stage objects (mask $C0: ZONE5 - 1's
+ * tower and its beams need both). Seats 3-5 take 6, 5 and 4 when free, never
+ * 7: the palette save/restore copies at $C1:0015/$C1:0035 (flashing, hit
+ * blink) move $21 bytes, so for OBJ palette 15 they overwrite $2B10 (slot
+ * 0's palette id) and $2EEA (object 0's frame pointer; ZONE5 - J's boss drew
+ * garbage pieces). There are not enough slots for every seat and every stage
+ * object, so the stage
+ * wins. When a non-player request fails and slots held by seats 3-5 inside
+ * its mask would make it fit, those seats' objects (bomber, mount, egg)
+ * share P1's slot instead and the search runs again; a seat that finds no
+ * slot shares P1's slot too. A seat sharing a slot does not write its own
+ * colors into it ($C4:37B0). */
+static int pending_seat=-1;
+static const uint8_t extra_slots[]={0x40,0x20,0x10}; /* seats 3-5: slots 6, 5, 4 */
+static unsigned fallback_slot(void) {
+    for(unsigned s=1;s<=2;++s) if(g_ram[0x2b10+s] && g_ram[0x349+s]) return s;
+    return 0;
+}
+static int seat_owning(unsigned slot) {
+    if(slot<3 || slot>7 || !g_ram[0x349+slot]) return -1;
+    for(unsigned p=2;p<seats();++p)
+        if(g_ram[0x17fa+p]<0x60 && g_ram[0x6df+g_ram[0x17fa+p]]==slot) return (int)p;
+    return -1;
+}
+static void share_slot(unsigned slot,unsigned target) {
+    for(unsigned o=0;o<0x60;o+=2) if(g_ram[0x6df+o]==slot) g_ram[0x6df+o]=(uint8_t)target;
+    g_ram[0x349+target]=(uint8_t)(g_ram[0x349+target]+g_ram[0x349+slot]);
+    g_ram[0x349+slot]=0;g_ram[0x2b10+slot]=0;g_ram[0x2b18+slot]=0;g_ram[0x2b20+slot]=0;
+}
+static void palette_full(CpuState *cpu,uint32_t pc) {
+    (void)pc;
+    if(!enabled || !installed || !campaign() || count<=2) return;
+    unsigned mask=g_ram[0x348],need=g_ram[0x347],target=fallback_slot();
+    if(!target) return;
+    if(pending_seat>=2 && mask==extra_slots[pending_seat-2]) {
+        /* A seat with no slot of its own shares P1's (C0:033D counts it). */
+        cpu->X=(uint16_t)target;interp_bridge_pre_opcode_redirect(0xc0033d);return;
+    }
+    bool usable[8];int run=0,first=-1;
+    for(unsigned s=0;s<8;++s) {
+        usable[s]=(mask>>s&1) && (!g_ram[0x2b10+s] || seat_owning(s)>=0);
+        run=usable[s]?run+1:0;
+        if(need && run>=(int)need) { first=(int)s-(int)need+1;break; }
+    }
+    if(first<0) return;
+    bool moved=false;
+    for(unsigned s=(unsigned)first;s<(unsigned)first+need;++s)
+        if(g_ram[0x2b10+s] && seat_owning(s)>=0) { share_slot(s,target);moved=true; }
+    if(moved) interp_bridge_pre_opcode_redirect(0xc002e2);
+}
+static void seat_colors(CpuState *cpu,uint32_t pc) {
+    (void)pc;
+    if(!enabled || !installed || !campaign() || count<=2) return;
+    unsigned object=cpu->Y&0xff;
+    if(object>=0x60 || g_ram[0x6df+object]>2) return;
+    for(unsigned p=2;p<seats();++p)
+        if(g_ram[0x17fa+p]==object) { interp_bridge_pre_opcode_redirect(0xc437cc);return; }
+}
+/* $C3:FF70 runs for every enemy each frame: it clears the six five-entry
+ * distance arrays ($C3:475C, 30 bytes) and runs $C3:46CC for seats 3-5.
+ * With many enemies (ZONE5 snake chains) that interpreted work pushed frames
+ * past vblank. The same stores happen natively here, in the same order,
+ * including $C3:46CC's scratch ($9F-$A6, $1D28-$1D2D), A and the flags
+ * at the trampoline's RTS, then execution continues at that RTS. */
+static uint8_t *dp_byte(const CpuState *cpu,unsigned offset) { return &g_ram[(cpu->D+offset)&0x1fff]; }
+static void enemy_distances_native(CpuState *cpu,uint32_t pc) {
+    (void)pc;
+    if(!enabled || !installed || !campaign() || count<=2) return;
+    if(memcmp(rom(0xc3ff70),enemy_distances,7) || !cpu->m_flag || !cpu->x_flag || cpu->emulation) return;
+    unsigned db=cpu->DB;
+    if(!(db<0x40 || (db>=0x80 && db<0xc0) || db==0x7e) || cpu->D>=0x1f00) return;
+    unsigned e=cpu->X&0xff,limit=rom(0xc3ff77)[0];
+    uint16_t a=(uint16_t)((cpu->A&0xff00)|0xff);
+    bool v=cpu->_flag_V;
+    memset(g_ram+DIST_BASE,0xff,30);
+    for(unsigned seat=2;seat<limit;++seat) {
+        a=(uint16_t)((a&0xff00)|(g_ram[0x15a2+seat]&0x80));
+        if(a&0x80) continue;
+        *dp_byte(cpu,0x9f)=0;
+        g_ram[0x1d29]=g_ram[0x1842+e];g_ram[0x1d28]=g_ram[0x182a+e];
+        g_ram[0x1d2b]=g_ram[0x188a+e];g_ram[0x1d2a]=g_ram[0x1872+e];
+        *dp_byte(cpu,0xa0)=0;
+        if(g_ram[0x17fa+seat]&0x80) {
+            *dp_byte(cpu,0xa5)=*dp_byte(cpu,0xa6)=0xff;a=(uint16_t)((a&0xff00)|0xff);continue;
+        }
+        uint8_t xdir=1,ydir=2;
+        unsigned px=g_ram[0x182a+seat]|g_ram[0x1842+seat]<<8,ex=g_ram[0x1d28]|g_ram[0x1d29]<<8;
+        unsigned dx=(px-ex)&0xffff;v=((px^ex)&(px^dx)&0x8000)!=0;
+        g_ram[0x1d28]=(uint8_t)dx;g_ram[0x1d29]=(uint8_t)(dx>>8);
+        if(dx&0x8000) { xdir=3;*dp_byte(cpu,0xa2)=0;dx=(0x10000-dx)&0xffff; } /* 16-bit STA $A1 */
+        g_ram[0x1d2c]=(uint8_t)dx;g_ram[0x1d2d]=(uint8_t)(dx>>8);
+        g_ram[DIST_BASE+seat]=(uint8_t)dx;g_ram[DIST_BASE+10+seat]=(uint8_t)(dx>>8);
+        unsigned py=g_ram[0x1872+seat]|g_ram[0x188a+seat]<<8,ey=g_ram[0x1d2a]|g_ram[0x1d2b]<<8;
+        unsigned dy=(py-ey)&0xffff;v=((py^ey)&(py^dy)&0x8000)!=0;
+        g_ram[0x1d2a]=(uint8_t)dy;g_ram[0x1d2b]=(uint8_t)(dy>>8);
+        if(dy&0x8000) { ydir=4;*dp_byte(cpu,0xa4)=0;dy=(0x10000-dy)&0xffff; } /* 16-bit STA $A3 */
+        g_ram[DIST_BASE+5+seat]=(uint8_t)dy;g_ram[DIST_BASE+15+seat]=(uint8_t)(dy>>8);
+        g_ram[DIST_BASE+25+seat]=ydir;g_ram[DIST_BASE+20+seat]=xdir;
+        *dp_byte(cpu,0xa1)=xdir;*dp_byte(cpu,0xa3)=ydir;
+        a=(uint16_t)((dy&0xff)<<8|xdir);
+    }
+    /* State at $FF88 (RTS) after PLY: Y and X unchanged. */
+    cpu->A=a;cpu->_flag_V=v;cpu->_flag_C=1;
+    cpu->_flag_N=(cpu->Y&0x80)!=0;cpu->_flag_Z=(cpu->Y&0xff)==0;
+    interp_bridge_pre_opcode_redirect(0xc3ff88);
+}
+static bool palette_hooks;
+/* Objects whose page request failed ($C5:714E, page_service): the archive
+ * they asked for ($1CCC,X) and their object set, so the overlay can draw
+ * them from the cartridge (a piece's tile t is sheet tile t) instead of the
+ * tiles of whatever page their stale offset points at. */
+static uint8_t pageless_archive[0x30],pageless_set[0x30];
+static void page_refused(CpuState *cpu,uint32_t pc) {
+    (void)pc;
+    if(!enabled || !installed || !campaign() || count<=2) return;
+    unsigned x=cpu->X&0xff,object=g_ram[0x1cd6+x],archive=g_ram[0x1ccc+x];
+    if(x>=10 || object>=0x60 || (object&1)) return;
+    pageless_archive[object/2]=(uint8_t)archive;pageless_set[object/2]=g_ram[0x4ff+object];
+}
+unsigned NormalCoopPagelessArchive(unsigned object) {
+    if(!enabled || !installed || !campaign() || count<=2 || object>=0x60 || (object&1)) return 0;
+    if(pageless_set[object/2]!=g_ram[0x4ff+object]) return 0;
+    for(unsigned p=0;p<16;++p) if(g_ram[0x1d00+p]==object) return 0;
+    return pageless_archive[object/2];
+}
 static void instruction(uint32_t pc,int m,int x) {
     if(previous_hook) previous_hook(pc,m,x);
     if(!campaign() || count<=2) return;
     if(pc==0xc4286f) {
+        memset(pageless_archive,0,sizeof(pageless_archive));
         if(g_ram[0x1031]==8) {
             preserve_characters=true;
             memcpy(campaign_characters,g_ram+0x16c2,5);memcpy(campaign_palettes,g_ram+0x16da,5);
@@ -410,20 +598,20 @@ static void instruction(uint32_t pc,int m,int x) {
         configure();
     }
     else if(pc==0xc4289d) g_ram[0x1d23]=(uint8_t)(count+2);
+    else if(pc==0xc42ae3 || pc==0xc42ba5) pending_seat=-1; /* seat palette request returned */
     else if(pc==0xc42adc || pc==0xc42b90) {
         /* The actor allocators request OBJ palette slot 1<<(player+1). Slot 3
          * belongs to campaign enemies, so P3 failed and drew with an unrelated
-         * palette. Seats 3-5 use the otherwise idle high slots instead. */
-        static const uint8_t extra_slots[]={0x80,0x40,0x20};
+         * palette. Seats 3-5 use extra_slots instead. */
         unsigned player=g_ram[0x8d];
-        if(player>=2 && player<seats()) g_ram[0x348]=extra_slots[player-2];
+        if(player>=2 && player<seats()) { g_ram[0x348]=extra_slots[player-2];pending_seat=(int)player; }
     }
     else if(pc==0xc428b4) {
         for(unsigned i=2;i<count;++i) { g_ram[0x16c2+i]=0;g_ram[0x16da+i]=(uint8_t)(g_rom[0xbb4e]+i); }
         if(preserve_characters) {
             memcpy(g_ram+0x16c2,campaign_characters,count);memcpy(g_ram+0x16da,campaign_palettes,count);
         }
-        active_mask=(uint8_t)((1u<<count)-1);set_masks();g_ram[0x1cbf]=5;benched_mask=0;
+        active_mask=(uint8_t)((1u<<count)-1);set_masks();g_ram[0x1cbf]=MOUNT_BASE;benched_mask=0;
     } else if(pc==0xc21697) {
         /* Continue resets equipment again and may load stock campaign fields.
          * Restore the choices at the final boundary before graphics creation. */
@@ -441,7 +629,7 @@ static void instruction(uint32_t pc,int m,int x) {
                 benched_mask&=(uint8_t)~bit;
             }
         }
-        set_masks();g_ram[0x1cbf]=5;build_spawn();spawn_check=true;
+        set_masks();g_ram[0x1cbf]=MOUNT_BASE;build_spawn();spawn_check=true;
     } else if(pc>=0xc24302 && pc<0xc2432a && (pc-0xc24302)%8==0 && rom(pc)[0]==0xa2) {
         unsigned player=rom(pc)[1];
         if(player>=2) position(player,false);
@@ -482,6 +670,7 @@ static void instruction(uint32_t pc,int m,int x) {
     }
 }
 void NormalCoopReset(void) {
+    memset(pageless_archive,0,sizeof(pageless_archive));memset(pageless_set,0,sizeof(pageless_set));
     player_menu=false;
     count=1;previous_pad=0;suppressed_mask=block_start_mask=0;rejoin_pressed=0;
     revive_mask=0;
@@ -494,7 +683,7 @@ static void reset_plugin(void) {
     if(installed) {
         for(unsigned i=0;i<patch_count;++i) restore(patches[i].pc);
         for(unsigned i=0;i<boss_site_count;++i) rom(boss_sites[i])[0]=boss_original[i];
-        for(unsigned i=0;i<enemy_site_count;++i) rom(enemy_sites[i])[0]=enemy_original[i];
+        for(unsigned i=0;i<enemy_site_count;++i) { rom(enemy_sites[i])[0]=enemy_original[i];rom(enemy_sites[i])[1]=0x1f; }
         if(g_interp_bridge_pc_hook==instruction) g_interp_bridge_pc_hook=previous_hook;
     }
     installed=enabled=false;patch_count=0;boss_site_count=0;enemy_site_count=0;NormalCoopReset();
@@ -513,18 +702,24 @@ void NormalCoopBeforeFrame(void) {
         find_boss_sites();find_enemy_sites();
         for(unsigned i=0;i<sizeof(enemy_loops)/sizeof(*enemy_loops);++i) reserve(enemy_loops[i],1);
         reserve(0xc34766,1);reserve(0xc34b8f,3);reserve(0xc3ff70,sizeof(enemy_distances));
-        reserve(0xc21f2b,3);reserve(0xc0374d,2);reserve(0xc24340,sizeof(bomber_slot));
+        reserve(0xc21f2b,3);reserve(0xc0374d,4);reserve(0xc24350,sizeof(point_damage));reserve(0xc42260,2);reserve(0xc453f0,4);reserve(0xc45b40,sizeof(mount_slot));reserve(0xc24340,sizeof(bomber_slot));
         for(unsigned i=0;i<sizeof(bomber_ops)/sizeof(*bomber_ops);++i) reserve(bomber_ops[i],4);
         for(unsigned i=0;i<sizeof(boss_rider_sites)/sizeof(*boss_rider_sites);++i) reserve(boss_rider_sites[i],1);
         reserve(0xc43c75,6);
         for(unsigned i=0;i<sizeof(seat_loops)/sizeof(*seat_loops);++i) reserve(seat_loops[i],2);
-        reserve(0xc30458,2);
         for(unsigned i=0;i<sizeof(mount_backups)/sizeof(*mount_backups);++i) reserve(mount_backups[i],3);
         reserve(0xc45b00,32);reserve(0xc24300,64);reserve(0xc57000,96);
         reserve(0xc57100,sizeof(page_allocator));memcpy(rom(0xc57100),page_allocator,sizeof(page_allocator));
         reserve(0xc56ae3,3);
         reserve(0xc57140,sizeof(page_service));memcpy(rom(0xc57140),page_service,sizeof(page_service));
         previous_hook=g_interp_bridge_pc_hook;g_interp_bridge_pc_hook=instruction;installed=true;
+        /* Palette arbitration (see palette_full): the allocator's failure
+         * exit and the per-object palette writer. Added once; inert when off. */
+        if(!palette_hooks && rom(0xc00303)[0]==0xa9 && rom(0xc00304)[0]==0xff && rom(0xc437b0)[0]==0x48 && rom(0xc437cc)[0]==0x60)
+            palette_hooks=interp_bridge_add_pre_opcode_hook(0xc00303,palette_full) &&
+                          interp_bridge_add_pre_opcode_hook(0xc437b0,seat_colors) &&
+                          interp_bridge_add_pre_opcode_hook(0xc5714e,page_refused) &&
+                          interp_bridge_add_pre_opcode_hook(0xc3ff70,enemy_distances_native);
         build_spawn();build_rejoin();
     }
     raw_pad=RtlGetPadState(0);

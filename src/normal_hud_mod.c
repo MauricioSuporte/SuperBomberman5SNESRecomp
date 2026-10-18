@@ -7,7 +7,7 @@
 #include "snes/interp_bridge.h"
 #include <string.h>
 static bool enabled, installed;
-static uint8_t original[4], guard[2], death[5], respawn[4], tick[3], scratch[256], release[96];
+static uint8_t original[4], guard[2], death[5], respawn[4], tick[3], scratch[256], release[192];
 /* Static OBJ allocation failures seen this frame: see vram_full(). */
 static bool alloc_failed, hooks_added;
 static bool releasing;
@@ -37,9 +37,18 @@ static bool boss_stage(void) {
  * and palette) and the stock heads return until the next stage; the native
  * retry then succeeds. Stages whose gates fit keep their faces (the queue
  * alone is no signal: covered gates stay queued until revealed). */
+static bool face_live(unsigned seat);
+/* A failure the native code does not retry (ZONE5 - 3's stage script creates
+ * its gate archive `$3A` once, at stage start) would leave the object out for
+ * good, so with a live face the failure exit runs $C5:7360 instead: it deletes
+ * the faces like $C5:7300 and re-enters the allocator with the same archive
+ * and registers. A second failure (faces gone) takes the stock exit. */
 static void vram_full(CpuState *cpu,uint32_t pc) {
-    (void)cpu;(void)pc;
-    if(enabled && installed && g_ram[0xadf]!=0x64) alloc_failed=true;
+    (void)pc;
+    if(!enabled || !installed || g_ram[0xadf]==0x64) return;
+    alloc_failed=true;
+    if((face_live(0) || face_live(1)) && cpu->m_flag && cpu->x_flag && !cpu->emulation && rom(0xc57360)[0]==0xfa)
+        interp_bridge_pre_opcode_redirect(0xc57360);
 }
 static bool suspended(void) {
     if(suspended_stage && g_ram[0x1031]!=suspended_stage) suspended_stage=0;
@@ -188,6 +197,29 @@ void NormalHudBeforeFrame(void) {
     }
     const uint8_t leave[]={0xc2,0x30,0x7a,0xfa,0x68,0x28,0x60};
     memcpy(q,leave,sizeof(leave));
+    /* Allocation retry ($C5:7360, see vram_full): entered at $C0:193A/$193C
+     * with the allocator's PHX on the stack, 8-bit registers. */
+    q=rom(0xc57360);
+    const uint8_t retry_enter[]={
+        0xfa,0xda,0x5a,          /* PLX / PHX / PHY        */
+        0xaf,0xdf,0x0a,0x7e,0x48 /* LDA $7E0ADF / PHA      */};
+    memcpy(q,retry_enter,sizeof(retry_enter));q+=sizeof(retry_enter);
+    for(unsigned seat=0;seat<2;++seat) {
+        const uint8_t drop[]={
+            0xaf,0xc5+seat,0x35,0x7e,  /* LDA $7E35C5+seat */
+            0xc9,0x60,0xb0,28,         /* CMP #$60 / BCS next */
+            0xaa,                      /* TAX */
+            0xbf,0xff,0x04,0x7e,0xc9,0x06,0xd0,19, /* LDA $7E04FF,X / CMP #6 / BNE */
+            0xbf,0xa0,0x04,0x7e,0xc9,0xf0,0xd0,11, /* LDA $7E04A0,X / CMP #$F0 / BNE */
+            0x8a,0x22,0x42,0x13,0xc0,  /* TXA / JSL $C0:1342 */
+            0xa9,0xff,0x8f,0xc5+seat,0x35,0x7e}; /* LDA #$FF / STA $7E35C5+seat */
+        memcpy(q,drop,sizeof(drop));q+=sizeof(drop);
+    }
+    const uint8_t retry_leave[]={
+        0xe2,0x30,               /* SEP #$30               */
+        0x68,0x7a,0xfa,          /* PLA / PLY / PLX        */
+        0x5c,0xfc,0x18,0xc0};    /* JML $C0:18FC           */
+    memcpy(q,retry_leave,sizeof(retry_leave));
     const uint8_t update_call[]={0x20,0xb0,0x72};
     memcpy(rom(0xc50608),update_call,3);
     installed=true;

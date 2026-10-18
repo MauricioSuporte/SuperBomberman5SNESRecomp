@@ -8,6 +8,8 @@ int snes_mod_register_activation_plugin(const char *id,SNESModActivationCallback
 static InterpPreOpcodeHook hooks[2];static uint32_t hook_pcs[2];static unsigned hook_count;
 bool interp_bridge_add_pre_opcode_hook(uint32_t pc,InterpPreOpcodeHook h){
     if(hook_count>=2)return false;hook_pcs[hook_count]=pc;hooks[hook_count++]=h;return true;}
+static uint32_t redirected;
+void interp_bridge_pre_opcode_redirect(uint32_t pc){redirected=pc;}
 uint8 g_ram[0x20000];
 const uint8 *g_rom;
 uint8 *SnesRomPtr(uint32 pc){return (uint8 *)g_rom+(pc&0x3fffff);}
@@ -18,7 +20,7 @@ int main(void){
     memcpy(r+0x5126b,"\xf0\x52",2);
     memcpy(r+0x436ff,"\xad\x1a\x1d\x89\x01",5);
     memset(r+0x57200,255,256);
-    memset(r+0x57300,255,96);
+    memset(r+0x57300,255,192);
     memcpy(r+0x193a,"\x80\x02\x80\x00",4);
     memcpy(r+0x50608,"\x20\xcd\x06",3);
     memcpy(r+0x42b33,"\x22\x07\x13\xc5",4);
@@ -81,13 +83,27 @@ int main(void){
             CHECK(q[b+30]==0x8f && q[b+31]==0xc5+seat);
         }
         CHECK(q[79]==0xc2 && q[85]==0x60 && q[86]==0xff);
+        /* Allocation retry: drop live faces, then JML $C0:18FC again. */
+        q=r+0x57360;
+        CHECK(q[0]==0xfa && q[1]==0xda && q[2]==0x5a && q[3]==0xaf && q[4]==0xdf && q[5]==0x0a && q[7]==0x48);
+        for(unsigned seat=0;seat<2;++seat) {
+            unsigned b=8+seat*36;
+            CHECK(q[b]==0xaf && q[b+1]==0xc5+seat && q[b+6]==0xb0 && b+8+q[b+7]==b+36);
+            CHECK(q[b+9]==0xbf && q[b+15]==0xd0 && b+17+q[b+16]==b+36 && q[b+17]==0xbf && q[b+23]==0xd0 && b+25+q[b+24]==b+36);
+            CHECK(q[b+26]==0x22 && q[b+27]==0x42 && q[b+28]==0x13 && q[b+29]==0xc0 && q[b+32]==0x8f && q[b+33]==0xc5+seat);
+        }
+        CHECK(q[80]==0xe2 && q[82]==0x68 && q[83]==0x7a && q[84]==0xfa);
+        CHECK(q[85]==0x5c && q[86]==0xfc && q[87]==0x18 && q[88]==0xc0 && q[89]==0xff);
     }
+    CpuState cpu={0};cpu.m_flag=cpu.x_flag=1;
     /* A failed face allocation itself is ignored. */
-    g_ram[0xadf]=0x64;hooks[1](NULL,0xc0193c);NormalHudBeforeFrame();
+    g_ram[0xadf]=0x64;redirected=0;hooks[1](&cpu,0xc0193c);CHECK(!redirected);NormalHudBeforeFrame();
     CHECK(installed && !releasing && r[0x50609]==0xb0);
     /* Another archive failing (ZONE3 - 1's gate, $63) releases the faces:
      * one HUD tick through $C5:7300, then the stock HUD for this stage. */
-    g_ram[0xadf]=0x63;hooks[0](NULL,0xc0193a);NormalHudBeforeFrame();
+    g_ram[0xadf]=0x63;g_ram[0x35c5]=10;g_ram[0x4ff+10]=6;g_ram[0x4a0+10]=0xf0;
+    redirected=0;hooks[0](&cpu,0xc0193a);CHECK(redirected==0xc57360);
+    NormalHudBeforeFrame();
     CHECK(releasing && r[0x50608]==0x20 && r[0x50609]==0x00 && r[0x5060a]==0x73);
     NormalHudBeforeFrame();CHECK(releasing && installed); /* face still live */
     g_ram[0x35c5]=0xff;NormalHudBeforeFrame();

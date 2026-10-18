@@ -12,3 +12,6 @@ bool NormalCoopPlayerMenu(void);
 
 /* Restore benched campaign seats before leaving a boss for the map. */
 void NormalCoopPrepareWorldMapReturn(void);
+
+/* Archive a page-less object asked for (0 = none or it has a page). */
+unsigned NormalCoopPagelessArchive(unsigned object);

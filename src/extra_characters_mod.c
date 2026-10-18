@@ -52,6 +52,7 @@
  *   6  7  8  9 10 12  -     (Subordinate 10, Kotetsu 12)
  *  13 14 15 16 17 18  -     (Bomber Kings) */
 #include "extra_characters_mod.h"
+#include "normal_coop_mod.h"
 #include "bomber_kings_mod.h"
 #include "subordinate_mod.h"
 #include "sb4_rom.h"
@@ -1059,6 +1060,7 @@ static bool pageless_mounts(void) {
     if(!campaign_stage()) return false;
     unsigned o;
     for(unsigned i=0;i<5;++i) if(pageless_mount(i,&o)) return true;
+    for(o=0;o<0x60;o+=2) if(NormalCoopPagelessArchive(o)) return true;
     return false;
 }
 static bool mount_first(unsigned mount,unsigned rider) {
@@ -1100,8 +1102,18 @@ static void draw_pageless_mounts(Ppu *ppu,bool *taken) {
         unsigned rider=g_ram[0x17fa+i],riders[16],mine[16],count=0;int ox=0,oy=0,bottom=0;
         unsigned rider_count=match_native(ppu,rider,g_ram[0x6df+rider],riders,&ox,&oy,&bottom);
         if(!rider_count) { ox=0;oy=0; }
+        /* The mount's own native pieces, by its frame layout: exact even
+         * while the rider jumps on (rider + 24 lines up, which moved the
+         * search window off the mount and left its pieces visible). */
+        unsigned own[16];int mox=0,moy=0,mbottom=0;
+        unsigned own_count=match_native(ppu,object,slot,own,&mox,&moy,&mbottom);
+        for(unsigned k=0;k<own_count;++k) {
+            bool rider_piece=false;for(unsigned r=0;r<rider_count;++r) rider_piece|=riders[r]==own[k];
+            if(!rider_piece && count<16) mine[count++]=own[k];
+        }
+        if(count) { ox=mox;oy=moy; }
         int mx=g_ram[0x55f+object]+ox,my=g_ram[0x5bf+object]+oy;
-        for(unsigned c=0;c<128 && count<16;++c) {
+        for(unsigned c=0;c<128 && count<16 && !own_count;++c) {
             if(!visible(ppu,c) || sprite_palette(ppu,c)!=slot) continue;
             bool own=false;for(unsigned k=0;k<rider_count;++k) own|=riders[k]==c;
             if(own) continue;
@@ -1118,6 +1130,47 @@ static void draw_pageless_mounts(Ppu *ppu,bool *taken) {
         /* The object list ($049B/$043B) draws its earlier object on top:
          * facing down, the Louie comes before its rider and hides him. */
         if(rider_count && mount_first(object,rider)) put_first(ppu,emitted_slots,emitted_count,riders,rider_count);
+    }
+}
+/* Other objects refused a page with five seats (stage effects such as
+ * ZONE3 - 9's sand pits, boss parts): co-op records the archive they asked
+ * for. Their native pieces show another page's tiles, so they are hidden;
+ * a figure that fits the overlay canvas is drawn from the cartridge sheet,
+ * a larger one is left hidden rather than garbled. */
+static void draw_pageless_objects(Ppu *ppu,bool *taken) {
+    if(!campaign_stage()) return;
+    for(unsigned object=0;object<0x60;object+=2) {
+        unsigned archive=NormalCoopPagelessArchive(object);
+        if(!archive || !g_ram[0x3d7+object] || !g_ram[0x49f+object]) continue;
+        bool skip=false;unsigned m;
+        for(unsigned i=0;i<5;++i) skip|=g_ram[0x17fa+i]==object || (pageless_mount(i,&m) && m==object);
+        if(skip) continue;
+        unsigned slot=g_ram[0x6df+object];
+        uint32_t data=frame_pointer(object),entry=0x85e22d+(archive-1)*8;
+        uint32_t src=rw(entry+4)|(uint32_t)rb(entry+6)<<16;
+        unsigned n=rb(data);
+        if(slot>=8 || !n || n>16 || (src>>16)<0xc0) continue;
+        unsigned mine[16];int ox=0,oy=0,low=0;
+        unsigned count=match_native(ppu,object,slot,mine,&ox,&oy,&low);
+        int minx=999,maxx=-999,miny=999,maxy=-999;
+        for(unsigned k=0;k<n;++k) {
+            uint32_t piece=data+1+k*7;
+            int dx=(int16_t)rw(piece),dy=(int16_t)rw(piece+2),size=(rb(piece+6)&1)?16:8;
+            if(dx<minx) minx=dx;
+            if(dx+size>maxx) maxx=dx+size;
+            if(dy<miny) miny=dy;
+            if(dy+size>maxy) maxy=dy+size;
+        }
+        bool fits=maxx-minx<=32 && minx>=-ORIGIN_X && maxx<=CANVAS_W-ORIGIN_X && miny>=-ORIGIN_Y && maxy<=CANVAS_H-ORIGIN_Y;
+        bool drawn_here=false;
+        if(fits) {
+            memset(canvas,0,sizeof(canvas));
+            compose_sheet(data,src,ORIGIN_X,ORIGIN_Y);
+            unsigned priority=count?(ppu->oam[mine[0]*2+1]>>12)&3:2;
+            int x=g_ram[0x55f+object]+ox-ORIGIN_X,y=g_ram[0x5bf+object]+oy-ORIGIN_Y;
+            drawn_here=emit(ppu,x,y,slot,priority,mine,count,taken);
+        }
+        if(!drawn_here) for(unsigned k=0;k<count;++k) { taken[mine[k]]=true;hide(ppu,mine[k]); }
     }
 }
 static void draw_players(Ppu *ppu,bool *taken) {
@@ -1489,6 +1542,7 @@ void ExtraCharactersObserve(const Ppu *view,unsigned line,void *context) {
         /* Mounts first: they find the rider by its native frame, which
          * the extra-character skins replace. */
         draw_pageless_mounts(ppu,taken);
+        draw_pageless_objects(ppu,taken);
         if(extras) draw_players(ppu,taken);
         if(extras) {
             draw_faces(ppu);

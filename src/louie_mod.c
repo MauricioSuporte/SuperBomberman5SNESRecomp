@@ -35,6 +35,13 @@ static bool seat(unsigned a) {
     return a<5 && ((g_ram[0x1d1a]&1) || (g_ram[0x1d25]&(1u<<a)));
 }
 static unsigned mount(unsigned a) { return a+g_ram[0x1cbf]; }
+/* Enemy actors. The cartridge puts mounts (and boss rivals) below 2 * $1CBF
+ * and enemies above; five-seat co-op keeps enemies at 5-18 and moves the
+ * mounts to rider + 19 (actors 19-23). */
+static bool enemy(unsigned a) {
+    unsigned base=g_ram[0x1cbf];
+    return base>=5 ? a>=5 && a<base : a>=2*base;
+}
 static bool riding(unsigned a,unsigned type) {
     unsigned b=mount(a);
     return seat(a) && alive(a) && b<ACTORS && alive(b) &&
@@ -111,8 +118,8 @@ static void hook(CpuState *cpu,uint32_t pc) {
         red_hit=false;
         if(riding(rider,RED) && !(g_ram[0x1d1a]&1)) {
             unsigned cell=cpu->A&255;
-            for(unsigned a=2*g_ram[0x1cbf];a<ACTORS;++a)
-                if(alive(a) && g_ram[0x16aa+a]==cell) { freeze(a,180);red_hit=true; }
+            for(unsigned a=5;a<ACTORS;++a)
+                if(enemy(a) && alive(a) && g_ram[0x16aa+a]==cell) { freeze(a,180);red_hit=true; }
         }
     } else if(pc==0xc45563) {
         /* The native player-hit path already plays group 2 / $38 once. */
@@ -239,7 +246,7 @@ void LouieBeforeFrame(void) {
         if(g_ram[0x170a+a]<2 && !g_ram[0x1722+a]) g_ram[0x170a+a]=2;
         unsigned dir=state.direction[a];
         for(unsigned b=0;b<ACTORS && !state.impact[a];++b) {
-            if(b==a || !alive(b) || (!seat(b) && (b<2*g_ram[0x1cbf] || (g_ram[0x1d1a]&1)))) continue;
+            if(b==a || !alive(b) || (!seat(b) && (!enemy(b) || (g_ram[0x1d1a]&1)))) continue;
             int x=position(b,false)-position(a,false),y=position(b,true)-position(a,true);
             int forward=x*dx[dir]+y*dy[dir],side=x*dy[dir]-y*dx[dir];
             if(forward>0 && forward<=20 && side>-10 && side<10 && !state.push[b]) {
