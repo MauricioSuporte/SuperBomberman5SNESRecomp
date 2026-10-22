@@ -56,7 +56,8 @@ def main() -> None:
     parser.add_argument('--port', type=int, default=18210)
     parser.add_argument('--mods', choices=['none', 'all'], default='none')
     parser.add_argument('--mispredict', type=int, default=0, help='RNET_RB_FORCE_MISPREDICT period on seat 0')
-    parser.add_argument('--delay-sync', action='store_true')
+    parser.add_argument('--rollback', action='store_true',
+                        help='force rollback (the game defaults to delay-sync; see docs/NETPLAY.md)')
     parser.add_argument('--inputs', action='store_true', help='pseudo-random pads on every peer')
     parser.add_argument('--scene', choices=['boot', 'battle'], default='boot', help='scripted route before the random pads')
     parser.add_argument('--out', type=Path, default=ROOT / '.bootstrap/netplay-pair')
@@ -96,8 +97,7 @@ def main() -> None:
             if scripts:
                 (peer / 'route.pads').write_text(scripts[seat])
                 env['SNESRECOMP_NET_TEST_INPUT_SCRIPT'] = str(peer / 'route.pads')
-            if args.delay_sync:
-                env['SNES_NET_MODE'] = 'delay'
+            env['SNES_NET_MODE'] = 'rollback' if args.rollback else 'delay'
             if args.mispredict and seat == 0:
                 env['RNET_RB_FORCE_MISPREDICT'] = str(args.mispredict)
             log = (peer / 'desktop.log').open('wb')
@@ -110,7 +110,7 @@ def main() -> None:
             log.close()
             text = (peer / 'desktop.log').read_text(errors='replace')
             assert result == 0, text[-4000:]
-            if not args.delay_sync:
+            if args.rollback:
                 found = re.findall(r'RB boot digest agreed \(([0-9a-f]+)\)', text)
                 assert found, text[-4000:]
                 digests.append(found)
