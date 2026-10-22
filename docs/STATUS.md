@@ -1,6 +1,6 @@
 # Super Bomberman 5: estado do protótipo
 
-## Unreleased — 2026-10-22 (launcher crash without OpenGL 3.3)
+## Unreleased — 2026-10-22 (launcher on OpenGL 3.0-3.2 and without OpenGL)
 
 - Player crash report (v2.0.6 setup host, Windows 10.0.26200, i5-2400 / Sandy Bridge, no vendor OpenGL ICD
   loaded, `D3D10Warp.dll` present): access violation reading `0x2C` 720 ms after "launcher: opening GUI".
@@ -9,14 +9,19 @@
   rebuild. Cause: without `WGL_ARB_create_context` SDL returns a legacy GDI OpenGL 1.1 context for the 3.3 core
   request instead of failing; `ImGui_ImplOpenGL3_Init` then fails in its loader (return value ignored) and never
   installs its backend data.
-- recomp-ui fork: the SDL3/SDL2 platform layers refuse a context below GL 3.3 (`launcher_gl_context_meets`),
-  so the launcher reports UNAVAILABLE instead of crashing; the font rebuild skips the GL backend when it is not
-  initialized. snesrecomp fork: a setup host whose launcher is UNAVAILABLE now explains the OpenGL 3.3
-  requirement (driver / Mesa3D software `opengl32.dll`) instead of SnesInit's "start it with --launcher".
-- Evidence: launcher sources syntax-checked against SDL 3.4.10 and SDL 2.30 headers; version parser unit-checked
-  (1.1.0, 3.1.0, 3.2 rejected; 3.3.0, 4.6.0 accepted). Not yet built on Windows nor reproduced on a GL 1.1
-  machine. A rebuilt (non-setup) game falls back to its SDL presenter; the setup host still needs OpenGL 3.3
-  for "Generate & rebuild".
+- recomp-ui fork: the launcher asked for a 3.3 core context only, although imgui 1.91.9's OpenGL3 backend supports
+  GL 3.0 with GLSL 130 and checks its 3.2/3.3 features at runtime. The SDL3/SDL2 platform layers now try 3.3 core,
+  then any 3.0+ context (Intel Sandy Bridge drivers stop at 3.1), record the version and pick `#version 330` or
+  `#version 130`; a context below 3.0 is refused (launcher UNAVAILABLE instead of the crash). The font rebuild
+  skips an uninitialized GL backend. snesrecomp fork: a setup host whose launcher is UNAVAILABLE explains the
+  OpenGL 3.0 requirement (driver / Mesa3D software `opengl32.dll`) instead of SnesInit's "start it with --launcher".
+- Evidence: launcher sources syntax-checked against SDL 3.4.10 and SDL 2.30 headers (SDL2 with and without
+  `LNG_GLES2`). Linux runtime harness with the real `launcher_platform_sdl2.c` + imgui OpenGL3 backend on Mesa
+  llvmpipe/Xvfb: default driver -> GL 4.5, `#version 330`; `MESA_GL_VERSION_OVERRIDE=3.1` + GLSL 1.40 -> 3.3 core
+  refused (GLXBadFBConfig), 3.1 context, `#version 130`, font rebuild + 3 frames rendered (text and button
+  visible, `glGetError` 0); override 2.1 -> both requests refused, UNAVAILABLE. Not yet built on Windows nor run on
+  the player's Intel driver; the full launcher (box art, emoji atlas) was not exercised on 3.1. The crash dump shows
+  no Intel OpenGL ICD loaded, so that machine also needs Intel's driver installed for OpenGL 3.1.
 
 ## v2.0.7 — 2026-10-22
 
