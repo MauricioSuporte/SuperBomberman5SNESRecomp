@@ -1275,6 +1275,9 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '2.0.7': (
+'''- **Online no longer slows down to wait for players:** the host now runs the match at full speed and never waits. Each frame it takes the newest input it has from every player and sends the result to everyone, so all games stay identical. Players far from the host feel their controls respond later (their own latency), instead of the whole match dropping frames. Every player needs v2.0.7.''',
+'''- **O online não fica mais lento esperando jogadores:** o anfitrião roda a partida na velocidade normal e nunca espera. A cada quadro ele usa a entrada mais recente de cada jogador e envia o resultado para todos, então os jogos continuam idênticos. Quem está longe do anfitrião sente os controles responderem mais tarde (a própria latência), em vez de a partida inteira perder quadros. Todos os jogadores precisam da v2.0.7.'''),
     '2.0.6': (
 '''- **Smoother online matches with 3+ players:** the automatic input delay was too short, so the game kept pausing to wait for the slowest player (a three-player test ran at about 29 fps). It now accounts for inputs that travel through the host and for the lockstep mode this game uses. With a high-latency player the match stays smooth but controls respond later for everyone; a wired connection helps the most.''',
 '''- **Partidas online com 3+ jogadores mais fluidas:** o atraso de entrada automático era curto demais e o jogo ficava parando para esperar o jogador mais lento (um teste com três jogadores rodou a uns 29 fps). Agora ele considera que as entradas passam pelo anfitrião e o modo lockstep que este jogo usa. Com um jogador de latência alta a partida fica fluida, mas os controles respondem mais tarde para todos; usar cabo de rede ajuda bastante.'''),

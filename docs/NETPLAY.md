@@ -21,6 +21,10 @@ com Discord e a sincronização são os do framework (snesrecomp + recomp-net + 
 atraso, caminho da conexão); o log de console (`... 2> log.txt`) mostra `delay_sync_starvation` e o FPS ao sair.
 O atraso automático (desde a v2.0.6) usa a soma das duas piores latências quando há dois ou mais convidados.
 
+**Anfitrião decide (desde a v2.0.7):** o anfitrião nunca espera; a cada quadro usa a entrada mais recente de
+cada convidado e envia o resultado a todos (`SNES_NET_HOST_AUTHORITY`, ligado pelo jogo). Quem tem latência alta
+sente atraso nos próprios controles, sem derrubar o FPS da partida.
+
 **Modo de sincronização:** o jogo força *delay-sync* (lockstep, com atraso de entrada configurável na sala).
 O *rollback* do framework divergiu com este port LLE quando havia reprevisão (ver Validação); uma variável
 `SNES_NET_MODE=rollback` explícita ainda o liga para testes.
@@ -58,6 +62,8 @@ same version (rooms only match the same version — use **Update game** in the l
 **Discord: online matches & news** button opens the Super Bomberman 5 server,
 <https://discord.gg/kH54NCDQB4>.
 
+Since v2.0.7 the host is authoritative: it never waits, uses each guest's newest input every frame and sends
+the resolved inputs to everyone, so latency shows up as input lag for distant players instead of frame drops.
 The game forces **delay-sync** (lockstep with a room input delay); the framework's rollback forked on this
 LLE port under forced mispredictions. LAN / Direct IP has two seats; online rooms have five seats, one per multitap player (since v2.0.2; four before); more
 than two peers is built in the framework but not exercised. Two real executables stayed byte-identical in

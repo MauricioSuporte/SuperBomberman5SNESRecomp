@@ -1,5 +1,20 @@
 # Super Bomberman 5: estado do protótipo
 
+## v2.0.7 — 2026-10-22
+
+- 2.0.6 still ran a three-player internet match at 27.6 fps (778 frames / 28.2 s, 128 `wait_confirm` streaks at
+  D=7): lockstep admits a tick only after every peer has every input AND every peer's confirmation, which
+  travels guest -> host -> guest, and a guest slower than 60 fps sets everyone's pace.
+- New host-authoritative delay-sync (recomp-net fork `RNetConfig.host_authority`, snesrecomp fork
+  `SNES_NET_HOST_AUTHORITY`, set by SB5 on every peer): seat 0 never waits; each tick it uses its live pad and
+  the newest input received from each guest (repeating the last), and sends the resolved row packed in its own
+  input sample; guests simulate only those rows. No confirmation barrier, no neutral prefix.
+- Evidence: recomp-net `session_host_authority_test` (host + fast + 1/3-speed guest over loopback: 300 host
+  ticks, 0 stalls, identical rows on all peers, guest input present); Linux LLE pair runtime with two real
+  executables, Battle with pseudo-random inputs, 2400 frames at ~59 fps, 79 identical WRAM samples without
+  mods and 79 with every mod (`host_authority=1` in both logs). Not yet verified: 3-5 players over the
+  internet. A guest that falls more than ~1 s behind the host cannot catch up (resend window).
+
 ## v2.0.6 — 2026-10-22
 
 - 2.0.5 started a three-player internet match (host + guests at ~470 ms and ~60 ms RTT) but it ran at 28.6 fps:
