@@ -11,8 +11,9 @@ com Discord e a sincronização são os do framework (snesrecomp + recomp-net + 
 2. Configure o **PLAYER 1** local (teclado ou controle). A rede leva essa entrada para o assento da sala.
 3. **NETPLAY → Online Netplay**: entre com Discord (ou como convidado, se o servidor deixar), crie ou entre
    numa sala. **LAN / Direct IP**: rede local ou endereço direto, sem conta.
-4. O anfitrião escolhe os mods; a sala adota os mods e as versões do anfitrião e recusa quem não tiver os
-   mesmos.
+4. O anfitrião escolhe os mods: ao entrar, os seus mods passam a ser exatamente os dele (desde a v2.0.2 também
+   com muitos mods ligados, quando o anfitrião não consegue publicar o conjunto inteiro e o jogo o monta pela
+   lista de pacotes). Bomber Kings ainda exige a sua ROM do Super Bomberman 4.
 5. O botão **Discord: online matches & news** abre o servidor do Super Bomberman 5 para achar partidas e
    novidades: <https://discord.gg/kH54NCDQB4>.
 
@@ -49,7 +50,7 @@ Since v2.0.0 the launcher offers **NETPLAY** like Mega Man X Recompiled: transpo
 and synchronization are the framework's (snesrecomp + recomp-net + recomp-ui). Every player needs the
 same version (rooms only match the same version — use **Update game** in the launcher) and their own ROM
 (plus their own Super Bomberman 4 ROM when Bomber Kings is on). Configure local **PLAYER 1**; choose
-**Online Netplay** (Discord sign-in) or **LAN / Direct IP**. The room adopts the host's mods. The
+**Online Netplay** (Discord sign-in) or **LAN / Direct IP**. Joining switches your mods to the host's automatically (since v2.0.2 also with many mods on). The
 **Discord: online matches & news** button opens the Super Bomberman 5 server,
 <https://discord.gg/kH54NCDQB4>.
 

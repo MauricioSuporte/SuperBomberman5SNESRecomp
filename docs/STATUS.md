@@ -12,6 +12,14 @@
   running temporary copy after it exits. Verified on Linux by a real 1.1.0 → 2.0.1 AppImage update with a
   stale 5 MB folder present: the temp root was empty afterwards. Windows: cross-compiles without warnings;
   not yet run on a real install.
+- Online rooms closed when the guest's mods differed from the host's. Cause: with about a dozen SB5 packages
+  on, the host's exact mod set (~600-700 bytes) exceeds the 512-byte `mod_set` wire field, so recomp-ui
+  published it empty and the guest never adopted the host's configuration. The guest now rebuilds the set
+  from the plan (package rows with enabled features; SB5 mods have no options, and the plan follows the same
+  selection/feature order as the runtime's effective set) for adoption and the launch gate (fork recomp-ui
+  `2f07062`). Evidence: maintainer confirmed rooms stay open with identical mods; code builds on Linux and
+  Windows. Not yet verified: a real join with different mods. LAN rooms keep the 512-byte limit
+  (recomp-net `RNET_LAN_LOBBY_MOD_SET_MAX`, "(plan-too-large)").
 
 ## v2.0.1 — 2026-10-22
 
