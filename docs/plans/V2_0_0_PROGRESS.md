@@ -1,7 +1,7 @@
 # v2.0.0 — diário de progresso
 
 STATUS: EM ANDAMENTO
-Heartbeat: 2026-10-22 06:50 (America/Cuiaba)
+Heartbeat: 2026-10-22 10:35 (America/Cuiaba)
 
 ## Decisões (opção recomendada, sem perguntar ao mantenedor)
 
@@ -61,3 +61,13 @@ Heartbeat: 2026-10-22 06:50 (America/Cuiaba)
   embutido): Game port, repo, Super Bomberman 5 (1996, SNES), recompilação estática, Windows+Linux,
   desenvolvedor, "mostly AI-generated", captura de Battle (Kotetsu/Bazooka/Hammer/Honey/Terrorin).
   Status: "Submission received" — aguarda revisão.
+
+### 2026-10-22 10:35
+- Região do launcher: `rom_identity.txt` `region = USA` (pedido do mantenedor: a versão suportada é a USA;
+  o cabeçalho mantém o byte de região japonês). Hashes e `game_id` inalterados. README, notas e
+  `docs/images/launcher-v2.png` atualizados (`9c4499c`).
+- CI de teste da Release (run 39766928140, sem publicar): windows OK, linux OK.
+- Bloqueio: o fast-forward de `main` e o disparo da Release 2.0.0 (publish) foram negados pela checagem de
+  permissões da sessão. Falta o mantenedor autorizar ou rodar:
+  `git push origin release/v1.2.0:main` e Actions → Release → version `2.0.0`, publish ✔.
+  Depois: testar o atualizador no Windows com a release publicada.
