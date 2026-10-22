@@ -1188,6 +1188,46 @@ Inclui tudo da v1.1.0 (spawns de cinco jogadores junto de P1/P2 e o mod opcional
 A correção foi verificada no Linux com rotas roteirizadas de fase forçada (ZONE3 - 1 e ZONE1 - 1, sozinha e com a maioria dos mods de jogo) e testes nativos; ainda não numa campanha jogada no Windows. Outras fases comuns que batem no mesmo limite não foram catalogadas. Recompilação parcial, principalmente interpretada; combinações de mods, cinco controles físicos e compatibilidade ampla no Linux não qualificados; sem netplay. Downloads sem ROM, código/executável gerado do jogo, assets extraídos, saves ou capturas brutas.
 '''
 
+if version == '1.1.2':
+    notes = f'''# Super Bomberman 5 v{version}
+
+## English
+
+Five-player Normal Game fixes (**5 Players** mod) and picker navigation:
+
+- **ZONE5 - J final boss:** no more garbled sprites or broken colors with three to five players; extra seats now share the game's sprite palettes correctly.
+- **Zone 5 slowdown** with five players removed, and the **ZONE5 - 3** exit gate appears again.
+- **Player colors:** P3-P5 keep their own colors in normal stages; they borrow P1's colors only while a stage uses every sprite palette.
+- **No blinking while walking:** P3-P5 no longer flicker or show garbled frames when tapping or holding a direction.
+- **ZONE5 - 1 tower shocks** hit every player, and **ZONE5 - 25 moving platforms** carry P3-P5.
+- **Lives reset** when leaving the world map for the title or file menu.
+- **Start rejoin** no longer shows a garbled sprite while a Louie is on the field.
+- **ZONE3 - D:** after returning to the world map, a benched player no longer keeps the Pirate's Black Louie or another player's colors.
+- **Back in the Normal character picker:** B from any controller returns to the file menu; B on the world map before entering a stage reopens the character picker (Normal character selection mod).
+
+Install into a new writable folder and run **Generate & rebuild** with your own supported JPN SB5 ROM; an older generated game does not get these fixes. Download the Windows x64 ZIP or experimental Linux x86_64 AppImage and verify SHA256SUMS. Internet is needed for the first tools; Rust is not required.
+
+Verified on Linux LLE with scripted five-seat routes (forced Zone 5 stages, ZONE3 - D, picker and map routes) and native tests, and confirmed by the maintainer on a Windows build. Partial recompilation with mostly interpreted gameplay; all mod combinations, physical five-player play and broad Linux compatibility remain unqualified; no netplay. Downloads contain no ROM, generated game code/binary, extracted assets, saves or raw captures.
+
+## Português
+
+Correções do Normal Game com cinco jogadores (mod **5 Players**) e navegação do seletor:
+
+- **Chefe final da ZONE5 - J:** sem sprites embaralhados ou cores quebradas com três a cinco jogadores; os assentos extras agora dividem corretamente as paletas de sprite do jogo.
+- **Lentidão da Zona 5** com cinco jogadores eliminada, e o portal de saída da **ZONE5 - 3** volta a aparecer.
+- **Cores dos jogadores:** P3-P5 mantêm as próprias cores nas fases comuns; só usam as cores do P1 enquanto uma fase ocupa todas as paletas de sprite.
+- **Sem piscar ao andar:** P3-P5 não piscam nem mostram quadros embaralhados ao tocar ou segurar o direcional.
+- **Choques da torre da ZONE5 - 1** atingem todos os jogadores, e as **plataformas móveis da ZONE5 - 25** carregam P3-P5.
+- **Vidas reiniciadas** ao sair do mapa para o título ou o menu de arquivos.
+- **Volta com Start** sem sprite embaralhado quando há um Louie em campo.
+- **ZONE3 - D:** ao voltar ao mapa, um jogador fora da luta não fica mais com o Louie Preto do Pirata nem com as cores de outro jogador.
+- **Voltar no seletor de personagem do Normal:** B em qualquer controle volta ao menu de arquivos; B no mapa, antes de entrar numa fase, reabre o seletor (mod de seleção de personagem no Normal).
+
+Instale numa pasta nova e gravável e faça **Generate & rebuild** com sua ROM JPN compatível do SB5; um jogo gerado antes não recebe estas correções. Baixe o ZIP Windows x64 ou o AppImage Linux x86_64 experimental e confira SHA256SUMS. Internet para as primeiras ferramentas; Rust não é necessário.
+
+Verificado no Linux LLE com rotas roteirizadas de cinco assentos (fases da Zona 5 forçadas, ZONE3 - D, seletor e mapa) e testes nativos, e confirmado pelo mantenedor num build Windows. Recompilação parcial, principalmente interpretada; combinações de mods, cinco controles físicos e compatibilidade ampla no Linux não qualificados; sem netplay. Downloads sem ROM, código/executável gerado do jogo, assets extraídos, saves ou capturas brutas.
+'''
+
 if args.output:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(notes, encoding='utf-8', newline='\n')
