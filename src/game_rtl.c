@@ -68,7 +68,7 @@ static void StateTrace(void)
     if (period <= 0 || frame % (unsigned)period) return;
     uint32_t h = 2166136261u;
     for (unsigned i = 0; i < 0x20000; ++i) h = (h ^ g_ram[i]) * 16777619u;
-    fprintf(stderr, "sb5 state frame=%u wram=%08x\n", frame, h);
+    fprintf(stderr, "sb5 state frame=%u wram=%08x mode=%02x\n", frame, h, g_ram[0x1031]);
 }
 
 static void GameInitialize(void)
