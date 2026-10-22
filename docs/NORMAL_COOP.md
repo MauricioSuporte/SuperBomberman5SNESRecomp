@@ -54,7 +54,8 @@ reaproveita a página do próprio jogador quando não há página livre, então 
 personagens animam e quem volta com Start reaparece com gráficos. Como a página
 é reescrita enquanto ainda está na tela, o personagem fica invisível por um
 único quadro ao começar, parar ou virar (antes aparecia deformado nesse
-quadro); andando sem parar ele não pisca. P3, P4 e P5 usam as paletas de sprite 7, 6 e 5 quando estão livres;
+quadro); andando sem parar ele não pisca. Quem volta com Start enquanto outro
+jogador está num Louie não aparece mais com o sprite embaralhado. P3, P4 e P5 usam as paletas de sprite 7, 6 e 5 quando estão livres;
 os inimigos ficam com as paletas 3 a 5 e objetos grandes da fase (como a torre
 elétrica da ZONE5-1 e seus raios) com as 6 e 7. A cópia de paleta que o jogo
 faz quando algo pisca escrevia um byte além da paleta e, na paleta 7,
@@ -187,6 +188,12 @@ content (`$C5:6B77`) and only restarts the animation for those (`$C5:7157`).
 A request for different tiles (start, stop, turn) waits one frame with the
 object hidden through the native blink counter (`$085F`), so the player is
 invisible for that single frame instead of garbled.
+
+A seat rejoining with Start has no page yet. When the page of a seat that
+left is still marked pending free (`$7F`, e.g. while another player rides a
+Louie and no other request frees it), the request used to fail and the
+rejoined bomber animated without tiles (garbled). The page is now freed as
+`$C5:6B0B` does and the request waits one frame.
 
 With five seats the five animation pages belong to the players. Objects left
 without a page (Louies and stage effects) are drawn from the cartridge by the

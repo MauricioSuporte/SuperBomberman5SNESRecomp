@@ -25,6 +25,11 @@ Causes and changes (Linux LLE headless, forced stages, lab-only hooks):
   for the chunk a page already holds now skip the upload. Frame-by-frame
   P3 walk in ZONE1 - 1: one hidden frame at start, stop and turn, none in
   30-40 walking frames, no garbled frame.
+- **Start rejoin with a Louie on the field.** The rejoining seat found no
+  free page (the left seat's page stayed `$7F`) and animated without tiles.
+  Pending pages are now freed and the request retried next frame. Route
+  (ZONE1 - 1, five seats): P3 hatches a Louie, P4 dies and rejoins: pages
+  `08 0a 0c 7f 10` → `08 0a 0e 0c 10`, P4 drawn correctly.
 - **`$1CBF`.** The 2026-10-17 layout set `$1CBF` = 19, but it is also the
   bomber-slot count read by survivor counts, player-on-cell searches and bomb
   owners, which then included enemies 5-18. `$1CBF` is 5 again; the 28 offset

@@ -648,7 +648,16 @@ static void page_service_entry(CpuState *cpu,uint32_t pc) {
         if(g_ram[0x1d00+i]&0x80) return;  /* a free page: stock path */
         if(i<pool && g_ram[0x1d00+i]==y) owned=(int)i;
     }
-    if(owned<0) return;
+    if(owned<0) {
+        /* No page yet (a seat rejoining with Start): a page released last
+         * frame is still $7F (pending free). Free it as $C5:6B0B does and keep
+         * the request queued for the next frame instead of letting it fail
+         * (the bomber then animated without tiles: a garbled rejoin). */
+        bool pending=false;
+        for(unsigned i=0;i<pool;++i) if(g_ram[0x1d00+i]==0x7f) { g_ram[0x1d00+i]=0xff;pending=true; }
+        if(pending) interp_bridge_pre_opcode_redirect(0xc56af2);
+        return;
+    }
     if(page_owner[owned]==y && page_archive[owned]==g_ram[0x1ccc+x] && page_half[owned]==g_ram[0x1cea+x]) {
             g_ram[0x1d11]=(uint8_t)(0x60|owned<<1);deferred_refill[y/2]=0;
         interp_bridge_pre_opcode_redirect(0xc57157);return;
