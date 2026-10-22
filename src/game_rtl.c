@@ -163,4 +163,9 @@ const RtlGameInfo kGameInfo = {
     .state_save_extra = &GameSaveExtra,
     .state_load_extra = &GameLoadExtra,
     .on_state_loaded = &NormalCharacterLoaded,
+    /* Netplay rollback: the beam driver's resume PC and WAI latch are host
+     * state the guest blob does not carry. */
+    .exec_state_bound = &snes_beam_frame_driver_exec_state_bound,
+    .exec_state_save = &snes_beam_frame_driver_exec_state_save,
+    .exec_state_load = &snes_beam_frame_driver_exec_state_load,
 };
