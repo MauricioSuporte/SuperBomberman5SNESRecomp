@@ -52,6 +52,7 @@
  * All state lives in free WRAM ($7F:F830-$F8D9, zero in every research
  * capture), so save states and rewind carry it without an extension. */
 #include "special_abilities.h"
+#include "actor_layout.h"
 #include "extra_characters_mod.h"
 #include "sb4_rom.h"
 #include "sb4_sound.h"
@@ -151,7 +152,7 @@ static bool rival(unsigned actor) { return actor<5 && g_ram[0x101f+actor]; }
  * 47 frames later). Setting the mount's death bit, mounted or during that
  * loss, left ZONE3 - D without its exit gates. */
 static bool mount(unsigned actor) {
-    unsigned base=g_ram[0x1cbf];
+    unsigned base=Sb5MountOffset(g_ram);
     if(actor<base || actor-base>=5 || actor-base==actor) return false;
     return g_ram[0x17fa+actor-base]<0x80;
 }

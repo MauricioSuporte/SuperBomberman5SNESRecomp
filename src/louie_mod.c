@@ -1,5 +1,6 @@
 /* Louie improvements use native actors, bomb motion and the Clock renderer. */
 #include "louie_mod.h"
+#include "actor_layout.h"
 #include "common_rtl.h"
 #include "common_cpu_infra.h"
 #include "mod_runtime.h"
@@ -34,13 +35,13 @@ static bool alive(unsigned a) {
 static bool seat(unsigned a) {
     return a<5 && ((g_ram[0x1d1a]&1) || (g_ram[0x1d25]&(1u<<a)));
 }
-static unsigned mount(unsigned a) { return a+g_ram[0x1cbf]; }
+static unsigned mount(unsigned a) { return a+Sb5MountOffset(g_ram); }
 /* Enemy actors. The cartridge puts mounts (and boss rivals) below 2 * $1CBF
  * and enemies above; five-seat co-op keeps enemies at 5-18 and moves the
  * mounts to rider + 19 (actors 19-23). */
 static bool enemy(unsigned a) {
-    unsigned base=g_ram[0x1cbf];
-    return base>=5 ? a>=5 && a<base : a>=2*base;
+    unsigned slots=g_ram[0x1cbf],offset=Sb5MountOffset(g_ram);
+    return offset!=slots ? a>=5 && a<offset : a>=2*slots;
 }
 static bool riding(unsigned a,unsigned type) {
     unsigned b=mount(a);

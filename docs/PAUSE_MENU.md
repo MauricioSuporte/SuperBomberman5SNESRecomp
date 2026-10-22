@@ -21,7 +21,10 @@ No menu principal, B retoma a partida; A não confirma opções. Manter um botã
   sinal nativo que leva à seleção de arenas após o fim de uma disputa.
 
 O retorno ao mapa preserva personagens, paletas, equipamentos e vidas
-compartilhadas. Não concede uma fase concluída. O salvamento nativo continua
+compartilhadas para a próxima fase. Sair do mapa para a tela de título, ou
+escolher New Game/Continue na seleção de arquivos, descarta esses valores
+guardados (antes as vidas da partida anterior voltavam no jogo novo). Não
+concede uma fase concluída. O salvamento nativo continua
 ativo e pode normalizar contador/checksum de um arquivo novo; o layout do SRAM
 é o original. Seats guardados pelo co-op durante chefes são recuperados antes
 da saída. As opções e a confirmação acompanham o mod PT-BR: Continuar,
@@ -99,6 +102,10 @@ resuming does not queue an additional menu accept/back sound.
 
 Map return keeps campaign characters, colors, equipment and shared lives,
 including co-op seats benched for bosses, without awarding a cleared stage.
+Going back to the title screen, or a New Game/Continue chosen in the file
+menu (the native entry store `$C2:1AEC` without a pending return), drops the
+kept values; before, the next campaign's player reset (`$C4:28CE`) restored
+the previous game's lives.
 Native saving may normalize a new file's count/checksum; SRAM layout is
 unchanged. Move/accept/back are native Battle setup SFX commands 1/4/3,
 executed by the cartridge's audio routine and APU before a scene transition.

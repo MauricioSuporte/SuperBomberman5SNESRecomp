@@ -232,7 +232,11 @@ File 1 (A = keyboard X) → Start on Zone 1 map.
 | `$C0:18FC`, `$7E30AA/$30EA/$314A` | Static OBJ archive allocation for created objects (VRAM block, archive id, refcount; `$C0:1A0A` fails when no block fits). A Normal HUD face (archive `$64`) blocked ZONE3 - D's gate archive. Verified by stack logs |
 | `$0300` / `$67` | INIDISP shadow / NMI busy latch (`$C0:F3D4`) |
 | `$1FF4-$1FFF` | Enemy→player distance arrays (6 × 2 entries: dx, dy, dx hi, dy hi, dir codes) from `$C3:46CC`; coop relocates to 6 × 5 at `$0100-$011D` (+`$C3:FF70` seat loop, run natively by a pre-opcode hook). `$1FC0-$1FDD` is NOT free: `$1FAB,Y` is the flame-thrower's segment-object table (ZONE5 - 27), `$1FBB,X` an actor array. Stack never below `$01BB` in 1263 dumps. Verified by contact runs on P1/P3 and a native/interpreted shadow check |
-| `$C1:0015` / `$C1:0035` | OBJ/BG palette save (`$2910`→`$2CEA`) / restore (blink, flash), `MVN` with A=`$20` = 33 bytes: palette 15 overruns into `$2B10` (slot 0 palette id) and `$2EEA` (object 0 frame pointer). Never give a flashing object OBJ slot 7. Verified by WRAM watch on forced `$6F` |
+| `$C1:0015` / `$C1:0035` | OBJ/BG palette save (`$2910`→`$2CEA`) / restore (blink, flash), `MVN` with A=`$20` (operands `$C1:002A/$004A`) = 33 bytes: palette 15 overruns into `$2B10` (slot 0 palette id) and `$2EEA` (object 0 frame pointer). Co-op patches both to `$1F` (32 bytes) so seats can use OBJ slot 7. Verified by WRAM watch on forced `$6F` |
+| `$1CBF` | Bomber-slot count AND mount offset (stock 2/2, Battle 5/5 via `$C4:2A60`). Count readers: `$C5:031C/$033D` survivors, `$C4:44DE/$4C94/$5585` player-on-cell, `$C5:1A14` bomb owner, `$C4:2815/$42D4`, `$C5:2652/$265C`, `$C5:60A4`. Offset readers (ADC/SBC/loose-mount bounds/boss backups, 28 operands): co-op points them to `$011E` = 19 and keeps `$1CBF` = 5. Verified by disassembly of every `$1CBF` operand and five-seat egg/platform routes |
+| `$C0:01C8/$01DE`, `$C0:0379` | Palette load: table word `$C0:0379 + 2*$0AE7` (bank `$81`), entry word `[table + 2*(id-1)]`, colors at entry+4, `$AB` colors to `$2910 + 2*$AE` (`$AE` = `$80 + slot*16` for OBJ), `$0351` = 1. Players: `$0AE7` = 0, 9 colors (`$C4:37B0`) |
+| `$085F+object` | Blink counter: the OAM pass `$C0:146F` decrements it and skips odd values. Co-op sets 2 to hide an object for the one frame its own page is refilled (`$C5:7140` deferral) |
+| `$C1:6B32`, `$C4:3C32/$3C4F` | Moving-platform carry (ZONE5 - 25 shuttles, `$1052` = `$08`): `CPX #$02` seat loop, player-on-cell test, object x move. Co-op raises it to the roster. Verified by teleporting P3 onto the platform |
 | `$C0:18FC`, `$C0:193A/$193C`, `$C0:1342`, `$C0:196D` | Static OBJ archive allocator (`$0ADF` = archive) / its failure exits (no free entry / no VRAM block from `$C0:1A0A`) / native object delete (A = object; releases `$06E0` archive entry and `$06DF` palette) / archive entry release (refcount `$7E314A`). Gate archive `$63` in ZONE3 - 1; HUD-faces mod hooks the failure exits and frees its faces through `$C0:1342` from FF padding `$C5:7300-$735F`; a failure with a live face redirects to `$C5:7360-$73B8` (drop faces, `JML $C0:18FC` retry) because ZONE5 - 3's gate archive `$3A` is loaded once at stage start. Verified by ZONE3 - 1/ZONE1 - 1 forced routes and disassembly |
 | `$C0:0295`, `$0346/$0347/$0348`, `$C0:0303`, `$2B10/$2B18/$2B20`, `$0349` | OBJ palette allocator: palette id / slot count / slot mask; reuse a masked slot with the same id and set, else `$0347` consecutive free slots (`$2B10` = 0), else fail at `$C0:0303` (`LDA #$FF`). Slots: 0 stage (`$58`), 1/2 P1/P2, 3-5 enemies (mask `$38`), 6-7 large stage objects (mask `$C0`: ZONE5 - 1 tower `$38`, two slots). Final boss `$6F` palette `$36` takes 3-6. Co-op hooks `$C0:0303` (seat 3-5 slots shared into P1's) and `$C4:37B0` (per-object palette writer). Verified by allocator logs on forced `$49`/`$6F` |
 | `$C4:53EB`/`$C4:53F0` | Mount palette: slot = `$16DA` of the mount (rider seat) + 1, then the mount colors at +8 of that slot. Seats 3-5 landed on enemy slots 3-5; co-op redirects to the rider object's slot (`$C4:5B40`). Verified by egg routes with five seats |
@@ -346,8 +350,15 @@ Verified by disassembly, a 30-exit ROM audit and a Zone 1-A route-flag-7 run.
 - Five seats exhaust the 8 OBJ palette slots and the 5 animation pages. Give
   stage objects priority (palette arbitration at `$C0:0303`) and draw
   page-less objects from the cartridge; check palette/page failures with a
-  lab log when a stage looks wrong only with 3+ players. Players never take
-  OBJ slot 7 (`$C1:0015/$0035` copy 33 bytes).
+  lab log when a stage looks wrong only with 3+ players. Seats use OBJ slots
+  7/6/5 only because co-op shortens the 33-byte blink copies
+  (`$C1:0015/$0035`); a borrowing seat reclaims its slot when it frees up.
+- `$1CBF` doubles as bomber count and mount offset. Never set it past 5: the
+  survivor and player-on-cell loops (`LDX $1CBF; DEX`) then treat enemies as
+  players. Co-op moves only the offset readers to `$011E`.
+- Scan every `CPX/CPY #$02` seat loop, including bodies that only call other
+  routines (`$C1:6B32` platform carry calls `$C4:3C32`); simple pattern scans
+  missed it and the tower shock loops in banks C0/C1.
 - "Zero in every recorded dump" is not proof that WRAM is free: `$1FC0` was
   the flame-thrower's table in one stage. Prefer ranges no code can reach
   (the never-used bottom of the stack page) and audit ROM operands nearby.

@@ -3,6 +3,7 @@
  * FFF4/FFF5 count native Black acquisition / dash commands.
  * FFF2/FFF3 hold the native frame counter at Black acquisition cue / attachment.
  * The native egg pickup still allocates, animates and attaches the mount. */
+#include "../src/actor_layout.h"
 #include "common_rtl.h"
 #include "snes/interp_bridge.h"
 static void egg_choice(CpuState *cpu,uint32_t pc) {
@@ -17,7 +18,7 @@ static void egg_choice(CpuState *cpu,uint32_t pc) {
         return;
     }
     if(pc==0xc4519c) {
-        unsigned companion=cpu->X+g_ram[0x1cbf];
+        unsigned companion=cpu->X+Sb5MountOffset(g_ram);
         if(companion<24 && g_ram[0x16c2+companion]==6) g_ram[0x1fff3]=g_ram[0x69];
         return;
     }

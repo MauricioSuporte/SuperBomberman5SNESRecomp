@@ -36,7 +36,8 @@ static void scene(unsigned count,unsigned type) {
     memset(g_ram+0x17fa,255,24);
     /* Mounts: stock rider + 2; five-seat co-op rider + 19 (enemies 5-18). */
     unsigned base=count>2?19:count;
-    g_ram[0x1031]=13;g_ram[0xaee]=1;g_ram[0x1cbf]=(uint8_t)base;
+    g_ram[0x1031]=13;g_ram[0xaee]=1;g_ram[0x1cbf]=(uint8_t)(count>2?5:count);
+    if(count>2) g_ram[0x11e]=19;
     g_ram[0x1d25]=(uint8_t)((1u<<count)-1);
     for(unsigned a=0;a<count;++a) {
         actor(a,a*2,0x33+a);actor(a+base,20+a*2,0x33+a);

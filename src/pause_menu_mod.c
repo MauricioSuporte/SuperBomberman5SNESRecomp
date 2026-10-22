@@ -44,10 +44,14 @@ static void instruction(uint32_t pc,int m,int x) {
     /* Normal's native menu actor chooses its entry state at $C7:0B8B
      * (or Continue at $0B97). State 4 runs the existing map builder and
      * selector, bypassing the file dialogs without awarding a stage clear. */
-    if(pc==0xc21aec && returning && g_ram[0xbd]==0x36 && g_ram[0xbe]==0x10 &&
+    if(pc==0xc21aec && g_ram[0xbd]==0x36 && g_ram[0xbe]==0x10 &&
        g_ram[0x0c]==0xc7 && g_ram[0x0b]==0x0b &&
        (g_ram[0x0a]==0x8e || g_ram[0x0a]==0x9a)) {
-        g_ram[0x373]=4;returning=0;
+        /* A New Game or Continue chosen in the file menu (map -> file
+         * select, or title) starts a fresh campaign: drop the lives and
+         * fields kept for the world-map return. */
+        if(returning) { g_ram[0x373]=4;returning=0; }
+        else keep_campaign=false;
     }
 }
 void PauseMenuReset(void) {
@@ -143,6 +147,7 @@ void PauseMenuBeforeFrame(void) {
 void PauseMenuAfterFrame(void) {
     if(!enabled || !installed) return;
     if(keep_campaign && stage()) keep_campaign=false;
+    if(keep_campaign && g_ram[0x1031]<=2) keep_campaign=false; /* back at the title */
     if(!g_ram[0x1d1d]) { open_menu=false;confirm_menu=false;selection=0; }
     else if(!open_menu && stage()) { open_menu=true;confirm_menu=false;selection=0; }
 }

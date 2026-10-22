@@ -52,6 +52,7 @@
  *   6  7  8  9 10 12  -     (Subordinate 10, Kotetsu 12)
  *  13 14 15 16 17 18  -     (Bomber Kings) */
 #include "extra_characters_mod.h"
+#include "actor_layout.h"
 #include "normal_coop_mod.h"
 #include "bomber_kings_mod.h"
 #include "subordinate_mod.h"
@@ -1050,7 +1051,7 @@ static bool campaign_stage(void) {
 }
 static unsigned pageless_mount(unsigned seat,unsigned *object) {
     if(seat>=5 || !(g_ram[0x1782+seat]&0x82) || g_ram[0x17fa+seat]>=0x60) return 0;
-    unsigned actor=seat+g_ram[0x1cbf];
+    unsigned actor=seat+Sb5MountOffset(g_ram);
     if(actor>=24) return 0;
     unsigned o=g_ram[0x17fa+actor];
     if(o>=0x60 || object_paged(o)) return 0;

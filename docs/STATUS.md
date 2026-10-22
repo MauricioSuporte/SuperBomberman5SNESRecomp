@@ -1,5 +1,50 @@
 # Super Bomberman 5: estado do protótipo
 
+## Five-player follow-ups: palettes, page refills, mounts, lives / Ajustes de cinco jogadores - 2026-10-22
+
+Reported after the 2026-10-17 fixes: a one-frame deformed bomber when tapping
+a direction (ZONE5 - 1, also elsewhere), ZONE5 - 1's tower shock paralysing
+only P1/P2, P3-P5 in P1's white palette in many stages, shared lives kept
+after leaving the world map for the title/file menu, and ZONE5 - 25's slow
+platforms carrying only P1/P2.
+
+Causes and changes (Linux LLE headless, forced stages, lab-only hooks):
+- **Palettes.** Seats 3-5 had moved to slots 6/5/4, inside the enemies'
+  range, so most stages evicted P4/P5 at once. The real hazard of slot 7 was
+  the 33-byte blink copy at `$C1:0015/$0035`; co-op now makes it 32 bytes and
+  seats use 7/6/5 again. A borrowing seat takes its slot back once the stage
+  frees it (every 16 ticks; colors copied like `$C0:01C8`). 12-stage sample at
+  frame 1500: all of P3-P5 keep their own slots in 8 stages; in stages `$1B`,
+  `$2B`, `$49` and `$61` some borrow P1's, as the stage needs those slots. ZONE5 - J
+  stays clean over ten 150-frame captures (P3 in slot 7).
+- **Page refill.** With five seats a player's page is refilled while still on
+  screen (`$C5:7120`), so the old frame showed the new tiles for one frame.
+  The refill now waits one frame with the object hidden via `$085F`
+  (`$C5:7140` hook); frame-by-frame captures in ZONE1 - 1 and ZONE5 - 1 show
+  one blank frame instead of the garbled one.
+- **`$1CBF`.** The 2026-10-17 layout set `$1CBF` = 19, but it is also the
+  bomber-slot count read by survivor counts, player-on-cell searches and bomb
+  owners, which then included enemies 5-18. `$1CBF` is 5 again; the 28 offset
+  readers use `$011E` = 19. Five-seat egg pickup: P3's Red Louie hatches in
+  actor 21, slot 7, and is ridden.
+- **Seat loops.** `$C0:2DB0`, `$C1:19AA`, `$C1:5D73` (tower shock: `$15BA`
+  bit 7 on P1-P4 at frame ~1110 of a ZONE5 - 1 run) and `$C1:6B32` (platform
+  carry) cover the roster. Teleporting P3 onto ZONE5 - 25's platform: P3 now
+  moves with it (cell `$66`→`$68`), as P1 did before.
+- **Lives.** The pause menu's world-map return kept lives/fields until the
+  next player reset, even after the title or a New Game. They are dropped at
+  the title and at a file-menu New Game/Continue (native tests).
+
+Evidence: all 14 native test executables, `tests/normal_coop_runtime.py`
+counts/five/lifecycle and the routes above pass; stage sweep below. Not
+checked in a played Windows campaign.
+
+Ajustes de cinco jogadores: P3-P5 voltam às paletas 7/6/5 (a cópia de piscar
+agora tem o tamanho certo) e recuperam as cores quando a fase libera a paleta;
+o quadro deformado ao andar virou um quadro invisível; `$1CBF` volta a 5 (a
+montaria usa `$011E`); choque da torre e plataformas da ZONE5-25 valem para
+P3-P5; vidas não voltam mais depois de sair do mapa para o título/arquivos.
+
 ## Five-player stage objects: actors, palettes and pages / Objetos de fase com cinco jogadores - 2026-10-17
 
 Reported with the five-player mod: garbled egg/Louie sprite, ZONE5 - 1's

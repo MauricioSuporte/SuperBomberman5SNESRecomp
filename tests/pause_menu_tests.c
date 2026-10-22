@@ -62,7 +62,12 @@ int main(void) {
     instruction(0xc428ce,1,1);
     CHECK(g_ram[0x16c2]==3 && g_ram[0x16da]==25 && g_ram[0x17ca]==7 && g_ram[0x1d23]==1);
     g_ram[0xbd]=0x36;g_ram[0xbe]=0x10;g_ram[0x0c]=0xc7;g_ram[0x0b]=0x0b;g_ram[0x0a]=0x8e;
-    instruction(0xc21aec,1,1);CHECK(g_ram[0x373]==4 && !returning);
+    instruction(0xc21aec,1,1);CHECK(g_ram[0x373]==4 && !returning && keep_campaign);
+    /* From the map back to the file menu: New Game/Continue drops the kept
+     * lives, so the next player reset keeps its own values. */
+    g_ram[0x373]=0;instruction(0xc21aec,1,1);CHECK(g_ram[0x373]==0 && !keep_campaign);
+    g_ram[0x1d23]=7;instruction(0xc428ce,1,1);CHECK(g_ram[0x1d23]==7);
+    keep_campaign=true;g_ram[0x1031]=2;PauseMenuAfterFrame();CHECK(!keep_campaign);
     returning=0;g_ram[0x1031]=116;g_ram[0x1d1a]=1;g_ram[0x1d1e]=0;g_ram[0x1d1d]=1;
     PauseMenuAfterFrame();CHECK(open_menu && selection==0);
     for(unsigned i=0;i<5;++i) g_ram[0x1ba3+i]=2;

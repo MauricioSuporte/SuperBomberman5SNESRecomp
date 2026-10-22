@@ -51,16 +51,20 @@ Start nela e retornam na fase seguinte com personagem, cor e itens que tinham.
 O HUD original (moldura, ícones, coração e placares de P1/P2) continua sendo
 desenhado. As animações usam cinco páginas de sprites; um alocador próprio
 reaproveita a página do próprio jogador quando não há página livre, então os
-personagens animam e quem volta com Start reaparece com gráficos. P3, P4 e P5
-usam as paletas de sprite 6, 5 e 4 quando estão livres; os inimigos ficam com
-as paletas 3 a 5 e objetos grandes da fase (como a torre elétrica da ZONE5-1 e
-seus raios) com as 6 e 7. Jogadores nunca usam a paleta 7: a cópia de paleta do
-jogo ao piscar escreve um byte além dela e estragava o desenho do primeiro
-objeto da fase (o chefe final da ZONE5-J aparecia em pedaços e lento). Como não há paletas para todos, a fase tem
-prioridade: quando um objeto da fase não cabe, P3-P5 que ocupam a paleta dele
-passam a usar a paleta do P1 (ficam com as cores do P1) até a próxima fase ou
-até voltarem com Start. O Louie de P3-P5 usa a paleta do próprio cavaleiro
-(antes usava a de um inimigo e aparecia embaralhado ao sair do ovo).
+personagens animam e quem volta com Start reaparece com gráficos. Como a página
+é reescrita enquanto ainda está na tela, o personagem fica invisível por um
+único quadro ao começar ou parar de andar (antes aparecia deformado nesse
+quadro). P3, P4 e P5 usam as paletas de sprite 7, 6 e 5 quando estão livres;
+os inimigos ficam com as paletas 3 a 5 e objetos grandes da fase (como a torre
+elétrica da ZONE5-1 e seus raios) com as 6 e 7. A cópia de paleta que o jogo
+faz quando algo pisca escrevia um byte além da paleta e, na paleta 7,
+estragava o desenho do primeiro objeto da fase (o chefe final da ZONE5-J
+aparecia em pedaços e lento); com o mod ela copia o tamanho certo. Como não há
+paletas para todos, a fase tem prioridade: quando um objeto da fase não cabe,
+P3-P5 que ocupam a paleta dele passam a usar a paleta do P1 (ficam com as
+cores do P1) e recuperam as próprias cores assim que a fase libera a paleta.
+O Louie de P3-P5 usa a paleta do próprio cavaleiro (antes usava a de um
+inimigo e aparecia embaralhado ao sair do ovo).
 
 Os inimigos mantêm a numeração do jogo original (atores 5-18); os Louies dos
 jogadores ficam nos atores 19-23. Os scripts das fases chamam inimigos e
@@ -82,7 +86,8 @@ página da pilha, que o jogo nunca usa. O cálculo dessas distâncias para P3-P5
 é feito em código nativo, com o mesmo resultado, para que fases com muitos
 inimigos (as cobras da Zona 5) não fiquem mais lentas que com dois jogadores.
 As chamas do lança-chamas e outros ataques de inimigos por casa agora atingem
-P3-P5 também.
+P3-P5 também, assim como o choque paralisante da torre da ZONE5-1. As
+plataformas lentas da ZONE5-25 carregam P3-P5 como carregam P1 e P2.
 
 Depois da animação de morte, Start no controle do jogador morto consome uma
 vida para voltar, desde que haja um companheiro vivo. Esse Start não pausa a
@@ -163,14 +168,22 @@ when enemies started at 10, ZONE5-1's tower lost its core and beams and froze
 when destroyed, and other gimmicks acted on the wrong actor.
 
 OBJ palettes: slot 0 stage, 1/2 P1/P2, 3-5 enemies, 6-7 large stage objects
-(the tower and its beams need both). P3-P5 take 6, 5 and 4 when free, never
-7: the cartridge's palette save/restore for blinking copies one byte past
-palette 15 into slot 0's palette id and object 0's frame pointer (ZONE5-J's
-final boss showed garbage pieces and slowed down). There
-are not enough slots for everyone, so the stage wins: when a stage object does
-not fit, seats 3-5 holding its slots borrow P1's palette (they show P1's
-colors) until the next stage or a Start rejoin. A seat 3-5 Louie uses its
-rider's palette (it used an enemy's and looked garbled when hatching).
+(the tower and its beams need both). P3-P5 take 7, 6 and 5 when free. The
+cartridge's palette save/restore for blinking (`$C1:0015/$C1:0035`) copies
+33 bytes, one past the palette: for palette 15 that byte landed in slot 0's
+palette id and object 0's frame pointer (ZONE5-J's final boss showed garbage
+pieces and slowed down); co-op makes both copies 32 bytes. There are not
+enough slots for everyone, so the stage wins: when a stage object does not
+fit, seats 3-5 holding its slots borrow P1's palette (they show P1's colors);
+every 16 ticks a borrowing seat takes its own slot back once it is free again
+(colors copied like `$C0:01C8`). A seat 3-5 Louie uses its rider's palette (it
+used an enemy's and looked garbled when hatching).
+
+When no page is free, a player's page is refilled while the frame on screen
+still uses it, so the old animation frame showed new tiles for one frame (a
+garbled bomber when starting or stopping a walk). Such a refill now waits one
+frame with the object hidden through the native blink counter (`$085F`), so
+the player is invisible for that single frame instead.
 
 With five seats the five animation pages belong to the players. Objects left
 without a page (Louies and stage effects) are drawn from the cartridge by the
@@ -184,7 +197,14 @@ object list looped (slowdown, frozen-looking stage). They now live at
 `$0100-$011D`, the bottom of the stack page (never used in any recorded dump).
 The seat 3-5 distances are computed natively at `$C3:FF70` with identical
 results, so enemy-heavy stages (Zone 5 snakes) run like two-player games.
-Flame columns and other cell attacks now hit P3-P5 too.
+Flame columns and other cell attacks now hit P3-P5 too, as do ZONE5-1's
+tower shock (`$C1:5D73`, `$C0:2DB0`) and the platforms that carry players in
+ZONE5-25 (`$C1:6B32`).
+
+`$1CBF` is both the bomber-slot count (survivor counts, player-on-cell
+searches, bomb owners) and the mount offset. Co-op keeps `$1CBF` = 5 and keeps
+the mount offset 19 at `$011E`; the 28 rider/mount conversions read it there.
+Setting `$1CBF` to 19 had made those loops count enemies as players.
 
 A dead player can press Start after cleanup to spend one shared life and
 rejoin while a teammate is alive. Rejoin does not pause. Simultaneous requests
