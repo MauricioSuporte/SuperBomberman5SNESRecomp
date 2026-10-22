@@ -458,6 +458,107 @@ SB5_UNUSED static void pause_if_interactive(int launched) {
 }
 
 #ifndef SB5_UPDATER_NO_MAIN
+/* ---- temporary files ---------------------------------------------------- */
+
+/* Every run works in its own <temp>/sb5-update-<pid> folder (the download,
+ * the unpacked package and, on Windows, the running copy of this program).
+ * The package is ~20 MB packed and much larger unpacked, so it is removed
+ * when the run ends, and folders left by earlier runs are removed at start. */
+static void rm_tree(const char *path) {
+#if defined(_WIN32)
+    char pattern[PATH_CAP], child[PATH_CAP];
+    WIN32_FIND_DATAA fd;
+    HANDLE h;
+    snprintf(pattern, sizeof(pattern), "%s\\*", path);
+    h = FindFirstFileA(pattern, &fd);
+    if (h != INVALID_HANDLE_VALUE) {
+        do {
+            if (!strcmp(fd.cFileName, ".") || !strcmp(fd.cFileName, "..")) continue;
+            snprintf(child, sizeof(child), "%s\\%s", path, fd.cFileName);
+            if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
+                !(fd.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)) {
+                rm_tree(child);
+            } else {
+                SetFileAttributesA(child, FILE_ATTRIBUTE_NORMAL);
+                if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) RemoveDirectoryA(child);
+                else DeleteFileA(child);
+            }
+        } while (FindNextFileA(h, &fd));
+        FindClose(h);
+    }
+    RemoveDirectoryA(path);
+#else
+    DIR *d = opendir(path);
+    struct dirent *e;
+    char child[PATH_CAP];
+    struct stat st;
+    if (d) {
+        while ((e = readdir(d)) != NULL) {
+            if (!strcmp(e->d_name, ".") || !strcmp(e->d_name, "..")) continue;
+            snprintf(child, sizeof(child), "%s/%s", path, e->d_name);
+            if (lstat(child, &st) == 0 && S_ISDIR(st.st_mode)) rm_tree(child);
+            else unlink(child);
+        }
+        closedir(d);
+    }
+    rmdir(path);
+#endif
+}
+
+static char g_self_tmp[PATH_CAP]; /* Windows: the folder holding this running copy */
+
+static void cleanup_tmp(void) {
+    if (g_tmp[0]) rm_tree(g_tmp);
+#if defined(_WIN32)
+    /* A running program cannot delete itself: a detached cmd removes the
+     * folder of the temporary copy a moment after this process exits. */
+    if (g_self_tmp[0] && strstr(g_self_tmp, "sb5-update-")) {
+        char cmd[PATH_CAP * 2];
+        STARTUPINFOA si;
+        PROCESS_INFORMATION pi;
+        snprintf(cmd, sizeof(cmd),
+                 "cmd.exe /d /c ping -n 3 127.0.0.1 >NUL & rmdir /s /q \"%s\"", g_self_tmp);
+        memset(&si, 0, sizeof(si));
+        si.cb = sizeof(si);
+        if (CreateProcessA(NULL, cmd, NULL, NULL, FALSE, CREATE_NO_WINDOW | DETACHED_PROCESS,
+                           NULL, NULL, &si, &pi)) {
+            CloseHandle(pi.hThread);
+            CloseHandle(pi.hProcess);
+        }
+    }
+#endif
+}
+
+/* Folders of earlier runs that ended before cleaning up (crash, closed
+ * window). The current run's folders are kept. */
+static void cleanup_stale(const char *temp_root) {
+#if defined(_WIN32)
+    char pattern[PATH_CAP], child[PATH_CAP];
+    WIN32_FIND_DATAA fd;
+    HANDLE h;
+    snprintf(pattern, sizeof(pattern), "%s\\sb5-update-*", temp_root);
+    h = FindFirstFileA(pattern, &fd);
+    if (h == INVALID_HANDLE_VALUE) return;
+    do {
+        if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) continue;
+        snprintf(child, sizeof(child), "%s\\%s", temp_root, fd.cFileName);
+        if (_stricmp(child, g_tmp) && _stricmp(child, g_self_tmp)) rm_tree(child);
+    } while (FindNextFileA(h, &fd));
+    FindClose(h);
+#else
+    DIR *d = opendir(temp_root);
+    struct dirent *e;
+    char child[PATH_CAP];
+    if (!d) return;
+    while ((e = readdir(d)) != NULL) {
+        if (strncmp(e->d_name, "sb5-update-", 11)) continue;
+        snprintf(child, sizeof(child), "%s/%s", temp_root, e->d_name);
+        if (strcmp(child, g_tmp)) rm_tree(child);
+    }
+    closedir(d);
+#endif
+}
+
 int main(int argc, char **argv) {
     int check = 0, do_launch = 0, force = 0, from_temp = 0, i;
     long wait_pid = 0;
@@ -497,14 +598,25 @@ int main(int argc, char **argv) {
         }
     }
 #if defined(_WIN32)
+    char temp_root[MAX_PATH];
     {
-        char t[MAX_PATH];
-        GetTempPathA(sizeof(t), t);
-        snprintf(g_tmp, sizeof(g_tmp), "%ssb5-update-%lu", t, (unsigned long)GetCurrentProcessId());
+        size_t n;
+        GetTempPathA(sizeof(temp_root), temp_root);
+        n = strlen(temp_root);
+        if (n && (temp_root[n - 1] == '\\' || temp_root[n - 1] == '/')) temp_root[n - 1] = 0;
+        snprintf(g_tmp, sizeof(g_tmp), "%s\\sb5-update-%lu", temp_root, (unsigned long)GetCurrentProcessId());
+        if (from_temp) {
+            char *cut;
+            GetModuleFileNameA(NULL, g_self_tmp, sizeof(g_self_tmp));
+            cut = strrchr(g_self_tmp, '\\');
+            if (cut) *cut = 0; else g_self_tmp[0] = 0;
+        }
     }
 #else
-    snprintf(g_tmp, sizeof(g_tmp), "%s/sb5-update-%ld", getenv("TMPDIR") ? getenv("TMPDIR") : "/tmp", (long)getpid());
+    const char *temp_root = getenv("TMPDIR") ? getenv("TMPDIR") : "/tmp";
+    snprintf(g_tmp, sizeof(g_tmp), "%s/sb5-update-%ld", temp_root, (long)getpid());
 #endif
+    if (!check) cleanup_stale(temp_root);
     mkdirs(g_tmp);
 #if defined(_WIN32)
     /* This executable is part of the package it installs, and Windows cannot
@@ -536,6 +648,9 @@ int main(int argc, char **argv) {
 #else
     (void)from_temp;
 #endif
+    /* From here on this process owns g_tmp (the spawning parent above
+     * returned and left its folder to the copy it started). */
+    atexit(cleanup_tmp);
     if (!check) {
         join(log_path, sizeof(log_path), g_dir, "updater.log");
         g_log = fopen(log_path, "a");

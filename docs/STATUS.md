@@ -7,6 +7,11 @@
   ceiling is now `RNET_LOBBY_MAX_PLAYERS` and the game's `num_players = 5` picks the size (fork snesrecomp
   `66e3f79`). Evidence: the setup host reports "5-player rooms online" on start. Not yet verified: that the
   shared lobby server accepts a five-seat room, and any match with three or more peers.
+- Updater temp cleanup: each run deletes its `sb5-update-<pid>` folder (download + unpacked package) on exit,
+  removes leftovers of earlier runs at start, and on Windows a detached `cmd` removes the folder of the
+  running temporary copy after it exits. Verified on Linux by a real 1.1.0 → 2.0.1 AppImage update with a
+  stale 5 MB folder present: the temp root was empty afterwards. Windows: cross-compiles without warnings;
+  not yet run on a real install.
 
 ## v2.0.1 — 2026-10-22
 

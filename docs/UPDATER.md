@@ -17,7 +17,9 @@ O atualizador:
    configurações, saves e a seleção de mods para a pasta da nova versão;
 4. abre o launcher, que pede **um Generate & rebuild** para compilar a nova versão a partir da sua ROM.
 
-Não baixa ROM nem dados do jogo. Recusa pastas que são checkout Git (use `git pull`) e instalações do Quiver
+Os arquivos temporários (download, pacote extraído e a cópia do próprio atualizador, em
+`%TEMP%\sb5-update-*` / `$TMPDIR/sb5-update-*`) são apagados ao terminar, e sobras de execuções antigas são
+apagadas ao começar (desde a v2.0.2). Não baixa ROM nem dados do jogo. Recusa pastas que são checkout Git (use `git pull`) e instalações do Quiver
 Launcher (`installed-build.txt`: atualize pelo Quiver). `--check` só informa (`0` atualizado, `10` há
 atualização, `1` sem conexão). Registro em `updater.log`.
 
@@ -34,7 +36,8 @@ game and starts it. It reads the latest GitHub release, compares with `VERSION`,
 package and `SHA256SUMS`, verifies the digest, then on Windows unpacks the ZIP over the folder without
 touching ROMs, `rom.cfg`, config, saves, `build/`, generated sources or the Mods selection, and on Linux
 replaces the AppImage (AppRun carries `rom.cfg`, config, saves and the Mods selection into the new
-version folder). The launcher then asks for one **Generate & rebuild**. It never downloads a ROM, refuses
+version folder). The launcher then asks for one **Generate & rebuild**. Its temporary files (`sb5-update-*` in the temp folder) are deleted when it finishes, and leftovers of
+earlier runs when it starts (since v2.0.2). It never downloads a ROM, refuses
 Git checkouts and defers to Quiver Launcher installs. Netplay needs the same version on every player.
 Validated by a native test and a real Linux AppImage update; the Windows extraction is built in CI but not
 yet run on a real install.
