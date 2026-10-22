@@ -18,11 +18,7 @@ import tempfile
 from pause_menu_runtime import BATTLE_ENTER
 
 ROOT = Path(__file__).resolve().parents[1]
-ALL_MODS = [('ptbr', 'menus_ptbr'), ('selection-colors', 'color_controls'), ('extra-characters', 'extra_characters'),
-            ('louie-improvements', 'louie_improvements'), ('pause-menu', 'pause_menu'), ('gold-battle', 'gold_battle'),
-            ('hud-faces', 'hud_faces'), ('infinite-time', 'infinite_time'), ('infinite-lives', 'infinite_lives'),
-            ('normal-characters', 'character_select'), ('normal-coop', 'five_players'),
-            ('portal-labels', 'portal_labels')]
+from sb5_mod_sets import ALL_MODS
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--exe', type=Path, required=True)
@@ -63,7 +59,7 @@ for package, feature in (ALL_MODS if args.mods == 'all' else []):
     state += (f'[[package]]\nid = "superbomberman5.{package}"\nversion = "0.1.0"\n'
               f'[[feature]]\npackage_id = "superbomberman5.{package}"\nid = "{feature}"\nenabled = true\n')
 (folder / 'mods/preloaded/state.toml').write_text(state, encoding='utf-8')
-(folder / 'headless.ini').write_text('[Graphics]\nOutputMethod=SDL-Software\nWindowScale=1\n[Sound]\nEnableAudio=0\n')
+(folder / 'headless.ini').write_text('[Graphics]\nOutputMethod=SDL-Software\nWindowScale=1\n[Sound]\nEnableAudio=1\n')
 (folder / 'route.input').write_text(route)
 env = os.environ.copy()
 env.update(SDL_VIDEODRIVER='dummy', SDL_AUDIODRIVER='dummy', SNESRECOMP_DUMP_DIR=str(folder),
