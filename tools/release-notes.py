@@ -1275,6 +1275,9 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '2.0.4': (
+'''- **Fix:** an online room closed as soon as a third player joined. With Super Bomberman 5's 14 mod packages, the room update sent to each player grew past the 4 KB the netplay library read at once, and the host was disconnected from the lobby. The lobby now reads updates for all five players; full 3-5 player matches have not been played yet.''',
+'''- **Correção:** a sala online fechava assim que entrava o terceiro jogador. Com os 14 pacotes de mods do Super Bomberman 5, a atualização da sala enviada a cada jogador passava dos 4 KB que a biblioteca de netplay lia de uma vez, e o anfitrião era desconectado do lobby. Agora o lobby lê as atualizações dos cinco jogadores; partidas completas com 3 a 5 jogadores ainda não foram jogadas.'''),
     '2.0.3': (
 '''- **Version in the launcher:** the header shows the installed version (for example "v2.0.3").
 - **Update check:** on start the launcher asks GitHub for the newest release. When there is one, it says so above **Update game / Atualizar jogo**, explains on the Netplay pages why other players' rooms are missing (rooms only match the same version) and disables **Host Lobby** until you update.''',

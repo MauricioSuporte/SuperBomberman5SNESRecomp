@@ -1,5 +1,15 @@
 # Super Bomberman 5: estado do protótipo
 
+## v2.0.4 — 2026-10-22
+
+- Fix: online rooms closed when a third player joined (maintainer's 2.0.3 host log: ICE to the first guest,
+  then a silent lobby reconnect). recomp-net read server frames into a 4 KiB buffer; a lobby_update repeats
+  every member's mod offer (14 SB5 packages each), so the third member's update filled it and the pump
+  disconnected. The buffer is 64 KiB in the recomp-net fork (`MauricioSuporte/recomp-net`, branch
+  superbomberman5, `27ab002`), pinned by the snesrecomp fork (`9fb4eb5`). Evidence: new lobby_client_test case
+  (5 members x 14 offered packages, ~8 KiB frame) fails on the old buffer and passes on the new; game builds.
+  Not yet verified: a real room with 3-5 players.
+
 ## v2.0.3 — 2026-10-22
 
 - Launcher header shows the installed version (`VERSION`, else the build's lobby version). On start a background

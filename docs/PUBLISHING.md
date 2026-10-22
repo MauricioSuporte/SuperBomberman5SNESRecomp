@@ -86,6 +86,9 @@ O Windows v0.13.1 inclui SuperBomberman5Recomp.exe com o ícone atual do “5”
 
 ## Netplay, Discord, updater and Quiver (v2.0.0)
 
+Since v2.0.4 the snesrecomp fork also points `lib/recomp-net` at the fork `MauricioSuporte/recomp-net` (branch
+`superbomberman5`: 64 KiB lobby frames). Push recomp-net fork commits before the snesrecomp gitlink.
+
 The game target links recomp-net with ICE (`SNESRECOMP_NET_ICE`); configure needs network for libjuice
 (FetchContent) unless `RNET_LIBJUICE_ROOT` points to a local copy. Lobby matching uses the stamped build
 version, so every release must keep `VERSION` = tag. The updater reads `releases/latest` and needs the
