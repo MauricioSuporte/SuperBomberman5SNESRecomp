@@ -1,7 +1,7 @@
 # v2.0.0 — diário de progresso
 
-STATUS: EM ANDAMENTO
-Heartbeat: 2026-10-22 10:35 (America/Cuiaba)
+STATUS: DONE
+Heartbeat: 2026-10-22 11:15 (America/Cuiaba)
 
 ## Decisões (opção recomendada, sem perguntar ao mantenedor)
 
@@ -21,7 +21,7 @@ Heartbeat: 2026-10-22 10:35 (America/Cuiaba)
 - [x] F5 — Discord (login do lobby + botões do servidor; capturas do launcher em Xvfb)
 - [~] F6 — atualizador (Linux/AppImage testado de ponta a ponta; Windows só compila no CI)
 - [x] F7 — Quiver (layout + docs/QUIVER.md; cadastro no site depende do login do mantenedor)
-- [ ] F8 — docs, versão, release
+- [x] F8 — docs, versão, release (v2.0.0 publicada 2026-10-22)
 
 ## Registro
 
@@ -71,3 +71,15 @@ Heartbeat: 2026-10-22 10:35 (America/Cuiaba)
   permissões da sessão. Falta o mantenedor autorizar ou rodar:
   `git push origin release/v1.2.0:main` e Actions → Release → version `2.0.0`, publish ✔.
   Depois: testar o atualizador no Windows com a release publicada.
+
+### 2026-10-22 11:15 — v2.0.0 publicada
+- Mantenedor autorizou. `main` avançada por fast-forward até `258756e`; Release run 39798621872 (windows, linux,
+  publish OK). Tag `v2.0.0` → `258756e`, release latest, não pré-release; assets: Windows ZIP 18.814.553 B,
+  AppImage 14.637.560 B, SHA256SUMS conferido com os digests do GitHub; notas UTF-8 idênticas à fonte.
+- Notas publicadas ainda dizem "ROM JPN" num parágrafo (gerador corrigido depois; esta sessão não pode editar
+  releases — o mantenedor pode trocar o texto pela saída de `tools/release-notes.py`).
+- Discord: novo passo do workflow `tools/discord-release-post.py` (secret `DISCORD_PATCH_NOTES_WEBHOOK`). O secret
+  não pôde ser gravado desta sessão (proxy bloqueia a API de secrets); falta o mantenedor criar. O anúncio da
+  v2.0.0 foi enviado uma vez pelo navegador embutido (webhook "Mecha Bomber", #patch-notes, HTTP 200).
+- Pendente fora do escopo da sessão: testar o atualizador numa instalação real de Windows.
+- Lembretes de retomada desativados.
