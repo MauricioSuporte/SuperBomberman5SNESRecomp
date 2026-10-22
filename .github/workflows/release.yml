@@ -199,3 +199,10 @@ jobs:
             dist/*.AppImage
             dist/*-windows-x64.zip
             dist/SHA256SUMS
+      - name: Announce in Discord #patch-notes
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_PATCH_NOTES_WEBHOOK }}
+        run: |
+          python3 tools/discord-release-post.py --version "${RELEASE_VERSION}" --notes dist/notes.md \
+            --url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/tag/v${RELEASE_VERSION}"
