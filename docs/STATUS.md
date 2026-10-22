@@ -1,5 +1,13 @@
 # Super Bomberman 5: estado do protótipo
 
+## v2.0.5 — 2026-10-22
+
+- With 2.0.4 a four-player room stayed open, but PLAY failed: host log "ice_hub: no connected agents to take
+  (slot 0 of 2)" then "snes_netplay_start failed (-3)"; guests saw a black screen.
+  `snes_host_app_apply_launch` never copied the launch's `player_count` into the netplay config, which kept its
+  default of two seats. Now it does (snesrecomp fork, `snes_host_app.c`). Evidence: the maintainer's host log and
+  a build. Not yet verified: a 3-5 player internet match (ICE hub with more than one guest).
+
 ## v2.0.4 — 2026-10-22
 
 - Fix: online rooms closed when a third player joined (maintainer's 2.0.3 host log: ICE to the first guest,
