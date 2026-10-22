@@ -1,7 +1,7 @@
 # v2.0.0 — diário de progresso
 
 STATUS: EM ANDAMENTO
-Heartbeat: 2026-10-22 06:35 (America/Cuiaba)
+Heartbeat: 2026-10-22 06:50 (America/Cuiaba)
 
 ## Decisões (opção recomendada, sem perguntar ao mantenedor)
 
@@ -57,3 +57,7 @@ Heartbeat: 2026-10-22 06:35 (America/Cuiaba)
 - F7 Quiver: catálogo não lista o SB5; entrada pronta em `docs/QUIVER.md` (formato copiado da do Mega Man X
   via API do catálogo). Cadastro exige o login do mantenedor em quiverlauncher.com/submit (não posso criar
   conta/entrar). Atualizador respeita `installed-build.txt` do Quiver.
+- 06:50 Cadastro enviado em quiverlauncher.com/submit com a conta do mantenedor (ele entrou no navegador
+  embutido): Game port, repo, Super Bomberman 5 (1996, SNES), recompilação estática, Windows+Linux,
+  desenvolvedor, "mostly AI-generated", captura de Battle (Kotetsu/Bazooka/Hammer/Honey/Terrorin).
+  Status: "Submission received" — aguarda revisão.
