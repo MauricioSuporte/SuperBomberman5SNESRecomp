@@ -32,6 +32,7 @@
 /audio-dumps/
 /assets/extracted/
 /launcher_assets/img/boxart.*
+!/launcher_assets/img/boxart.tga
 
 # Renamed compiler output and analysis profiles still derive from the ROM.
 **/gen/

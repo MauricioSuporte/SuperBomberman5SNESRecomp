@@ -54,6 +54,7 @@ add_executable(SuperBomberman5SNESRecomp
     src/louie_mod.c
     src/gold_battle_mod.c
     src/pause_menu_mod.c
+    src/infinite_lives_mod.c
     src/infinite_time_mod.c
     src/normal_coop_mod.c
     src/coop_corner_spawns_mod.c
@@ -120,6 +121,9 @@ if(BUILD_TESTING)
     add_executable(infinite_time_tests tests/infinite_time_tests.c)
     target_include_directories(infinite_time_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src")
     add_test(NAME normal_infinite_time COMMAND infinite_time_tests)
+    add_executable(infinite_lives_tests tests/infinite_lives_tests.c)
+    target_include_directories(infinite_lives_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src")
+    add_test(NAME normal_infinite_lives COMMAND infinite_lives_tests)
     add_executable(normal_coop_tests tests/normal_coop_tests.c)
     target_include_directories(normal_coop_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src")
     add_test(NAME normal_five_player_coop COMMAND normal_coop_tests)

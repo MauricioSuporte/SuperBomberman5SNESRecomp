@@ -16,7 +16,7 @@ rom_sha256 = "5251e6491872dc51879b630a34d76a92e29ea0c39026c4f8773c1fe006d047c4"
 id = "infinite_time"
 name = "Unlimited time in Normal Game"
 description = "Removes the Normal Game time limit using the native boss timer display. Requires a native host built with this mod."
-group = "Gameplay"
+group = "Cheats"
 default_enabled = false
 presentation_only = false
 

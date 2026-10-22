@@ -1,0 +1,25 @@
+format_version = 1
+id = "superbomberman5.infinite-lives"
+version = "0.1.0"
+name = "Normal Game — infinite lives"
+author = "MauricioSuporte"
+description = "Lives are never spent in Normal Game: deaths and stage retries keep the counter, so there is no Game Over. Works with the five-player mod. Requires a native host built with this mod."
+license = "PolyForm-Noncommercial-1.0.0"
+resolver = "declarative"
+save_compatibility = "shared"
+
+[[target]]
+game_id = "superbomberman5-jpn"
+rom_sha256 = "5251e6491872dc51879b630a34d76a92e29ea0c39026c4f8773c1fe006d047c4"
+
+[[feature]]
+id = "infinite_lives"
+name = "Unlimited lives in Normal Game"
+description = "Lives are never spent in Normal Game: deaths and stage retries keep the counter, so there is no Game Over. Works with the five-player mod. Requires a native host built with this mod."
+group = "Cheats"
+default_enabled = false
+presentation_only = false
+
+[[plugin]]
+feature = "infinite_lives"
+id = "superbomberman5.normal.infinite-lives"

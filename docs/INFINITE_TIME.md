@@ -2,7 +2,7 @@
 
 ## Português
 
-Compile as fontes atuais. Em **Mods → Gameplay → Normal Game — infinite time**,
+Compile as fontes atuais. Em **Mods → Cheats → Normal Game — infinite time**,
 ative **Unlimited time in Normal Game** e inicie o jogo. Desativado por padrão.
 Todas as fases Normal usam o cronômetro nativo `-:--`, sem morte por tempo.
 Battle e menus mantêm o comportamento original. Bombas e inimigos ainda matam.
@@ -23,7 +23,7 @@ controles físicos não foram qualificados por esta mudança.
 ## English
 
 Build current source and enable **Unlimited time in Normal Game** under
-**Mods → Gameplay → Normal Game — infinite time**. Disabled by default.
+**Mods → Cheats → Normal Game — infinite time**. Disabled by default.
 Normal stages use native `-:--` with no timeout deaths. Battle and menus
 retain their behavior; enemies and bombs still kill players. Package 0.1.0
 requires host v0.4.3 or newer and is bundled in the v0.4.3 setup ZIP.
@@ -39,3 +39,6 @@ Native tests cover activation, guards, chaining and reset. Windows/LLE
 Zone 1-1 routes exercise 1/2 players, PT-BR and character/color selection,
 including a forced 0:01 deadline. Full campaign, real bosses, rewind and
 physical controllers remain unqualified by this change.
+
+Since v1.2.0 the mod is listed under **Cheats** (next to infinite lives) instead of
+Gameplay. / Desde a v1.2.0 o mod fica em **Cheats** (junto com vidas infinitas).

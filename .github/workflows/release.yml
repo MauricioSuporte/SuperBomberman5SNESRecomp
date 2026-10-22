@@ -62,6 +62,7 @@ jobs:
           ./build-ci/normal_hud_tests.exe
           ./build-ci/selection_color_tests.exe
           ./build-ci/infinite_time_tests.exe
+          ./build-ci/infinite_lives_tests.exe
           ./build-ci/normal_coop_tests.exe
           ./build-ci/subordinate_tests.exe
           ./build-ci/pause_menu_tests.exe

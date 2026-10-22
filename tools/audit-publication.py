@@ -50,6 +50,11 @@ def forbidden(path: str, release: bool = False) -> str | None:
     # recorded in assets/README.md. Other media still require separate review.
     if not release and path == 'assets/app.ico':
         return None
+    # Launcher box art supplied and explicitly requested by the maintainer on
+    # 2026-10-22 (v1.2.0), as Mega Man X Recompiled ships its box art. The
+    # launcher stages it beside the setup host; provenance in assets/README.md.
+    if not release and path == 'launcher_assets/img/boxart.tga':
+        return None
     # Maintainer authorized documentation gameplay screenshots on 2026-10-15.
     # This path permission does not authorize extracted cartridge assets.
     if len(parts) == 3 and parts[:2] == ['docs', 'images'] and p.suffix.lower() in {'.png', '.jpg', '.jpeg', '.webp'}:

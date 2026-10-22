@@ -40,6 +40,7 @@
 #include "normal_character_mod.h"
 #include "normal_coop_mod.h"
 #include "infinite_time_mod.h"
+#include "infinite_lives_mod.h"
 #include "pause_menu_mod.h"
 #include "portal_labels_mod.h"
 #include "selection_color_mod.h"
@@ -70,6 +71,7 @@ void GameRunOneFrame(void)
     SelectionColorBeforeFrame();
     NormalCoopBeforeFrame();
     InfiniteTimeBeforeFrame();
+    InfiniteLivesBeforeFrame(); /* Must wrap co-op: captures lives before it charges seats 3-5. */
     PauseMenuBeforeFrame();
     GoldBattleBeforeFrame();
     LouieBeforeFrame();
@@ -123,6 +125,7 @@ void GameSessionReset(void)
     LouieReset();
     GoldBattleReset();
     PauseMenuReset();
+    InfiniteLivesReset();
     InfiniteTimeReset();
     NormalCoopReset();
     SelectionColorReset();
@@ -136,6 +139,7 @@ static void GameHardwareReset(void)
     LouieReset();
     GoldBattleReset();
     PauseMenuReset();
+    InfiniteLivesReset();
     InfiniteTimeReset();
     NormalCoopReset();
     SelectionColorReset();
