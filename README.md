@@ -31,7 +31,7 @@ An unofficial, noncommercial **Super Bomberman 5** PC port built with [SNESRecom
 
 ### Supported ROM
 
-Compatibility is decided by hash, not filename. The developer's file is named `Super Bomberman 5 (USA).sfc`, but its header reports **JPN**. Other revisions and translations are not qualified. [rom_identity.txt](rom_identity.txt) is authoritative; no ROM links are provided.
+Compatibility is decided by hash, not filename. The supported version is **Super Bomberman 5 (USA)** (`Super Bomberman 5 (USA).sfc`); its internal header still carries the Japanese region byte, so tools may label it JPN. Other revisions and translations are not qualified. [rom_identity.txt](rom_identity.txt) is authoritative; no ROM links are provided.
 
 | Identity | Value |
 |---|---|
@@ -130,7 +130,7 @@ Thanks to Matthew Stanley and the RetroPorting ToolKit contributors for SNESReco
 
 ### ROM compatível
 
-A compatibilidade é definida pelo hash da tabela em [Supported ROM](#supported-rom), não pelo nome do arquivo. O arquivo do desenvolvedor tem “USA” no nome, mas o cabeçalho indica **JPN**. Outras revisões e traduções não foram qualificadas. Nenhuma ROM acompanha o projeto.
+A compatibilidade é definida pelo hash da tabela em [Supported ROM](#supported-rom), não pelo nome do arquivo. A versão suportada é **Super Bomberman 5 (USA)** (`Super Bomberman 5 (USA).sfc`); o cabeçalho interno ainda traz o byte de região japonês, por isso algumas ferramentas a chamam de JPN. Outras revisões e traduções não foram qualificadas. Nenhuma ROM acompanha o projeto.
 
 ### Mods
 

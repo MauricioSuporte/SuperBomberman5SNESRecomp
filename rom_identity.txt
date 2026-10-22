@@ -20,7 +20,9 @@ expected_sha1   = 417d5ace7e51baafb69d20ce15ff0894d91c70c5
 expected_sha256 = 5251e6491872dc51879b630a34d76a92e29ea0c39026c4f8773c1fe006d047c4
 rom_size        = 4194304
 mapping         = hirom
-region          = JPN
+# Shown in the launcher. The supported dump is the USA release (the header's
+# region byte still reads Japan); hashes, not this label, decide compatibility.
+region          = USA
 # What a mod package's [[target]] game_id must name to apply to this title
 # (snesrecomp/docs/MOD_PACKAGES.md). Stable across revisions on purpose.
 game_id         = superbomberman5-jpn

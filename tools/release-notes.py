@@ -17,7 +17,7 @@ Download the Windows x64 ZIP and extract the entire archive into a writable fold
 
 The release contains **a setup host and source, not the game**: no ROM, ROM-derived C, ROM-derived game executable, extracted sprites/music, saves or gameplay captures. Runtime licensed launcher assets and dependency notices are preserved. The playable build is generated locally under build/.
 
-Supported image: header region JPN, CRC32 c25ab56a, SHA-256 5251e6491872dc51879b630a34d76a92e29ea0c39026c4f8773c1fe006d047c4. The developer filename contains USA, but hashes determine compatibility. No other revision is qualified.
+Supported image: Super Bomberman 5 (USA), CRC32 c25ab56a, SHA-256 5251e6491872dc51879b630a34d76a92e29ea0c39026c4f8773c1fe006d047c4 (its header keeps the Japanese region byte). Hashes determine compatibility. No other revision is qualified.
 
 Reset/NMI remain interpreted after AOT promotion produced continuation/dispatch errors. This is a baseline for improving native coverage, not a completed port. See README.md, docs/STATUS.md, CONTRIBUTING.md and THIRD_PARTY_NOTICES.md. Verify the ZIP using SHA256SUMS.
 
