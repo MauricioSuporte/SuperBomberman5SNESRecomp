@@ -49,7 +49,9 @@ End with links to the repository/release, version, installed skill and material 
 
 ## Every release updates the README
 
-Before publishing any new release, update README.md in both English and Portuguese with useful information for that version: current downloads and platform formats, installation or upgrade steps, included features/mods, required host versions and concrete validation limits. Review the full README for obsolete version/platform claims, keep still-valid instructions, and use precise release links. Do not publish a new version with an outdated README or replace useful instructions with release-note boilerplate. Update docs/PUBLISHING.md and the release-notes generator to match the final artifacts.
+Before publishing any new release, update README.md in both English and Portuguese with useful information for that version: current downloads and platform formats, installation or upgrade steps, included features/mods, required host versions and concrete validation limits. Review the full README for obsolete version/platform claims, keep still-valid instructions, and use precise release links. Do not publish a new version with an outdated README or replace useful instructions with release-note boilerplate.
+
+Bug fixes never go into the README (maintainer rule, 2026-10-22): describe them only in the release notes (`tools/release-notes.py`), docs/STATUS.md and the Discord #patch-notes announcement. A bug-fix release changes in the README only what a reader needs to download and install that version (version heading, download links, asset names, versioned paths); new or changed features are still documented there. Update docs/PUBLISHING.md and the release-notes generator to match the final artifacts.
 
 
 ## Linux AppImage and Windows ZIP

@@ -15,7 +15,6 @@ An unofficial, noncommercial **Super Bomberman 5** PC port built with [SNESRecom
 - Windows x64 setup and an experimental Linux x86_64 AppImage; the game is generated and compiled locally from your ROM.
 - Launcher with **PLAYER 1–5** input tabs (keyboard or gamepad per player, including several identical controllers such as two DualSense pads).
 - Fourteen optional mods, all disabled by default: five-player Normal Game (with an optional corner spawn layout), character and color selection in Normal, extra characters, Super Bomberman 4 Bomber Kings, Louie improvements, PT-BR menus, a **Cheats** group (infinite time and infinite lives) and more.
-- **Fixed in v2.0.1:** Generate & rebuild on Windows in folders with accents (e.g. OneDrive's "Área de Trabalho"), which stopped at "Configure failed" in v2.0.0.
 - **New in v2.0.0 — netplay:** play online (lobby with Discord sign-in) or over LAN / Direct IP, like Mega Man X Recompiled. [Details](docs/NETPLAY.md)
 - **Discord:** the launcher links to the Super Bomberman 5 server to find matches and follow news: <https://discord.gg/kH54NCDQB4>.
 - **Updater:** **Update game** in the launcher installs the newest release in place (checksum-verified, keeps your ROM, saves and settings). [Details](docs/UPDATER.md)
@@ -115,7 +114,6 @@ Thanks to Matthew Stanley and the RetroPorting ToolKit contributors for SNESReco
 - Setup Windows x64 e AppImage Linux x86_64 experimental; o jogo é gerado e compilado localmente a partir da sua ROM.
 - Launcher com abas **PLAYER 1–5** (teclado ou controle por jogador, inclusive vários controles iguais, como dois DualSense).
 - Quatorze mods opcionais, desligados por padrão: Normal Game com cinco jogadores (com layout opcional de spawn nos cantos), seleção de personagem e cor no Normal, personagens extras, Reis Bomber do Super Bomberman 4, melhorias dos Louies, menus em PT-BR, o grupo **Cheats** (tempo infinito e vidas infinitas) e mais.
-- **Corrigido na v2.0.1:** o Generate & rebuild no Windows em pastas com acento (por exemplo a "Área de Trabalho" do OneDrive), que parava em "Configure failed" na v2.0.0.
 - **Novo na v2.0.0 — netplay:** jogue online (lobby com login do Discord) ou por LAN / IP direto, como no Mega Man X Recompiled. [Detalhes](docs/NETPLAY.md)
 - **Discord:** o launcher leva ao servidor do Super Bomberman 5 para achar partidas e acompanhar novidades: <https://discord.gg/kH54NCDQB4>.
 - **Atualizador:** **Atualizar jogo** no launcher instala a release mais nova na mesma pasta (conferida por checksum, mantendo ROM, saves e configurações). [Detalhes](docs/UPDATER.md)
