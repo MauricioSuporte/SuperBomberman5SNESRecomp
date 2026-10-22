@@ -1,5 +1,14 @@
 # Super Bomberman 5: estado do protótipo
 
+## v2.0.6 — 2026-10-22
+
+- 2.0.5 started a three-player internet match (host + guests at ~470 ms and ~60 ms RTT) but it ran at 28.6 fps:
+  813 frames in 28.4 s, `delay_sync_starvation` every 4-8 frames, 237 `wait_confirm` stall streaks (max 192 ms)
+  at D=7 (`SNES_NET_DIAG=1` net_diag.jsonl + host log). The host's auto D used the rollback tiers (UI toggle)
+  although SB5 forces delay-sync, and only the worst single host RTT although guests exchange input through the
+  host. recomp-ui fork now uses the delay-sync formula when `SNES_NET_MODE=delay` and the sum of the two worst
+  RTTs with 2+ guests. Not yet re-measured in a real match.
+
 ## v2.0.5 — 2026-10-22
 
 - With 2.0.4 a four-player room stayed open, but PLAY failed: host log "ice_hub: no connected agents to take

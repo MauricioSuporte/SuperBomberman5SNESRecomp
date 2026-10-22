@@ -2,7 +2,7 @@
 
 An unofficial, noncommercial **Super Bomberman 5** PC port built with [SNESRecomp](https://github.com/RetroPortingToolKit/snesrecomp) and [recomp-ui](https://github.com/RetroPortingToolKit/recomp-ui), following the game-repository architecture of [Mega Man X Recompiled](https://github.com/mstan/MegaManXSNESRecomp).
 
-[Download v2.0.5](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v2.0.5) · [English](#english) · [Português](#português) · [Technical status](docs/STATUS.md) · [Contributing](CONTRIBUTING.md)
+[Download v2.0.6](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v2.0.6) · [English](#english) · [Português](#português) · [Technical status](docs/STATUS.md) · [Contributing](CONTRIBUTING.md)
 
 > **Partial recompilation.** Most game logic still runs on the framework's interpreter. Supply your own legally obtained ROM; no ROM, generated game code or extracted assets are distributed. v1.0.1 is the first full release: the maintainer has played the campaign through to the end on Windows.
 
@@ -22,12 +22,12 @@ An unofficial, noncommercial **Super Bomberman 5** PC port built with [SNESRecom
 
 ### Install
 
-1. Download **superbomberman5-2.0.5-windows-x64.zip** (Windows 10+ x64) or **superbomberman5-2.0.5-linux-x86_64.AppImage** (glibc 2.35+, Ubuntu 22.04 baseline) from [v2.0.5](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v2.0.5) and check **SHA256SUMS**.
-2. Windows: extract the **entire** ZIP into a new writable folder and open `SuperBomberman5Recomp.exe`. Linux: `chmod +x` the AppImage and run it (without FUSE, add `--appimage-extract-and-run`); its setup lives in `~/.local/share/superbomberman5/2.0.5`.
+1. Download **superbomberman5-2.0.6-windows-x64.zip** (Windows 10+ x64) or **superbomberman5-2.0.6-linux-x86_64.AppImage** (glibc 2.35+, Ubuntu 22.04 baseline) from [v2.0.6](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v2.0.6) and check **SHA256SUMS**.
+2. Windows: extract the **entire** ZIP into a new writable folder and open `SuperBomberman5Recomp.exe`. Linux: `chmod +x` the AppImage and run it (without FUSE, add `--appimage-extract-and-run`); its setup lives in `~/.local/share/superbomberman5/2.0.6`.
 3. Let the launcher fetch the portable build tools (internet needed once; Rust is not required), select your own ROM and choose **Generate & rebuild**.
 4. Open **Mods** to enable features, configure controls and select **Play**.
 
-**Upgrading:** the launcher header shows your version and, when a newer release exists, the launcher says so (and holds online hosting until you update). From v2.0.0 on, use **Update game / Atualizar jogo** in the launcher (or `updater/SuperBomberman5Updater`), then run **Generate & rebuild** once; your ROM path, saves, settings and Mods selection are kept. From v1.x, install 2.0.5 into a new folder (or extract it over the old one) and run **Generate & rebuild** again; an older generated executable cannot load new native mod code. Leave several GB free.
+**Upgrading:** the launcher header shows your version and, when a newer release exists, the launcher says so (and holds online hosting until you update). From v2.0.0 on, use **Update game / Atualizar jogo** in the launcher (or `updater/SuperBomberman5Updater`), then run **Generate & rebuild** once; your ROM path, saves, settings and Mods selection are kept. From v1.x, install 2.0.6 into a new folder (or extract it over the old one) and run **Generate & rebuild** again; an older generated executable cannot load new native mod code. Leave several GB free.
 
 ### Supported ROM
 
@@ -121,12 +121,12 @@ Thanks to Matthew Stanley and the RetroPorting ToolKit contributors for SNESReco
 
 ### Instalação
 
-1. Baixe **superbomberman5-2.0.5-windows-x64.zip** (Windows 10+ x64) ou **superbomberman5-2.0.5-linux-x86_64.AppImage** (glibc 2.35+, base Ubuntu 22.04) na [v2.0.5](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v2.0.5) e confira o **SHA256SUMS**.
-2. Windows: extraia o ZIP **inteiro** numa pasta nova e gravável e abra `SuperBomberman5Recomp.exe`. Linux: dê `chmod +x` no AppImage e execute (sem FUSE, use `--appimage-extract-and-run`); o setup fica em `~/.local/share/superbomberman5/2.0.5`.
+1. Baixe **superbomberman5-2.0.6-windows-x64.zip** (Windows 10+ x64) ou **superbomberman5-2.0.6-linux-x86_64.AppImage** (glibc 2.35+, base Ubuntu 22.04) na [v2.0.6](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v2.0.6) e confira o **SHA256SUMS**.
+2. Windows: extraia o ZIP **inteiro** numa pasta nova e gravável e abra `SuperBomberman5Recomp.exe`. Linux: dê `chmod +x` no AppImage e execute (sem FUSE, use `--appimage-extract-and-run`); o setup fica em `~/.local/share/superbomberman5/2.0.6`.
 3. Deixe o launcher baixar as ferramentas portáteis (internet só na primeira vez; Rust não é necessário), escolha sua própria ROM e clique em **Generate & rebuild**.
 4. Abra **Mods** para ativar funções, configure os controles e clique em **Play**.
 
-**Atualizando:** o cabeçalho do launcher mostra a sua versão e, quando há versão mais nova, o launcher avisa (e segura a criação de salas online até você atualizar). A partir da v2.0.0, use **Update game / Atualizar jogo** no launcher (ou `updater/SuperBomberman5Updater`) e faça **Generate & rebuild** uma vez; o caminho da ROM, saves, configurações e mods escolhidos continuam. Vindo da v1.x, instale a 2.0.5 numa pasta nova (ou extraia por cima da antiga) e faça **Generate & rebuild** de novo; um executável gerado antigo não carrega o código nativo novo. Deixe alguns GB livres.
+**Atualizando:** o cabeçalho do launcher mostra a sua versão e, quando há versão mais nova, o launcher avisa (e segura a criação de salas online até você atualizar). A partir da v2.0.0, use **Update game / Atualizar jogo** no launcher (ou `updater/SuperBomberman5Updater`) e faça **Generate & rebuild** uma vez; o caminho da ROM, saves, configurações e mods escolhidos continuam. Vindo da v1.x, instale a 2.0.6 numa pasta nova (ou extraia por cima da antiga) e faça **Generate & rebuild** de novo; um executável gerado antigo não carrega o código nativo novo. Deixe alguns GB livres.
 
 ### ROM compatível
 

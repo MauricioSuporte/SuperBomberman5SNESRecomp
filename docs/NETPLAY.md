@@ -17,6 +17,10 @@ com Discord e a sincronização são os do framework (snesrecomp + recomp-net + 
 5. O botão **Discord: online matches & news** abre o servidor do Super Bomberman 5 para achar partidas e
    novidades: <https://discord.gg/kH54NCDQB4>.
 
+**Diagnóstico:** `set SNES_NET_DIAG=1` antes de abrir o jogo grava `build\\saves\\netplay\\net_diag.jsonl` (paradas,
+atraso, caminho da conexão); o log de console (`... 2> log.txt`) mostra `delay_sync_starvation` e o FPS ao sair.
+O atraso automático (desde a v2.0.6) usa a soma das duas piores latências quando há dois ou mais convidados.
+
 **Modo de sincronização:** o jogo força *delay-sync* (lockstep, com atraso de entrada configurável na sala).
 O *rollback* do framework divergiu com este port LLE quando havia reprevisão (ver Validação); uma variável
 `SNES_NET_MODE=rollback` explícita ainda o liga para testes.
