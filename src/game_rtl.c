@@ -50,6 +50,26 @@
 #include "louie_mod.h"
 #include "normal_hud_mod.h"
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+/* Developer check for netplay: SB5_STATE_TRACE=<period> prints a hash of
+ * guest WRAM every <period> frames, so two peers' logs can be compared
+ * frame by frame (tests/netplay_pair_runtime.py). Off unless set. */
+static void StateTrace(void)
+{
+    static int period = -1;
+    static unsigned frame;
+    if (period < 0) {
+        const char *v = getenv("SB5_STATE_TRACE");
+        period = v ? atoi(v) : 0;
+    }
+    ++frame;
+    if (period <= 0 || frame % (unsigned)period) return;
+    uint32_t h = 2166136261u;
+    for (unsigned i = 0; i < 0x20000; ++i) h = (h ^ g_ram[i]) * 16777619u;
+    fprintf(stderr, "sb5 state frame=%u wram=%08x\n", frame, h);
+}
 
 static void GameInitialize(void)
 {
@@ -83,6 +103,7 @@ void GameRunOneFrame(void)
     NormalCoopAfterFrame();
     SelectionColorAfterFrame();
     NormalCharacterFrame();
+    StateTrace();
 }
 
 /* Render-only overlays draw in this order on line 1 and restore in the

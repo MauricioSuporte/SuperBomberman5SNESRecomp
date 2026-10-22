@@ -59,7 +59,7 @@ def main() -> None:
                        SNES_NET_TRANSPORT='lan', SNES_NET_BIND=f'127.0.0.1:{args.port + seat}',
                        SNES_NET_PEER=f'127.0.0.1:{args.port + (1 if seat == 0 else 0)}',
                        SNES_NET_INPUT_PLAYER='0', SNESRECOMP_RUN_FRAMES=str(args.frames),
-                       SDL_VIDEODRIVER='dummy', SDL_AUDIODRIVER='dummy')
+                       SDL_VIDEODRIVER='dummy', SDL_AUDIODRIVER='dummy', SB5_STATE_TRACE='30')
             if args.delay_sync:
                 env['SNES_NET_MODE'] = 'delay'
             if args.mispredict and seat == 0:
@@ -68,7 +68,7 @@ def main() -> None:
             proc = subprocess.Popen([str(peer / exe.name), '--no-launcher', '--rom', str(rom)], cwd=peer, env=env,
                                     stdout=log, stderr=subprocess.STDOUT)
             processes.append((proc, log, peer))
-        digests = []
+        digests, traces = [], []
         for proc, log, peer in processes:
             result = proc.wait(timeout=60 + args.frames // 15)
             log.close()
@@ -87,11 +87,16 @@ def main() -> None:
             assert not re.search(r'RB (POST|BASELINE) FORK', text), text[-4000:]
             assert 'match refused' not in text and 'INPUT desync' not in text, text[-4000:]
             assert not (peer / 'saves/save0.sav').exists(), 'Online match wrote an offline autosave'
+            traces.append(dict(re.findall(r'sb5 state frame=(\d+) wram=([0-9a-f]{8})', text)))
             rollbacks = len(re.findall(r'RB (?:resim|rollback|replay)', text, re.I))
             print(f'{peer.name}: {simulated} frames in {elapsed:.2f}s, rollback lines {rollbacks}', flush=True)
+        common = sorted(set(traces[0]).intersection(*traces[1:]), key=int)
+        assert len(common) >= args.frames // 30 - 2, f'too few common state samples: {len(common)}'
+        bad = [f for f in common if len({t[f] for t in traces}) != 1]
+        assert not bad, f'WRAM differs between peers from frame {bad[0]} ({len(bad)} of {len(common)} samples)'
         if digests:
             assert all(d == digests[0] for d in digests), f'Boot states differ: {digests}'
-        print(f'{args.peers} peers in sync ({args.mods} mods, mispredict {args.mispredict}): {root}')
+        print(f'{args.peers} peers in sync, {len(common)} identical WRAM samples ({args.mods} mods, mispredict {args.mispredict}): {root}')
     finally:
         for proc, log, _ in processes:
             if proc.poll() is None:
