@@ -1,7 +1,7 @@
 # v1.2.0 — diário de progresso
 
 STATUS: EM ANDAMENTO
-Heartbeat: 2026-10-22 05:50 (America/Cuiaba)
+Heartbeat: 2026-10-22 06:35 (America/Cuiaba)
 
 ## Decisões (opção recomendada, sem perguntar ao mantenedor)
 
@@ -17,9 +17,9 @@ Heartbeat: 2026-10-22 05:50 (America/Cuiaba)
 - [x] F1 — aba Cheats + vidas ilimitadas (`12bb72f`; rota headless 1/2/5 jogadores OK)
 - [x] F2 — capa do SB5 no launcher (`12bb72f`; staged em `assets/img/boxart.tga`; falta ver o launcher na tela)
 - [x] F3 — framework nos pins do MMX (`2c64277`; forks em `superbomberman5-v1.2`)
-- [ ] F4 — netplay
-- [ ] F5 — Discord
-- [ ] F6 — atualizador
+- [x] F4 — netplay (delay-sync; 2 peers loopback validados; 3–5 via lobby não validados)
+- [x] F5 — Discord (login do lobby + botões do servidor; capturas do launcher em Xvfb)
+- [~] F6 — atualizador (Linux/AppImage testado de ponta a ponta; Windows só compila no CI)
 - [ ] F7 — Quiver
 - [ ] F8 — docs, versão, release
 
@@ -36,3 +36,17 @@ Heartbeat: 2026-10-22 05:50 (America/Cuiaba)
 - `tests/infinite_lives_runtime.py --players 1|2|5`: sem o mod, vida 0 + tempo esgotado → Game Over
   (modo 8); com o mod, vidas continuam 0 e a fase reinicia (modo `$0D`). Passou nos três.
 - Forks rebaseados sem conflito; o commit de multitap já está no upstream.
+
+### 2026-10-22 06:35
+- Netplay: `snesrecomp_enable_recomp_net` + ICE. Rollback com o beam driver diverge (PPU/VRAM) quando há
+  reprevisão forçada (`RNET_RB_FORCE_MISPREDICT=20`), mesmo sem mods; corrigi no fork o ponto de retomada
+  do driver e o diário raster (exec state), mas o `rb_probe` ainda acusa VRAM diferente (DMA fora do
+  vblank?). Decisão: o jogo força `SNES_NET_MODE=delay` (lockstep), igual em todos os peers.
+  `tests/netplay_pair_runtime.py --scene battle --inputs --mods all`: 7600 quadros, ~1700 em Battle,
+  253 amostras de WRAM idênticas nos dois peers. LAN/IP direto só tem 2 assentos neste build; online 4.
+- Knobs de validação no fork: `SNESRECOMP_NET_TEST_INPUT(_SCRIPT)`; jogo: `SB5_STATE_TRACE`.
+- recomp-ui fork: `GameInfo.game_links` + `game_action` (botões sob o painel da ROM, na escolha de
+  netplay e no painel online). Capturas: capa, botões Atualizar/Discord/Releases, Netplay, Discord.
+- Atualizador `SuperBomberman5Updater` em `updater/` do pacote; teste Linux real (1.1.1→1.1.2 AppImage
+  com SHA256SUMS). Windows: compila e tem teste nativo; extração por `tar` e cópia em lugar não testadas.
+- Pendentes: F7 Quiver, F8 docs/versão/release; Windows real fica para o CI/mantenedor.
