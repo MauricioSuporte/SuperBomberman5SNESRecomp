@@ -20,8 +20,8 @@ com Discord e a sincronização são os do framework (snesrecomp + recomp-net + 
 O *rollback* do framework divergiu com este port LLE quando havia reprevisão (ver Validação); uma variável
 `SNES_NET_MODE=rollback` explícita ainda o liga para testes.
 
-**Assentos:** LAN / IP direto tem dois assentos neste build; salas online aceitam até quatro (limite do
-framework); o jogo tem cinco assentos de multitap. Mais de dois peers foi construído no framework, mas
+**Assentos:** LAN / IP direto tem dois assentos neste build; salas online têm **cinco** assentos, um
+para cada jogador do multitap (desde a v2.0.2; antes o framework limitava a quatro). Mais de dois peers foi construído no framework, mas
 **não foi exercitado**.
 
 Partidas começam do boot frio. Save states, rewind e pausa local ficam desligados online (regras do
@@ -54,7 +54,7 @@ same version (rooms only match the same version — use **Update game** in the l
 <https://discord.gg/kH54NCDQB4>.
 
 The game forces **delay-sync** (lockstep with a room input delay); the framework's rollback forked on this
-LLE port under forced mispredictions. LAN / Direct IP has two seats; online rooms take up to four; more
+LLE port under forced mispredictions. LAN / Direct IP has two seats; online rooms have five seats, one per multitap player (since v2.0.2; four before); more
 than two peers is built in the framework but not exercised. Two real executables stayed byte-identical in
 WRAM over 7,600 loopback frames including ~1,700 frames of Battle with every gameplay mod on. No real
 two-machine internet match has been played yet.

@@ -1,4 +1,4 @@
-snesrecomp=e24e6d6655e5ee15c86fdb9c8924033e82f51f7a
+snesrecomp=66e3f7993c2b871260cd5fa055ccef6a524f461d
 recomp-ui=1cf280befa4ff6bce77ceea356decffa8ac1e8b1
 recomp-net=8c76fb643339144a3a84d5ba8f5defe6250dcd26
 retcomm-rbengine=2a03e73693acee0fb78076ea058642c931bef12e

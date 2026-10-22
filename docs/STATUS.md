@@ -1,5 +1,13 @@
 # Super Bomberman 5: estado do protótipo
 
+## v2.0.2 — 2026-10-22
+
+- Online netplay rooms have five seats. The maintainer's v2.0.1 lobby showed "1 / 4 seated": the framework
+  clamped SNES lobbies to a fixed four (`SNES_LOBBY_MAX_PLAYERS`) although recomp-net carries eight; the
+  ceiling is now `RNET_LOBBY_MAX_PLAYERS` and the game's `num_players = 5` picks the size (fork snesrecomp
+  `66e3f79`). Evidence: the setup host reports "5-player rooms online" on start. Not yet verified: that the
+  shared lobby server accepts a five-seat room, and any match with three or more peers.
+
 ## v2.0.1 — 2026-10-22
 
 - Fix: Windows **Generate & rebuild** in a folder whose path has accents. The maintainer's v2.0.0 install in
