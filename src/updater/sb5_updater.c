@@ -96,7 +96,7 @@ static int file_exists(const char *p) {
 #endif
 }
 
-static int is_dir(const char *p) {
+SB5_UNUSED static int is_dir(const char *p) {
 #if defined(_WIN32)
     DWORD a = GetFileAttributesA(p);
     return a != INVALID_FILE_ATTRIBUTES && (a & FILE_ATTRIBUTE_DIRECTORY);
@@ -469,6 +469,9 @@ int main(int argc, char **argv) {
     Release rel;
 
     exe_dir(g_dir, sizeof(g_dir));
+#if defined(_WIN32)
+    (void)appimage;
+#endif
     {
         /* Shipped in <install>/updater/: the install root is the folder with VERSION. */
         char probe[PATH_CAP];

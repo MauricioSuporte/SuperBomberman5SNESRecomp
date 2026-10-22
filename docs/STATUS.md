@@ -1,5 +1,36 @@
 # Super Bomberman 5: estado do protótipo
 
+## v2.0.0 release / Release v2.0.0 - 2026-10-22
+
+New in v2.0.0 (evidence and limits; details in each linked document):
+
+- **Framework:** forks rebased onto the revisions Mega Man X Recompiled 2.3.1 pins (snesrecomp
+  `7a67b85`, recomp-ui `7c635c6`), branch `superbomberman5-v1.2`; multitap seat routing is upstream now.
+  Setup host built on Linux; all native tests pass (17 with `updater_tests` and `infinite_lives_tests`).
+- **Cheats group:** infinite time moved from Gameplay to **Cheats**; new **infinite lives**
+  ([INFINITE_LIVES.md](INFINITE_LIVES.md)). Linux LLE headless route: lives 0 + forced time-over in
+  Zone 1-1 with 1, 2 and 5 players: Game Over without the mod (mode 8), stage restart with lives 0 with it.
+- **Netplay** ([NETPLAY.md](NETPLAY.md)): recomp-net with ICE, forced delay-sync. Two real executables on
+  loopback stayed byte-identical in WRAM for 7,600 frames (route to Battle, ~1,700 Battle frames,
+  pseudo-random pads, every gameplay mod). Rollback forked (PPU/VRAM) under forced mispredictions; the
+  beam driver's resume PC/WAI latch and the raster journal now ride in rollback snapshots (fork), but the
+  in-process probe still reports VRAM divergence in 7 of 207 probes. Not done: real internet match,
+  three or more peers, Windows netplay run.
+- **Discord:** lobby Discord sign-in (framework) seen in the launcher under Xvfb; launcher links to
+  <https://discord.gg/kH54NCDQB4> on the main page and the Netplay pages (recomp-ui fork:
+  `GameInfo.game_links`/`game_action`).
+- **Box art:** maintainer-supplied cover staged as `assets/img/boxart.tga` (provenance in
+  `assets/README.md`); seen in the launcher.
+- **Updater** ([UPDATER.md](UPDATER.md)): Linux AppImage update verified end to end against the published
+  v1.1.2 (`SHA256SUMS` checked); Windows ZIP path cross-compiles (MinGW) and builds in CI, not yet run on
+  a real Windows install.
+- **Quiver Launcher** ([QUIVER.md](QUIVER.md)): one root executable (updater in `updater/`), catalog entry
+  submitted for review on quiverlauncher.com.
+
+Na v2.0.0: framework nos pins do MMX, grupo Cheats com vidas infinitas, netplay (delay-sync, validado com
+dois peers no loopback), Discord no launcher, capa, atualizador (testado no Linux) e Quiver. Partida real
+pela internet, 3+ peers e o atualizador no Windows ainda não foram testados.
+
 ## v1.1.2 release / Release v1.1.2 - 2026-10-22
 
 v1.1.2 packages the five-player fixes logged below since v1.1.1 (ZONE5 - J palettes, Zone 5 slowdown, ZONE5 - 3 gate, seat colors, walking blink, tower shocks, platforms, lives reset, rejoin with a Louie, ZONE3 - D rival state) and picker Back / world-map repick. Evidence: Linux LLE scripted routes and native tests listed in each entry, plus the maintainer's confirmation on a Windows build; CI builds both platforms before publication. The upstream `continuous` AppImage type2 runtime was republished (old pin no longer downloadable), so the workflow pin moved to SHA-256 `617aa773…ed98a46` (same MIT-licensed project, same URL).

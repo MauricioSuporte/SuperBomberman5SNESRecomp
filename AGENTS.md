@@ -19,7 +19,9 @@ before changing code, docs or releases. Humans: see README.md and CONTRIBUTING.m
 - **Hybrid port, partial recompilation.** Only ~9 routine variants are AOT;
   reset/NMI and almost all game logic run on the framework's 65816
   interpreter. PPU, APU/SPC700, DMA are emulated. Never describe this as
-  "fully recompiled" or claim full-game, multiplayer, netplay or broad Linux/macOS support.
+  "fully recompiled" or claim full-game or broad Linux/macOS support. Netplay
+  exists since v2.0.0 (delay-sync, docs/NETPLAY.md) but is validated only
+  between two peers on one machine; never claim more.
 - Reference ROM: file `Super Bomberman 5 (USA).sfc` but the header says
   **JPN** (`Hu SUPER BOMBERMAN 5`), Fast HiROM, 4 MiB, 8 KiB SRAM.
   `rom_identity.txt` is the single source of truth (hashes, `game_id =
@@ -89,6 +91,9 @@ before changing code, docs or releases. Humans: see README.md and CONTRIBUTING.m
 | `src/special_abilities.c` | B + direction abilities and SB4 debuff for Honey/Kotetsu/Terrorin/Bomber Kings: pre-opcode hooks at `$C0:0AF9` (pads) and `$C4:3180` (walking steps), native damage rules, SB4 timelines and graphics (fire, mace, laser, ability poses via `sb4_rom.c`), stun/item loss via `$15BA` bit 5 and `$C4:37CD`, Terrorin's barrier (`$C4:2CFE` fire-cell hook) and Clock (`$C4:398C` lost-item flight with `$8D` = seat and `$1CC7` = 0, `$C5:42D3` pickup hook, `$C4:4503` paralysis), state in WRAM `$7F:F840-$F8F0`. |
 | `src/normal_coop_mod.c` | 1–5 player Normal Game: 65816 trampolines in unused ROM space, interpreter PC hook, safe-spawn search, shared lives, Start rejoin. Regular-stage spawns: P3/P5 beside P1, P4 beside P2. |
 | `src/coop_corner_spawns_mod.c` | Plugin of the **5 Players → corner spawns** mod (`superbomberman5.coop-corner-spawns`): switches coop regular-stage spawns to P3 lower left, P4 lower right, P5 centre. Flag only; logic stays in `spawn_tile()`. |
+| `src/infinite_lives_mod.c` | **Cheats → infinite lives**: captures `$1D23` before the retry/respawn charges (`$C5:3B1C`, `$C5:0659`, wrapping co-op's charge) and restores it before the Game Over test (`$C5:3B2D`/`$C5:065C`). Must be installed after co-op. |
+| `src/sb5_launcher.c` | Launcher links (Discord `https://discord.gg/kH54NCDQB4`, releases), the **Update game** action and the netplay policy (forced delay-sync, Bomber Kings needs each player's SB4 ROM). |
+| `src/updater/sb5_updater.c` | ROM-free updater shipped in `updater/`: GitHub `releases/latest`, `SHA256SUMS` check, in-place install that keeps player files; defers to Git checkouts and Quiver installs. docs/UPDATER.md |
 | `src/host_contract.c`, `src/gen_stubs.c`, `src/variables.h` | Framework contract placeholders (trace hooks, stubs, WRAM names). |
 | `recomp/` | Analysis inputs: `symbols.toml` (source of truth), `bank00.cfg`. `funcs.h` is generated. |
 | `mods/preloaded/packages/<id>/<ver>/manifest.toml` | Reviewed, default-disabled mod packages staged by `snesrecomp_target_mod_catalog`. Data only. |
@@ -383,6 +388,17 @@ Verified by disassembly, a 30-exit ROM audit and a Zone 1-A route-flag-7 run.
   observer on that line (`late_places`). Test overlays with all mods on.
 - The developer plays `build-lle/SuperBomberman5SNESRecomp.exe` through a
   desktop shortcut; source changes appear only after `./tools/build-windows.ps1`.
+
+- Netplay rollback with the LLE beam driver needs host state in the snapshot:
+  the driver's resume PC/WAI latch and the PPU raster journal now ride in
+  `RtlGameInfo.exec_state_*` (game_rtl.c). Even so the rollback probe
+  (`SNESRECOMP_RB_PROBE`) shows VRAM divergence, so the game forces
+  delay-sync (`Sb5ForceDelaySync`). Check netplay changes with
+  `tests/netplay_pair_runtime.py` (two loopback peers, `SB5_STATE_TRACE` WRAM
+  hashes, `SNESRECOMP_NET_TEST_INPUT(_SCRIPT)` pads) and
+  `tests/netplay_determinism_runtime.py`. Any new mod state that lives
+  outside WRAM must also be in a save-state extension, or peers desync.
+- Netplay refuses `--script`; headless peers get input only from the test-input knobs.
 
 ## 9. Skills in this repo
 

@@ -1228,6 +1228,36 @@ Instale numa pasta nova e gravável e faça **Generate & rebuild** com sua ROM J
 Verificado no Linux LLE com rotas roteirizadas de cinco assentos (fases da Zona 5 forçadas, ZONE3 - D, seletor e mapa) e testes nativos, e confirmado pelo mantenedor num build Windows. Recompilação parcial, principalmente interpretada; combinações de mods, cinco controles físicos e compatibilidade ampla no Linux não qualificados; sem netplay. Downloads sem ROM, código/executável gerado do jogo, assets extraídos, saves ou capturas brutas.
 '''
 
+if version == '2.0.0':
+    notes = f'''# Super Bomberman 5 v{version}
+
+## English
+
+- **Netplay:** **NETPLAY** in the launcher, like Mega Man X Recompiled: **Online Netplay** on the shared lobby server (sign in with Discord) or **LAN / Direct IP**. Every player needs this same version and their own ROM; the room adopts the host's mods. Synchronization is lockstep (delay-sync). Validated between two real executables on one machine (7,600 frames including Battle with every gameplay mod on); a real internet match and three or more peers are not yet qualified. See docs/NETPLAY.md.
+- **Discord:** **Discord: online matches & news** opens the Super Bomberman 5 server to find matches and follow updates: https://discord.gg/kH54NCDQB4
+- **Updater:** **Update game / Atualizar jogo** in the launcher (or `updater/SuperBomberman5Updater`) installs the newest GitHub release in place after checking `SHA256SUMS`, keeping your ROM, saves, settings and Mods selection; then run **Generate & rebuild** once. Verified end to end on Linux; the Windows path is new. See docs/UPDATER.md.
+- **Cheats:** infinite time now lives in a **Cheats** group, joined by the new **Unlimited lives in Normal Game** (no Game Over; works with five players).
+- **Box art** on the launcher's ROM panel, and releases ready for **Quiver Launcher** (catalog entry submitted; see docs/QUIVER.md).
+- Framework updated to the engine revisions used by Mega Man X Recompiled 2.3.1.
+
+Coming from v1.x: download the Windows x64 ZIP or the experimental Linux x86_64 AppImage, verify SHA256SUMS, install (a new folder or over the old one) and run **Generate & rebuild** with your own supported JPN SB5 ROM. Internet is needed for the first tools; Rust is not required.
+
+Partial recompilation with mostly interpreted gameplay; all mod combinations, physical five-player play and broad Linux compatibility remain unqualified. Downloads contain no ROM, generated game code/binary, extracted assets, saves or raw captures.
+
+## Português
+
+- **Netplay:** **NETPLAY** no launcher, como no Mega Man X Recompiled: **Online Netplay** no servidor de lobby compartilhado (entre com o Discord) ou **LAN / Direct IP**. Todos precisam desta mesma versão e da própria ROM; a sala adota os mods do anfitrião. A sincronização é lockstep (delay-sync). Validado entre dois executáveis reais na mesma máquina (7.600 quadros, incluindo Battle com todos os mods de jogo); partida real pela internet e três ou mais peers ainda não foram qualificados. Veja docs/NETPLAY.md.
+- **Discord:** **Discord: online matches & news** abre o servidor do Super Bomberman 5 para achar partidas e acompanhar novidades: https://discord.gg/kH54NCDQB4
+- **Atualizador:** **Update game / Atualizar jogo** no launcher (ou `updater/SuperBomberman5Updater`) instala a release mais nova do GitHub na mesma pasta depois de conferir o `SHA256SUMS`, mantendo ROM, saves, configurações e mods escolhidos; depois faça **Generate & rebuild** uma vez. Verificado de ponta a ponta no Linux; o caminho do Windows é novo. Veja docs/UPDATER.md.
+- **Cheats:** o tempo infinito agora fica no grupo **Cheats**, junto com o novo **Unlimited lives in Normal Game** (sem Game Over; funciona com cinco jogadores).
+- **Capa** no painel da ROM do launcher, e releases prontas para o **Quiver Launcher** (cadastro enviado; veja docs/QUIVER.md).
+- Framework atualizado para as revisões usadas pelo Mega Man X Recompiled 2.3.1.
+
+Vindo da v1.x: baixe o ZIP Windows x64 ou o AppImage Linux x86_64 experimental, confira o SHA256SUMS, instale (numa pasta nova ou por cima da antiga) e faça **Generate & rebuild** com sua ROM JPN compatível do SB5. Internet para as primeiras ferramentas; Rust não é necessário.
+
+Recompilação parcial, principalmente interpretada; combinações de mods, cinco controles físicos e compatibilidade ampla no Linux não qualificados. Downloads sem ROM, código/executável gerado do jogo, assets extraídos, saves ou capturas brutas.
+'''
+
 if args.output:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(notes, encoding='utf-8', newline='\n')

@@ -48,3 +48,9 @@ solicitada em 2026-10-15. A arte continua pertencendo aos respectivos titulares.
 For the v0.13.1 bottom-left frame, five seats were selected through the real Normal picker. The cartridge egg pickup allocated the native Black Louie for P1; WRAM checks confirmed rider bit 7, mount type 6, Subordinate index 9/color 4 and down direction 2. The staged shot uses scripted positions, open ability corridors, protection for the other seats and explicit native facing/animation state for the mount; it is a presentation showcase rather than an unmodified playthrough. Honey and Terrorin have their single cartridge palettes; Jet uses SB4 color 1, Bazooka color 2 and Subordinate uses green. The other three panels are pixel-identical to v0.13.0. No generated artwork or extracted sprites were composited.
 
 Na v0.13.1 somente o quadro inferior esquerdo foi substituído por captura Windows LLE: Subordinado verde de frente, no Black Louie nativo, Honey, Jet preto voando, Bazooka vermelho com raio e barreira do Terrorin, além da HUD nova de P1/P2. A seleção e a coleta do ovo executam as rotinas reais; posições, corredores, proteção e pose nativa da montaria foram ajustados por script para compor a cena. Honey e Terrorin têm uma paleta nativa cada. Os outros três quadros foram preservados pixel a pixel. É uma cena preparada de apresentação, não uma demonstração de jogatina sem intervenções.
+
+
+`launcher-v2.png` (960 × 768) is the v2.0.0 launcher captured on Linux (Xvfb, software OpenGL) from this
+project's own setup build: the maintainer-supplied Super Bomberman 5 box art, **Update game**, the Discord
+and releases links and **NETPLAY**. / Launcher da v2.0.0 capturado no Linux a partir do setup do próprio
+projeto: capa, Atualizar jogo, links do Discord e das releases e NETPLAY.

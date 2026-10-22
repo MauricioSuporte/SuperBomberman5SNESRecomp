@@ -2,7 +2,7 @@
 
 An unofficial, noncommercial **Super Bomberman 5** PC port built with [SNESRecomp](https://github.com/RetroPortingToolKit/snesrecomp) and [recomp-ui](https://github.com/RetroPortingToolKit/recomp-ui), following the game-repository architecture of [Mega Man X Recompiled](https://github.com/mstan/MegaManXSNESRecomp).
 
-[Download v1.1.2](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v1.1.2) · [English](#english) · [Português](#português) · [Technical status](docs/STATUS.md) · [Contributing](CONTRIBUTING.md)
+[Download v2.0.0](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v2.0.0) · [English](#english) · [Português](#português) · [Technical status](docs/STATUS.md) · [Contributing](CONTRIBUTING.md)
 
 > **Partial recompilation.** Most game logic still runs on the framework's interpreter. Supply your own legally obtained ROM; no ROM, generated game code or extracted assets are distributed. v1.0.1 is the first full release: the maintainer has played the campaign through to the end on Windows.
 
@@ -14,16 +14,20 @@ An unofficial, noncommercial **Super Bomberman 5** PC port built with [SNESRecom
 
 - Windows x64 setup and an experimental Linux x86_64 AppImage; the game is generated and compiled locally from your ROM.
 - Launcher with **PLAYER 1–5** input tabs (keyboard or gamepad per player, including several identical controllers such as two DualSense pads).
-- Thirteen optional mods, all disabled by default: five-player Normal Game (with an optional corner spawn layout), character and color selection in Normal, extra characters, Super Bomberman 4 Bomber Kings, Louie improvements, PT-BR menus and more.
+- Fourteen optional mods, all disabled by default: five-player Normal Game (with an optional corner spawn layout), character and color selection in Normal, extra characters, Super Bomberman 4 Bomber Kings, Louie improvements, PT-BR menus, a **Cheats** group (infinite time and infinite lives) and more.
+- **New in v2.0.0 — netplay:** play online (lobby with Discord sign-in) or over LAN / Direct IP, like Mega Man X Recompiled. [Details](docs/NETPLAY.md)
+- **Discord:** the launcher links to the Super Bomberman 5 server to find matches and follow news: <https://discord.gg/kH54NCDQB4>.
+- **Updater:** **Update game** in the launcher installs the newest release in place (checksum-verified, keeps your ROM, saves and settings). [Details](docs/UPDATER.md)
+- Box art on the launcher's ROM panel, and releases listable in [Quiver Launcher](docs/QUIVER.md).
 
 ### Install
 
-1. Download **superbomberman5-1.1.2-windows-x64.zip** (Windows 10+ x64) or **superbomberman5-1.1.2-linux-x86_64.AppImage** (glibc 2.35+, Ubuntu 22.04 baseline) from [v1.1.2](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v1.1.2) and check **SHA256SUMS**.
-2. Windows: extract the **entire** ZIP into a new writable folder and open `SuperBomberman5Recomp.exe`. Linux: `chmod +x` the AppImage and run it (without FUSE, add `--appimage-extract-and-run`); its setup lives in `~/.local/share/superbomberman5/1.1.2`.
+1. Download **superbomberman5-2.0.0-windows-x64.zip** (Windows 10+ x64) or **superbomberman5-2.0.0-linux-x86_64.AppImage** (glibc 2.35+, Ubuntu 22.04 baseline) from [v2.0.0](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v2.0.0) and check **SHA256SUMS**.
+2. Windows: extract the **entire** ZIP into a new writable folder and open `SuperBomberman5Recomp.exe`. Linux: `chmod +x` the AppImage and run it (without FUSE, add `--appimage-extract-and-run`); its setup lives in `~/.local/share/superbomberman5/2.0.0`.
 3. Let the launcher fetch the portable build tools (internet needed once; Rust is not required), select your own ROM and choose **Generate & rebuild**.
 4. Open **Mods** to enable features, configure controls and select **Play**.
 
-**Upgrading:** install 1.1.2 into a new folder and run **Generate & rebuild** again; an older generated executable cannot load new native mod code. Leave several GB free.
+**Upgrading:** from v2.0.0 on, use **Update game / Atualizar jogo** in the launcher (or `updater/SuperBomberman5Updater`), then run **Generate & rebuild** once; your ROM path, saves, settings and Mods selection are kept. From v1.x, install 2.0.0 into a new folder (or extract it over the old one) and run **Generate & rebuild** again; an older generated executable cannot load new native mod code. Leave several GB free.
 
 ### Supported ROM
 
@@ -51,12 +55,22 @@ Each setup package already includes these mods (no separate download). They can 
 | **Normal Game HUD faces** | Selected character and color in the P1/P2 HUD faces. [Details](docs/NORMAL_HUD_FACES.md) |
 | **Louie improvements** | Yellow bomb kicks, Red enemy freeze and Black Louie's protected dash (Y). [Details](docs/LOUIE_IMPROVEMENTS.md) |
 | **Normal Game — portal destinations** | Shows each visible portal's destination (`Z1-2`, `Z1-S`, `Z1-A1`…). [Details](docs/PORTAL_LABELS.md) |
-| **Normal Game — infinite time** | Native `-:--` timer without timeout deaths. [Details](docs/INFINITE_TIME.md) |
+| **Normal Game — infinite time** | Native `-:--` timer without timeout deaths. Listed under **Mods → Cheats**. [Details](docs/INFINITE_TIME.md) |
+| **Normal Game — infinite lives** | Lives are never spent (deaths, retries, five-player rejoins): no Game Over. **Mods → Cheats**. [Details](docs/INFINITE_LIVES.md) |
 | **Pause — exit & draw** | Return to the map in Normal; force a draw or return to stage select in Battle. [Details](docs/PAUSE_MENU.md) |
 | **Gold Cartridge — Battle** | Arenas 11–13 and Hyper Revenge. [Details](docs/GOLD_BATTLE.md) |
 | **Português brasileiro — menus** | PT-BR menus, HUD and certificates using the cartridge fonts. [Details](docs/TRANSLATION_PTBR.md) |
 
 ![Normal Game portal destination hints](docs/images/portal-destinations.png)
+
+### Netplay, Discord and updates
+
+- **NETPLAY → Online Netplay** finds rooms on the shared lobby server (sign in with Discord); **LAN / Direct IP** needs no account. Everyone needs the same version and their own ROM; the room adopts the host's mods. Synchronization is lockstep (delay-sync). Two peers were validated on loopback; a real internet match and three or more peers are not yet qualified. [Details](docs/NETPLAY.md)
+- **Discord: online matches & news** opens the [Super Bomberman 5 Discord server](https://discord.gg/kH54NCDQB4).
+- **Update game** downloads the newest release from GitHub, verifies it against `SHA256SUMS` and installs it in place. [Details](docs/UPDATER.md)
+- [Quiver Launcher](https://github.com/tgeorgiadis/quiver-launcher) can install and update the releases; see [QUIVER.md](docs/QUIVER.md).
+
+<p align="center"><img src="docs/images/launcher-v2.png" width="640" alt="Launcher with the Super Bomberman 5 box art, Update game and Discord buttons"></p>
 
 ### Controls
 
@@ -85,7 +99,7 @@ Then open `SuperBomberman5Recomp.exe` at the repository root. Tools go to the ig
 
 ### Status and limits
 
-SNESRecomp translates analyzable 65816 routines into C and runs the rest through an interpreter, with PPU, APU, DMA and cartridge hardware modeled. AOT coverage is small and reset/NMI remain interpreted. Gameplay is verified with scripted routes on Linux LLE and maintainer play on Windows, including a full campaign playthrough; all mod combinations, physical five-player play and broad Linux compatibility are not qualified. No netplay, widescreen or macOS. Details: [STATUS.md](docs/STATUS.md).
+SNESRecomp translates analyzable 65816 routines into C and runs the rest through an interpreter, with PPU, APU, DMA and cartridge hardware modeled. AOT coverage is small and reset/NMI remain interpreted. Gameplay is verified with scripted routes on Linux LLE and maintainer play on Windows, including a full campaign playthrough; all mod combinations, physical five-player play and broad Linux compatibility are not qualified. Netplay is new in v2.0.0 and validated only between two peers on one machine. No widescreen or macOS. Details: [STATUS.md](docs/STATUS.md).
 
 [Open an issue](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/issues) with version, OS, ROM hash and steps to reproduce. Never upload the ROM, extracted assets or save states.
 
@@ -99,16 +113,20 @@ Thanks to Matthew Stanley and the RetroPorting ToolKit contributors for SNESReco
 
 - Setup Windows x64 e AppImage Linux x86_64 experimental; o jogo é gerado e compilado localmente a partir da sua ROM.
 - Launcher com abas **PLAYER 1–5** (teclado ou controle por jogador, inclusive vários controles iguais, como dois DualSense).
-- Treze mods opcionais, desligados por padrão: Normal Game com cinco jogadores (com layout opcional de spawn nos cantos), seleção de personagem e cor no Normal, personagens extras, Reis Bomber do Super Bomberman 4, melhorias dos Louies, menus em PT-BR e mais.
+- Quatorze mods opcionais, desligados por padrão: Normal Game com cinco jogadores (com layout opcional de spawn nos cantos), seleção de personagem e cor no Normal, personagens extras, Reis Bomber do Super Bomberman 4, melhorias dos Louies, menus em PT-BR, o grupo **Cheats** (tempo infinito e vidas infinitas) e mais.
+- **Novo na v2.0.0 — netplay:** jogue online (lobby com login do Discord) ou por LAN / IP direto, como no Mega Man X Recompiled. [Detalhes](docs/NETPLAY.md)
+- **Discord:** o launcher leva ao servidor do Super Bomberman 5 para achar partidas e acompanhar novidades: <https://discord.gg/kH54NCDQB4>.
+- **Atualizador:** **Atualizar jogo** no launcher instala a release mais nova na mesma pasta (conferida por checksum, mantendo ROM, saves e configurações). [Detalhes](docs/UPDATER.md)
+- Capa do jogo no painel da ROM do launcher, e releases listáveis no [Quiver Launcher](docs/QUIVER.md).
 
 ### Instalação
 
-1. Baixe **superbomberman5-1.1.2-windows-x64.zip** (Windows 10+ x64) ou **superbomberman5-1.1.2-linux-x86_64.AppImage** (glibc 2.35+, base Ubuntu 22.04) na [v1.1.2](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v1.1.2) e confira o **SHA256SUMS**.
-2. Windows: extraia o ZIP **inteiro** numa pasta nova e gravável e abra `SuperBomberman5Recomp.exe`. Linux: dê `chmod +x` no AppImage e execute (sem FUSE, use `--appimage-extract-and-run`); o setup fica em `~/.local/share/superbomberman5/1.1.2`.
+1. Baixe **superbomberman5-2.0.0-windows-x64.zip** (Windows 10+ x64) ou **superbomberman5-2.0.0-linux-x86_64.AppImage** (glibc 2.35+, base Ubuntu 22.04) na [v2.0.0](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v2.0.0) e confira o **SHA256SUMS**.
+2. Windows: extraia o ZIP **inteiro** numa pasta nova e gravável e abra `SuperBomberman5Recomp.exe`. Linux: dê `chmod +x` no AppImage e execute (sem FUSE, use `--appimage-extract-and-run`); o setup fica em `~/.local/share/superbomberman5/2.0.0`.
 3. Deixe o launcher baixar as ferramentas portáteis (internet só na primeira vez; Rust não é necessário), escolha sua própria ROM e clique em **Generate & rebuild**.
 4. Abra **Mods** para ativar funções, configure os controles e clique em **Play**.
 
-**Atualizando:** instale a 1.1.2 numa pasta nova e faça **Generate & rebuild** de novo; um executável gerado antigo não carrega o código nativo novo. Deixe alguns GB livres.
+**Atualizando:** a partir da v2.0.0, use **Update game / Atualizar jogo** no launcher (ou `updater/SuperBomberman5Updater`) e faça **Generate & rebuild** uma vez; o caminho da ROM, saves, configurações e mods escolhidos continuam. Vindo da v1.x, instale a 2.0.0 numa pasta nova (ou extraia por cima da antiga) e faça **Generate & rebuild** de novo; um executável gerado antigo não carrega o código nativo novo. Deixe alguns GB livres.
 
 ### ROM compatível
 
@@ -129,10 +147,18 @@ Todos já vêm no pacote de setup (sem download separado) e podem ser ativados j
 | **Normal Game HUD faces** | Personagem e cor escolhidos nos rostos da HUD de P1/P2. [Detalhes](docs/NORMAL_HUD_FACES.md) |
 | **Louie improvements** | Chute de bombas do Yellow, paralisia de inimigos do Red e arrancada protegida do Black Louie (Y). [Detalhes](docs/LOUIE_IMPROVEMENTS.md) |
 | **Normal Game — portal destinations** | Mostra o destino de cada portal visível (`Z1-2`, `Z1-S`, `Z1-A1`…). [Detalhes](docs/PORTAL_LABELS.md) |
-| **Normal Game — infinite time** | Cronômetro nativo `-:--` sem morte por tempo. [Detalhes](docs/INFINITE_TIME.md) |
+| **Normal Game — infinite time** | Cronômetro nativo `-:--` sem morte por tempo. Fica em **Mods → Cheats**. [Detalhes](docs/INFINITE_TIME.md) |
+| **Normal Game — infinite lives** | As vidas nunca são gastas (mortes, reinícios, volta com Start no modo de cinco): sem Game Over. **Mods → Cheats**. [Detalhes](docs/INFINITE_LIVES.md) |
 | **Pause — exit & draw** | Voltar ao mapa no Normal; empatar a rodada ou voltar às arenas no Battle. [Detalhes](docs/PAUSE_MENU.md) |
 | **Gold Cartridge — Battle** | Arenas 11–13 e Revanche Hiper. [Detalhes](docs/GOLD_BATTLE.md) |
 | **Português brasileiro — menus** | Menus, HUD e certificados em PT-BR com as fontes do cartucho. [Detalhes](docs/TRANSLATION_PTBR.md) |
+
+### Netplay, Discord e atualizações
+
+- **NETPLAY → Online Netplay** procura salas no servidor de lobby compartilhado (entre com o Discord); **LAN / Direct IP** não precisa de conta. Todos precisam da mesma versão e da própria ROM; a sala adota os mods do anfitrião. A sincronização é lockstep (delay-sync). Dois peers foram validados no loopback; partida real pela internet e três ou mais peers ainda não foram qualificados. [Detalhes](docs/NETPLAY.md)
+- **Discord: online matches & news** abre o [servidor do Super Bomberman 5 no Discord](https://discord.gg/kH54NCDQB4).
+- **Atualizar jogo** baixa a release mais nova do GitHub, confere com o `SHA256SUMS` e instala na mesma pasta. [Detalhes](docs/UPDATER.md)
+- O [Quiver Launcher](https://github.com/tgeorgiadis/quiver-launcher) instala e atualiza as releases; veja [QUIVER.md](docs/QUIVER.md).
 
 ### Controles
 
@@ -144,7 +170,7 @@ Instale Git for Windows e Python 3.11+ e execute os comandos de [Build from sour
 
 ### Estado e limites
 
-A recompilação é parcial: rotinas analisáveis viram C e o restante roda no interpretador; reset/NMI continuam interpretados. A jogabilidade é verificada com rotas roteirizadas no Linux LLE e testes do mantenedor no Windows, que já zerou a campanha; todas as combinações de mods, cinco controles físicos e compatibilidade ampla no Linux não foram qualificados. Sem netplay, widescreen ou macOS. Detalhes em [STATUS.md](docs/STATUS.md).
+A recompilação é parcial: rotinas analisáveis viram C e o restante roda no interpretador; reset/NMI continuam interpretados. A jogabilidade é verificada com rotas roteirizadas no Linux LLE e testes do mantenedor no Windows, que já zerou a campanha; todas as combinações de mods, cinco controles físicos e compatibilidade ampla no Linux não foram qualificados. O netplay é novo na v2.0.0 e só foi validado entre dois peers na mesma máquina. Sem widescreen ou macOS. Detalhes em [STATUS.md](docs/STATUS.md).
 
 [Abra uma issue](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/issues) com versão, sistema, hash da ROM e passos. Nunca publique ROM, recursos extraídos ou save states.
 
