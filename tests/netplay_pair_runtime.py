@@ -18,6 +18,32 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
+BUTTONS = {'b': 1, 'y': 2, 'select': 4, 'start': 8, 'up': 0x10, 'down': 0x20, 'left': 0x40, 'right': 0x80,
+           'a': 0x100, 'x': 0x200, 'l': 0x400, 'r': 0x800}
+
+
+def seat_scripts(route: str, peers: int) -> list[str]:
+    """Split a headless route (press/wait lines, p2: prefix) into per-seat pad timelines."""
+    out = [[] for _ in range(peers)]
+    for line in route.splitlines():
+        words = line.split()
+        if not words or words[0] not in ('press', 'wait'):
+            continue
+        if words[0] == 'wait':
+            for seat in out:
+                seat.append(f'{words[1]} 0')
+            continue
+        target, names = 0, words[1]
+        if names.startswith('p2:'):
+            target, names = 1, names[3:]
+        mask = 0
+        for name in names.split('+'):
+            mask |= BUTTONS[name]
+        frames = words[2] if len(words) > 2 else '1'
+        for i, seat in enumerate(out):
+            seat.append(f'{frames} {mask if i == target else 0:x}')
+            seat.append('2 0')  # release so the next press is new
+    return ['\n'.join(seat) + '\n' for seat in out]
 
 
 def main() -> None:
@@ -32,6 +58,7 @@ def main() -> None:
     parser.add_argument('--mispredict', type=int, default=0, help='RNET_RB_FORCE_MISPREDICT period on seat 0')
     parser.add_argument('--delay-sync', action='store_true')
     parser.add_argument('--inputs', action='store_true', help='pseudo-random pads on every peer')
+    parser.add_argument('--scene', choices=['boot', 'battle'], default='boot', help='scripted route before the random pads')
     parser.add_argument('--out', type=Path, default=ROOT / '.bootstrap/netplay-pair')
     args = parser.parse_args()
     exe, rom = args.exe.resolve(strict=True), args.rom.resolve(strict=True)
@@ -39,6 +66,10 @@ def main() -> None:
     root = Path(tempfile.mkdtemp(prefix=f'pair{args.peers}-{args.mods}-', dir=args.out.resolve()))
     from sb5_mod_sets import ALL_MODS
     processes = []
+    scripts = None
+    if args.scene == 'battle':
+        from pause_menu_runtime import BATTLE_ENTER
+        scripts = seat_scripts(BATTLE_ENTER, args.peers)
     try:
         for seat in range(args.peers):
             peer = root / f'peer{seat}'
@@ -62,6 +93,9 @@ def main() -> None:
                        SNES_NET_INPUT_PLAYER='0', SNESRECOMP_RUN_FRAMES=str(args.frames),
                        SDL_VIDEODRIVER='dummy', SDL_AUDIODRIVER='dummy', SB5_STATE_TRACE='30',
                        SNESRECOMP_NET_TEST_INPUT=str(1000 + seat) if args.inputs else '0')
+            if scripts:
+                (peer / 'route.pads').write_text(scripts[seat])
+                env['SNESRECOMP_NET_TEST_INPUT_SCRIPT'] = str(peer / 'route.pads')
             if args.delay_sync:
                 env['SNES_NET_MODE'] = 'delay'
             if args.mispredict and seat == 0:
