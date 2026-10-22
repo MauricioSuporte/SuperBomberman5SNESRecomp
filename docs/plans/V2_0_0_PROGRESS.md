@@ -83,3 +83,10 @@ Heartbeat: 2026-10-22 11:15 (America/Cuiaba)
   v2.0.0 foi enviado uma vez pelo navegador embutido (webhook "Mecha Bomber", #patch-notes, HTTP 200).
 - Pendente fora do escopo da sessão: testar o atualizador numa instalação real de Windows.
 - Lembretes de retomada desativados.
+
+### 2026-10-22 12:00 — v2.0.1
+- Bug do mantenedor: Generate & rebuild no Windows em `OneDrive\Área de Trabalho` parava em "Configure failed"
+  (manifesto UTF-8 do framework → helper .cmd em UTF-8, junction para "├ürea"). Correção no fork snesrecomp
+  `e24e6d6`. Release run 39806903041 OK; tag `v2.0.1` → `379b6a1`; SHA256SUMS conferido; notas idênticas.
+- Regra nova do mantenedor: correções de bug não entram no README (só notas, STATUS e Discord); skill atualizada.
+- Discord: passo do CI pulado (secret ainda não criado); anúncio enviado uma vez pelo navegador (HTTP 200).
