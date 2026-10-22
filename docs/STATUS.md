@@ -1,5 +1,23 @@
 # Super Bomberman 5: estado do protótipo
 
+## Unreleased — 2026-10-22 (launcher crash without OpenGL 3.3)
+
+- Player crash report (v2.0.6 setup host, Windows 10.0.26200, i5-2400 / Sandy Bridge, no vendor OpenGL ICD
+  loaded, `D3D10Warp.dll` present): access violation reading `0x2C` 720 ms after "launcher: opening GUI".
+  Minidump code bytes at exe+`0x2765AF` decode to imgui `ImGui_ImplOpenGL3_DestroyFontsTexture`
+  (`bd = io.BackendRendererUserData` = NULL, `cmp [bd+0x2C]` = `FontTexture`), called from the launcher's font
+  rebuild. Cause: without `WGL_ARB_create_context` SDL returns a legacy GDI OpenGL 1.1 context for the 3.3 core
+  request instead of failing; `ImGui_ImplOpenGL3_Init` then fails in its loader (return value ignored) and never
+  installs its backend data.
+- recomp-ui fork: the SDL3/SDL2 platform layers refuse a context below GL 3.3 (`launcher_gl_context_meets`),
+  so the launcher reports UNAVAILABLE instead of crashing; the font rebuild skips the GL backend when it is not
+  initialized. snesrecomp fork: a setup host whose launcher is UNAVAILABLE now explains the OpenGL 3.3
+  requirement (driver / Mesa3D software `opengl32.dll`) instead of SnesInit's "start it with --launcher".
+- Evidence: launcher sources syntax-checked against SDL 3.4.10 and SDL 2.30 headers; version parser unit-checked
+  (1.1.0, 3.1.0, 3.2 rejected; 3.3.0, 4.6.0 accepted). Not yet built on Windows nor reproduced on a GL 1.1
+  machine. A rebuilt (non-setup) game falls back to its SDL presenter; the setup host still needs OpenGL 3.3
+  for "Generate & rebuild".
+
 ## v2.0.7 — 2026-10-22
 
 - 2.0.6 still ran a three-player internet match at 27.6 fps (778 frames / 28.2 s, 128 `wait_confirm` streaks at
