@@ -1240,7 +1240,7 @@ if version == '2.0.0':
 - **Box art** on the launcher's ROM panel, and releases ready for **Quiver Launcher** (catalog entry submitted; see docs/QUIVER.md).
 - Framework updated to the engine revisions used by Mega Man X Recompiled 2.3.1.
 
-Coming from v1.x: download the Windows x64 ZIP or the experimental Linux x86_64 AppImage, verify SHA256SUMS, install (a new folder or over the old one) and run **Generate & rebuild** with your own supported JPN SB5 ROM. Internet is needed for the first tools; Rust is not required.
+Coming from v1.x: download the Windows x64 ZIP or the experimental Linux x86_64 AppImage, verify SHA256SUMS, install (a new folder or over the old one) and run **Generate & rebuild** with your own Super Bomberman 5 (USA) ROM. Internet is needed for the first tools; Rust is not required.
 
 Partial recompilation with mostly interpreted gameplay; all mod combinations, physical five-player play and broad Linux compatibility remain unqualified. Downloads contain no ROM, generated game code/binary, extracted assets, saves or raw captures.
 
@@ -1253,7 +1253,7 @@ Partial recompilation with mostly interpreted gameplay; all mod combinations, ph
 - **Capa** no painel da ROM do launcher, e releases prontas para o **Quiver Launcher** (cadastro enviado; veja docs/QUIVER.md).
 - Framework atualizado para as revisões usadas pelo Mega Man X Recompiled 2.3.1.
 
-Vindo da v1.x: baixe o ZIP Windows x64 ou o AppImage Linux x86_64 experimental, confira o SHA256SUMS, instale (numa pasta nova ou por cima da antiga) e faça **Generate & rebuild** com sua ROM JPN compatível do SB5. Internet para as primeiras ferramentas; Rust não é necessário.
+Vindo da v1.x: baixe o ZIP Windows x64 ou o AppImage Linux x86_64 experimental, confira o SHA256SUMS, instale (numa pasta nova ou por cima da antiga) e faça **Generate & rebuild** com sua ROM do Super Bomberman 5 (USA). Internet para as primeiras ferramentas; Rust não é necessário.
 
 Recompilação parcial, principalmente interpretada; combinações de mods, cinco controles físicos e compatibilidade ampla no Linux não qualificados. Downloads sem ROM, código/executável gerado do jogo, assets extraídos, saves ou capturas brutas.
 '''
