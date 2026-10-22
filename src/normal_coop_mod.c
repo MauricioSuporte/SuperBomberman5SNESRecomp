@@ -708,6 +708,18 @@ static void instruction(uint32_t pc,int m,int x) {
             memcpy(g_ram+0x16c2,campaign_characters,count);memcpy(g_ram+0x16da,campaign_palettes,count);
         }
         active_mask=(uint8_t)((1u<<count)-1);set_masks();g_ram[0x1cbf]=BOMBER_SLOTS;g_ram[MOUNT_OFFSET_RAM]=MOUNT_BASE;benched_mask=0;
+        /* The rival-bomber flags ($101F) stay set in the seats a boss used;
+         * the next boss start sets its own. */
+        for(unsigned i=0;i<5;++i) g_ram[0x101f+i]=0;
+    } else if(pc==0xc43c60) {
+        /* Boss start: save the seats the boss benches before it seats its
+         * rivals there (ZONE3 - D's Pirate rides his Black Louie in P4's
+         * seat). Saving only at $C2:1697 captured the rival's riding bit and
+         * mount, which P4 kept after a world-map return. */
+        for(unsigned i=seats();i<count;++i) if(!(benched_mask&(1u<<i))) {
+            for(unsigned f=0;f<SEAT_FIELDS;++f) benched[i][f]=g_ram[seat_fields[f]+i];
+            benched_mask|=(uint8_t)(1u<<i);
+        }
     } else if(pc==0xc21697) {
         /* Continue resets equipment again and may load stock campaign fields.
          * Restore the choices at the final boundary before graphics creation. */

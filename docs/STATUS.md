@@ -30,6 +30,13 @@ Causes and changes (Linux LLE headless, forced stages, lab-only hooks):
   Pending pages are now freed and the request retried next frame. Route
   (ZONE1 - 1, five seats): P3 hatches a Louie, P4 dies and rejoins: pages
   `08 0a 0c 7f 10` → `08 0a 0e 0c 10`, P4 drawn correctly.
+- **ZONE3 - D → world map → next stage.** Benched P4/P5 fields were saved
+  after the boss start had seated the rival (riding bit, Black Louie) in
+  P4's seat; P4 kept them, and `$101F` still flagged P4/P5 as rivals. Saved
+  at `$C4:3C60` now, flags cleared at `$C4:28B4`. Route: forced `$6A`, pause
+  → world map → `$35`: P4 `$1782` = 0, no mount, `$101F` clear; ZONE3 - D
+  still flags its rivals. P4 still borrows P1's palette in `$35` because all
+  eight OBJ slots are in use there (stage id `$31` holds slot 6).
 - **`$1CBF`.** The 2026-10-17 layout set `$1CBF` = 19, but it is also the
   bomber-slot count read by survivor counts, player-on-cell searches and bomb
   owners, which then included enemies 5-18. `$1CBF` is 5 again; the 28 offset

@@ -55,7 +55,8 @@ personagens animam e quem volta com Start reaparece com gráficos. Como a págin
 é reescrita enquanto ainda está na tela, o personagem fica invisível por um
 único quadro ao começar, parar ou virar (antes aparecia deformado nesse
 quadro); andando sem parar ele não pisca. Quem volta com Start enquanto outro
-jogador está num Louie não aparece mais com o sprite embaralhado. P3, P4 e P5 usam as paletas de sprite 7, 6 e 5 quando estão livres;
+jogador está num Louie não aparece mais com o sprite embaralhado. Sair da
+ZONE3-D pelo mapa não deixa mais o P4 com o Louie Preto do pirata. P3, P4 e P5 usam as paletas de sprite 7, 6 e 5 quando estão livres;
 os inimigos ficam com as paletas 3 a 5 e objetos grandes da fase (como a torre
 elétrica da ZONE5-1 e seus raios) com as 6 e 7. A cópia de paleta que o jogo
 faz quando algo pisca escrevia um byte além da paleta e, na paleta 7,
@@ -194,6 +195,12 @@ left is still marked pending free (`$7F`, e.g. while another player rides a
 Louie and no other request frees it), the request used to fail and the
 rejoined bomber animated without tiles (garbled). The page is now freed as
 `$C5:6B0B` does and the request waits one frame.
+
+Boss stages bench the seats their rivals take (ZONE3 - D: P4/P5). The benched
+fields were saved at `$C2:1697`, after the boss start (`$C4:3C60`) had already
+seated the Pirate on his Black Louie in P4's seat, so a world-map return gave
+P4 the rival's riding bit and Louie. They are now saved at the boss start, and
+the rival-bomber flags (`$101F`) are cleared at the next player reset.
 
 With five seats the five animation pages belong to the players. Objects left
 without a page (Louies and stage effects) are drawn from the cartridge by the
