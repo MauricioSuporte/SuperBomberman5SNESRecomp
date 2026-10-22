@@ -1,4 +1,4 @@
-# v1.2.0 — diário de progresso
+# v2.0.0 — diário de progresso
 
 STATUS: EM ANDAMENTO
 Heartbeat: 2026-10-22 06:35 (America/Cuiaba)
@@ -13,14 +13,14 @@ Heartbeat: 2026-10-22 06:35 (America/Cuiaba)
 
 ## Fases
 
-- [x] F0 — branch `release/v1.2.0`, plano, diário (2026-10-22 00:55)
+- [x] F0 — branch `release/v2.0.0`, plano, diário (2026-10-22 00:55)
 - [x] F1 — aba Cheats + vidas ilimitadas (`12bb72f`; rota headless 1/2/5 jogadores OK)
 - [x] F2 — capa do SB5 no launcher (`12bb72f`; staged em `assets/img/boxart.tga`; falta ver o launcher na tela)
 - [x] F3 — framework nos pins do MMX (`2c64277`; forks em `superbomberman5-v1.2`)
 - [x] F4 — netplay (delay-sync; 2 peers loopback validados; 3–5 via lobby não validados)
 - [x] F5 — Discord (login do lobby + botões do servidor; capturas do launcher em Xvfb)
 - [~] F6 — atualizador (Linux/AppImage testado de ponta a ponta; Windows só compila no CI)
-- [ ] F7 — Quiver
+- [x] F7 — Quiver (layout + docs/QUIVER.md; cadastro no site depende do login do mantenedor)
 - [ ] F8 — docs, versão, release
 
 ## Registro
@@ -50,3 +50,10 @@ Heartbeat: 2026-10-22 06:35 (America/Cuiaba)
 - Atualizador `SuperBomberman5Updater` em `updater/` do pacote; teste Linux real (1.1.1→1.1.2 AppImage
   com SHA256SUMS). Windows: compila e tem teste nativo; extração por `tar` e cópia em lugar não testadas.
 - Pendentes: F7 Quiver, F8 docs/versão/release; Windows real fica para o CI/mantenedor.
+
+### 2026-10-22 06:40 — versão
+- O mantenedor pediu para publicar como **v2.0.0** (não 1.2.0). Branch continua `release/v1.2.0`;
+  plano/diário renomeados para `V2_0_0_*`.
+- F7 Quiver: catálogo não lista o SB5; entrada pronta em `docs/QUIVER.md` (formato copiado da do Mega Man X
+  via API do catálogo). Cadastro exige o login do mantenedor em quiverlauncher.com/submit (não posso criar
+  conta/entrar). Atualizador respeita `installed-build.txt` do Quiver.

@@ -581,6 +581,14 @@ int main(int argc, char **argv) {
         pause_if_interactive(do_launch);
         return 0;
     }
+    join(path, sizeof(path), g_dir, "installed-build.txt");
+    if (file_exists(path) && !force) {
+        /* Quiver Launcher records the package it installed here; updating
+         * behind its back would leave its library on the old version. */
+        say("This copy was installed by Quiver Launcher: update it from Quiver (or pass --force).");
+        pause_if_interactive(0);
+        return 3;
+    }
 #if defined(_WIN32)
     join(path, sizeof(path), g_dir, ".git");
     if (is_dir(path) && !force) {

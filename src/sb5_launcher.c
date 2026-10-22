@@ -168,6 +168,10 @@ static const RecompLauncherCGameLink kLinks[] = {
 };
 
 static int update_action(char *msg, size_t cap) { return Sb5StartUpdater(msg, cap); }
+static int quiver_action(char *msg, size_t cap) {
+    snprintf(msg, cap, "Close the game and use Update in Quiver Launcher's library.");
+    return 0;
+}
 #endif
 
 void Sb5ConfigureLauncher(struct RecompLauncherCGameInfo *gi) {
@@ -176,9 +180,19 @@ void Sb5ConfigureLauncher(struct RecompLauncherCGameInfo *gi) {
     gi->game_links = kLinks;
     gi->num_game_links = (int)(sizeof(kLinks) / sizeof(kLinks[0]));
     if (Sb5FindUpdater(updater, sizeof(updater), root, sizeof(root))) {
-        gi->game_action_label = "Update game / Atualizar jogo";
-        gi->game_action_note = "Online play needs the newest version on every player.";
-        gi->game_action = update_action;
+        char quiver[2100];
+        snprintf(quiver, sizeof(quiver), "%s/installed-build.txt", root);
+        if (is_file(quiver)) {
+            /* Quiver Launcher owns this install's updates. */
+            gi->game_action_label = "Update with Quiver Launcher";
+            gi->game_action_note = "Installed by Quiver Launcher: update it there. Online play needs the newest "
+                                   "version on every player.";
+            gi->game_action = quiver_action;
+        } else {
+            gi->game_action_label = "Update game / Atualizar jogo";
+            gi->game_action_note = "Online play needs the newest version on every player.";
+            gi->game_action = update_action;
+        }
     }
 #else
     (void)gi;

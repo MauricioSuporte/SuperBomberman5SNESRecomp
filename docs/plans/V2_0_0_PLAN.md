@@ -1,7 +1,7 @@
-# Plano de execução — v1.2.0
+# Plano de execução — v2.0.0
 
-Branch de trabalho: `release/v1.2.0` (a partir de `main` v1.1.2, `2474613`).
-Diário de progresso: `docs/plans/V1_2_0_PROGRESS.md` (sempre atualizado e enviado ao GitHub
+Branch de trabalho: `release/v2.0.0` (a partir de `main` v1.1.2, `2474613`).
+Diário de progresso: `docs/plans/V2_0_0_PROGRESS.md` (sempre atualizado e enviado ao GitHub
 ao fim de cada etapa). Referência principal: **Mega Man X Recompiled**
 (`mstan/MegaManXSNESRecomp`, pins `snesrecomp 7a67b85`, `recomp-ui 7c635c6`).
 
@@ -45,7 +45,7 @@ opção recomendada e registrar a decisão no diário.
 | F5 | Discord: login do lobby (recomp-ui) ligado + botão "Servidor do Discord do SB5" no netplay e no launcher + README | botão abre o convite; doc |
 | F6 | Atualizador: `SuperBomberman5Updater` (C, WinHTTP no Windows / curl no Linux): GitHub `releases/latest`, compara `VERSION`, baixa o zip, confere `SHA256SUMS`, troca arquivos preservando ROM, `saves/`, `rom.cfg`, `*.ini`, `mods/preloaded/state.toml`; relança o setup host para regenerar; botão "Atualizar" no launcher; netplay bloqueia versão diferente e aponta o atualizador | teste nativo do comparador/filtro + atualização real v1.1.2 → build local simulado |
 | F7 | Quiver: exe na raiz do zip, `docs/QUIVER.md` com a entrada de catálogo (`repository`, `folderName`, filtro de release, arquivo da ROM a adicionar), atualizador detecta instalação do Quiver e delega a ele; tentar cadastrar em quiverlauncher.com | zip passa no `PlatformAssetMatcher` (teste com os nomes reais) |
-| F8 | Docs EN/PT (README, STATUS, AGENTS, docs por recurso), `VERSION` 1.2.0, `tools/release-notes.py`, CI, PR para `main`, merge, tag `v1.2.0`, release | release publicada com zip/AppImage/SHA256SUMS |
+| F8 | Docs EN/PT (README, STATUS, AGENTS, docs por recurso), `VERSION` 2.0.0, `tools/release-notes.py`, CI, PR para `main`, merge, tag `v2.0.0`, release | release publicada com zip/AppImage/SHA256SUMS |
 
 ## Regras (AGENTS.md)
 
@@ -56,9 +56,9 @@ mensagens de commit em inglês com as linhas de atribuição; nunca `git add -A`
 ## Como retomar (sessão nova ou depois do limite)
 
 1. `add_repo MauricioSuporte/SuperBomberman5SNESRecomp` (push) e clonar em
-   `/home/claude/superbomberman5snesrecomp`; `git fetch origin release/v1.2.0` e
-   `git checkout release/v1.2.0`; `git submodule update --init --recursive`.
-2. Ler este plano, `docs/plans/V1_2_0_PROGRESS.md`, `AGENTS.md` e as skills em `.agents/skills/`.
+   `/home/claude/superbomberman5snesrecomp`; `git fetch origin release/v2.0.0` e
+   `git checkout release/v2.0.0`; `git submodule update --init --recursive`.
+2. Ler este plano, `docs/plans/V2_0_0_PROGRESS.md`, `AGENTS.md` e as skills em `.agents/skills/`.
 3. Se o diário tiver "batimento" (linha `Heartbeat:`) com menos de 60 min, outra sessão está
    trabalhando: não fazer nada. Senão atualizar o batimento e continuar pela primeira fase
    não concluída.
@@ -66,4 +66,4 @@ mensagens de commit em inglês com as linhas de atribuição; nunca `git add -A`
    (`Super Bomberman 5 (USA).sfc`, `Super Bomberman 4 (Japan).sfc`). Copiar para fora do Git
    (`.bootstrap/`) via ponte do dispositivo quando precisar rodar.
 5. Ao terminar tudo, escrever `STATUS: DONE` no diário e desativar as tarefas agendadas
-   "SB5 v1.2.0 — retomar".
+   "SB5 v2.0.0 — retomar".
