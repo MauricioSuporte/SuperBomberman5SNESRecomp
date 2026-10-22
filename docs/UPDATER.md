@@ -23,7 +23,10 @@ apagadas ao começar (desde a v2.0.2). Não baixa ROM nem dados do jogo. Recusa 
 Launcher (`installed-build.txt`: atualize pelo Quiver). `--check` só informa (`0` atualizado, `10` há
 atualização, `1` sem conexão). Registro em `updater.log`.
 
-O netplay exige a mesma versão em todos os jogadores, por isso o launcher lembra de atualizar.
+O netplay exige a mesma versão em todos os jogadores. Desde a v2.0.3 o launcher mostra a versão instalada no
+cabeçalho e roda `--check` em segundo plano ao abrir: com versão nova, avisa acima do botão, explica nas telas de
+Netplay por que as salas dos outros não aparecem e desativa o **Host Lobby** até atualizar
+(`SB5_NO_UPDATE_CHECK=1` desliga a consulta).
 
 **Validação:** teste nativo (`updater_tests`: JSON da release, versões, `SHA256SUMS`, arquivos do jogador) e
 atualização real no Linux de um AppImage falso para a v1.1.2 publicada, com checksum conferido. A extração
@@ -38,6 +41,8 @@ touching ROMs, `rom.cfg`, config, saves, `build/`, generated sources or the Mods
 replaces the AppImage (AppRun carries `rom.cfg`, config, saves and the Mods selection into the new
 version folder). The launcher then asks for one **Generate & rebuild**. Its temporary files (`sb5-update-*` in the temp folder) are deleted when it finishes, and leftovers of
 earlier runs when it starts (since v2.0.2). It never downloads a ROM, refuses
-Git checkouts and defers to Quiver Launcher installs. Netplay needs the same version on every player.
+Git checkouts and defers to Quiver Launcher installs. Netplay needs the same version on every player; since v2.0.3 the launcher shows the installed version, checks
+GitHub in the background (`--check`), warns when a newer release exists and disables Host Lobby until you update
+(`SB5_NO_UPDATE_CHECK=1` turns the check off).
 Validated by a native test and a real Linux AppImage update; the Windows extraction is built in CI but not
 yet run on a real install.

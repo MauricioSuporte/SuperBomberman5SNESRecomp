@@ -1,5 +1,15 @@
 # Super Bomberman 5: estado do protótipo
 
+## v2.0.3 — 2026-10-22
+
+- Launcher header shows the installed version (`VERSION`, else the build's lobby version). On start a background
+  thread runs `updater --check` (hidden, no install): with a newer release it says so above the Update button,
+  shows a warning on the Netplay pages (rooms only match the same version) and disables Host Lobby (recomp-ui
+  fork `829e48a`: `GameInfo.game_version_label` / `netplay_notice`). Evidence: Linux Xvfb launcher with VERSION
+  2.0.1 against the published v2.0.2 showed "v2.0.1" in the header, the update note and the Netplay warning.
+  Not exercised: the disabled Host Lobby button (needs a signed-in lobby page) and the Windows check process.
+- Discord announcements carry only the new version's changes (`release-notes.py --whats-new`).
+
 ## v2.0.2 — 2026-10-22
 
 - Online netplay rooms have five seats. The maintainer's v2.0.1 lobby showed "1 / 4 seated": the framework

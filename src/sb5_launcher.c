@@ -18,7 +18,9 @@
 #include <windows.h>
 #define SB5_UPDATER_NAME "SuperBomberman5Updater.exe"
 #else
+#include <pthread.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #define SB5_UPDATER_NAME "SuperBomberman5Updater"
 #endif
@@ -174,25 +176,194 @@ static int quiver_action(char *msg, size_t cap) {
 }
 #endif
 
+/* ---- version label and update check ------------------------------------ */
+
+/* Read every frame by the launcher (GameInfo pointers), filled here and by
+ * the background check. Each write is a whole short string into a buffer
+ * that is never freed; a frame that reads mid-write shows one stale line. */
+static char g_version_label[48];
+static char g_action_note[320];
+static char g_netplay_notice[320];
+static char g_local_version[32];
+static char g_check_updater[2100];
+static char g_check_root[2048];
+
+static void read_local_version(const char *root) {
+    char path[2100];
+    FILE *f;
+    g_local_version[0] = 0;
+    snprintf(path, sizeof(path), "%s/VERSION", root);
+    f = fopen(path, "rb");
+    if (f) {
+        if (fgets(g_local_version, sizeof(g_local_version), f))
+            g_local_version[strcspn(g_local_version, "\r\n ")] = 0;
+        fclose(f);
+    }
+}
+
+/* Runs `updater --check` (no window, no install) and parses its
+ * "local=<v>\nlatest=v<x>" answer; exit code 10 means a newer release. */
+static int run_update_check(char *latest, size_t cap) {
+    char out[512];
+    size_t used = 0;
+    int code = -1;
+    latest[0] = 0;
+    out[0] = 0;
+#if defined(_WIN32)
+    {
+        SECURITY_ATTRIBUTES sa = {sizeof(sa), NULL, TRUE};
+        HANDLE rd = NULL, wr = NULL;
+        STARTUPINFOA si;
+        PROCESS_INFORMATION pi;
+        char cmd[4400];
+        DWORD got, exit_code = 1;
+        if (!CreatePipe(&rd, &wr, &sa, 0)) return -1;
+        SetHandleInformation(rd, HANDLE_FLAG_INHERIT, 0);
+        memset(&si, 0, sizeof(si));
+        si.cb = sizeof(si);
+        si.dwFlags = STARTF_USESTDHANDLES;
+        si.hStdOutput = wr;
+        si.hStdError = wr;
+        si.hStdInput = NULL;
+        snprintf(cmd, sizeof(cmd), "\"%s\" --check --dir \"%s\"", g_check_updater, g_check_root);
+        if (!CreateProcessA(NULL, cmd, NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
+            CloseHandle(rd);
+            CloseHandle(wr);
+            return -1;
+        }
+        CloseHandle(wr);
+        while (used + 1 < sizeof(out) &&
+               ReadFile(rd, out + used, (DWORD)(sizeof(out) - 1 - used), &got, NULL) && got)
+            used += got;
+        out[used] = 0;
+        CloseHandle(rd);
+        WaitForSingleObject(pi.hProcess, 60000);
+        GetExitCodeProcess(pi.hProcess, &exit_code);
+        CloseHandle(pi.hThread);
+        CloseHandle(pi.hProcess);
+        code = (int)exit_code;
+    }
+#else
+    {
+        int fds[2], status = 0;
+        pid_t child;
+        ssize_t got;
+        if (pipe(fds) != 0) return -1;
+        child = fork();
+        if (child < 0) { close(fds[0]); close(fds[1]); return -1; }
+        if (child == 0) {
+            dup2(fds[1], 1);
+            dup2(fds[1], 2);
+            close(fds[0]);
+            close(fds[1]);
+            execl(g_check_updater, g_check_updater, "--check", "--dir", g_check_root, (char *)NULL);
+            _exit(127);
+        }
+        close(fds[1]);
+        while (used + 1 < sizeof(out) && (got = read(fds[0], out + used, sizeof(out) - 1 - used)) > 0)
+            used += (size_t)got;
+        out[used] = 0;
+        close(fds[0]);
+        if (waitpid(child, &status, 0) == child && WIFEXITED(status)) code = WEXITSTATUS(status);
+    }
+#endif
+    {
+        const char *p = strstr(out, "latest=");
+        if (p) {
+            p += 7;
+            if (*p == 'v' || *p == 'V') ++p;
+            snprintf(latest, cap, "%.*s", (int)strcspn(p, "\r\n "), p);
+        }
+    }
+    return code;
+}
+
+static void apply_check_result(int code, const char *latest) {
+    const char *v = g_local_version[0] ? g_local_version : "?";
+    if (code == 10 && latest[0]) {
+        snprintf(g_action_note, sizeof(g_action_note),
+                 "Installed: v%s. New version v%s is available! Update to play online "
+                 "(online rooms only match players on the same version).", v, latest);
+        snprintf(g_netplay_notice, sizeof(g_netplay_notice),
+                 "You have v%s, but v%s is out: online players are on the new version, so their "
+                 "rooms do not appear here and yours would not appear to them. Hosting is disabled "
+                 "until you update (main page: Update game / Atualizar jogo).", v, latest);
+    } else if (code == 0) {
+        snprintf(g_action_note, sizeof(g_action_note),
+                 "Installed: v%s (up to date). Online play needs the same version on every player.", v);
+    } else {
+        snprintf(g_action_note, sizeof(g_action_note),
+                 "Installed: v%s. Could not check for updates. Online play needs the same version on "
+                 "every player.", v);
+    }
+}
+
+#if defined(_WIN32)
+static DWORD WINAPI update_check_thread(LPVOID arg) {
+#else
+static void *update_check_thread(void *arg) {
+#endif
+    char latest[64];
+    int code;
+    (void)arg;
+    code = run_update_check(latest, sizeof(latest));
+    apply_check_result(code, latest);
+#if defined(_WIN32)
+    return 0;
+#else
+    return NULL;
+#endif
+}
+
+static void start_update_check(void) {
+    if (getenv("SB5_NO_UPDATE_CHECK")) return;
+#if defined(_WIN32)
+    {
+        HANDLE t = CreateThread(NULL, 0, update_check_thread, NULL, 0, NULL);
+        if (t) CloseHandle(t);
+    }
+#else
+    {
+        pthread_t t;
+        if (pthread_create(&t, NULL, update_check_thread, NULL) == 0) pthread_detach(t);
+    }
+#endif
+}
+
 void Sb5ConfigureLauncher(struct RecompLauncherCGameInfo *gi) {
 #if defined(RECOMP_LAUNCHER) && defined(RECOMP_LAUNCHER_HAS_GAME_LINKS)
     char updater[2100], root[2048];
+    const int have_updater = Sb5FindUpdater(updater, sizeof(updater), root, sizeof(root));
     gi->game_links = kLinks;
     gi->num_game_links = (int)(sizeof(kLinks) / sizeof(kLinks[0]));
-    if (Sb5FindUpdater(updater, sizeof(updater), root, sizeof(root))) {
+    if (have_updater) read_local_version(root);
+#if defined(SNES_GAME_VERSION)
+    if (!g_local_version[0]) snprintf(g_local_version, sizeof(g_local_version), "%s", SNES_GAME_VERSION);
+#endif
+#if defined(RECOMP_LAUNCHER_HAS_NETPLAY_NOTICE)
+    if (g_local_version[0]) {
+        snprintf(g_version_label, sizeof(g_version_label), "v%s", g_local_version);
+        gi->game_version_label = g_version_label;
+    }
+    gi->netplay_notice = g_netplay_notice;
+#endif
+    if (have_updater) {
         char quiver[2100];
         snprintf(quiver, sizeof(quiver), "%s/installed-build.txt", root);
         if (is_file(quiver)) {
             /* Quiver Launcher owns this install's updates. */
             gi->game_action_label = "Update with Quiver Launcher";
-            gi->game_action_note = "Installed by Quiver Launcher: update it there. Online play needs the newest "
-                                   "version on every player.";
             gi->game_action = quiver_action;
         } else {
             gi->game_action_label = "Update game / Atualizar jogo";
-            gi->game_action_note = "Online play needs the newest version on every player.";
             gi->game_action = update_action;
         }
+        snprintf(g_action_note, sizeof(g_action_note),
+                 "Installed: v%s. Checking for updates...", g_local_version[0] ? g_local_version : "?");
+        gi->game_action_note = g_action_note;
+        snprintf(g_check_updater, sizeof(g_check_updater), "%s", updater);
+        snprintf(g_check_root, sizeof(g_check_root), "%s", root);
+        start_update_check();
     }
 #else
     (void)gi;

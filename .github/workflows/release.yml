@@ -6,7 +6,7 @@ on:
       version:
         description: 'Version matching VERSION (without v)'
         type: string
-        default: '2.0.2'
+        default: '2.0.3'
       publish_release:
         description: 'Publish audited Linux AppImage and Windows ZIP'
         type: boolean
@@ -204,5 +204,6 @@ jobs:
           RELEASE_VERSION: ${{ inputs.version }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_PATCH_NOTES_WEBHOOK }}
         run: |
-          python3 tools/discord-release-post.py --version "${RELEASE_VERSION}" --notes dist/notes.md \
+          python3 tools/release-notes.py --whats-new --output dist/whats-new.md
+          python3 tools/discord-release-post.py --version "${RELEASE_VERSION}" --notes dist/whats-new.md \
             --url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/tag/v${RELEASE_VERSION}"

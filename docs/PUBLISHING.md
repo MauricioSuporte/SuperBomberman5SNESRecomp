@@ -63,7 +63,7 @@ Generate bilingual notes with `python tools/release-notes.py --output .bootstrap
 
 Verify the default branch, tag target, successful workflow, release state (not prerelease, latest), UTF-8 notes, asset sizes and SHA-256 digests. SHA256SUMS covers both public packages; FILE_SHA256SUMS covers the setup payload. GitHub also exposes each uploaded asset digest. Check remote state before retrying an API failure to avoid duplicates.
 
-The Release workflow then announces the release in the Discord #patch-notes channel (`tools/discord-release-post.py`, link + English/Português notes as embeds). The webhook URL is only in the Actions secret `DISCORD_PATCH_NOTES_WEBHOOK`; never commit or print it. Without the secret the step is skipped.
+The Release workflow then announces the release in the Discord #patch-notes channel (`tools/discord-release-post.py`, link + only this version's changes from `tools/release-notes.py --whats-new`, English/Português embeds). The webhook URL is only in the Actions secret `DISCORD_PATCH_NOTES_WEBHOOK`; never commit or print it. Without the secret the step is skipped.
 
 ## Português
 

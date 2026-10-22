@@ -6,6 +6,7 @@ import sys
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--output', type=Path)
 parser.add_argument('--version', help='Version for correcting an existing release without changing VERSION.')
+parser.add_argument('--whats-new', action='store_true', help='Only what changed in this version (Discord #patch-notes).')
 args = parser.parse_args()
 
 version = args.version or (Path(__file__).resolve().parents[1] / 'VERSION').read_text().strip()
@@ -1270,6 +1271,45 @@ if version in ('2.0.1', '2.0.2'):
     if version == '2.0.2':
         fix_pt = '''**Novo na v2.0.2:** as salas do netplay online agora têm **cinco assentos**, um para cada jogador do Super Bomberman 5 (antes paravam em quatro). Todos precisam da v2.0.2. Salas LAN / IP direto continuam com dois assentos. Ao entrar numa sala online, seus mods passam a ser os do anfitrião automaticamente (antes a sala fechava quando eram diferentes com muitos mods ligados); com Bomber Kings ainda é preciso a sua própria ROM do Super Bomberman 4. Partidas com mais de dois peers ainda não foram jogadas. O atualizador agora apaga os arquivos temporários (download e pacote extraído) ao terminar, além de sobras de execuções antigas.\n\n''' + fix_pt.replace('**Correção na v2.0.1:**', '**Também incluído (v2.0.1):**')
     notes = notes.replace('## English\n\n', '## English\n\n' + fix_en, 1).replace('## Português\n\n', '## Português\n\n' + fix_pt, 1)
+
+# From v2.0.3 on, each version lists only what is new in it. The full notes add
+# the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
+WHATS_NEW = {
+    '2.0.3': (
+'''- **Version in the launcher:** the header shows the installed version (for example "v2.0.3").
+- **Update check:** on start the launcher asks GitHub for the newest release. When there is one, it says so above **Update game / Atualizar jogo**, explains on the Netplay pages why other players' rooms are missing (rooms only match the same version) and disables **Host Lobby** until you update.''',
+'''- **Versão no launcher:** o cabeçalho mostra a versão instalada (por exemplo "v2.0.3").
+- **Aviso de atualização:** ao abrir, o launcher consulta o GitHub. Se houver versão nova, avisa acima de **Update game / Atualizar jogo**, explica nas telas de Netplay por que as salas dos outros não aparecem (as salas só juntam a mesma versão) e desativa o **Host Lobby** até você atualizar.'''),
+}
+
+if version in WHATS_NEW:
+    en, pt = WHATS_NEW[version]
+    if args.whats_new:
+        notes = f'''# Super Bomberman 5 v{version}
+
+## English
+
+{en}
+
+## Português
+
+{pt}
+'''
+    else:
+        notes = f'''# Super Bomberman 5 v{version}
+
+## English
+
+{en}
+
+Update with **Update game / Atualizar jogo** in the launcher (or download the Windows x64 ZIP / Linux x86_64 AppImage and verify SHA256SUMS), then run **Generate & rebuild** once with your own Super Bomberman 5 (USA) ROM. Every online player needs this version. Partial recompilation; see docs/STATUS.md for validation limits. Downloads contain no ROM, generated game code, extracted assets or saves.
+
+## Português
+
+{pt}
+
+Atualize com **Update game / Atualizar jogo** no launcher (ou baixe o ZIP Windows x64 / AppImage Linux x86_64 e confira o SHA256SUMS) e faça **Generate & rebuild** uma vez com sua ROM do Super Bomberman 5 (USA). Todos os jogadores online precisam desta versão. Recompilação parcial; limites de validação em docs/STATUS.md. Os downloads não trazem ROM, código gerado do jogo, assets extraídos nem saves.
+'''
 
 if args.output:
     args.output.parent.mkdir(parents=True, exist_ok=True)
