@@ -37,6 +37,17 @@ void Sb5ForceDelaySync(void) {
      * frames; with this LLE port two loopback peers forked (PPU/VRAM) after
      * forced mispredicts, while delay-sync stayed byte-identical through
      * Battle with every mod on. An explicit SNES_NET_MODE still wins. */
+    /* Host-authoritative delay-sync: the host never waits for anyone and
+     * sends each frame's inputs to the guests, who lag by their latency
+     * instead of slowing the match (3+ player internet matches ran at
+     * ~28 fps in plain lockstep). Every SB5 peer sets it. */
+    if (!getenv("SNES_NET_HOST_AUTHORITY")) {
+#if defined(_WIN32)
+        _putenv_s("SNES_NET_HOST_AUTHORITY", "1");
+#else
+        setenv("SNES_NET_HOST_AUTHORITY", "1", 0);
+#endif
+    }
     if (getenv("SNES_NET_MODE")) return;
 #if defined(_WIN32)
     _putenv_s("SNES_NET_MODE", "delay");
