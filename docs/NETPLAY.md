@@ -38,6 +38,43 @@ para cada jogador do multitap (desde a v2.0.2; antes o framework limitava a quat
 Partidas começam do boot frio. Save states, rewind e pausa local ficam desligados online (regras do
 framework); o menu de estados sincronizado do anfitrião é **Select+R**.
 
+### Chat no jogo
+
+Desde a v2.1.0 o chat da sala do launcher continua funcionando dentro do jogo durante uma partida online:
+
+- As mensagens aparecem no **canto inferior esquerdo** da janela, a mais nova embaixo e as antigas subindo.
+  Cada mensagem nova fica visível por **5 segundos** e some com um fade curto.
+- **T** abre a barra de texto e mostra todo o histórico que couber na tela (inclusive o que foi dito na sala
+  antes da partida). **Enter** envia e fecha; Enter com a barra vazia ou **Esc** só fecham (com o chat aberto,
+  Esc não sai da partida). Acentos usam a entrada de texto do sistema.
+- Fonte Lato Bold (a do launcher) com fundo preto translúcido; o nome de quem escreveu aparece em cor
+  (o seu em dourado), mensagens da sala (entrou/saiu) em verde. Jogadores ignorados no launcher ficam ocultos.
+- Enquanto a barra está aberta, e depois até você soltar as teclas, o **teclado** manda controle neutro para a
+  partida (o Enter não vira Start); um **controle** continua jogando. Isso é entrada normal da rede: não dessincroniza.
+- O chat é desenhado na resolução da janela, por cima do jogo e do shader, e não entra em save states nem em
+  capturas de tela (F12).
+- **LAN / IP direto:** o socket da sala de espera fecha quando a partida começa, então não há chat durante a
+  partida; enviar mostra "Chat is not available in this match.".
+
+**Nomes sobre os personagens:** o nome de cada jogador na sala aparece em cima do personagem que ele controla,
+em branco com contorno escuro e 75% de opacidade, só enquanto o personagem está em cena (fase rodando, sem pausa) e vivo e é controlado
+por uma pessoa da partida: no Battle os COM não têm nome; no Normal entram só os assentos que estão jogando, nunca os
+rivais dos chefes. Some no instante em que o personagem é atingido e volta quando ele renasce e a fase recomeça.
+Montado num Louie, o nome sobe junto. O nome vem do assento da sala (assento 1 = P1 e assim por
+diante). Se o anfitrião assistir da galeria, os nomes podem ficar deslocados um assento (limitação conhecida).
+
+**Entrar com a partida em andamento:** quem abre o Netplay e entra numa sala cuja partida já começou fica na sala
+de espera do launcher (num assento livre ou na galeria de espectadores, se a sala tiver), conversa no chat da sala, que
+os jogadores veem dentro do jogo, e joga ou assiste a partir da partida seguinte. Desde a v2.1.0, um espectador que
+fecha o jogo não encerra mais a partida dos jogadores (antes, o aviso de saída dele era lido como a saída de um
+jogador). Um jogador que sai continua encerrando a partida para todos, como antes.
+
+Implementação no fork do snesrecomp: `runner/src/desktop/host_chat.c` (estado, layout e rasterização com o
+stb_truetype do recomp-ui) e ganchos em `host_main.c` (teclas, entrada de texto, controle neutro, renderer SDL)
+e `opengl.c` (camada na resolução da janela); nomes em `src/name_tags.c` (jogo) e no fork do recomp-net a correção
+do espectador (`rnet_session.c`). Testes nativos: `ingame_chat_tests`, `name_tags_tests` e o caso de espectador do
+`session_state_test` do recomp-net.
+
 ### Validação (2026-10-22)
 
 - Dois executáveis reais no loopback UDP (`tests/netplay_pair_runtime.py --scene battle --inputs
@@ -49,6 +86,12 @@ framework); o menu de estados sincronizado do anfitrião é **Select+R**.
   `SNESRECOMP_RB_PROBE` ainda acusa VRAM diferente em 7 de 207 sondas. Por isso o delay-sync.
 - O login com Discord e a lista de salas foram vistos no launcher (servidor de lobby compartilhado);
   uma partida real pela internet entre duas máquinas **não** foi feita.
+
+Chat no jogo (2026-10-22): `ingame_chat_tests` (histórico × mensagens novas, 5 s + fade, ignorados, digitação
+UTF-8, Enter/Esc, limite de 255 bytes, rasterização 1920×1080 e 1280×720) passou com AddressSanitizer/UBSan
+(gcc, Linux); `host_main.c`/`opengl.c` compilam com e sem o chat. **Ainda não** foi compilado pelo toolchain
+Windows nem testado numa partida real; não se sabe ainda se o servidor de lobby repassa o chat da sala durante
+a partida (o cliente permite).
 
 Ferramentas: `SNESRECOMP_NET_TEST_INPUT=<semente>` / `SNESRECOMP_NET_TEST_INPUT_SCRIPT=<arquivo>` (fork do
 snesrecomp) dão entradas determinísticas a peers sem janela; `SB5_STATE_TRACE=<período>` imprime o hash da
@@ -65,6 +108,29 @@ host does not run are switched off, also when the host plays without mods (since
 one in the room is undone. The switch is saved as your Mods selection. The
 **Discord: online matches & news** button opens the Super Bomberman 5 server,
 <https://discord.gg/kH54NCDQB4>.
+
+**In-game chat (since v2.1.0):** during an online match the room chat stays in the game, bottom-left of the
+window: newest line at the bottom, older ones moving up, each new line visible for 5 seconds. **T** opens a text
+bar with all the history that fits; **Enter** sends and closes, an empty Enter or **Esc** just closes (Esc does
+not leave the match while typing). Lato Bold on a translucent black background, the sender's name in color
+(yours in gold), room notices in green; players ignored in the launcher stay hidden. While typing (and until the
+keys are released) the keyboard pad sent to the match is neutral; a gamepad keeps playing. Drawn at window
+resolution after the frame and shader, not in save states or F12 screenshots. LAN / Direct IP closes the waiting
+room socket at launch, so there is no chat during a LAN match. Code: snesrecomp fork `runner/src/desktop/host_chat.c`
+plus hooks in `host_main.c` and `opengl.c`; native test `ingame_chat_tests` (ASan/UBSan clean on Linux gcc).
+Not yet built with the Windows toolchain nor tried in a real match; whether the lobby server relays room chat
+during a match is still to be confirmed.
+
+**Name tags (v2.1.0):** each player's room name (white, dark outline, 75% opacity) floats over the bomber they control while it is on the
+field (stage running, not paused), alive and driven by a person in the match: no tags on Battle COMs, on campaign
+seats that are not playing or on boss rival bombers. It disappears the moment the bomber is hit and comes back
+when it respawns and the stage resumes; a Louie rider's tag rises with it. Tags follow the lobby seat
+(seat 1 = P1, ...); with the host watching from the gallery they can be one seat off (known gap).
+
+**Joining a running match (v2.1.0):** someone who enters a room whose match already started waits in the
+launcher's room (free seat or spectator gallery), chats with the players (who see it in game) and plays or watches
+from the next match. A spectator closing the game no longer ends the players' match (its BYE used to be read as a
+player leaving, recomp-net fork `rnet_session.c`); a player leaving still ends it for everyone.
 
 Since v2.0.7 the host is authoritative: it never waits, uses each guest's newest input every frame and sends
 the resolved inputs to everyone, so latency shows up as input lag for distant players instead of frame drops.

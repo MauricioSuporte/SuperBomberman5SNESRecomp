@@ -256,6 +256,14 @@ File 1 (A = keyboard X) → Start on Zone 1 map.
 | `$C0:0CED`, `ROM[$8086D0+id]` | Native SFX command group 2: menu move/accept/back ids 1/4/3 (commands `$21/$24/$23`). Verified against Battle setup scripts and Windows/LLE CPU-to-APU traces. |
 | SRAM `$30-$6A` | Checksum (16-bit sum of `$32-$6A`) and three 19-byte Normal records at `$32/$45/$58`: 16 flag bytes (stage N → byte N>>3 bit N&7), cleared count, Continue stage, `$6258` |
 
+Netplay name tags (2026-10-22, `src/name_tags.c`): a seat shows its room name when `$0AEE` = 1 (stage live; 0 in
+title, menus, picker and during the stage restart after a lost life), `$1D1D` = 0 (not paused), mode `$1031` is a
+campaign stage (`$0D-$73`, `$1D1A` bit 0 clear) or Battle (`$74+`, bit 0 set), `$17FA+i` != `$FF`, `$15A2+i` bit 7
+clear (set from the explosion frame), and a person drives it: Battle `$6269+i & $7F` = 1 (2 = COM), campaign `$1D25`
+bit i and `$101F+i` = 0. Feet on screen = world − signed scroll; head top ≈ feet − 17, Louie rider 8 higher.
+Verified by Battle (2 humans + 3 COM) and Zone 1-1 dumps, an own-bomb death/respawn route (Linux LLE) and loopback
+netplay logs.
+
 When you identify a new address, document it here (and optionally name it in
 `src/variables.h`), with how it was verified.
 

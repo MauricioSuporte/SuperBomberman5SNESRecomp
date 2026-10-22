@@ -53,6 +53,7 @@ add_executable(SuperBomberman5SNESRecomp
     # Register infinite-time cleanup before coop; its hook wraps the coop hook.
     # Hook reset callbacks follow this order, opposite to frame installation.
     src/portal_labels_mod.c
+    src/name_tags.c
     src/normal_hud_mod.c
     src/louie_mod.c
     src/gold_battle_mod.c
@@ -115,6 +116,17 @@ if(BUILD_TESTING)
     target_include_directories(normal_character_tests PRIVATE
         "${SNESRECOMP_ROOT}/runner/src")
     add_test(NAME normal_character_selection COMMAND normal_character_tests)
+    add_executable(name_tags_tests tests/name_tags_tests.c)
+    target_include_directories(name_tags_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src")
+    add_test(NAME netplay_name_tags COMMAND name_tags_tests)
+    add_executable(ingame_chat_tests tests/ingame_chat_tests.c)
+    target_include_directories(ingame_chat_tests PRIVATE
+        "${SNESRECOMP_ROOT}/runner/src" "${CMAKE_SOURCE_DIR}/recomp-ui/src")
+    if(UNIX)
+        target_link_libraries(ingame_chat_tests PRIVATE m)
+    endif()
+    add_test(NAME ingame_chat COMMAND ingame_chat_tests
+        "${CMAKE_SOURCE_DIR}/recomp-ui/assets/common/fonts/LatoLatin-Bold.ttf")
     add_executable(portal_labels_tests tests/portal_labels_tests.c)
     target_include_directories(portal_labels_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src")
     add_test(NAME normal_portal_labels COMMAND portal_labels_tests)

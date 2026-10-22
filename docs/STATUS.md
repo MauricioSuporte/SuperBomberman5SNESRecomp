@@ -1,5 +1,46 @@
 # Super Bomberman 5: estado do protótipo
 
+## v2.1.0 — 2026-10-22: in-game chat, name tags, spectators
+
+- snesrecomp fork: new `runner/src/desktop/host_chat.c/.h` (SDL/GL-free state, layout, stb_truetype raster from
+  recomp-ui's vendored `imstb_truetype.h`, Lato Bold from `assets/fonts`), compiled by `snesrecomp_enable_recomp_net`
+  when recomp-ui is present (`SNES_HOST_HAS_INGAME_CHAT`). `host_main.c`: T opens the bar during a netplay match,
+  text input via `SDL_StartTextInput`, Enter/Esc/Backspace consumed, keyboard pad neutral in `netplay_capture_pad`
+  while typing and until keys are released, SDL renderer draws the overlay after the frame; `opengl.c`:
+  `snesrecomp_opengl_set_window_overlay` draws it at drawable resolution after the GLSL shader and after the
+  screenshot readback. Source: the launcher backend's `chat_send/chat_count/chat_get` (same ring as the lobby
+  panel; `np_pump_session` pumps the lobby WebSocket every match frame), ignore list via `recomp_moderation`.
+- Evidence: `ingame_chat_tests` (game repo) passes under gcc ASan/UBSan on Linux; `host_main.c` and `opengl.c`
+  pass `-fsyntax-only -Wall` with and without the chat defines against the toolchain's SDL3 headers; a rendered
+  1920×1080 preview matched the requested layout. Not built with the Windows Clang toolchain, not run in a
+  real online match. Open: server-side relay of room chat during a match (client allows it: `in_lobby` survives
+  `launch`); LAN/Direct IP has no in-match chat (waiting-room socket closes at launch); emoji draw as `?`.
+- Linux build of the game (container, gcc, SDL3 static, LLE) compiled every changed file and passed all 19 ctest
+  cases (18 after the name tags). Linking caught a missing `libm` for `ingame_chat_tests` on Linux (fixed in CMakeLists).
+- Name tags (`src/name_tags.c`): guards and position verified on real dumps of Battle (2 humans + 3 COM: `$6269`
+  1/2, `$15A2` `0x19`/`0x1a`, scroll -16/-28) and Zone 1-1 (`$1D25` = 1, `$17FA+i` = `$FF` for absent seats); menus,
+  title and picker have `$0AEE` = 0; pause sets `$1D1D`. Screen = world (`$182A/$1842`, `$1872/$188A`) − signed
+  scroll; head top ≈ feet − 17. A rendered 4x preview over the dumped frames put each tag above its bomber.
+  `name_tags_tests` covers Battle/COM, death, pause, Louie, campaign mask, boss rivals and off-screen. Two real
+  executables in LAN loopback (`SNESRECOMP_NET_TEST_NAMES`, Battle route, 7,600 frames): both peers logged the tags
+  shown at Battle start and hidden after the seats died, with 251 identical WRAM samples. The harness's frame-count
+  assertion failed on this 2-CPU container for the guest (51 frames behind the host-authoritative host); the
+  unmodified harness without the feature failed the same way (5,620/7,600), so it is the machine, not a regression.
+- Death/respawn (Linux LLE, Zone 1-1 route, P1 drops a bomb with `a` and stays on it, dumps every 15-20 frames):
+  tag shown while alive (`$15A2` = `01`); hidden from the explosion frame (`$15A2` = `81`, object still `08`) through
+  the object's removal (`$17FA` = `FF`), the life charge (`$1D23` 3 → 2) and the stage restart (`$0AEE` = 0, the
+  new object `08` already exists with status `05`); shown again once `$0AEE` = 1 (status `05`, then `01`). A
+  composed preview of four of those frames matches. Battle deaths hide it too (pair run above); Battle has no
+  respawn. Tag bitmaps are 75% opaque (alpha 191, checked by `ingame_chat_tests`, which also checks the viewport
+  mapping and that moving a tag reuses its bitmap). Both tests pass under gcc ASan/UBSan.
+- Spectators: the lobby server (`RetroPortingToolKit/recomp-net-server`, `handle_join`/`seat_joiner_locked`) seats a
+  joiner in a started room (free seat or gallery) and never sends the match state to clients, so a mid-match joiner
+  stays in the room and chats. Client bug fixed in the recomp-net fork: any BYE set `peer_gone`, so a spectator
+  quitting ended the match. New `session_state_test` case fails on the old code and passes on the new one; the
+  pre-existing "4-seat liveness" timing case fails on this container with and without the change;
+  `session_state_multipeer_test`, `session_host_authority_test`, `lobby_client_test` pass. Not run with a real
+  relayed spectator.
+
 ## v2.0.8 — 2026-10-22
 
 - Netplay mod agreement (recomp-ui fork `recomp_netplay_host.c`): guests adopt the host's effective mod set in the lobby

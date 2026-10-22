@@ -1,10 +1,10 @@
 # Versions and publication / Versões e publicação
 
-Public repository: `MauricioSuporte/SuperBomberman5SNESRecomp`. VERSION is **2.0.0**. Since v1.0.1 releases are full (non-prerelease) releases, marked latest: the maintainer completed the campaign on Windows. Keep describing the partial recompilation and the unqualified areas. Preserve existing published tags and assets.
+Public repository: `MauricioSuporte/SuperBomberman5SNESRecomp`. VERSION is **2.1.0**. Since v1.0.1 releases are full (non-prerelease) releases, marked latest: the maintainer completed the campaign on Windows. Keep describing the partial recompilation and the unqualified areas. Preserve existing published tags and assets.
 
 ## Release contents
 
-Publish **superbomberman5-2.0.0-windows-x64.zip**, **superbomberman5-2.0.0-linux-x86_64.AppImage** and **SHA256SUMS**. Both are ROM-independent setup hosts with source, native analyzer, launcher resources, licenses, the updater (`updater/SuperBomberman5Updater[.exe]`, built from `src/updater/` and added by `tools/finalize-release.py --updater` / `tools/package-appimage.py`) and fourteen optional, default-disabled mods: PT-BR menus and completion screens, Normal character selection, Normal HUD faces, L/R colors, infinite Normal timer and infinite lives (Cheats group), five-player Normal Game, its optional corner-spawn layout, Super Bomberman 5 Extra Characters (Honey, Kotetsu, Subordinate Bomber and Emperor Terrorin; replaces the separate Honey and Kotetsu and Subordinate Bomber packages since v0.13.0), Pause — exit & draw, Normal portal destinations, Gold Battle, Louie improvements and Bomber Kings. Extra Characters renders Terrorin's barrier sound at runtime from the player's own SB5 ROM in a private APU; no audio is stored. Black Louie uses native cartridge sound effects; no external WAVs are included. Former audio hashes are grandfathered for auditing historical commits only, never current source or new packages. Bomber Kings reads Super Bomberman 4 graphics, palettes and sound driver at runtime from the player's own SB4 ROM (selected on the Mods page, SHA-256 checked); no SB4 data is in the repository or the packages — audit for it. The playable executable is generated only on the player's machine. Linux is experimental; see STATUS.md for exact evidence.
+Publish **superbomberman5-2.1.0-windows-x64.zip**, **superbomberman5-2.1.0-linux-x86_64.AppImage** and **SHA256SUMS**. Both are ROM-independent setup hosts with source, native analyzer, launcher resources, licenses, the updater (`updater/SuperBomberman5Updater[.exe]`, built from `src/updater/` and added by `tools/finalize-release.py --updater` / `tools/package-appimage.py`) and fourteen optional, default-disabled mods: PT-BR menus and completion screens, Normal character selection, Normal HUD faces, L/R colors, infinite Normal timer and infinite lives (Cheats group), five-player Normal Game, its optional corner-spawn layout, Super Bomberman 5 Extra Characters (Honey, Kotetsu, Subordinate Bomber and Emperor Terrorin; replaces the separate Honey and Kotetsu and Subordinate Bomber packages since v0.13.0), Pause — exit & draw, Normal portal destinations, Gold Battle, Louie improvements and Bomber Kings. Extra Characters renders Terrorin's barrier sound at runtime from the player's own SB5 ROM in a private APU; no audio is stored. Black Louie uses native cartridge sound effects; no external WAVs are included. Former audio hashes are grandfathered for auditing historical commits only, never current source or new packages. Bomber Kings reads Super Bomberman 4 graphics, palettes and sound driver at runtime from the player's own SB4 ROM (selected on the Mods page, SHA-256 checked); no SB4 data is in the repository or the packages — audit for it. The playable executable is generated only on the player's machine. Linux is experimental; see STATUS.md for exact evidence.
 
 Build from a separate clean checkout with pinned submodules, no src/gen/*.c or recomp/funcs.h, `SNESRECOMP_SETUP_HOST=ON`, `SNESRECOMP_FRAME_IMPL=LLE` and the test input fixture OFF. Never package the development game executable or local ROM/save/capture data.
 
@@ -85,6 +85,10 @@ O Windows v0.13.1 inclui SuperBomberman5Recomp.exe com o ícone atual do “5”
 
 
 ## Netplay, Discord, updater and Quiver (v2.0.0)
+
+Since v2.1.0 the snesrecomp fork carries the in-game room chat and name-tag overlay
+(`runner/src/desktop/host_chat.c`) and the recomp-net fork the spectator-BYE fix; push recomp-net,
+then snesrecomp, then the game gitlink.
 
 Since v2.0.4 the snesrecomp fork also points `lib/recomp-net` at the fork `MauricioSuporte/recomp-net` (branch
 `superbomberman5`: 64 KiB lobby frames). Push recomp-net fork commits before the snesrecomp gitlink.

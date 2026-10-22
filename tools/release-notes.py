@@ -1275,6 +1275,17 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '2.1.0': (
+'''- **Chat inside the match:** during an online match the room's chat stays on screen, bottom-left. New messages show for 5 seconds; press **T** to open the text bar with the recent history, **Enter** to send, **Esc** to cancel. While you type the keyboard does not move your bomber (a gamepad keeps playing). Not available in LAN / Direct IP matches.
+- **Player names over the bombers:** each player's room name floats over the bomber they control while it is on the field and alive: it disappears when the bomber is hit and comes back when it respawns. COMs, players who are out and boss rivals have none.
+- **Join a room while a match is running:** you wait in the room, chat with the players (they read it in game) and play from the next match.
+- **Fix:** a spectator closing the game ended the match for every player. Now only a player leaving ends it.
+- Not yet tried in a real internet match. Every online player needs v2.1.0.''',
+'''- **Chat dentro da partida:** durante uma partida online o chat da sala continua na tela, no canto inferior esquerdo. Mensagens novas aparecem por 5 segundos; aperte **T** para abrir a barra de texto com o histórico recente, **Enter** para enviar e **Esc** para cancelar. Enquanto você digita, o teclado não move o seu personagem (o controle continua jogando). Não funciona em partidas LAN / IP direto.
+- **Nome dos jogadores em cima dos personagens:** o nome de cada jogador na sala aparece em cima do personagem que ele controla, enquanto estiver em cena e vivo: some quando o personagem é atingido e volta quando ele renasce. COMs, jogadores eliminados e rivais dos chefes não têm nome.
+- **Entrar na sala com a partida em andamento:** você espera na sala, conversa com os jogadores (eles leem dentro do jogo) e joga a partir da partida seguinte.
+- **Correção:** um espectador que fechava o jogo encerrava a partida de todos os jogadores. Agora só a saída de um jogador encerra.
+- Ainda não testado numa partida real pela internet. Todos os jogadores online precisam da v2.1.0.'''),
     '2.0.8': (
 '''- **Launcher on older graphics cards:** the launcher crashed right after opening on PCs whose graphics driver has no OpenGL 3.3, such as Intel HD Graphics 2000/3000 (OpenGL 3.1). It now opens with OpenGL 3.0 or newer. On a PC without an OpenGL 3.0 driver (for example Windows' generic "Microsoft Basic Display Adapter"), it shows a message asking to install the graphics card driver instead of crashing.
 - **Same mods for every online player:** when the host played without mods, players who joined kept their own mods on, so the games could differ. Now everyone starts with exactly the host's mods, and the ones the host does not use are switched off. If a player turns a mod back on while waiting in the room, it is switched off again before the match. Every player needs v2.0.8.''',

@@ -49,6 +49,7 @@
 #include "gold_battle_mod.h"
 #include "louie_mod.h"
 #include "normal_hud_mod.h"
+#include "name_tags.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -103,6 +104,7 @@ void GameRunOneFrame(void)
     NormalCoopAfterFrame();
     SelectionColorAfterFrame();
     NormalCharacterFrame();
+    NameTagsAfterFrame(); /* presentation only: host overlay tags */
     StateTrace();
 }
 
