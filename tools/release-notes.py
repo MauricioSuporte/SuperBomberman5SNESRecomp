@@ -1228,7 +1228,7 @@ Instale numa pasta nova e gravável e faça **Generate & rebuild** com sua ROM J
 Verificado no Linux LLE com rotas roteirizadas de cinco assentos (fases da Zona 5 forçadas, ZONE3 - D, seletor e mapa) e testes nativos, e confirmado pelo mantenedor num build Windows. Recompilação parcial, principalmente interpretada; combinações de mods, cinco controles físicos e compatibilidade ampla no Linux não qualificados; sem netplay. Downloads sem ROM, código/executável gerado do jogo, assets extraídos, saves ou capturas brutas.
 '''
 
-if version == '2.0.0':
+if version in ('2.0.0', '2.0.1'):
     notes = f'''# Super Bomberman 5 v{version}
 
 ## English
@@ -1257,6 +1257,15 @@ Vindo da v1.x: baixe o ZIP Windows x64 ou o AppImage Linux x86_64 experimental, 
 
 Recompilação parcial, principalmente interpretada; combinações de mods, cinco controles físicos e compatibilidade ampla no Linux não qualificados. Downloads sem ROM, código/executável gerado do jogo, assets extraídos, saves ou capturas brutas.
 '''
+
+if version == '2.0.1':
+    fix_en = '''**Fix in v2.0.1:** **Generate & rebuild** failed on Windows when the game folder's path had accents (for example OneDrive's "Área de Trabalho"), stopping at "Configure failed … does not appear to contain CMakeLists.txt". The 2.0 framework runs in UTF-8, and the rebuild script wrote the folder name in UTF-8 while the Windows console reads it in its own code page, so the build shortcut under C:\\Users\\Public\\retcomm-builds pointed at a folder that does not exist. The script now uses the console's code page and replaces a broken shortcut left by v2.0.0. Install v2.0.1 (a new folder or over 2.0.0) and run **Generate & rebuild**. Everything below is unchanged from v2.0.0.
+
+'''
+    fix_pt = '''**Correção na v2.0.1:** o **Generate & rebuild** falhava no Windows quando o caminho da pasta do jogo tinha acento (por exemplo a "Área de Trabalho" do OneDrive), parando em "Configure failed … does not appear to contain CMakeLists.txt". O framework da 2.0 roda em UTF-8, e o script de rebuild gravava o nome da pasta em UTF-8 enquanto o console do Windows o lê no próprio code page; o atalho de build em C:\\Users\\Public\\retcomm-builds apontava para uma pasta inexistente. Agora o script usa o code page do console e refaz o atalho quebrado deixado pela v2.0.0. Instale a v2.0.1 (pasta nova ou por cima da 2.0.0) e faça **Generate & rebuild**. O restante é igual à v2.0.0.
+
+'''
+    notes = notes.replace('## English\n\n', '## English\n\n' + fix_en, 1).replace('## Português\n\n', '## Português\n\n' + fix_pt, 1)
 
 if args.output:
     args.output.parent.mkdir(parents=True, exist_ok=True)

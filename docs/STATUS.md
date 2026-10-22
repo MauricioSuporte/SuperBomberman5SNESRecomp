@@ -1,5 +1,18 @@
 # Super Bomberman 5: estado do protótipo
 
+## v2.0.1 — 2026-10-22
+
+- Fix: Windows **Generate & rebuild** in a folder whose path has accents. The maintainer's v2.0.0 install in
+  `OneDrive\Área de Trabalho` stopped at "Configure failed … does not appear to contain CMakeLists.txt": the
+  framework's UTF-8 `activeCodePage` manifest makes `CP_OEMCP` 65001 inside the process, so the rebuild
+  helper wrote the path in UTF-8 while `cmd.exe` read it as CP850, and the junction under
+  `C:\Users\Public\retcomm-builds` pointed at "├ürea de Trabalho". The helper now converts paths to the
+  system OEM code page (registry `Nls\CodePage\OEMCP`, locale fallback) and relinks a junction whose target
+  has no `CMakeLists.txt` (fork snesrecomp `e24e6d6`).
+- Evidence: the failing helper and dangling junction inspected on the maintainer's machine; the fixed source
+  cross-compiles for Windows without warnings and the Release CI builds it. A Windows rebuild from an accented
+  folder with v2.0.1 still needs confirmation on real hardware.
+
 ## v2.0.0 release / Release v2.0.0 - 2026-10-22
 
 New in v2.0.0 (evidence and limits; details in each linked document):
