@@ -162,7 +162,7 @@ int Sb5StartUpdater(char *msg, size_t cap) {
 
 #if defined(RECOMP_LAUNCHER) && defined(RECOMP_LAUNCHER_HAS_GAME_LINKS)
 static const RecompLauncherCGameLink kLinks[] = {
-    {"Discord — Super Bomberman 5 (matches & news)", kSb5DiscordInvite,
+    {"Discord: online matches & news", kSb5DiscordInvite,
      "Find online matches and news about Super Bomberman 5 Recompiled.", 1},
     {"Release notes & downloads (GitHub)", kSb5ReleasesUrl, NULL, 0},
 };
