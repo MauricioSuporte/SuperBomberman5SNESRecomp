@@ -36,6 +36,9 @@ set(SNESRECOMP_ENABLE_MODS ON CACHE BOOL
     "Mod package loader + trusted plugins (required for every title)" FORCE)
 # The first Bomberman release is qualified against LLE composition. Keep the
 # launcher's first-run rebuild on that same path unless explicitly overridden.
+# Online netplay like Mega Man X Recompiled: ICE (libjuice) transport for the
+# shared recomp-net lobby, plus LAN / Direct IP. Must precede the include.
+set(SNESRECOMP_NET_ICE ON CACHE BOOL "Internet netplay transport" FORCE)
 set(SNESRECOMP_FRAME_IMPL "LLE" CACHE STRING
     "Frame compositor validated for this game (LLE; HLE is experimental)")
 include(${SNESRECOMP_ROOT}/runner/runner.cmake)
@@ -236,6 +239,9 @@ include(${RECOMP_UI_ROOT}/recomp_ui.cmake)
 # so this configures cleanly before any art is fetched.
 recomp_target_launcher_ui(SuperBomberman5SNESRecomp CONSOLE snes
     BOXART "${CMAKE_SOURCE_DIR}/launcher_assets/img/boxart.tga")
+# Netplay (rollback, up to five seats on the multitap) after the launcher:
+# the host lobby adapter uses recomp-ui's shared netplay backend.
+snesrecomp_enable_recomp_net(SuperBomberman5SNESRecomp)
 
 # Generate & rebuild from inside the launcher: pick ROM -> recompile locally
 # -> cmake --build -> relaunch. The implementation is the framework's; this
