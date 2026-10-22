@@ -19,9 +19,12 @@ Causes and changes (Linux LLE headless, forced stages, lab-only hooks):
   stays clean over ten 150-frame captures (P3 in slot 7).
 - **Page refill.** With five seats a player's page is refilled while still on
   screen (`$C5:7120`), so the old frame showed the new tiles for one frame.
-  The refill now waits one frame with the object hidden via `$085F`
-  (`$C5:7140` hook); frame-by-frame captures in ZONE1 - 1 and ZONE5 - 1 show
-  one blank frame instead of the garbled one.
+  A refill for different tiles now waits one frame with the object hidden
+  via `$085F` (`$C5:7140` hook). A first version hid the bomber on every
+  step (walking re-requests the chunk already loaded, every frame); requests
+  for the chunk a page already holds now skip the upload. Frame-by-frame
+  P3 walk in ZONE1 - 1: one hidden frame at start, stop and turn, none in
+  30-40 walking frames, no garbled frame.
 - **`$1CBF`.** The 2026-10-17 layout set `$1CBF` = 19, but it is also the
   bomber-slot count read by survivor counts, player-on-cell searches and bomb
   owners, which then included enemies 5-18. `$1CBF` is 5 again; the 28 offset

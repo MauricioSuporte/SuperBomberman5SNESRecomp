@@ -390,6 +390,8 @@ static const uint8_t page_service[]={
     0xbc,0xd6,0x1c,   /* 714E LDY $1CD6,X requesting object         */
     0x20,0x56,0x6b,   /* 7151 JSR $6B56   start animation, dequeue  */
     0x4c,0xee,0x6a,   /* 7154 JMP $6AEE                             */
+    0x20,0x36,0x6b,   /* 7157 JSR $6B36   same tiles already loaded */
+    0x4c,0xee,0x6a,   /* 715A JMP $6AEE                             */
 };
 /* `CPX #$02` bounds of cartridge loops that visit only P1/P2:
  * $C2:0C9F script op $12 (exit warps and floor switches), $C5:6195/$C5:61C6
@@ -621,18 +623,38 @@ static uint8_t pageless_archive[0x30],pageless_set[0x30];
  * pass $C0:146F decrements it and skips odd values); the next frame the page
  * is refilled while the object is not on screen. */
 static uint8_t deferred_refill[0x30];
+/* What each page holds: owner object, archive and half of its last upload
+ * ($C5:6B77). A walking bomber asks again for the chunk it already shows on
+ * every step; that refill rewrote identical tiles, but with the hiding below
+ * the bomber blinked on every step. Such requests now only restart the
+ * animation ($C5:7157: JSR $6B36 without the upload). */
+static uint8_t page_owner[16],page_archive[16],page_half[16];
+static void page_upload(CpuState *cpu,uint32_t pc) {
+    (void)pc;
+    if(!enabled || !installed) return;
+    unsigned x=cpu->X&0xff,page=(g_ram[0x1d11]&0x1f)>>1;
+    if(x>=10 || page>=16) return;
+    /* $C5:6B36 already dequeued the object ($1CD6,X = $FF); Y still holds it. */
+    page_owner[page]=(uint8_t)cpu->Y;page_archive[page]=g_ram[0x1ccc+x];page_half[page]=g_ram[0x1cea+x];
+}
 static void page_service_entry(CpuState *cpu,uint32_t pc) {
     (void)pc;
     if(!enabled || !installed || !campaign() || count<=2) return;
-    unsigned y=cpu->Y&0xff;
-    if(y>=0x60 || (y&1)) return;
+    unsigned y=cpu->Y&0xff,x=cpu->X&0xff;
+    if(y>=0x60 || (y&1) || x>=10) return;
     unsigned pool=g_ram[0x1d10]<16?g_ram[0x1d10]:16;
-    bool owned=false;
+    int owned=-1;
     for(unsigned i=0;i<16;++i) {
         if(g_ram[0x1d00+i]&0x80) return;  /* a free page: stock path */
-        if(i<pool && g_ram[0x1d00+i]==y) owned=true;
+        if(i<pool && g_ram[0x1d00+i]==y) owned=(int)i;
     }
-    if(!owned) return;
+    if(owned<0) return;
+    if(page_owner[owned]==y && page_archive[owned]==g_ram[0x1ccc+x] && page_half[owned]==g_ram[0x1cea+x]) {
+            g_ram[0x1d11]=(uint8_t)(0x60|owned<<1);deferred_refill[y/2]=0;
+        interp_bridge_pre_opcode_redirect(0xc57157);return;
+    }
+    /* New tiles for a page on screen (start or stop walking, a turn): hide
+     * the object for the one frame that would show the old frame with them. */
     if(deferred_refill[y/2]) { deferred_refill[y/2]=0;return; }
     deferred_refill[y/2]=1;
     if(!g_ram[0x85f+y]) g_ram[0x85f+y]=2;
@@ -655,7 +677,7 @@ static void instruction(uint32_t pc,int m,int x) {
     if(previous_hook) previous_hook(pc,m,x);
     if(!campaign() || count<=2) return;
     if(pc==0xc4286f) {
-        memset(pageless_archive,0,sizeof(pageless_archive));memset(deferred_refill,0,sizeof(deferred_refill));
+        memset(pageless_archive,0,sizeof(pageless_archive));memset(deferred_refill,0,sizeof(deferred_refill));memset(page_owner,0xff,sizeof(page_owner));
         if(g_ram[0x1031]==8) {
             preserve_characters=true;
             memcpy(campaign_characters,g_ram+0x16c2,5);memcpy(campaign_palettes,g_ram+0x16da,5);
@@ -735,7 +757,7 @@ static void instruction(uint32_t pc,int m,int x) {
     }
 }
 void NormalCoopReset(void) {
-    memset(pageless_archive,0,sizeof(pageless_archive));memset(deferred_refill,0,sizeof(deferred_refill));memset(pageless_set,0,sizeof(pageless_set));
+    memset(pageless_archive,0,sizeof(pageless_archive));memset(deferred_refill,0,sizeof(deferred_refill));memset(page_owner,0xff,sizeof(page_owner));memset(pageless_set,0,sizeof(pageless_set));
     player_menu=false;
     count=1;previous_pad=0;suppressed_mask=block_start_mask=0;rejoin_pressed=0;
     revive_mask=0;
@@ -787,6 +809,7 @@ void NormalCoopBeforeFrame(void) {
                           interp_bridge_add_pre_opcode_hook(0xc437b0,seat_colors) &&
                           interp_bridge_add_pre_opcode_hook(0xc5714e,page_refused) &&
                           interp_bridge_add_pre_opcode_hook(0xc57140,page_service_entry) &&
+                          interp_bridge_add_pre_opcode_hook(0xc56b77,page_upload) &&
                           interp_bridge_add_pre_opcode_hook(0xc3ff70,enemy_distances_native);
         build_spawn();build_rejoin();
     }

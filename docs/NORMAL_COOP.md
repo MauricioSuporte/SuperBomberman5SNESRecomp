@@ -53,8 +53,8 @@ desenhado. As animações usam cinco páginas de sprites; um alocador próprio
 reaproveita a página do próprio jogador quando não há página livre, então os
 personagens animam e quem volta com Start reaparece com gráficos. Como a página
 é reescrita enquanto ainda está na tela, o personagem fica invisível por um
-único quadro ao começar ou parar de andar (antes aparecia deformado nesse
-quadro). P3, P4 e P5 usam as paletas de sprite 7, 6 e 5 quando estão livres;
+único quadro ao começar, parar ou virar (antes aparecia deformado nesse
+quadro); andando sem parar ele não pisca. P3, P4 e P5 usam as paletas de sprite 7, 6 e 5 quando estão livres;
 os inimigos ficam com as paletas 3 a 5 e objetos grandes da fase (como a torre
 elétrica da ZONE5-1 e seus raios) com as 6 e 7. A cópia de paleta que o jogo
 faz quando algo pisca escrevia um byte além da paleta e, na paleta 7,
@@ -181,9 +181,12 @@ used an enemy's and looked garbled when hatching).
 
 When no page is free, a player's page is refilled while the frame on screen
 still uses it, so the old animation frame showed new tiles for one frame (a
-garbled bomber when starting or stopping a walk). Such a refill now waits one
-frame with the object hidden through the native blink counter (`$085F`), so
-the player is invisible for that single frame instead.
+garbled bomber when starting or stopping a walk). A walking bomber asks again
+for the chunk its page already holds on every step; co-op tracks each page's
+content (`$C5:6B77`) and only restarts the animation for those (`$C5:7157`).
+A request for different tiles (start, stop, turn) waits one frame with the
+object hidden through the native blink counter (`$085F`), so the player is
+invisible for that single frame instead of garbled.
 
 With five seats the five animation pages belong to the players. Objects left
 without a page (Louies and stage effects) are drawn from the cartridge by the
