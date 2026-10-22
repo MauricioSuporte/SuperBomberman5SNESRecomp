@@ -2,7 +2,7 @@
 
 ## v1.1.2 release / Release v1.1.2 - 2026-10-22
 
-v1.1.2 packages the five-player fixes logged below since v1.1.1 (ZONE5 - J palettes, Zone 5 slowdown, ZONE5 - 3 gate, seat colors, walking blink, tower shocks, platforms, lives reset, rejoin with a Louie, ZONE3 - D rival state) and picker Back / world-map repick. Evidence: Linux LLE scripted routes and native tests listed in each entry, plus the maintainer's confirmation on a Windows build; CI builds both platforms before publication.
+v1.1.2 packages the five-player fixes logged below since v1.1.1 (ZONE5 - J palettes, Zone 5 slowdown, ZONE5 - 3 gate, seat colors, walking blink, tower shocks, platforms, lives reset, rejoin with a Louie, ZONE3 - D rival state) and picker Back / world-map repick. Evidence: Linux LLE scripted routes and native tests listed in each entry, plus the maintainer's confirmation on a Windows build; CI builds both platforms before publication. The upstream `continuous` AppImage type2 runtime was republished (old pin no longer downloadable), so the workflow pin moved to SHA-256 `617aa773…ed98a46` (same MIT-licensed project, same URL).
 
 A v1.1.2 traz as correções de cinco jogadores registradas abaixo desde a v1.1.1 e o B no seletor/mapa. O README só muda os links de download.
 
