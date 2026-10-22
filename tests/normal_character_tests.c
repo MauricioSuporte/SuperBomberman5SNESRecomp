@@ -26,6 +26,7 @@ static uint16_t pad;
 static unsigned hook_calls;
 static void other_hook(uint32_t pc,int m,int x) {(void)pc;(void)m;(void)x;++hook_calls;}
 uint16 RtlGetPadState(int slot) { (void)slot;return pad; }
+void RtlSetPadState(int slot,uint16 buttons) { (void)slot;(void)buttons; }
 unsigned NormalCoopPlayerCount(void) {
     unsigned count=0;for(unsigned i=0;i<5;++i) count+=(g_ram[0x1d25]>>i)&1;
     return count?count:1;

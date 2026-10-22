@@ -37,6 +37,13 @@ Causes and changes (Linux LLE headless, forced stages, lab-only hooks):
   → world map → `$35`: P4 `$1782` = 0, no mount, `$101F` clear; ZONE3 - D
   still flags its rivals. P4 still borrows P1's palette in `$35` because all
   eight OBJ slots are in use there (stage id `$31` holds slot 6).
+- **Normal picker Back.** Only P1's B was intercepted; P2-P5's B ran the
+  native picker exit and the suspended file confirmation continued to the
+  world map. Any seat's B now returns to the file menu (native picker never
+  sees B), and B on the world map before any stage reopens the picker from
+  the kept snapshot. Routes (2 seats): P2 confirm + B → file menu; confirm
+  both → map → B → picker → re-pick → map → stage `$0D` with the new
+  choices.
 - **`$1CBF`.** The 2026-10-17 layout set `$1CBF` = 19, but it is also the
   bomber-slot count read by survivor counts, player-on-cell searches and bomb
   owners, which then included enemies 5-18. `$1CBF` is 5 again; the 28 offset

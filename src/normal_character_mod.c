@@ -51,6 +51,12 @@ void NormalCharacterInstallHook(void) {
 static uint8_t *resume;
 static uint32_t resume_size;
 static uint16_t previous_pad;
+static uint16_t previous_seat_pads[5],held_pads[5];
+static uint8_t masked_b;
+/* The file-confirmation snapshot of the last finished picker: B on the world
+ * map, before any stage was played, reopens the picker from it. */
+static uint8_t *repick;
+static uint32_t repick_size;
 
 static uint32_t picker_pc(void) {
     /* Script task 9. These are three parallel arrays, not CPU registers. */
@@ -64,7 +70,9 @@ void NormalCharacterReset(void) {
         g_interp_bridge_pc_hook=previous_hook;
     hook_installed=false;previous_hook=NULL;restarting=false;
     free(resume);resume=NULL;resume_size=0;
+    free(repick);repick=NULL;repick_size=0;
     picking=picker_ready=chosen=loaded=from_continue=false;players=1;previous_pad=0;
+    memset(previous_seat_pads,0,sizeof(previous_seat_pads));masked_b=0;
 }
 static void reset_plugin(void) { NormalCharacterReset();enabled=false; }
 static void activate(void) { enabled=true; }
@@ -73,6 +81,14 @@ SNES_MOD_CONSTRUCTOR(register_normal_characters) {
     snes_mod_register_activation_plugin("superbomberman5.normal.characters",activate);
 }
 
+static void open_picker(void) {
+    players=NormalCoopPlayerCount();
+    picking=true;picker_ready=false;
+    set_picker_pc(0xc689cf);
+    g_ram[0x1031]=4;
+    for(unsigned i=0;i<5;++i) g_ram[0x6269+i]=i<players?1:2;
+    g_ram[0x1038]=0;
+}
 static void finish_picker(bool cancel) {
     uint8_t choices[5],palettes[5],extra_colors[5];
     for(unsigned i=0;i<5;++i)extra_colors[i]=(uint8_t)ExtraCharacterSeatColor(i);
@@ -84,8 +100,9 @@ static void finish_picker(bool cancel) {
     uint8_t *snapshot=resume;uint32_t size=resume_size;
     resume=NULL;resume_size=0;
     bool ok=RtlLoadSnapshotFromMemory(snapshot,size);
-    free(snapshot);
     picking=false;
+    free(repick);repick=NULL;repick_size=0;
+    if(ok && !cancel) { repick=snapshot;repick_size=size; } else free(snapshot);
     if (!ok) return;
     players=count;from_continue=continued;
     if (cancel) {
@@ -131,13 +148,53 @@ static bool confirmed_new_game(void) { return return_stack(0xc70bff,0xc710e6); }
 static bool confirmed_continue(void) { return return_stack(0xc70bea,0xc70e2b); }
 
 void NormalCharacterBeforeFrame(void) {
-    /* Consume Back before the native picker changes its script task. */
-    uint16_t pad=RtlGetPadState(0);
-    if(enabled && picking && picker_pc()==0xc68e68 &&
-       ((pad & ~previous_pad)&0x0001)) finish_picker(true); /* runtime B bit */
+    /* Consume Back before the native picker changes its script task. Any
+     * seat's B returns to the file menu; the native picker never sees it
+     * (its own B left Battle's picker through Battle's exit script, which
+     * with a confirmed seat carried the suspended Normal file confirmation
+     * on to the world map). */
+    masked_b=0;
+    if(enabled && !picking && chosen && repick && g_ram[0x1031]==3 &&
+       picker_pc()>=0xc71370 && picker_pc()<0xc713b0) {
+        /* World map before any stage: B goes back to the character picker
+         * (same seats) instead of the Normal menu. */
+        bool back=false;
+        for(unsigned i=0;i<5;++i) {
+            uint16_t pad=RtlGetPadState((int)i);
+            if(i<players && ((pad & ~previous_seat_pads[i])&0x0001)) back=true;
+            previous_seat_pads[i]=pad;
+        }
+        if(back) {
+            bool continued=from_continue;unsigned count=players;
+            uint8_t *snapshot=repick;uint32_t size=repick_size;
+            repick=NULL;repick_size=0;
+            if(RtlLoadSnapshotFromMemory(snapshot,size)) {
+                from_continue=continued;
+                resume=snapshot;resume_size=size;
+                open_picker();players=count;
+                for(unsigned i=0;i<5;++i) {
+                    uint16_t pad=RtlGetPadState((int)i);
+                    if(pad&0x0001) { held_pads[i]=pad;RtlSetPadState((int)i,(uint16_t)(pad&~0x0001));masked_b|=(uint8_t)(1u<<i); }
+                }
+            } else free(snapshot);
+        }
+        return;
+    }
+    if(enabled && !picking) for(unsigned i=0;i<5;++i) previous_seat_pads[i]=RtlGetPadState((int)i);
+    if(!enabled || !picking) return;
+    bool back=false;
+    for(unsigned i=0;i<5;++i) {
+        uint16_t pad=RtlGetPadState((int)i);
+        if(i<players && picker_pc()==0xc68e68 && ((pad & ~previous_seat_pads[i])&0x0001)) back=true;
+        previous_seat_pads[i]=pad;
+        if(pad&0x0001) { held_pads[i]=pad;RtlSetPadState((int)i,(uint16_t)(pad&~0x0001));masked_b|=(uint8_t)(1u<<i); }
+    }
+    if(back) finish_picker(true);
 }
 
 void NormalCharacterFrame(void) {
+    for(unsigned i=0;i<5;++i) if(masked_b&(1u<<i)) RtlSetPadState((int)i,held_pads[i]);
+    masked_b=0;
     if (!enabled) return;
     uint32_t pc=picker_pc();
     uint16_t pad=RtlGetPadState(0);
@@ -150,6 +207,7 @@ void NormalCharacterFrame(void) {
         if (picker_ready && g_ram[0x1038]>=players) finish_picker(false);
         return;
     }
+    if(repick && g_ram[0x1031]!=3) { free(repick);repick=NULL;repick_size=0; } /* a stage started */
     if (g_ram[0x1031]!=3) {
         /* Game Over and its Continue map keep the current campaign choice. */
         if(g_ram[0x1031]==2){chosen=false;restarting=false;}
@@ -167,12 +225,7 @@ void NormalCharacterFrame(void) {
         internal_snapshot=false;
         if (!size || size>RESUME_CAP) { free(snapshot);return; }
         resume=snapshot;resume_size=(uint32_t)size;
-        players=NormalCoopPlayerCount();
-        picking=true;
-        set_picker_pc(0xc689cf);
-        g_ram[0x1031]=4;
-        for(unsigned i=0;i<5;++i) g_ram[0x6269+i]=i<players?1:2;
-        g_ram[0x1038]=0;
+        open_picker();
     }
 }
 

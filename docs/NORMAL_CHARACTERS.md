@@ -10,7 +10,10 @@ Mod opcional `superbomberman5.normal-characters` v0.1.0, incluído no setup pack
 com `src/normal_character_mod.c`. Em **Mods**, ative **Choose a character in
 Normal Game** e inicie o jogo. Após confirmar o arquivo, tanto em New Game
 quanto em Continue, aparece a seleção original do Battle Mode. Use o direcional e confirme com A (teclado X). B
-(teclado Z) volta à seleção de arquivo. Nos builds atuais de fonte, a volta
+(teclado Z) de qualquer jogador volta à seleção de arquivo, mesmo depois de
+alguém já ter confirmado (antes, o B do P2-P5 seguia direto para o mapa). No
+mapa, antes de jogar alguma fase, B volta ao seletor de personagens com o
+mesmo número de jogadores. Nos builds atuais de fonte, a volta
 reconstrói a lista e permite navegar, reabrir o seletor ou voltar ao menu anterior. A escolha é aplicada aos sprites e à
 paleta do jogador antes do carregamento das fases. A tela funciona também com
 o mod de tradução PT-BR habilitado.
@@ -43,7 +46,11 @@ Optional `superbomberman5.normal-characters` v0.1.0 is included in the v0.3.0 se
 that compile `src/normal_character_mod.c`. Enable **Choose a character in
 Normal Game** in **Mods**, then launch. Confirming a Normal Game file, from
 New Game or Continue, opens the original Battle character picker. Move with the D-pad, confirm with A (keyboard
-X), or return to file selection with B (keyboard Z). The selected character and
+X), or return to file selection with B (keyboard Z) from any seat, also after
+someone confirmed (the native picker's own B, from P2-P5, carried the
+suspended file confirmation on to the world map). On the world map, before
+any stage is played, B reopens the picker with the same seats from the kept
+file-confirmation snapshot. The selected character and
 palette are applied before stage graphics load. The PT-BR menu overlay can be
 enabled alongside this mod.
 
