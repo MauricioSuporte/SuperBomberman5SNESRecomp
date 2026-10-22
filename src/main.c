@@ -27,6 +27,7 @@
 
 #include "host_main.h"
 #include "game_rtl.h"
+#include "sb5_launcher.h"
 #include "snesrecomp_rom_identity.h"  /* generated from rom_identity.txt */
 
 #ifndef __ANDROID__
@@ -56,6 +57,11 @@ static const SnesDesktopHostGame kGameHost = {
     /* Battery-backed SRAM shows the launcher's SAVES panel. Leave NULL for a
      * title without one. The path is exe-relative. */
     .sram_path           = "saves/save.srm",
+    /* Discord / releases links, the Update button and the netplay policy
+     * (delay-sync, Bomber Kings needs each player's own SB4 ROM). */
+    .configure_launcher  = Sb5ConfigureLauncher,
+    .prepare_netplay     = Sb5PrepareNetplay,
+    .netplay_ready       = Sb5NetplayReady,
 };
 
 #ifndef __ANDROID__
@@ -63,5 +69,6 @@ static const SnesDesktopHostGame kGameHost = {
 #endif
 int main(int argc, char **argv)
 {
+    Sb5ForceDelaySync();
     return snesrecomp_desktop_main(&kGameHost, argc, argv);
 }

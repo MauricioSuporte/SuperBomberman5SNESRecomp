@@ -63,6 +63,7 @@ jobs:
           ./build-ci/selection_color_tests.exe
           ./build-ci/infinite_time_tests.exe
           ./build-ci/infinite_lives_tests.exe
+          ./build-ci/updater_tests.exe
           ./build-ci/normal_coop_tests.exe
           ./build-ci/subordinate_tests.exe
           ./build-ci/pause_menu_tests.exe
@@ -81,6 +82,7 @@ jobs:
             --build-dir build-ci \
             --analyzer snesrecomp/recompiler-rs/target/release/snesrecomp-analyze.exe \
             --toolchain "${TOOLCHAIN_DIR}" \
+            --updater build-ci/SuperBomberman5Updater.exe \
             --rust-sysroot "$(rustup run 1.97.1-x86_64-pc-windows-gnullvm rustc --print sysroot)"
           python tools/audit-publication.py --zip "dist/superbomberman5-${RELEASE_VERSION}-windows-x64.zip"
           python tools/release-notes.py --output dist/notes.md

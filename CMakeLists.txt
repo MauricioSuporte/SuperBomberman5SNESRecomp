@@ -69,8 +69,17 @@ add_executable(SuperBomberman5SNESRecomp
     src/sb4_sound.c
     src/sb5_sound.c
     src/special_abilities.c
+    src/sb5_launcher.c
     src/gen_stubs.c
 )
+
+# ROM-independent updater shipped beside the setup host (src/updater/).
+add_executable(SuperBomberman5Updater src/updater/sb5_updater.c ${SNESRECOMP_ROOT}/runner/src/sha256.c)
+target_include_directories(SuperBomberman5Updater PRIVATE ${SNESRECOMP_ROOT}/runner/src)
+if(NOT WIN32)
+    target_compile_definitions(SuperBomberman5Updater PRIVATE _DEFAULT_SOURCE)
+endif()
+add_dependencies(SuperBomberman5SNESRecomp SuperBomberman5Updater)
 
 if(WIN32)
     enable_language(RC)
@@ -127,6 +136,12 @@ if(BUILD_TESTING)
     add_executable(infinite_lives_tests tests/infinite_lives_tests.c)
     target_include_directories(infinite_lives_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src")
     add_test(NAME normal_infinite_lives COMMAND infinite_lives_tests)
+    add_executable(updater_tests tests/updater_tests.c ${SNESRECOMP_ROOT}/runner/src/sha256.c)
+    target_include_directories(updater_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src")
+    if(NOT WIN32)
+        target_compile_definitions(updater_tests PRIVATE _DEFAULT_SOURCE)
+    endif()
+    add_test(NAME updater COMMAND updater_tests)
     add_executable(normal_coop_tests tests/normal_coop_tests.c)
     target_include_directories(normal_coop_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src")
     add_test(NAME normal_five_player_coop COMMAND normal_coop_tests)

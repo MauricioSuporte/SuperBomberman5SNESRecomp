@@ -17,7 +17,7 @@ spec = importlib.util.spec_from_file_location('audit', ROOT / 'tools/audit-publi
 audit = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(audit)
 
-def complete_zip(path, analyzer, cargo_home, rust_sysroot):
+def complete_zip(path, analyzer, cargo_home, rust_sysroot, updater):
     with zipfile.ZipFile(path) as archive:
         roots = {Path(i.filename).parts[0] for i in archive.infolist()}
         if len(roots) != 1:
@@ -26,6 +26,7 @@ def complete_zip(path, analyzer, cargo_home, rust_sysroot):
         entries = {i.filename: (i, archive.read(i)) for i in archive.infolist()
                    if '/docs/assets/games/' not in i.filename and '/test_data/' not in i.filename and '/docs/images/' not in i.filename}
     entries[root + '/snesrecomp/recompiler-rs/target/release/snesrecomp-analyze'] = (None, analyzer.read_bytes())
+    entries[root + '/updater/SuperBomberman5Updater'] = (None, updater.read_bytes())
     lock = tomllib.loads((ROOT / 'snesrecomp/recompiler-rs/Cargo.lock').read_text())
     licensed = set()
     for package in lock['package']:
@@ -60,7 +61,7 @@ def complete_zip(path, analyzer, cargo_home, rust_sysroot):
         for name, (info, data) in entries.items():
             if info is None:
                 info = zipfile.ZipInfo(name)
-                info.external_attr = (0o100755 if name.endswith('/snesrecomp-analyze') else 0o100644) << 16
+                info.external_attr = (0o100755 if name.endswith(('/snesrecomp-analyze', '/SuperBomberman5Updater')) else 0o100644) << 16
             archive.writestr(info, data)
     errors = audit.audit_zip(path)
     if errors:
@@ -75,13 +76,17 @@ def main():
     parser.add_argument('--rust-sysroot', type=Path, required=True)
     parser.add_argument('--appimagetool', type=Path, required=True)
     parser.add_argument('--runtime', type=Path, required=True)
+    parser.add_argument('--updater', type=Path, help='defaults to <build-dir>/SuperBomberman5Updater')
     args = parser.parse_args()
     cache = (args.build_dir/'CMakeCache.txt').read_text()
     if 'SNESRECOMP_SETUP_HOST:BOOL=ON' not in cache or 'SNESRECOMP_FRAME_IMPL:STRING=LLE' not in cache:
         raise ValueError('Requires ROM-independent LLE setup build')
     if list((ROOT/'src/gen').glob('*.c')) or (ROOT/'recomp/funcs.h').exists():
         raise ValueError('Generated game data present')
-    complete_zip(args.zip, args.analyzer, args.cargo_home, args.rust_sysroot)
+    updater = args.updater or args.build_dir/'SuperBomberman5Updater'
+    if not updater.is_file():
+        raise ValueError(f'Missing updater: {updater}')
+    complete_zip(args.zip, args.analyzer, args.cargo_home, args.rust_sysroot, updater)
     version = (ROOT/'VERSION').read_text().strip()
     output = args.zip.parent / f'superbomberman5-{version}-linux-x86_64.AppImage'
     with tempfile.TemporaryDirectory(prefix='sb5-appdir-') as temp:

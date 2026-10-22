@@ -31,6 +31,8 @@ def main() -> None:
     parser.add_argument('--build-dir', type=pathlib.Path, required=True)
     parser.add_argument('--analyzer', type=pathlib.Path, required=True)
     parser.add_argument('--toolchain', type=pathlib.Path, required=True)
+    parser.add_argument('--updater', type=pathlib.Path, required=True,
+                        help='SuperBomberman5Updater.exe from the setup build')
     parser.add_argument('--cargo-home', type=pathlib.Path,
                         default=pathlib.Path(os.environ.get('CARGO_HOME', str(pathlib.Path.home() / '.cargo'))))
     parser.add_argument('--rust-sysroot', type=pathlib.Path, required=True)
@@ -40,7 +42,7 @@ def main() -> None:
         raise SystemExit('Refusing to release a game build: setup host must be ON.')
     if 'SNESRECOMP_FRAME_IMPL:STRING=LLE' not in cache:
         raise SystemExit('The first release requires the validated LLE frame path.')
-    for p in (args.analyzer, args.toolchain / 'bin/libunwind.dll', args.toolchain / 'LICENSE.TXT'):
+    for p in (args.analyzer, args.updater, args.toolchain / 'bin/libunwind.dll', args.toolchain / 'LICENSE.TXT'):
         if not p.is_file():
             raise SystemExit(f'Missing release dependency: {p}')
     lock = tomllib.loads((pathlib.Path(__file__).resolve().parents[1] / 'snesrecomp/recompiler-rs/Cargo.lock').read_text())
@@ -100,6 +102,9 @@ def main() -> None:
         info.compress_type = zipfile.ZIP_DEFLATED
         info.external_attr = item.external_attr
         out.writestr(info, data)
+        # The updater lives in updater/ so the package root keeps exactly one
+        # executable (launchers such as Quiver pick the root .exe).
+        out.write(args.updater, root + '/updater/SuperBomberman5Updater.exe')
         analyzer_dir = root + '/snesrecomp/recompiler-rs/target/release/'
         out.write(args.analyzer, analyzer_dir + 'snesrecomp-analyze.exe')
         out.write(args.toolchain / 'bin/libunwind.dll', analyzer_dir + 'libunwind.dll')
@@ -115,6 +120,7 @@ def main() -> None:
             'frame_implementation': 'LLE', 'contains_game_code': False,
             'analyzer_sha256': hashlib.sha256(args.analyzer.read_bytes()).hexdigest(),
             'toolchain_embedded': False,
+            'updater_sha256': hashlib.sha256(args.updater.read_bytes()).hexdigest(),
             'cargo_license_notices': sorted(found_crates),
             'game_code_generation': 'local, from the player-supplied ROM',
         }

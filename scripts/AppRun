@@ -17,6 +17,19 @@ if [[ ! -f "$DEST/.appimage-ready" ]]; then
   trap 'rm -rf -- "$TEMP"' EXIT
   cp -a "$APPDIR/setup/." "$TEMP/"
   chmod -R u+w "$TEMP"
+  # A newer AppImage (the updater replaces the file) starts a new version
+  # folder: bring the player's own files from the newest earlier one. The game
+  # itself is rebuilt from the ROM by the launcher's Generate & rebuild.
+  PREV="$(ls -1dt "$DATA_ROOT"/*/.appimage-ready 2>/dev/null | head -n 1 || true)"
+  if [[ -n "$PREV" ]]; then
+    PREV="$(dirname "$PREV")"
+    for item in rom.cfg config.ini keybinds.ini saves mods/preloaded/state.toml; do
+      if [[ -e "$PREV/$item" ]]; then
+        mkdir -p "$TEMP/$(dirname "$item")"
+        cp -a "$PREV/$item" "$TEMP/$item"
+      fi
+    done
+  fi
   touch "$TEMP/.appimage-ready"
   mv "$TEMP" "$DEST"
   trap - EXIT
