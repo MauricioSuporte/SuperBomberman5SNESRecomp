@@ -1,6 +1,20 @@
 # Super Bomberman 5: estado do protótipo
 
-## Unreleased — 2026-10-22 (launcher on OpenGL 3.0-3.2 and without OpenGL)
+## v2.0.8 — 2026-10-22
+
+- Netplay mod agreement (recomp-ui fork `recomp_netplay_host.c`): guests adopt the host's effective mod set in the lobby
+  and again right before launch (`cb_fill_launch` → `mod_set_sync_step`), and adoption switches off every feature the
+  host does not run before enabling the host's lines; the game then commits that selection at startup
+  (`host_main.c` → `snes_mod_runtime_commit_c`). Gap found: a host with no mods publishes an empty `mod_set` and an
+  empty plan online, which `room_want_set` read as "nothing to compare", so a guest kept its own mods and the launch
+  gate passed. The empty set now reads as `(none)` and is adopted. Adoption no longer caches successes, so a guest
+  who re-enables a mod in the lobby is realigned instead of refused at Start; only failed sets are cached. A LAN
+  `(plan-too-large)` room holds the launch instead of being adopted as an empty set. Presentation-only features stay
+  per-player only when the host grants them (SB5 grants none). Evidence: `netplay_host_test` (Linux, recomp-net
+  pinned) with three new fake-runtime cases plus all existing cases passing. Not yet verified in a real
+  online/LAN match. Adoption is persisted as the guest's Mods selection (existing behaviour).
+
+### Launcher on OpenGL 3.0-3.2 and without OpenGL
 
 - Player crash report (v2.0.6 setup host, Windows 10.0.26200, i5-2400 / Sandy Bridge, no vendor OpenGL ICD
   loaded, `D3D10Warp.dll` present): access violation reading `0x2C` 720 ms after "launcher: opening GUI".
