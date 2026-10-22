@@ -19,9 +19,21 @@ com Discord e a sincronização são os do framework (snesrecomp + recomp-net + 
 5. O botão **Discord: online matches & news** abre o servidor do Super Bomberman 5 para achar partidas e
    novidades: <https://discord.gg/kH54NCDQB4>.
 
-**Diagnóstico:** `set SNES_NET_DIAG=1` antes de abrir o jogo grava `build\\saves\\netplay\\net_diag.jsonl` (paradas,
-atraso, caminho da conexão); o log de console (`... 2> log.txt`) mostra `delay_sync_starvation` e o FPS ao sair.
+**Diagnóstico:** abra o jogo pelo `tools/netplay-diag.cmd` (copie-o para a pasta do jogo, ao lado de
+`SuperBomberman5Recomp.exe`) ou rode `set SNES_NET_DIAG=1` antes de abrir. Cada partida grava em `saves\netplay\`
+(na pasta do jogo ou em `build\`) um `net_diag_<data>_<hora>_<host|guest>_slot<N>.jsonl` (paradas, atraso, caminho
+da conexão, FPS, quadros lentos, quanto o convidado está atrás do anfitrião) e acrescenta o log do jogo em
+`netplay_log.txt` (`delay_sync_starvation`, `local_slow`, `host_authority backlog`). Anfitrião **e** convidado devem
+mandar a pasta `saves\netplay`; `python tools/netplay-diag-report.py <pastas>` resume tudo.
 O atraso automático (desde a v2.0.6) usa a soma das duas piores latências quando há dois ou mais convidados.
+
+**Convidado atrasado (correção da v2.1.1):** com o anfitrião decidindo, um convidado que
+parava um instante (um pacote perdido esperando reenvio, um quadro lento) nunca recuperava o atraso: cada parada
+somava atraso nos controles, e passando de ~64 quadros (~1 s) ele **congelava para sempre** (tela parada/preta para o
+convidado, personagem dele travado para o anfitrião). Agora o convidado roda até 3 quadros extras por quadro para
+alcançar o anfitrião (`SNES_NET_CATCHUP_CAP`), o anfitrião reenvia até 120 quadros perdidos, e se mesmo assim o
+convidado ficar irrecuperável (conexão parada por mais de ~2 s) ele volta para a sala com uma mensagem em vez de
+ficar congelado. Na LAN / IP direto, um pacote perdido do anfitrião também podia congelar o convidado; corrigido.
 
 **Anfitrião decide (desde a v2.0.7):** o anfitrião nunca espera; a cada quadro usa a entrada mais recente de
 cada convidado e envia o resultado a todos (`SNES_NET_HOST_AUTHORITY`, ligado pelo jogo). Quem tem latência alta
@@ -134,6 +146,18 @@ player leaving, recomp-net fork `rnet_session.c`); a player leaving still ends i
 
 Since v2.0.7 the host is authoritative: it never waits, uses each guest's newest input every frame and sends
 the resolved inputs to everyone, so latency shows up as input lag for distant players instead of frame drops.
+
+**Diagnostics:** start the game through `tools/netplay-diag.cmd` (copy it next to `SuperBomberman5Recomp.exe`) or
+set `SNES_NET_DIAG=1`. Each match writes `saves\netplay\net_diag_<date>_<time>_<host|guest>_slot<N>.jsonl` (stalls,
+delay, connection path, fps, slow frames, how far the guest trails the host) and appends the game's log to
+`netplay_log.txt`. Collect both peers' `saves\netplay` folders and run `python tools/netplay-diag-report.py <folders>`.
+
+**Guest catch-up (v2.1.1 fix):** under host authority a guest that stalled briefly (a lost
+datagram waiting for its resend, a slow frame) never caught up: each stall added permanent input lag, and past
+~64 frames (~1 s) the guest froze for good (frozen/black screen for the guest, its bomber stuck on the host). The
+guest now runs up to 3 extra frames per wall frame to catch up (`SNES_NET_CATCHUP_CAP`), the host resends up to
+120 missed rows, and a guest that still cannot be fed (stalled more than ~2 s) returns to the room with a reason
+instead of freezing. A lost host row could also freeze a LAN / Direct IP guest; fixed.
 The game forces **delay-sync** (lockstep with a room input delay); the framework's rollback forked on this
 LLE port under forced mispredictions. LAN / Direct IP has two seats; online rooms have five seats, one per multitap player (since v2.0.2; four before); more
 than two peers is built in the framework but not exercised. Two real executables stayed byte-identical in

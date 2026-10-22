@@ -1,5 +1,32 @@
 # Super Bomberman 5: estado do protótipo
 
+## v2.1.1 — 2026-10-22: netplay guest catch-up and diagnostics
+
+- Report: online, host + one guest; the guest's screen froze/went black at some point, the host saw stutter.
+- Cause (reproduced with recomp-net loopback sessions, no ROM needed): host-authority delay-sync never lets the
+  host wait, but the desktop host's catch-up budget defaulted to 0, so every guest stall became permanent lag
+  that only grew (the v2.1.0 name-tag harness already showed a guest 51 frames behind). recomp-net then resent at
+  most 64 rows past a guest's ACK and a guest dropped host rows more than 64 ahead of its sim tick: once 64+ rows
+  behind, it waited forever. With two seats (LAN/Direct IP) the guest acknowledged the highest row seen, so one lost
+  host row older than the redundancy window was never resent. Loopback model, 16 ms per host tick: a 150-tick
+  guest stall froze the guest even with catch-up; repeated 20-tick stalls without catch-up left 61 frames of
+  permanent lag; 20% INPUT loss froze a two-seat guest at tick 0.
+- Fix: recomp-net fork — host-authority guest window `[sim, sim+127]`, host resend up to 120 rows past the guest's
+  contiguous ACK, contiguous ACK also for two seats, stats `auth_backlog/auth_resend_rows/auth_rows_dropped`,
+  test knob `RNET_TEST_INPUT_LOSS_PCT`, new `session_host_authority_catchup_test` (2 and 5 seats, 160+40+40-tick
+  guest stalls, 10% INPUT loss: guest back within 1 tick, identical rows; fails on the previous code).
+  snesrecomp fork — catch-up cap 3 for host-authority guests (`SNES_NET_CATCHUP_CAP` still overrides; other modes
+  unchanged), `host_authority backlog` log lines, a guest unrecoverable for 3 s leaves to the room
+  (`host_authority_guest_lost`) instead of a frozen frame, per-match `net_diag_*` files with frame timing
+  (fps, `frame_ms_max`, catch-up frames, backlog, resends) and stderr redirected to `saves/netplay/netplay_log.txt`
+  when `SNES_NET_DIAG=1`. Game repo: `tools/netplay-diag.cmd`, `tools/netplay-diag-report.py`.
+- Evidence and limits: recomp-net builds and its ctest suite passes except `open_url_test` and
+  `session_state_test` (liveness case), which fail identically on the unmodified pin in this container.
+  `snes_netplay.c`, `snes_host_app.c`, `host_main.c` pass `gcc -fsyntax-only` against SDL3 headers. **Not** built with
+  the Windows toolchain, not run in the game (no ROM here), not tried in a real internet match. Catch-up frames
+  run back to back (audio of those frames is produced faster than real time). The host-side stutter was not
+  explained by this; the new per-frame timing in `net_diag` is meant to show it on the next match.
+
 ## v2.1.0 — 2026-10-22: in-game chat, name tags, spectators
 
 - snesrecomp fork: new `runner/src/desktop/host_chat.c/.h` (SDL/GL-free state, layout, stb_truetype raster from
