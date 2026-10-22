@@ -31,6 +31,7 @@ def main() -> None:
     parser.add_argument('--mods', choices=['none', 'all'], default='none')
     parser.add_argument('--mispredict', type=int, default=0, help='RNET_RB_FORCE_MISPREDICT period on seat 0')
     parser.add_argument('--delay-sync', action='store_true')
+    parser.add_argument('--inputs', action='store_true', help='pseudo-random pads on every peer')
     parser.add_argument('--out', type=Path, default=ROOT / '.bootstrap/netplay-pair')
     args = parser.parse_args()
     exe, rom = args.exe.resolve(strict=True), args.rom.resolve(strict=True)
@@ -59,7 +60,8 @@ def main() -> None:
                        SNES_NET_TRANSPORT='lan', SNES_NET_BIND=f'127.0.0.1:{args.port + seat}',
                        SNES_NET_PEER=f'127.0.0.1:{args.port + (1 if seat == 0 else 0)}',
                        SNES_NET_INPUT_PLAYER='0', SNESRECOMP_RUN_FRAMES=str(args.frames),
-                       SDL_VIDEODRIVER='dummy', SDL_AUDIODRIVER='dummy', SB5_STATE_TRACE='30')
+                       SDL_VIDEODRIVER='dummy', SDL_AUDIODRIVER='dummy', SB5_STATE_TRACE='30',
+                       SNESRECOMP_NET_TEST_INPUT=str(1000 + seat) if args.inputs else '0')
             if args.delay_sync:
                 env['SNES_NET_MODE'] = 'delay'
             if args.mispredict and seat == 0:
