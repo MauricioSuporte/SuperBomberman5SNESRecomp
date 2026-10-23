@@ -31,6 +31,14 @@ portal é carregado uma única vez, no início da fase, e o jogo não tenta de n
 nesse caso os rostos são removidos na hora e o carregamento é refeito, então o
 portal aparece.
 
+Ao remover os rostos, o jogo também liberava a paleta deles, que é a mesma do
+P1/P2: os jogadores continuavam com essas cores, mas o jogo passava a considerar
+os dois espaços de paleta livres e podia entregá-los a outro objeto. Na ZONE3 - 1,
+com o colete de invencibilidade (que reescreve a paleta do jogador ao piscar) e
+com cinco jogadores, isso deixava a ponte do meio com as cores de um bomber e o
+portal de saída não aparecia. Agora só o gráfico do rosto é liberado; a paleta
+continua com o jogador.
+
 As rotinas nativas criam somente os objetos dos rostos, sem carregar o layout
 do Battle. O desenho limpa o rosto fixo nos seis tiles BG2 de cada ícone ocupado,
 preservando as linhas da moldura e o fundo azul,
@@ -70,6 +78,17 @@ allocator's failure exit (`$C0:193A/$193C`) now runs `$C5:7360`, which deletes
 the faces like `$C5:7300` and re-enters `$C0:18FC` with the same archive and
 registers, so the gate is loaded (static archive table identical to a run
 without the mod).
+
+Deleting a face through `$C0:1342` also released its `$06DF` palette. A face is
+drawn in its bomber's slot without a reference of its own, so the release took
+the bomber's only reference: P1/P2 kept those colors while the allocator saw the
+slots as free (`$7E2B10` id and `$0349` count 0) and could hand them to another
+object. In ZONE3 - 1 with the invincibility vest (item 7, which rewrites the
+bomber's palette while it blinks) or with five players this showed the middle
+bridge in a bomber's colors and no exit gate. The drop routine (`$C5:73C0`,
+called by `$C5:7300` and `$C5:7360`) now sets a face's `$06DF` to `$FF` when it
+shares its bomber's slot (`$C0:0345` ignores negative slots), so only the face
+archive is released.
 
 Native routines create only the face objects. Render observers clear each
 occupied fixed BG2 head across all three tile rows, preserving the blue

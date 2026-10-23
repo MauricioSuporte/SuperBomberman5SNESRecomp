@@ -7,7 +7,7 @@
 #include "snes/interp_bridge.h"
 #include <string.h>
 static bool enabled, installed;
-static uint8_t original[4], guard[2], death[5], respawn[4], tick[3], scratch[256], release[192];
+static uint8_t original[4], guard[2], death[5], respawn[4], tick[3], scratch[256], release[320];
 /* Static OBJ allocation failures seen this frame: see vram_full(). */
 static bool alloc_failed, hooks_added;
 static bool releasing;
@@ -178,48 +178,54 @@ void NormalHudBeforeFrame(void) {
         0x68,0x28,                  /* full: PLA / PLP         */
         0x22,0x00,0x72,0xc5,0x60};  /* JSL $C5:7200 / RTS      */
     memcpy(rom(0xc572b0),update,sizeof(update));
-    /* Gate room ($C5:7300, called instead of $C5:72B0 once): run the native
-     * tick, then delete each live P1/P2 face object ($04FF = 6, $04A0 = $F0)
-     * with $C0:1342 and forget it in $35C5. */
-    uint8_t *q=rom(0xc57300);
-    const uint8_t enter[]={0x20,0xcd,0x06,0x08,0xc2,0x30,0x48,0xda,0x5a,0xe2,0x30};
-    memcpy(q,enter,sizeof(enter));q+=sizeof(enter);
+    /* Face drop ($C5:73C0, JSR from both routines below, 8-bit registers):
+     * delete each live P1/P2 face object ($04FF = 6, $04A0 = $F0) with the
+     * native $C0:1342 and forget it in $35C5. A face is drawn in its bomber's
+     * palette slot without a reference of its own (the slot's $0349 count is
+     * the bomber's alone), but $C0:1342 also releases the object's $06DF
+     * palette: deleting the faces used to free the P1/P2 slots while both
+     * bombers still used them. With the invincibility vest (item 7) the
+     * bombers' palettes then went through freed slots and ZONE3 - 1's exit
+     * gate never animated. So when the face shares its bomber's slot, $06DF
+     * is set to $FF first ($C0:0345 ignores negative slots) and only the face
+     * archive is released. Long addressing: the allocator retry may run with
+     * any data bank. */
+    uint8_t *q=rom(0xc573c0);
     for(unsigned seat=0;seat<2;++seat) {
         const uint8_t drop[]={
-            0xaf,0xc5+seat,0x35,0x7e,  /* LDA $7E35C5+seat */
-            0xc9,0x60,0xb0,26,         /* CMP #$60 / BCS next */
-            0xaa,                      /* TAX */
-            0xbd,0xff,0x04,0xc9,0x06,0xd0,18, /* LDA $04FF,X / CMP #6 / BNE */
-            0xbd,0xa0,0x04,0xc9,0xf0,0xd0,11, /* LDA $04A0,X / CMP #$F0 / BNE */
-            0x8a,0x22,0x42,0x13,0xc0,  /* TXA / JSL $C0:1342 */
+            0xaf,0xc5+seat,0x35,0x7e,          /* LDA $7E35C5+seat          */
+            0xc9,0x60,0xb0,53,                 /* CMP #$60 / BCS next       */
+            0xaa,                              /* TAX                       */
+            0xbf,0xff,0x04,0x7e,0xc9,0x06,0xd0,44, /* LDA $7E04FF,X / CMP #6 / BNE next */
+            0xbf,0xa0,0x04,0x7e,0xc9,0xf0,0xd0,36, /* LDA $7E04A0,X / CMP #$F0 / BNE next */
+            0xaf,0xfa+seat,0x17,0x7e,0x30,19,  /* LDA $7E17FA+seat / BMI release */
+            0xda,0xaa,                         /* PHX / TAX (bomber)        */
+            0xbf,0xdf,0x06,0x7e,0xfa,          /* LDA $7E06DF,X / PLX       */
+            0xdf,0xdf,0x06,0x7e,0xd0,6,        /* CMP $7E06DF,X / BNE release */
+            0xa9,0xff,0x9f,0xdf,0x06,0x7e,     /* LDA #$FF / STA $7E06DF,X  */
+            0x8a,0x22,0x42,0x13,0xc0,          /* release: TXA / JSL $C0:1342 */
             0xa9,0xff,0x8f,0xc5+seat,0x35,0x7e}; /* LDA #$FF / STA $7E35C5+seat */
         memcpy(q,drop,sizeof(drop));q+=sizeof(drop);
     }
-    const uint8_t leave[]={0xc2,0x30,0x7a,0xfa,0x68,0x28,0x60};
-    memcpy(q,leave,sizeof(leave));
+    *q=0x60;                                   /* next (seat 1): RTS        */
+    /* Gate room ($C5:7300, called instead of $C5:72B0 once): run the native
+     * tick, then drop the faces. */
+    q=rom(0xc57300);
+    const uint8_t gate_room[]={0x20,0xcd,0x06,0x08,0xc2,0x30,0x48,0xda,0x5a,0xe2,0x30,
+        0x20,0xc0,0x73,                        /* JSR $73C0                 */
+        0xc2,0x30,0x7a,0xfa,0x68,0x28,0x60};
+    memcpy(q,gate_room,sizeof(gate_room));
     /* Allocation retry ($C5:7360, see vram_full): entered at $C0:193A/$193C
      * with the allocator's PHX on the stack, 8-bit registers. */
     q=rom(0xc57360);
-    const uint8_t retry_enter[]={
+    const uint8_t retry[]={
         0xfa,0xda,0x5a,          /* PLX / PHX / PHY        */
-        0xaf,0xdf,0x0a,0x7e,0x48 /* LDA $7E0ADF / PHA      */};
-    memcpy(q,retry_enter,sizeof(retry_enter));q+=sizeof(retry_enter);
-    for(unsigned seat=0;seat<2;++seat) {
-        const uint8_t drop[]={
-            0xaf,0xc5+seat,0x35,0x7e,  /* LDA $7E35C5+seat */
-            0xc9,0x60,0xb0,28,         /* CMP #$60 / BCS next */
-            0xaa,                      /* TAX */
-            0xbf,0xff,0x04,0x7e,0xc9,0x06,0xd0,19, /* LDA $7E04FF,X / CMP #6 / BNE */
-            0xbf,0xa0,0x04,0x7e,0xc9,0xf0,0xd0,11, /* LDA $7E04A0,X / CMP #$F0 / BNE */
-            0x8a,0x22,0x42,0x13,0xc0,  /* TXA / JSL $C0:1342 */
-            0xa9,0xff,0x8f,0xc5+seat,0x35,0x7e}; /* LDA #$FF / STA $7E35C5+seat */
-        memcpy(q,drop,sizeof(drop));q+=sizeof(drop);
-    }
-    const uint8_t retry_leave[]={
+        0xaf,0xdf,0x0a,0x7e,0x48,/* LDA $7E0ADF / PHA      */
+        0x20,0xc0,0x73,          /* JSR $73C0              */
         0xe2,0x30,               /* SEP #$30               */
         0x68,0x7a,0xfa,          /* PLA / PLY / PLX        */
         0x5c,0xfc,0x18,0xc0};    /* JML $C0:18FC           */
-    memcpy(q,retry_leave,sizeof(retry_leave));
+    memcpy(q,retry,sizeof(retry));
     const uint8_t update_call[]={0x20,0xb0,0x72};
     memcpy(rom(0xc50608),update_call,3);
     installed=true;

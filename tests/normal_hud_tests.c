@@ -14,13 +14,56 @@ uint8 g_ram[0x20000];
 const uint8 *g_rom;
 uint8 *SnesRomPtr(uint32 pc){return (uint8 *)g_rom+(pc&0x3fffff);}
 #define CHECK(x) do {if(!(x)){fprintf(stderr,"line %d\n",__LINE__);return 1;}}while(0)
+
+/* A tiny 65816 subset (8-bit A/X/Y) to execute the face drop at $C5:73C0.
+ * JSL $C0:1342 is modelled like the native delete: release the object's
+ * archive ($06E0) and palette ($06DF, via $C0:0345: negative = none). */
+static unsigned released_archives;
+static void native_palette_release(unsigned slot) {
+    if(slot&0x80 || slot>=8) return;
+    if(--g_ram[0x349+slot]==0xff) { ++g_ram[0x349+slot]; return; }
+    if(!g_ram[0x349+slot]) g_ram[0x2b10+slot]=0;
+}
+static int run_drop(const uint8 *r,unsigned depth) {
+    unsigned pc=0x573c0,a=0,x=0,n=0,z=0,c=0,stack[8],sp=0,deleted=0,steps=0;
+    (void)depth;
+    for(;;) {
+        if(++steps>500) return -1;
+        const uint8 *o=r+pc;
+        unsigned lng=o[1]|o[2]<<8|o[3]<<16;
+        #define WR(v) (g_ram[(v)&0x1ffff])
+        #define FL(v) do{n=((v)&0x80)!=0;z=((v)&0xff)==0;}while(0)
+        switch(o[0]) {
+        case 0xaf: a=WR(lng);FL(a);pc+=4;break;
+        case 0xbf: a=WR(lng+x);FL(a);pc+=4;break;
+        case 0xdf: { unsigned m=WR(lng+x);c=a>=m;FL(a-m);pc+=4;break; }
+        case 0x9f: WR(lng+x)=(uint8)a;pc+=4;break;
+        case 0x8f: WR(lng)=(uint8)a;pc+=4;break;
+        case 0xc9: c=a>=o[1];FL(a-o[1]);pc+=2;break;
+        case 0xa9: a=o[1];FL(a);pc+=2;break;
+        case 0xaa: x=a;FL(x);pc+=1;break;
+        case 0x8a: a=x;FL(a);pc+=1;break;
+        case 0xda: stack[sp++]=x;pc+=1;break;
+        case 0xfa: x=stack[--sp];FL(x);pc+=1;break;
+        case 0xb0: pc+=2+(c?(int8_t)o[1]:0);break;
+        case 0xd0: pc+=2+(!z?(int8_t)o[1]:0);break;
+        case 0x30: pc+=2+(n?(int8_t)o[1]:0);break;
+        case 0x22:
+            if(lng!=0xc01342) return -2;
+            released_archives++;native_palette_release(g_ram[0x6df+a]);
+            g_ram[0x6df+a]=g_ram[0x6e0+a]=0xff;g_ram[0x4ff+a]=g_ram[0x4a0+a]=0;deleted++;pc+=4;break;
+        case 0x60: return (int)deleted;
+        default: fprintf(stderr,"op %02x at %x\n",o[0],pc);return -3;
+        }
+    }
+}
 int main(void){
     uint8 *r=calloc(1,0x400000);g_rom=r;
     memcpy(r+0x505f1,"\x22\x86\x0c\xc5",4);
     memcpy(r+0x5126b,"\xf0\x52",2);
     memcpy(r+0x436ff,"\xad\x1a\x1d\x89\x01",5);
     memset(r+0x57200,255,256);
-    memset(r+0x57300,255,192);
+    memset(r+0x57300,255,320);
     memcpy(r+0x193a,"\x80\x02\x80\x00",4);
     memcpy(r+0x50608,"\x20\xcd\x06",3);
     memcpy(r+0x42b33,"\x22\x07\x13\xc5",4);
@@ -71,29 +114,43 @@ int main(void){
     g_ram[0x1031]=13;NormalHudBeforeFrame();CHECK(installed && !memcmp(copy,r+0x57200,256));
     /* Allocator failure exits are watched; hooks are added once. */
     CHECK(hook_count==2 && hook_pcs[0]==0xc0193a && hook_pcs[1]==0xc0193c && hooks[0]==vram_full);
-    /* Gate room routine: branches land on the next seat or the epilogue. */
+    /* Gate room and allocation retry both JSR the face drop at $C5:73C0. */
     {
         const uint8_t *q=r+0x57300;
         CHECK(q[0]==0x20 && q[1]==0xcd && q[2]==0x06 && q[10]==0x30);
-        for(unsigned seat=0;seat<2;++seat) {
-            unsigned b=11+seat*34;
-            CHECK(q[b]==0xaf && q[b+1]==0xc5+seat && q[b+6]==0xb0 && b+8+q[b+7]==b+34);
-            CHECK(q[b+14]==0xd0 && b+16+q[b+15]==b+34 && q[b+21]==0xd0 && b+23+q[b+22]==b+34);
-            CHECK(q[b+24]==0x22 && q[b+25]==0x42 && q[b+26]==0x13 && q[b+27]==0xc0);
-            CHECK(q[b+30]==0x8f && q[b+31]==0xc5+seat);
-        }
-        CHECK(q[79]==0xc2 && q[85]==0x60 && q[86]==0xff);
-        /* Allocation retry: drop live faces, then JML $C0:18FC again. */
+        CHECK(q[11]==0x20 && q[12]==0xc0 && q[13]==0x73);
+        CHECK(q[14]==0xc2 && q[20]==0x60 && q[21]==0xff);
         q=r+0x57360;
         CHECK(q[0]==0xfa && q[1]==0xda && q[2]==0x5a && q[3]==0xaf && q[4]==0xdf && q[5]==0x0a && q[7]==0x48);
-        for(unsigned seat=0;seat<2;++seat) {
-            unsigned b=8+seat*36;
-            CHECK(q[b]==0xaf && q[b+1]==0xc5+seat && q[b+6]==0xb0 && b+8+q[b+7]==b+36);
-            CHECK(q[b+9]==0xbf && q[b+15]==0xd0 && b+17+q[b+16]==b+36 && q[b+17]==0xbf && q[b+23]==0xd0 && b+25+q[b+24]==b+36);
-            CHECK(q[b+26]==0x22 && q[b+27]==0x42 && q[b+28]==0x13 && q[b+29]==0xc0 && q[b+32]==0x8f && q[b+33]==0xc5+seat);
-        }
-        CHECK(q[80]==0xe2 && q[82]==0x68 && q[83]==0x7a && q[84]==0xfa);
-        CHECK(q[85]==0x5c && q[86]==0xfc && q[87]==0x18 && q[88]==0xc0 && q[89]==0xff);
+        CHECK(q[8]==0x20 && q[9]==0xc0 && q[10]==0x73 && q[11]==0xe2 && q[13]==0x68);
+        CHECK(q[16]==0x5c && q[17]==0xfc && q[18]==0x18 && q[19]==0xc0 && q[20]==0xff);
+        CHECK(r[0x573c0+122]==0x60 && r[0x573c0+123]==0xff);
+    }
+    /* Run the face drop on a bomber/face pair and check the palette counts:
+     * a face sharing its bomber's slot leaves the slot (and its count) alone,
+     * a face in a slot of its own releases it. */
+    {
+        unsigned keep5=g_ram[0x35c5];
+        g_ram[0x35c5]=g_ram[0x35c6]=0xff;
+        CHECK(run_drop(r,0)==0);
+        g_ram[0x17fa]=8;g_ram[0x6df+8]=1;g_ram[0x349+1]=1;g_ram[0x2b10+1]=0x01;
+        g_ram[0x17fb]=0xa;g_ram[0x6df+0xa]=2;g_ram[0x349+2]=1;g_ram[0x2b10+2]=0x02;
+        g_ram[0x35c5]=0x10;g_ram[0x4ff+0x10]=6;g_ram[0x4a0+0x10]=0xf0;g_ram[0x6df+0x10]=1;g_ram[0x6e0+0x10]=3;
+        g_ram[0x35c6]=0x12;g_ram[0x4ff+0x12]=6;g_ram[0x4a0+0x12]=0xf0;g_ram[0x6df+0x12]=5;g_ram[0x6e0+0x12]=3;
+        g_ram[0x349+5]=1;g_ram[0x2b10+5]=0x40;
+        CHECK(run_drop(r,0)==2);
+        CHECK(g_ram[0x35c5]==0xff && g_ram[0x35c6]==0xff);
+        CHECK(g_ram[0x349+1]==1 && g_ram[0x2b10+1]==0x01); /* P1 keeps its slot */
+        CHECK(g_ram[0x349+5]==0 && g_ram[0x2b10+5]==0);    /* face's own slot freed */
+        CHECK(g_ram[0x349+2]==1 && released_archives==2);
+        /* Not a live face (wrong signature, no object, dead bomber): untouched. */
+        g_ram[0x35c5]=0x10;g_ram[0x4ff+0x10]=6;g_ram[0x4a0+0x10]=0x26;g_ram[0x35c6]=0xff;
+        CHECK(run_drop(r,0)==0 && g_ram[0x35c5]==0x10);
+        g_ram[0x4ff+0x10]=6;g_ram[0x4a0+0x10]=0xf0;g_ram[0x6df+0x10]=1;g_ram[0x17fa]=0xff;g_ram[0x349+1]=2;
+        CHECK(run_drop(r,0)==1 && g_ram[0x349+1]==1); /* no bomber object: plain release */
+        memset(g_ram+0x340,0,0x20);memset(g_ram+0x2b10,0,0x20);
+        g_ram[0x35c6]=0;g_ram[0x17fa]=g_ram[0x17fb]=0;g_ram[0x35c5]=(uint8)keep5;
+        memset(g_ram+0x6df,0,0x62);released_archives=0;
     }
     CpuState cpu={0};cpu.m_flag=cpu.x_flag=1;
     /* A failed face allocation itself is ignored. */
@@ -151,7 +208,7 @@ int main(void){
     CHECK(r[0x42b34]==0x07 && r[0x50609]==0xcd);
     CHECK(r[0x505f2]==0x86 && r[0x5126b]==0xf0 && r[0x436ff]==0xad);
     for(unsigned i=0;i<256;++i)CHECK(r[0x57200+i]==255);
-    for(unsigned i=0;i<96;++i)CHECK(r[0x57300+i]==255);
+    for(unsigned i=0;i<320;++i)CHECK(r[0x57300+i]==255);
     g_ram[0x1031]=13;r[0x57280]=0;NormalHudBeforeFrame();CHECK(!installed);
     cleanup();CHECK(!NormalHudEnabled());free(r);free(p);
     puts("Normal HUD context, patches, refusal and exact render restoration passed.");return 0;
