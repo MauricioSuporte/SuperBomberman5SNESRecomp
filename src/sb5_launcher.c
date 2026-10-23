@@ -8,6 +8,7 @@
 #include "host_paths.h"
 #include "mod_runtime.h"
 #include "sb4_rom.h"
+#include "discord_presence.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -342,6 +343,7 @@ static void start_update_check(void) {
 }
 
 void Sb5ConfigureLauncher(struct RecompLauncherCGameInfo *gi) {
+    Sb5DiscordConfigureLauncher(gi); /* Rich Presence + Discord invites */
 #if defined(RECOMP_LAUNCHER) && defined(RECOMP_LAUNCHER_HAS_GAME_LINKS)
     char updater[2100], root[2048];
     const int have_updater = Sb5FindUpdater(updater, sizeof(updater), root, sizeof(root));
