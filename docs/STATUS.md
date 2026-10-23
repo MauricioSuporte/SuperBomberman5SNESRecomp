@@ -1,5 +1,20 @@
 # Super Bomberman 5: estado do protótipo
 
+## Unreleased — 2026-10-22: Discord Rich Presence and room invites (branch `discord-presence`)
+
+- `src/discord_presence.c` speaks Discord's local IPC (no SDK): status for launcher / online room / Normal Game /
+  Battle, online room published as a party with a join secret, `ACTIVITY_JOIN` hands the lobby id to the launcher
+  (recomp-ui fork `poll_external_join`, branch `superbomberman5-discord`), `ACTIVITY_JOIN_REQUEST` auto-accepted while
+  the room has a free seat. Windows registers `discord-1562965215291904100` to the root `SuperBomberman5Recomp.exe`.
+  See docs/DISCORD.md.
+- Evidence: `discord_presence_tests` (gcc, ASan/UBSan, Linux) against a fake `discord-ipc-0` socket: handshake with the
+  app id, READY, both SUBSCRIBEs, SET_ACTIVITY with party `[2,5]` and secret, Ask-to-Join accepted, ACTIVITY_JOIN
+  delivered once to the launcher poll, party/secret dropped after leaving, reconnect after Discord closes. The module
+  compiles for Windows with mingw-w64 gcc (`-Wall -Wextra`, no warnings); `launcher_imgui.cpp` and
+  `launcher_model.c` pass `-fsyntax-only`. **Not** run against the real Discord client, not tried with two accounts;
+  whether Discord shows Join/Invite for this unverified application, the Windows launch-on-invite and the `logo` art
+  asset (must be uploaded in the Developer Portal) are unconfirmed.
+
 ## v2.1.1 — 2026-10-22: netplay guest catch-up and diagnostics
 
 - Report: online, host + one guest; the guest's screen froze/went black at some point, the host saw stutter.

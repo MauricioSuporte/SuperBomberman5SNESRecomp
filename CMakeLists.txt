@@ -71,6 +71,7 @@ add_executable(SuperBomberman5SNESRecomp
     src/sb5_sound.c
     src/special_abilities.c
     src/sb5_launcher.c
+    src/discord_presence.c
     src/gen_stubs.c
 )
 
@@ -91,6 +92,8 @@ if(WIN32)
     set_source_files_properties(assets/app.rc PROPERTIES
         OBJECT_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/assets/app.ico")
     target_include_directories(SuperBomberman5SNESRecomp PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/assets")
+    # Discord invite launch registration (RegSetKeyValueW).
+    target_link_libraries(SuperBomberman5SNESRecomp PRIVATE advapi32)
 endif()
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
@@ -119,6 +122,15 @@ if(BUILD_TESTING)
     add_executable(name_tags_tests tests/name_tags_tests.c)
     target_include_directories(name_tags_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src")
     add_test(NAME netplay_name_tags COMMAND name_tags_tests)
+    if(UNIX)
+        # Fake Discord IPC socket; the Windows named-pipe path is the same code
+        # above the transport.
+        add_executable(discord_presence_tests tests/discord_presence_tests.c)
+        target_include_directories(discord_presence_tests PRIVATE
+            "${SNESRECOMP_ROOT}/runner/src" "${SNESRECOMP_ROOT}/runner/src/netplay"
+            "${SNESRECOMP_ROOT}/lib/recomp-net/include" "${CMAKE_SOURCE_DIR}/recomp-ui/src")
+        add_test(NAME discord_presence COMMAND discord_presence_tests)
+    endif()
     add_executable(ingame_chat_tests tests/ingame_chat_tests.c)
     target_include_directories(ingame_chat_tests PRIVATE
         "${SNESRECOMP_ROOT}/runner/src" "${CMAKE_SOURCE_DIR}/recomp-ui/src")

@@ -50,6 +50,7 @@
 #include "louie_mod.h"
 #include "normal_hud_mod.h"
 #include "name_tags.h"
+#include "discord_presence.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -105,6 +106,7 @@ void GameRunOneFrame(void)
     SelectionColorAfterFrame();
     NormalCharacterFrame();
     NameTagsAfterFrame(); /* presentation only: host overlay tags */
+    Sb5DiscordFrame();    /* Discord Rich Presence, reads WRAM only */
     StateTrace();
 }
 
