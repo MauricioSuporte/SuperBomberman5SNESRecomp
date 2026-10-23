@@ -1,6 +1,32 @@
 # Super Bomberman 5: estado do protótipo
 
-## Unreleased — 2026-10-22: lower guest input lag under host authority
+## v2.2.1 — 2026-10-23: lower guest input lag online; ZONE3 - 1 gate with HUD faces
+
+### HUD faces freed P1/P2's palette slots (ZONE3 - 1 bridge in a bomber's colors, no exit gate)
+
+- Report (Discord, v2.2.0): ZONE3 - 1 showed no exit gate after every enemy died, once with two players and the
+  invincibility vest, then with five players; the screenshot shows the middle bridge drawn in a white bomber's
+  colors. Cause (Linux LLE headless, JPN ROM, forced `$2B` with 2 and 5 seats, vests placed as item 7 at
+  `$145A+cell`): when a static OBJ allocation fails, the HUD-faces mod deletes the faces through `$C0:1342`, which
+  also releases the object's `$06DF` palette (`$C0:0345`). A face is drawn in its bomber's slot with no reference
+  of its own (slot count 1 with face and bomber live), so the release dropped the bomber's only reference: after
+  it, P1/P2 were alive in slots 1/2 while `$2B10` ids and `$0349` counts read 0 (five seats: P1's shared slot at 2
+  instead of 3). The allocator could then give those slots to other objects, and the bombers' palette writes (the
+  vest blinks by rewriting them) recolor those objects.
+- Fix (`src/normal_hud_mod.c`): one drop routine at `$C5:73C0-$743A` (FF padding, saved/restored like the others),
+  called by `$C5:7300` (HUD tick) and `$C5:7360` (allocator retry); when a live face shares its bomber's slot it
+  sets the face's `$06DF` to `$FF` before `$C0:1342`, so only the face archive is released. A face in a slot of
+  its own is still released.
+- Evidence: `normal_hud_tests` now executes the drop bytes on a small 65816 subset (shared slot kept, own slot
+  freed, no-face and no-bomber cases); all 19 native tests pass. Headless routes with the fixed build: 2 seats +
+  vests + HUD faces, the same plus a P2 death and rejoin, 5 seats + vests + ten gameplay mods: slots 1/2 keep ids
+  01/02 and their counts after the faces are dropped (old build: 0/0 with both bombers alive); the gate animates in
+  consecutive frames like the run without the mod; ZONE1 - 1 keeps its faces; no BRK/interp_cap/abandon.
+  Not reproduced: the exact garbled bridge screen (which object takes the freed slot depends on the play);
+  not checked in a played Windows campaign. Note for future checks: gate animation 2 alternates its frame with 0
+  every tick, so a single dump can look hidden.
+
+### Lower guest input lag under host authority
 
 - Report: online, the host plays at zero input lag while guests feel their input late. Reading the code
   (snesrecomp + recomp-net forks pinned by v2.2.0): a host-authority guest's lag was its round trip **plus the
