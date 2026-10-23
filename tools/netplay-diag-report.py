@@ -32,6 +32,7 @@ LOG_PATTERNS = [
     ("lost", re.compile(r"host_authority guest LOST")),
     ("backlog", re.compile(r"host_authority backlog")),
     ("starvation", re.compile(r"delay_sync_starvation")),
+    ("buffer", re.compile(r"host_authority guest buffer")),
     ("slow", re.compile(r"local_slow")),
     ("disconnect", re.compile(r"peer_disconnect")),
     ("desync", re.compile(r"desync", re.I)),
@@ -199,6 +200,16 @@ def report_jsonl(rep: Report) -> None:
                   f"end={bl[-1]} samples>=16: {sum(1 for b in known if b >= 16)}")
         print(f"  resend_rows={ss[-1].get('resend_rows')} rows_dropped={ss[-1].get('rows_dropped')} "
               f"catchup_total={ss[-1].get('catchup_total')}")
+    if "auth_buffer" in ss[-1]:
+        buf = [s["auth_buffer"] for s in ss if s.get("auth_buffer", -1) >= 0]
+        if buf:
+            # Guest only: host rows it holds beyond the one it plays next --
+            # frames of input lag added on top of the round trip.
+            leads = sorted(s.get("remote_lead", 0) for s in ss if s.get("auth_buffer", -1) >= 0)
+            print(f"  guest jitter buffer (rows): min={min(buf)} max={max(buf)} end={buf[-1]}; "
+                  f"queued rows median={leads[len(leads) // 2]} max={leads[-1]}")
+        print(f"  inputs sent early while waiting (guest)={ss[-1].get('presend', 0)} "
+              f"guest input queue jumps (host)={ss[-1].get('input_jumps', 0)}")
     lead = [s.get("remote_lead", 0) for s in ss]
     print(f"  remote_lead: min={min(lead)} max={max(lead)} end={lead[-1]} "
           f"peer_rx_age_max={max(s.get('peer_rx_age_ms', 0) for s in ss)} ms "

@@ -39,6 +39,15 @@ ficar congelado. Na LAN / IP direto, um pacote perdido do anfitrião também pod
 cada convidado e envia o resultado a todos (`SNES_NET_HOST_AUTHORITY`, ligado pelo jogo). Quem tem latência alta
 sente atraso nos próprios controles, sem derrubar o FPS da partida.
 
+**Menos atraso para o convidado (próxima versão):** o atraso do convidado era o ping de ida e volta **mais o atraso
+da sala (D)**: depois do primeiro soluço da rede ele guardava D linhas do anfitrião e ficava D quadros atrás delas.
+Agora o convidado guarda um buffer pequeno que se ajusta sozinho (1 linha no começo, até 4 se a conexão oscilar,
+volta a 0 com a conexão estável; `SNES_NET_AUTH_BUFFER=<n>` fixa o valor), manda o controle assim que ele muda enquanto
+espera a linha do anfitrião, e roda o quadro assim que a linha chega. O anfitrião passa a usar as entradas do
+convidado em ordem, então um toque rápido não se perde quando duas entradas chegam juntas. O anfitrião continua sem
+esperar ninguém, então a queda de FPS de antes da v2.0.7 não volta. O diagnóstico mostra `auth_buffer`, `presend` e
+`input_jumps`. Atraso zero para o convidado ainda depende de previsão com rollback (ver Validação).
+
 **Modo de sincronização:** o jogo força *delay-sync* (lockstep, com atraso de entrada configurável na sala).
 O *rollback* do framework divergiu com este port LLE quando havia reprevisão (ver Validação); uma variável
 `SNES_NET_MODE=rollback` explícita ainda o liga para testes.
@@ -158,6 +167,14 @@ datagram waiting for its resend, a slow frame) never caught up: each stall added
 guest now runs up to 3 extra frames per wall frame to catch up (`SNES_NET_CATCHUP_CAP`), the host resends up to
 120 missed rows, and a guest that still cannot be fed (stalled more than ~2 s) returns to the room with a reason
 instead of freezing. A lost host row could also freeze a LAN / Direct IP guest; fixed.
+**Lower guest input lag (next version):** a guest's lag used to be its round trip **plus the room's input delay D**:
+after the first network hiccup it kept D host rows queued and ran D frames behind them. A guest now keeps a small
+adaptive buffer (1 row to start, up to 4 when the connection jitters, back to 0 when steady;
+`SNES_NET_AUTH_BUFFER=<n>` pins it), sends its pad as soon as it changes while waiting for the host's row, and runs
+the frame as soon as that row arrives. The host takes each guest's inputs in order, so a quick tap is no longer lost
+when two inputs arrive together. The host still never waits, so the pre-v2.0.7 frame-rate drops do not return.
+Diagnostics add `auth_buffer`, `presend` and `input_jumps`. Zero guest lag still needs guest-side prediction with
+rollback.
 The game forces **delay-sync** (lockstep with a room input delay); the framework's rollback forked on this
 LLE port under forced mispredictions. LAN / Direct IP has two seats; online rooms have five seats, one per multitap player (since v2.0.2; four before); more
 than two peers is built in the framework but not exercised. Two real executables stayed byte-identical in

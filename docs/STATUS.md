@@ -1,5 +1,40 @@
 # Super Bomberman 5: estado do protótipo
 
+## Unreleased — 2026-10-22: lower guest input lag under host authority
+
+- Report: online, the host plays at zero input lag while guests feel their input late. Reading the code
+  (snesrecomp + recomp-net forks pinned by v2.2.0): a host-authority guest's lag was its round trip **plus the
+  room's input delay D**. D is lockstep's figure (the room's auto delay, 3-7 in the maintainer's matches) but the
+  barrier used it as every peer's runway: after the guest's first starvation (4 failed polls, i.e. any row a few ms
+  late) the latch waited for D queued host rows, and the catch-up only spent rows above D, so the guest kept
+  running D frames behind rows it already had. On top of that the guest slept to its own clock deadline (holding an
+  early row up to a frame), latched its pad per tick (a press while waiting left a tick later) and the host folded
+  in only each guest's newest input (taps that arrived with a newer input were lost).
+- Change, snesrecomp fork (`runner/src/netplay/snes_host_app.c`, `snes_netplay.c`, `desktop/host_main.c`):
+  host-authority guests keep an adaptive jitter buffer instead of D (1 row to start, +1 when it starves twice within
+  3 s up to 4, -1 after 10 s without starving down to 0; `SNES_NET_AUTH_BUFFER=<n>` pins it); the catch-up drains
+  everything above it. While waiting for the host's row the guest pumps events, refreshes its pad and sends a
+  change at once (`snes_netplay_refresh_local`), and runs the frame as soon as the row is here and half a period
+  has passed. `net_diag_*.jsonl` gains `auth_buffer`, `presend`, `input_jumps`; `tools/netplay-diag-report.py`
+  prints them. recomp-net fork (`rnet_session.c`): the host takes each guest's inputs in order, one change per
+  tick, collapsing runs of identical inputs at once and jumping to the newest past 3 pending changes;
+  `rnet_session_auth_refresh_local` sends a changed pad up to 2 ticks ahead. Host, lockstep, rollback and observers
+  are unchanged; the host still never waits, so the pre-v2.0.7 frame-rate drops cannot return.
+- Evidence (Linux, gcc): new recomp-net `session_host_authority_input_test` — bursty guest (one tick in three, then
+  three at once) over UDP loopback: 85/85 taps reach the host (29/85 with the previous newest-only rule), host never
+  stalls, host and guest rows identical; a pad refreshed while waiting is in the host's next row. Existing
+  `session_host_authority_test` and `session_host_authority_catchup_test` pass; full ctest passes except
+  `open_url_test` and `session_state_test` (liveness), which fail identically on the unmodified pin, and
+  `rb_driver_test`, which failed once under load and passed 5 of 5 reruns (rollback only, untouched code path).
+  New snesrecomp `tests/netplay/auth_guest_buffer_test.c` (+ `tests/v2/test_auth_guest_buffer.py`) on the real
+  barrier: lockstep still unlatches at D=7, a host-authority guest at 1 row, growth/shrink/pin, catch-up drains above
+  the buffer; `disconnect_diagnostics_test` still passes. SB5 setup host (`SNESRECOMP_SETUP_HOST=ON`, LLE) builds on
+  Linux; all 19 native tests and 17 Python tests pass.
+- **Not** done: no build with the Windows toolchain, no run with the ROM, no real internet match. Expected effect
+  (not measured): guest lag drops from RTT + D frames (+ up to one frame of clock phase) to about RTT + 1 frame on a
+  steady connection. Zero lag for guests still needs guest-side prediction/rollback (snapshot determinism, see
+  NETPLAY.md).
+
 ## v2.2.0 — 2026-10-22: Discord Rich Presence and room invites
 
 - `src/discord_presence.c` speaks Discord's local IPC (no SDK): status for launcher / online room / Normal Game /
