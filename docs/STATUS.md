@@ -1,6 +1,6 @@
 # Super Bomberman 5: estado do protótipo
 
-## Unreleased — 2026-10-22: Discord Rich Presence and room invites (branch `discord-presence`)
+## v2.2.0 — 2026-10-22: Discord Rich Presence and room invites
 
 - `src/discord_presence.c` speaks Discord's local IPC (no SDK): status for launcher / online room / Normal Game /
   Battle, online room published as a party with a join secret, `ACTIVITY_JOIN` hands the lobby id to the launcher
