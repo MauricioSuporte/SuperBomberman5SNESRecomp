@@ -170,6 +170,30 @@ int main(void)
     close(ls);
     unlink(path);
     rmdir(dir);
+
+    /* Room invite pasted in a chat: format, then find it inside chat noise. */
+    {
+        char msg[512], got[48];
+        CHECK(Sb5RoomInviteFormat("2.2.1", "abc-123_X", msg, sizeof(msg)) == 1);
+        CHECK(strstr(msg, "sb5:2.2.1:abc-123_X") != NULL);
+        CHECK(Sb5RoomInviteParse(msg, got, sizeof(got)) == 1 && !strcmp(got, "abc-123_X"));
+        CHECK(Sb5RoomInviteParse("> Room: `sb5:2.2.1:Zz9`\n", got, sizeof(got)) == 1 &&
+              !strcmp(got, "Zz9"));
+        CHECK(Sb5RoomInviteFormat("2.2.1", "lan:1.2.3.4:5", msg, sizeof(msg)) == 0);
+        CHECK(Sb5RoomInviteParse("hello there", got, sizeof(got)) == 0);
+        CHECK(Sb5RoomInviteParse("sb5::abc sb5:1.0", got, sizeof(got)) == 0);
+        /* Accepting queues the room for the launcher's external join. */
+        g_dc.pending_join[0] = '\0';
+        CHECK(room_invite_accept(NULL, "Room: sb5:2.2.1:room42") == 1);
+        CHECK(poll_external_join(NULL, id, sizeof(id)) == 1 && !strcmp(id, "room42"));
+        CHECK(room_invite_accept(NULL, "nothing here") == 0);
+        /* Copy Invite follows the room the player sits in. */
+        g_in_lobby = 1;
+        snprintf(g_ji.lobby_id, sizeof(g_ji.lobby_id), "%s", "room77");
+        CHECK(room_invite_text(NULL, msg, sizeof(msg)) == 1 && strstr(msg, "sb5:9.9.9:room77"));
+        g_in_lobby = 0;
+        CHECK(room_invite_text(NULL, msg, sizeof(msg)) == 0);
+    }
     if (g_fail) { fprintf(stderr, "discord_presence_tests: %d failure(s)\n", g_fail); return 1; }
     printf("discord_presence_tests: ok\n");
     return 0;

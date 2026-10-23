@@ -549,9 +549,9 @@ static int poll_external_join(void *ctx, char *lobby_id, size_t cap)
     static uint64_t last;
     uint64_t t;
     (void)ctx;
-    if (!dc_enabled()) return 0;
     t = now_ms();
-    if (t - last >= 250u) {
+    /* Discord off still delivers a pasted room invite (room_invite_accept). */
+    if (dc_enabled() && t - last >= 250u) {
         last = t;
         build_activity(1);
         dc_pump();
@@ -565,11 +565,93 @@ static int poll_external_join(void *ctx, char *lobby_id, size_t cap)
 }
 #endif
 
+/* ---- room invites pasted in any chat ---------------------------------- */
+
+/* The invite carries the same token as the Discord join secret,
+ * "sb5:<host version>:<lobby id>", inside a message a person can read. */
+int Sb5RoomInviteFormat(const char *version, const char *lobby_id, char *out, size_t cap)
+{
+    int n;
+    if (!out || !cap) return 0;
+    out[0] = '\0';
+    if (!version || !lobby_id || !lobby_id[0] || !strncmp(lobby_id, "lan:", 4)) return 0;
+    n = snprintf(out, cap,
+                 "Join my Super Bomberman 5 Recomp room! Copy this whole message, "
+                 "then in the game open Online Netplay and press Join from Invite.\n"
+                 "Room: sb5:%s:%s", version, lobby_id);
+    if (n < 0 || (size_t)n >= cap) { out[0] = '\0'; return 0; }
+    return 1;
+}
+
+static int invite_id_char(char c)
+{
+    return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+           c == '-' || c == '_' || c == '.';
+}
+
+/* Finds "sb5:<version>:<id>" anywhere in text (chat apps add quotes, links,
+ * line breaks around it). Writes the lobby id; 0 when there is none. */
+int Sb5RoomInviteParse(const char *text, char *lobby_id, size_t cap)
+{
+    const char *p = text;
+    if (!lobby_id || !cap) return 0;
+    lobby_id[0] = '\0';
+    if (!text) return 0;
+    while ((p = strstr(p, "sb5:")) != NULL) {
+        const char *v = p + 4, *id;
+        size_t n = 0;
+        while (*v && (invite_id_char(*v)) && *v != ':') ++v;
+        if (*v == ':' && v > p + 4) {
+            id = v + 1;
+            while (invite_id_char(id[n])) ++n;
+            if (n > 0 && n < cap && n < 48) {
+                memcpy(lobby_id, id, n);
+                lobby_id[n] = '\0';
+                return 1;
+            }
+        }
+        p += 4;
+    }
+    return 0;
+}
+
+#if defined(RECOMP_LAUNCHER) && defined(RECOMP_LAUNCHER_HAS_ROOM_INVITE)
+static int room_invite_text(void *ctx, char *out, size_t cap)
+{
+    RoomInfo room;
+    const char *v = SNES_GAME_VERSION;
+    (void)ctx;
+    room_info(&room, 1);
+    if (!room.in_room || !room.online_room) return 0;
+#if defined(SNESRECOMP_NET)
+    {
+        const char *lv = rnet_lobby_game_version();
+        if (lv && lv[0]) v = lv;
+    }
+#endif
+    return Sb5RoomInviteFormat(v, room.lobby_id, out, cap);
+}
+
+static int room_invite_accept(void *ctx, const char *text)
+{
+    char id[sizeof(g_dc.pending_join)];
+    (void)ctx;
+    if (!Sb5RoomInviteParse(text, id, sizeof(id))) return 0;
+    snprintf(g_dc.pending_join, sizeof(g_dc.pending_join), "%s", id);
+    return 1;
+}
+#endif
+
 void Sb5DiscordConfigureLauncher(struct RecompLauncherCGameInfo *gi)
 {
 #if defined(RECOMP_LAUNCHER) && defined(RECOMP_LAUNCHER_HAS_EXTERNAL_JOIN)
     gi->poll_external_join = poll_external_join;
     gi->external_join_ctx = NULL;
+#if defined(RECOMP_LAUNCHER_HAS_ROOM_INVITE)
+    gi->room_invite_text = room_invite_text;
+    gi->room_invite_accept = room_invite_accept;
+    gi->room_invite_ctx = NULL;
+#endif
 #else
     (void)gi;
 #endif

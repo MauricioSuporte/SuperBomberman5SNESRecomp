@@ -1,5 +1,18 @@
 # Super Bomberman 5: estado do protótipo
 
+## v2.2.2 — 2026-10-23: netplay host keeps the offline save; Copy Invite; real online test
+
+- Report: the host's online progress was a separate save from offline play. Cause (snesrecomp fork
+  `runner/src/desktop/host_main.c`): in a netplay session the host skipped `RtlReadSram()` at boot and
+  `RtlWriteSram()` at exit like the guests, so it started online with an all-zero SRAM, synced those zeros to every
+  guest, and online progress never reached `saves/save.srm` (only an in-match state save wrote it).
+- Fix: the host (seat 0, not a spectator; save root is already `saves/` for it) now reads `saves/save.srm` before
+  the first frame — the initial SRAM sync to guests only starts in the main loop, after that read — and writes it
+  back at exit, the same file offline play uses. Guests/spectators are unchanged: sandbox `saves/netplay/`, personal
+  SRAM restored on shutdown.
+- Evidence: code review only. Not built with the Windows toolchain and not exercised in a netplay match yet (needs
+  a host with Normal progress, a guest checking it sees the same files, then offline reopening after online saves).
+
 ## v2.2.1 — 2026-10-23: lower guest input lag online; ZONE3 - 1 gate with HUD faces
 
 ### HUD faces freed P1/P2's palette slots (ZONE3 - 1 bridge in a bomber's colors, no exit gate)

@@ -20,8 +20,9 @@ before changing code, docs or releases. Humans: see README.md and CONTRIBUTING.m
   reset/NMI and almost all game logic run on the framework's 65816
   interpreter. PPU, APU/SPC700, DMA are emulated. Never describe this as
   "fully recompiled" or claim full-game or broad Linux/macOS support. Netplay
-  exists since v2.0.0 (delay-sync, docs/NETPLAY.md) but is validated only
-  between two peers on one machine; never claim more.
+  exists since v2.0.0 (delay-sync, docs/NETPLAY.md); the maintainer tested a
+  real two-player internet match with the Discord integration successfully
+  (2026-10-23). Three or more peers remain unqualified; never claim more.
 - Reference ROM: file `Super Bomberman 5 (USA).sfc` but the header says
   **JPN** (`Hu SUPER BOMBERMAN 5`), Fast HiROM, 4 MiB, 8 KiB SRAM.
   `rom_identity.txt` is the single source of truth (hashes, `game_id =

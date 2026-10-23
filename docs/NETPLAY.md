@@ -59,6 +59,12 @@ para cada jogador do multitap (desde a v2.0.2; antes o framework limitava a quat
 Partidas começam do boot frio. Save states, rewind e pausa local ficam desligados online (regras do
 framework); o menu de estados sincronizado do anfitrião é **Select+R**.
 
+**Save do anfitrião (correção):** o anfitrião joga online com o **mesmo save do jogo offline**
+(`saves\save.srm`): ele é lido ao abrir a partida, é esse save que todos os convidados recebem ao conectar, e o
+progresso feito online (fases liberadas, Continue) é gravado de volta no mesmo arquivo ao sair. Antes o anfitrião
+entrava online com o save vazio e o progresso online se perdia. Convidados e espectadores jogam sobre uma cópia
+do save do anfitrião em `saves\netplay\` e o save pessoal deles nunca é alterado.
+
 ### Chat no jogo
 
 Desde a v2.1.0 o chat da sala do launcher continua funcionando dentro do jogo durante uma partida online:
@@ -160,6 +166,12 @@ the resolved inputs to everyone, so latency shows up as input lag for distant pl
 set `SNES_NET_DIAG=1`. Each match writes `saves\netplay\net_diag_<date>_<time>_<host|guest>_slot<N>.jsonl` (stalls,
 delay, connection path, fps, slow frames, how far the guest trails the host) and appends the game's log to
 `netplay_log.txt`. Collect both peers' `saves\netplay` folders and run `python tools/netplay-diag-report.py <folders>`.
+
+**Host save (fix):** the host plays online on the **same save as offline play** (`saves\save.srm`): it is
+read when the match starts, it is the save every guest receives on connecting, and progress made online (cleared
+stages, Continue) is written back to that same file on exit. The host used to enter online play with an empty save
+and lose online progress. Guests and spectators play on a copy of the host's save under `saves\netplay\`; their
+personal save is never changed.
 
 **Guest catch-up (v2.1.1 fix):** under host authority a guest that stalled briefly (a lost
 datagram waiting for its resend, a slow frame) never caught up: each stall added permanent input lag, and past
