@@ -1,6 +1,6 @@
 # Super Bomberman 5: estado do protótipo
 
-## Unreleased — 2026-10-24: slow-PC guest frame skip; who the match start is waiting on
+## v2.2.3 — 2026-10-24: slow-PC guest frame skip; who the match start is waiting on
 
 ### Guest on a PC below 60 fps drifted behind until the host ignored it
 

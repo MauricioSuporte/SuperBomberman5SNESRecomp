@@ -1275,6 +1275,13 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '2.2.3': (
+'''- **Fix: online guest on a slow PC could not move:** a guest whose PC cannot hold 60 fps fell a little further behind the host every second, until the host stopped receiving its inputs and its bomber froze with no message. The guest now skips drawing the frames it uses to catch up (only the picture is skipped, the game runs the same) and catches up faster when far behind. The picture is choppier on that PC, but the match keeps up; the game shows "Slow PC: skipping frames to keep up with the host".
+- **Black screen while waiting for players:** a match starts only when every player has loaded. Instead of a black screen, the game now says who it is waiting for ("Waiting for P3..."), and the netplay log lists each player's state.
+- Everyone in a room needs v2.2.3. Not yet tried in a real internet match.''',
+'''- **Correção: convidado online com PC lento não conseguia se mexer:** um convidado cujo PC não segura 60 fps ficava um pouco mais atrás do anfitrião a cada segundo, até o anfitrião deixar de receber os comandos dele e o personagem parar, sem aviso. Agora o convidado pula o desenho dos quadros que usa para alcançar o anfitrião (só a imagem é pulada, o jogo roda igual) e alcança mais rápido quando está muito atrás. A imagem fica menos fluida nesse PC, mas a partida acompanha; o jogo mostra "Slow PC: skipping frames to keep up with the host".
+- **Tela preta esperando jogadores:** a partida só começa quando todos carregaram. Em vez da tela preta, o jogo agora diz quem falta ("Waiting for P3..."), e o log do netplay mostra a situação de cada jogador.
+- Todos na sala precisam da v2.2.3. Ainda não testado numa partida real pela internet.'''),
     '2.2.2': (
 '''- **Copy Invite:** in an online room, the **Copy Invite** button in the footer copies a message with the room code. Paste it in Discord, WhatsApp or any chat; your friend copies the whole message, opens **Online Netplay** and presses **Join from Invite** to enter the room (the password is asked if the room has one). Works even with Discord closed.
 - **Fix: the host's save online:** the host now plays online on the same save as offline play. Every player who joins receives that save, and progress made online (cleared stages, Continue) is saved to the same file when the game closes. Before, the host entered online play with an empty save and online progress was lost. Guests keep their own save untouched.
