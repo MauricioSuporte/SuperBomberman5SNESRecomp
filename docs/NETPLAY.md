@@ -41,9 +41,17 @@ também eram desenhados. Passando de ~110 quadros, o anfitrião descartava as en
 de vez, sem aviso. Agora os quadros de recuperação são simulados **sem desenhar a imagem** (só o último de cada
 rajada é desenhado; a lógica do jogo roda igual), e quando o convidado está 12+ quadros atrás ele pode rodar até 8
 quadros extras por quadro em vez de 3 (`SNES_NET_CATCHUP_CAP_FAR`). Uma rajada nunca segura o jogo por mais de dois
-quadros. A imagem fica menos fluida nesse PC, mas a partida acompanha o anfitrião; o jogo mostra
-"Slow PC: skipping frames to keep up with the host" e o log registra `frame_skip` (o diagnóstico conta
-`draw_skips`). `SNES_NET_CATCHUP_DRAW_ALL=1` desenha todos os quadros (para comparar).
+quadros. A imagem fica menos fluida nesse PC, mas a partida acompanha o anfitrião; o log registra `frame_skip` (o
+diagnóstico conta `draw_skips`). `SNES_NET_CATCHUP_DRAW_ALL=1` desenha todos os quadros (para comparar).
+
+**Recuperação suave (correção):** na v2.2.3 o convidado pagava qualquer sobra de uma vez. Num PC rápido cujo
+anfitrião manda os quadros em pares, quase todo segundo quadro virava um passo duplo (200–290 imagens puladas a cada
+5 s): o movimento tremia e objetos que o jogo pisca em quadros alternados sumiam, porque o passo caía sempre na mesma
+paridade. Agora uma sobra pequena é espalhada: no máximo 1 quadro extra a cada 4 quadros mostrados (sobra de 1–3),
+a cada 3 (sobra de 4–11); só um convidado bem atrás (12+) roda rajadas de até 3, e 30+ até 8. O buffer do convidado
+não desce mais de 1 linha (custa ~16 ms de atraso e evita a parada seguida de passo duplo). O aviso
+"Slow PC: skipping frames to keep up with the host" só aparece quando os quadros desenhados pesam de verdade no PC;
+quando a causa é a chegada irregular dos quadros do anfitrião, só o log diz isso.
 
 **Tela preta esperando jogadores (diagnóstico):** a partida só começa quando **todos** os assentos respondem;
 enquanto isso a tela ficava preta sem explicação. Agora a tela diz quem falta ("Waiting for P3 (no answer yet)")
@@ -188,9 +196,16 @@ behind the host every second (~3 frames per second in one test), because its cat
 **without composing their picture** (only the last frame of each burst is drawn; the game logic runs exactly the
 same), and once the guest is 12+ frames behind it may run up to 8 extra frames per frame instead of 3
 (`SNES_NET_CATCHUP_CAP_FAR`). A burst never holds the game for more than two frames. The picture is choppier on
-that PC but the match keeps up with the host; the game shows "Slow PC: skipping frames to keep up with the host",
-the log records `frame_skip` and the diagnostics count `draw_skips`. `SNES_NET_CATCHUP_DRAW_ALL=1` draws every frame
-(for comparison).
+that PC but the match keeps up with the host; the log records `frame_skip` and the diagnostics count `draw_skips`.
+`SNES_NET_CATCHUP_DRAW_ALL=1` draws every frame (for comparison).
+
+**Smooth recovery (fix):** in v2.2.3 the guest repaid any surplus at once. On a fast PC whose host delivers frames in
+pairs, nearly every other frame became a double step (200-290 skipped pictures per 5 s): motion juddered and objects
+the game flickers on alternate frames vanished, because the step always landed on the same parity. A small surplus
+is now spread out: at most one extra frame every 4 presented frames (surplus 1-3), every 3 (4-11); only a guest far
+behind (12+) runs bursts of up to 3, and 30+ up to 8. The guest's buffer no longer drops below one row (~16 ms of
+input lag, and no stall-then-double-step). "Slow PC: skipping frames to keep up with the host" only appears when
+the drawn frames really load the PC; when the cause is the host's frames arriving unevenly, only the log says so.
 
 **Black screen while waiting for players (diagnostics):** a match starts only when **every** seat answers;
 until then the screen stayed black with no explanation. The screen now says who is missing ("Waiting for P3 (no

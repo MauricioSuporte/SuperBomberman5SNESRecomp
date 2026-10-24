@@ -1,5 +1,25 @@
 # Super Bomberman 5: estado do protótipo
 
+## Unreleased — 2026-10-24: paced guest catch-up (no double-step judder)
+
+- Report (v2.2.3, video from a friend's PC and the maintainer's guest log, session 3419): with "Slow PC" on, the
+  picture juddered and sprites (portal gates, labels, bombers) blinked out. The maintainer's PC is fast (59.96 fps as
+  host, drawn frames ~8 ms) yet as a guest it skipped 200-290 pictures per 5 s while its buffer bounced 0<->1 with
+  repeated starvation latches: the host's rows arrived in pairs, and v2.2.3 drained any surplus at once, so nearly
+  every other present was a two-frame step. Objects the game multiplexes on alternate frames then always land on the
+  hidden parity (the frames extracted from the video show the gates missing for several samples in a row). The skip
+  itself was not new -- catch-up frames were never presented in 2.2.2 either -- but the far cap made bursts longer
+  and the notice blamed the PC.
+- Fix (snesrecomp fork `runner/src/netplay/snes_host_app.c`, `host_main.c`): `snes_host_catchup_plan` decides the
+  extra frames once per present and paces them by the surplus past the buffer (1-3: one extra every 4th present;
+  4-11: every 3rd; 12-29: up to 3 per present, a quarter of the gap; 30+: up to 8); the guest buffer no longer
+  shrinks below one row (`SNES_AUTH_BUFFER_MIN`; `SNES_NET_AUTH_BUFFER` still pins any value); the "Slow PC" notice
+  only shows when drawn frames average >= 85% of a frame period, and `frame_skip` log lines now carry the drawn-frame
+  average and the cause (slow PC vs uneven arrival).
+- Evidence: `tests/netplay/auth_guest_buffer_test.c` covers each pacing tier, the caps/env pins, lockstep peers and
+  the one-row floor; Linux gcc syntax check of `host_main.c`. Not built with the Windows toolchain, not tried in a
+  match; the drain rate of the near tiers (~15-20 rows/s) is a choice, not a measurement.
+
 ## v2.2.3 — 2026-10-24: slow-PC guest frame skip; who the match start is waiting on
 
 ### Guest on a PC below 60 fps drifted behind until the host ignored it
