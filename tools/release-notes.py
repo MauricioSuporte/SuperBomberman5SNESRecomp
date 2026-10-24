@@ -1275,6 +1275,11 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '2.2.7': (
+'''- **Fix: "This is a setup build" on Play (Linux):** the AppImage kept its settings, ROM choice and mods beside the `.AppImage` file instead of in its game folder (`~/.local/share/superbomberman5/<version>`). The launcher then opened without the setup wizard and **Play** ended in "This is a setup build with no recompiled game code". The AppImage now uses its game folder again, so the launcher asks for your ROM and **Generate & rebuild** as it should. Settings, controls, saves and the netplay identity already written beside the AppImage are copied into the game folder once.
+- Same online netplay as v2.2.6; everyone in a room needs v2.2.7.''',
+'''- **Correção: "This is a setup build" no Play (Linux):** o AppImage guardava as configurações, a ROM escolhida e os mods ao lado do arquivo `.AppImage` em vez da pasta do jogo (`~/.local/share/superbomberman5/<versão>`). O launcher abria sem o assistente de instalação e o **Play** terminava em "This is a setup build with no recompiled game code". Agora o AppImage volta a usar a pasta do jogo, então o launcher pede a ROM e o **Generate & rebuild** como deveria. Configurações, controles, saves e a identidade do netplay já gravados ao lado do AppImage são copiados para a pasta do jogo uma vez.
+- Mesmo jogo online da v2.2.6; todos na sala precisam da v2.2.7.'''),
     '2.2.6': (
 '''- **Portable game folder:** the ROM paths saved by the launcher (rom.cfg) and by the Mods page (the Super Bomberman 4 ROM of Bomber Kings) are now kept relative to the game folder. A folder with the game already generated can be moved or copied to another drive or PC and opens straight on **Play**: it no longer asks where the ROMs are or sends you to **Generate & rebuild** when everything is in place.
 - **ROMs found in the folder:** a valid Super Bomberman 5 or Super Bomberman 4 ROM in the game folder or its `roms/` subfolder is recognized by its checksum under any file name, and a path saved on another PC is looked up by its file name in the folder.

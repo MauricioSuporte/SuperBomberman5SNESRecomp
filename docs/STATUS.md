@@ -1,6 +1,6 @@
 # Super Bomberman 5: estado do protótipo
 
-## Unreleased — 2026-10-24: Linux AppImage PLAY says "This is a setup build" (launcher opened normally)
+## v2.2.7 — 2026-10-24: Linux AppImage PLAY says "This is a setup build" (launcher opened normally)
 
 - Report (v2.2.4, Linux Mint, a player's screenshots): the launcher opened with no setup wizard; PLAY showed
   "This is a setup build with no recompiled game code". `config.ini`, `keybinds.ini`, `netplay_secret` and `mods/`
