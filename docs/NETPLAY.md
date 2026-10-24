@@ -35,6 +35,21 @@ alcançar o anfitrião (`SNES_NET_CATCHUP_CAP`), o anfitrião reenvia até 120 q
 convidado ficar irrecuperável (conexão parada por mais de ~2 s) ele volta para a sala com uma mensagem em vez de
 ficar congelado. Na LAN / IP direto, um pacote perdido do anfitrião também podia congelar o convidado; corrigido.
 
+**PC lento: o convidado pula quadros (correção):** um convidado cujo PC não segura 60 fps ficava um pouco
+mais atrás do anfitrião a cada segundo (num teste, ~3 quadros por segundo), porque os quadros extras de recuperação
+também eram desenhados. Passando de ~110 quadros, o anfitrião descartava as entradas dele: o personagem dele parava
+de vez, sem aviso. Agora os quadros de recuperação são simulados **sem desenhar a imagem** (só o último de cada
+rajada é desenhado; a lógica do jogo roda igual), e quando o convidado está 12+ quadros atrás ele pode rodar até 8
+quadros extras por quadro em vez de 3 (`SNES_NET_CATCHUP_CAP_FAR`). Uma rajada nunca segura o jogo por mais de dois
+quadros. A imagem fica menos fluida nesse PC, mas a partida acompanha o anfitrião; o jogo mostra
+"Slow PC: skipping frames to keep up with the host" e o log registra `frame_skip` (o diagnóstico conta
+`draw_skips`). `SNES_NET_CATCHUP_DRAW_ALL=1` desenha todos os quadros (para comparar).
+
+**Tela preta esperando jogadores (diagnóstico):** a partida só começa quando **todos** os assentos respondem;
+enquanto isso a tela ficava preta sem explicação. Agora a tela diz quem falta ("Waiting for P3 (no answer yet)")
+e o log, a cada 5 s, mostra cada assento como `ready`, `heard, not ready` ou `silent (nothing received)`. Um assento
+`silent` nunca abriu a partida (ainda numa janela do launcher, baixando mods, ou fechou) ou perdeu a conexão.
+
 **Anfitrião decide (desde a v2.0.7):** o anfitrião nunca espera; a cada quadro usa a entrada mais recente de
 cada convidado e envia o resultado a todos (`SNES_NET_HOST_AUTHORITY`, ligado pelo jogo). Quem tem latência alta
 sente atraso nos próprios controles, sem derrubar o FPS da partida.
@@ -166,6 +181,21 @@ the resolved inputs to everyone, so latency shows up as input lag for distant pl
 set `SNES_NET_DIAG=1`. Each match writes `saves\netplay\net_diag_<date>_<time>_<host|guest>_slot<N>.jsonl` (stalls,
 delay, connection path, fps, slow frames, how far the guest trails the host) and appends the game's log to
 `netplay_log.txt`. Collect both peers' `saves\netplay` folders and run `python tools/netplay-diag-report.py <folders>`.
+
+**Slow PC: the guest skips frames (fix):** a guest whose PC could not hold 60 fps fell a little further
+behind the host every second (~3 frames per second in one test), because its catch-up frames were drawn too. Past
+~110 frames the host dropped its inputs and its bomber stopped for good, with no message. Catch-up frames now run
+**without composing their picture** (only the last frame of each burst is drawn; the game logic runs exactly the
+same), and once the guest is 12+ frames behind it may run up to 8 extra frames per frame instead of 3
+(`SNES_NET_CATCHUP_CAP_FAR`). A burst never holds the game for more than two frames. The picture is choppier on
+that PC but the match keeps up with the host; the game shows "Slow PC: skipping frames to keep up with the host",
+the log records `frame_skip` and the diagnostics count `draw_skips`. `SNES_NET_CATCHUP_DRAW_ALL=1` draws every frame
+(for comparison).
+
+**Black screen while waiting for players (diagnostics):** a match starts only when **every** seat answers;
+until then the screen stayed black with no explanation. The screen now says who is missing ("Waiting for P3 (no
+answer yet)") and every 5 s the log lists each seat as `ready`, `heard, not ready` or `silent (nothing received)`.
+A `silent` seat never opened its match (still in a launcher dialog, downloading mods, or closed) or lost its path.
 
 **Host save (fix):** the host plays online on the **same save as offline play** (`saves\save.srm`): it is
 read when the match starts, it is the save every guest receives on connecting, and progress made online (cleared

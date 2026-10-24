@@ -38,6 +38,8 @@ LOG_PATTERNS = [
     ("desync", re.compile(r"desync", re.I)),
     ("refused", re.compile(r"match refused")),
     ("ice", re.compile(r"ICE FAILED")),
+    ("frame_skip", re.compile(r"snes_netplay: frame_skip")),
+    ("waiting", re.compile(r"snes_netplay: waiting \d+ ms for|every seat ready after")),
     ("match", re.compile(r"===== netplay match|snes_netplay: started")),
 ]
 
@@ -199,7 +201,8 @@ def report_jsonl(rep: Report) -> None:
             print(f"  backlog (frames the guest trails the host): max={worst} at {fmt_t(at['t_ms'], t0)} "
                   f"end={bl[-1]} samples>=16: {sum(1 for b in known if b >= 16)}")
         print(f"  resend_rows={ss[-1].get('resend_rows')} rows_dropped={ss[-1].get('rows_dropped')} "
-              f"catchup_total={ss[-1].get('catchup_total')}")
+              f"catchup_total={ss[-1].get('catchup_total')} "
+              f"draw_skips_total={ss[-1].get('draw_skips_total', 'n/a')}")
     if "auth_buffer" in ss[-1]:
         buf = [s["auth_buffer"] for s in ss if s.get("auth_buffer", -1) >= 0]
         if buf:

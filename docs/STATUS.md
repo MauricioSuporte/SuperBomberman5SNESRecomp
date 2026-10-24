@@ -1,5 +1,51 @@
 # Super Bomberman 5: estado do protótipo
 
+## Unreleased — 2026-10-24: slow-PC guest frame skip; who the match start is waiting on
+
+### Guest on a PC below 60 fps drifted behind until the host ignored it
+
+- Report (v2.2.2, two players, host authority): with the friend hosting, the maintainer (guest) saw small
+  hitches; with the maintainer hosting, the friend could not move. Evidence: the maintainer's guest log starved for
+  a host row every ~10-11 frames even at the maximum 4-row buffer (the friend's host producing fewer than 60 rows
+  per second); the maintainer's host `net_diag` (match of 2026-10-23 20:18) shows the friend ACKing host rows
+  ~7 frames late all along (network fine) while her own input wire fell from -2 to ~-100 frames between 12 s and
+  33 s (~3 frames/s), so her simulation ran below real time even with the 3-frame catch-up. From ~35 s her inputs
+  were older than the host's accept window (`rows_dropped` 128k at the end, `remote_wire` frozen at 3507 from
+  ~63 s): her bomber stopped while she stayed connected, and `snes_netplay_auth_guest_lost` never fired because
+  rows kept arriving. The friend's own logs were not collected (her folder had no `net_diag`), so her fps is
+  inferred, not measured.
+- Fix (snesrecomp fork): `ppu_setSkipLineDraw` (`runner/src/snes/ppu.c`) skips composing a line's pixels while
+  sprite evaluation still runs; the host-authority guest's burst in `host_main.c` sets it for every frame that
+  another catch-up frame follows (`snes_host_catchup_skip_draw`, `snes_host_app.c`), so only the last frame of a
+  burst is drawn. The catch-up cap opens from 3 to 8 when the guest is 12+ rows past its buffer
+  (`SNES_NET_CATCHUP_CAP_FAR`), a burst stops after two frame periods (the frame expected to cross that line is the
+  drawn one), and sustained skipping logs `frame_skip` and shows "Slow PC: skipping frames to keep up with the
+  host" (at most every 30 s). `net_diag` gains `draw_skips`/`draw_skips_total`; the backlog line gains
+  `draw_skips`. `SNES_NET_CATCHUP_DRAW_ALL=1` restores drawing every frame.
+- Evidence: `tests/netplay/auth_guest_buffer_test.c` (real barrier) covers which burst frames skip their picture,
+  the far cap, the env pins and lockstep peers never skipping; Linux gcc syntax check of `host_main.c`,
+  `snes_netplay.c`, `ppu.c`. Not built with the Windows toolchain, not measured on a slow PC, not tried in a match.
+  Risk to check in the first match: the line draw is assumed to be presentation only (static review found writes to
+  render buffers only); a desync between a skipping guest and the host would show it.
+
+### Black screen while a match waits for a seat
+
+- Report: a three-seat lobby match (session 3378) stayed on a black screen; the host log shows `sim=0` for 26.8 s,
+  no SRAM sync (it starts only once RUNNING), `packets_rx=263` (~10/s, one guest's READY every 100 ms) and then
+  `received_bye` from seat 3 (`peer_gone_mask=0x4`). So the host was waiting for READY from one seat that sent
+  nothing; which seat, and why, needs the guests' logs. Leading suspects: that guest's game had not opened the
+  match yet (the room's 13-package mod set is too long to publish, so guests match it at launch, downloading one
+  package at a time; the same host log shows `refusing - already transferring` and an ICE failure on the mod
+  transfer link), or its ICE path died between the lobby and the match.
+- Change (diagnostics, no behavior change): recomp-net fork `RNetSessionStats.ready_mask`;
+  `snes_netplay_wait_report` logs every 5 s while not RUNNING which seats are `ready`, `heard, not ready`,
+  `silent (nothing received)` or `left`, shows "Waiting for P<n> ..." on screen (guests: "Waiting for the other
+  players to load" / "Waiting for the host"), and logs `every seat ready after N ms`. `net_diag` gains `ready_mask`;
+  `tools/netplay-diag-report.py` lists the new lines.
+- Evidence: recomp-net `session_start_wait_test` (three loopback peers, the third starts late: host not RUNNING,
+  `ready_mask=0x3`, seat 2 silent, then RUNNING with `0x7`); existing host-authority tests pass. Not tried in a
+  real lobby.
+
 ## v2.2.2 — 2026-10-23: netplay host keeps the offline save; Copy Invite; real online test
 
 - Report: the host's online progress was a separate save from offline play. Cause (snesrecomp fork
