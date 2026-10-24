@@ -124,6 +124,8 @@ static void stock_cartridge(void) {
     put_bytes(0xc0c93a,cursor_x,4);put_bytes(0xc0c941,cursor_y,4);put_bytes(0xc212d2,grid_x,10);
     put_bytes(0xc212dc,grid_y,10);
     put_bytes(0xc43bdf,set,6);
+    put_bytes(0xc67971,(const uint8_t *)"\xd1\x74\xc6",3);
+    for(unsigned c=0;c<9;++c) at(0xc674d1)[c]=(uint8_t)(5+c);
     for(unsigned c=0;c<10;++c) at(0xc0c980)[c]=c<5?0x90:0xb8;
     at(0xc21470)[0]=0x14;at(0xc512fe)[0]=0x1e;
     build_archive(ARCHIVE,ARCHIVE_END,expected,ARCHIVE_SIZE,0);
@@ -243,6 +245,9 @@ int main(void) {
     CHECK(!memcmp(at(SET_CHARACTER),kSetCharacter,sizeof(kSetCharacter)));
     CHECK(!memcmp(at(0xc213e7),"\x22\x88\x60\xc2",4) && !memcmp(at(0xc21356),"\x22\x88\x60\xc2",4));
     CHECK(!memcmp(at(0xc42a3c),"\x22\x94\x60\xc2\xea",5) && !memcmp(at(0xc43bdf),"\x22\xa4\x60\xc2\xea\xea",6));
+    /* Champion screen: choices 10-19 read Bomberman's entry of a copy. */
+    CHECK(!memcmp(at(0xc67971),"\x40\x61\xc2",3));
+    for(unsigned c=0;c<20;++c) CHECK(at(0xc26140)[c]==(c<9?5+c:5));
     unsigned count=patch_count;ExtraCharactersBeforeFrame();CHECK(patch_count==count); /* Installed once. */
     /* Cells 10/11/18 hold their choices, 12-17 none (no Bomber Kings); the
      * title clears remembered seats. */

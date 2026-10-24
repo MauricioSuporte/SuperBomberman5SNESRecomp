@@ -175,7 +175,11 @@ static bool present(unsigned choice) {
 static unsigned grid_at(unsigned r,unsigned c) { unsigned v=kGrid[r][c];return c<cols && present(v)?v:0; }
 enum { TABLE_RIGHT=0xc260c0, TABLE_LEFT=0xc260d4, TABLE_DOWN=0xc260e8, TABLE_UP=0xc260fc,
        TABLE_CURSOR_X=0xc26110, TABLE_CURSOR_Y=0xc26124, CLAMP=0xc26088, STAGE_INIT=0xc26094,
-       SET_CHARACTER=0xc260a4, PATCH_START=0xc26040, PATCH_END=0xc26140 };
+       SET_CHARACTER=0xc260a4, CHAMPION_TABLE=0xc26140, PATCH_START=0xc26040, PATCH_END=0xc26160,
+       /* Champion script ($C6:7963): acc = $625F[seat] - 1, then acc =
+        * $C6:74D1[acc], a nine-entry table (choices 1-9). Its operand is
+        * moved to a twenty-entry copy where choices 10-19 read Bomberman's. */
+       CHAMPION_REF=0xc67971, STOCK_CHAMPION=0xc674d1 };
 static const uint8_t kClamp[]={
     0x3a,             /* DEC A                                     */
     0x29,0x1f,        /* AND #$1F   (stock AND #$0F: choices 1-10)  */
@@ -387,11 +391,12 @@ static void install(void) {
     static const uint8_t cursor_x[]={0xbf,0x76,0xc9,0x80},cursor_y[]={0xbf,0x80,0xc9,0x80};
     static const uint8_t stock_x[]={5,10,15,20,25,5,10,15,20,25},grid_y[]={15,15,15,15,15,20,20,20,20,20};
     static const uint8_t set_character[]={0x9c,0xe7,0x0a,0x9d,0xc2,0x16};
+    static const uint8_t champion_ref[]={(uint8_t)STOCK_CHAMPION,(uint8_t)(STOCK_CHAMPION>>8),(uint8_t)(STOCK_CHAMPION>>16)};
     if(!stock(0xc68c02,right,sizeof(right)) || !stock(0xc68c78,left,sizeof(left)) ||
        !stock(0xc68cee,vert,sizeof(vert)) || !stock(0xc68d62,vert,sizeof(vert)) ||
        !stock(0xc213e7,portrait,4) || !stock(0xc21356,portrait,4) || !stock(0xc42a3c,init,5) ||
        !stock(0xc0c93a,cursor_x,4) || !stock(0xc0c941,cursor_y,4) || !stock(0xc212d2,stock_x,10) || !stock(0xc212dc,grid_y,10) ||
-       !stock(0xc43bdf,set_character,6)) return;
+       !stock(0xc43bdf,set_character,6) || !stock(CHAMPION_REF,champion_ref,3)) return;
     for(uint32_t pc=PATCH_START;pc<PATCH_END;++pc) if(*rom(pc)!=0xff) return;
     art_ready=decompress(ARCHIVE,archive,ARCHIVE_SIZE,ARCHIVE_END) && check_art();
     if(!art_ready) return;
@@ -442,7 +447,15 @@ static void install(void) {
     patch(SET_CHARACTER,kSetCharacter,sizeof(kSetCharacter));
     uint8_t set_call[]={0x22,(uint8_t)SET_CHARACTER,(uint8_t)(SET_CHARACTER>>8),0xc2,0xea,0xea};
     patch(0xc43bdf,set_call,6);
-    patched=patch_count==sizeof(kCellCharRefs)/sizeof(*kCellCharRefs)+sizeof(kCellColorRefs)/sizeof(*kCellColorRefs)+20+(rows==3);
+    /* Champion screen: without this, choices 10+ read past the stock table
+     * (script pointers) and the screen never ends (Honey, Kotetsu, Terrorin,
+     * most Bomber Kings). Extra characters use Bomberman's entry. */
+    uint8_t champion_table[TABLE_CELLS];
+    for(unsigned c=0;c<TABLE_CELLS;++c) champion_table[c]=*rom(STOCK_CHAMPION+(c<9?c:0));
+    patch(CHAMPION_TABLE,champion_table,TABLE_CELLS);
+    uint8_t champion_call[]={(uint8_t)CHAMPION_TABLE,(uint8_t)(CHAMPION_TABLE>>8),(uint8_t)(CHAMPION_TABLE>>16)};
+    patch(CHAMPION_REF,champion_call,3);
+    patched=patch_count==sizeof(kCellCharRefs)/sizeof(*kCellCharRefs)+sizeof(kCellColorRefs)/sizeof(*kCellColorRefs)+22+(rows==3);
     if(!patched) uninstall(),installed=true;
     else bomber_anchor();
 }
@@ -791,7 +804,10 @@ static unsigned sb4_pose_frame(unsigned object,bool rider,bool mounting) {
     case POSE_AIR: return 48+d;
     case POSE_VICTORY: return (snes_frame_counter/16)&1?53:54;
     case POSE_DEATH: { unsigned k=g_ram[0x7ff+object]/2;return 24+(k>3?3:k); }
-    case POSE_STUN: return 55;
+    /* Losers on the Battle champion screen (mode 5) are zapped with the
+     * stun animation ($21); Super Bomberman 4 shows its losers with the
+     * dejected Time Up pose instead of the electrocuted frame. */
+    case POSE_STUN: return g_ram[0x1031]==5?52:55;
     case POSE_TIME_UP: return 52;
     case POSE_STAND: return d*3;
     default: return ((snes_frame_counter/6)&3)*3;

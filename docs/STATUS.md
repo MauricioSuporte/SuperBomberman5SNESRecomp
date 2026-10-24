@@ -1,5 +1,21 @@
 # Super Bomberman 5: estado do protótipo
 
+## Unreleased — 2026-10-24: Battle champion screen hung with extra characters; Super Bomberman 4 losers
+
+- Report: the Battle flow stopped on the VICTORY screen when Terrorin won, and the Super Bomberman 4 characters
+  on that screen showed their electrocuted frame.
+- Cause: the champion script (`$C6:7963`) reads `$C6:74D1[$625F - 1]`, a nine-entry table (choices 1-9) followed by
+  script pointers. Choices 10-19 read those bytes and the script never finished. Reproduced (Linux LLE, JPN ROM,
+  scripted three-win Battle with pokes of `$625F`) for Honey (11), the first Bomber King (13) and Terrorin (19);
+  choice 18 happened to read a harmless byte. Losers there play the stun animation `$21`.
+- Fix: the operand at `$C6:7971` points to a twenty-entry copy at `$C2:6140` (stock entries 1-9, Bomberman's for
+  10-19). On the champion screen (mode `$1031` = 5) the SB4 stun pose shows frame 52 (the dejected pose of SB4's own
+  losers) instead of 55 (electrocuted); in-stage stun is unchanged.
+- Evidence: after the fix the same routes for choices 10, 11, 13 and 19 left the champion screen for the item
+  roulette (`$A8`), the picker (4) and the next Battle (`$74`); champion dump with Terrorin winning and four Bomber
+  Kings losing shows the new pose. Native tests (all, including the extended `extra_characters_tests`) and
+  `python -m unittest` pass. Windows build and physical play not checked.
+
 ## v2.2.7 — 2026-10-24: Linux AppImage PLAY says "This is a setup build" (launcher opened normally)
 
 - Report (v2.2.4, Linux Mint, a player's screenshots): the launcher opened with no setup wizard; PLAY showed
