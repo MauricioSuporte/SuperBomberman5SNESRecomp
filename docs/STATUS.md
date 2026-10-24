@@ -1,5 +1,22 @@
 # Super Bomberman 5: estado do protótipo
 
+## Unreleased — 2026-10-24: Linux AppImage "This is a setup build" after starting
+
+- Report (v2.2.4, Linux AppImage, a player's screenshot): starting the AppImage showed "This is a setup build with
+  no recompiled game code. Start it with --launcher ...". Cause (snesrecomp fork `host_main.c`, code review): the
+  setup host only opens the launcher -- which is also where it hands off to the rebuilt game in `build/`
+  (`snesrecomp_codegen_host_autowire`) -- when `SkipLauncher` is off and no ROM is passed. AppRun copies
+  `config.ini` from the newest earlier version folder into the new one (`~/.local/share/superbomberman5/<version>`,
+  no `build/` yet), so a player with `SkipLauncher=1` booted the setup host straight into `SnesInit`, which refuses.
+  The same happens with a ROM given on the command line ("Open with"). Which of the two hit this player is not
+  confirmed.
+- Fix: a setup host always opens the launcher unless told not to (`--no-launcher`, `SNESRECOMP_NO_LAUNCHER`,
+  headless); `SkipLauncher` is ignored there and a ROM argument only preselects the ROM. Workaround for the
+  released v2.2.4: run the AppImage with `--launcher`, or set `SkipLauncher=0` in that version folder's
+  `config.ini`.
+- Evidence: Linux gcc syntax check of `host_main.c` with and without `SNESRECOMP_SETUP_HOST`. Not run on a Linux
+  desktop or in the AppImage smoke test.
+
 ## v2.2.4 — 2026-10-24: paced guest catch-up (no double-step judder)
 
 - Report (v2.2.3, video from a friend's PC and the maintainer's guest log, session 3419): with "Slow PC" on, the
