@@ -1275,6 +1275,11 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '2.2.5': (
+'''- **Fix: "This is a setup build" on Linux:** after updating the AppImage, a player who had turned on skipping the launcher (or who opened the AppImage with a ROM) got the error "This is a setup build with no recompiled game code" instead of the game. The setup now always opens the launcher; run **Generate & rebuild** once and the AppImage opens the rebuilt game as usual.
+- Same online netplay as v2.2.4; everyone in a room needs v2.2.5.''',
+'''- **Correção: "This is a setup build" no Linux:** depois de atualizar o AppImage, quem tinha ligado a opção de pular o launcher (ou abria o AppImage com uma ROM) recebia o erro "This is a setup build with no recompiled game code" em vez do jogo. Agora o setup sempre abre o launcher; rode **Generate & rebuild** uma vez e o AppImage passa a abrir o jogo gerado normalmente.
+- Mesmo jogo online da v2.2.4; todos na sala precisam da v2.2.5.'''),
     '2.2.4': (
 '''- **Fix: choppy picture for online guests:** in v2.2.3 a guest repaid any delay at once, so when the host's frames arrived unevenly almost every other frame became a double step: the picture juddered and objects the game blinks on alternate frames (gates, labels, bombers) disappeared. The guest now catches up gradually, one extra frame every few frames, and only runs bursts when it is far behind. It also keeps one frame in reserve (about 16 ms more input lag for guests) so it stops less often.
 - The "Slow PC" message now only appears when the PC itself is slow, not when the host's frames simply arrive unevenly.

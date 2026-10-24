@@ -1,6 +1,6 @@
 # Super Bomberman 5: estado do protótipo
 
-## Unreleased — 2026-10-24: Linux AppImage "This is a setup build" after starting
+## v2.2.5 — 2026-10-24: Linux AppImage "This is a setup build" after starting
 
 - Report (v2.2.4, Linux AppImage, a player's screenshot): starting the AppImage showed "This is a setup build with
   no recompiled game code. Start it with --launcher ...". Cause (snesrecomp fork `host_main.c`, code review): the
