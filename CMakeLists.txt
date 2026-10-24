@@ -185,10 +185,23 @@ if(BUILD_TESTING)
     target_include_directories(special_abilities_tests PRIVATE
         "${SNESRECOMP_ROOT}/runner/src")
     add_test(NAME special_abilities COMMAND special_abilities_tests)
-    add_executable(sb4_rom_tests tests/sb4_rom_tests.c)
+    add_executable(sb4_rom_tests tests/sb4_rom_tests.c
+        "${SNESRECOMP_ROOT}/runner/src/host_paths.c"
+        "${SNESRECOMP_ROOT}/runner/src/launcher_cache.c")
     target_include_directories(sb4_rom_tests PRIVATE
         "${SNESRECOMP_ROOT}/runner/src")
     add_test(NAME sb4_rom COMMAND sb4_rom_tests)
+    # A copied game folder keeps finding its ROM (rom.cfg relative to the
+    # game root, lookup by name and by digest in the folder).
+    add_executable(portable_paths_tests tests/portable_paths_tests.c
+        "${SNESRECOMP_ROOT}/runner/src/host_paths.c"
+        "${SNESRECOMP_ROOT}/runner/src/launcher_cache.c"
+        "${SNESRECOMP_ROOT}/runner/src/rom_image_verify.c"
+        "${SNESRECOMP_ROOT}/runner/src/sha256.c"
+        "${SNESRECOMP_ROOT}/runner/src/crc32.c")
+    target_include_directories(portable_paths_tests PRIVATE
+        "${SNESRECOMP_ROOT}/runner/src")
+    add_test(NAME portable_paths COMMAND portable_paths_tests)
 endif()
 
 # ROM identity. rom_identity.txt is the one place the digests live: the build

@@ -4,12 +4,17 @@
  * Kings mod draws its characters from this image. The launcher's Mods page
  * asks for it (the package's [[external_rom]], verified by the engine) and
  * the plugin passes that path to Sb4RomLoad(). Without a selection it is
- * searched for, in order, at $SB5_SB4_ROM, then among the .sfc/.smc files of the working
- * directory, its roms/ folder and the folder of the Super Bomberman 5 ROM
- * named in rom.cfg. Only an image whose SHA-256 matches the verified
- * Japanese release is accepted (a 512-byte copier header is skipped). */
+ * searched for, in order, at $SB5_SB4_ROM, then among the .sfc/.smc files of the
+ * game folder (the folder holding the setup host and build/, see
+ * snesrecomp_game_root_dir), its roms/ folder, the executable's and working
+ * directories and their roms/ folders, and the folder of the Super Bomberman 5
+ * ROM named in rom.cfg (resolved like the host does, so a relative entry
+ * works). Only an image whose SHA-256 matches the verified Japanese release is
+ * accepted (a 512-byte copier header is skipped). */
 #include "sb4_rom.h"
 #include "sha256.h"
+#include "host_paths.h"
+#include "launcher_cache.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -86,13 +91,13 @@ static void search(void) {
     searched=true;
     const char *env=getenv("SB5_SB4_ROM");
     if(env && env[0] && try_file(env)) return;
+    char dirs[SNESRECOMP_SEARCH_DIR_MAX][SNESRECOMP_SEARCH_PATH_LEN];
+    int n=snesrecomp_rom_search_dirs(dirs,SNESRECOMP_SEARCH_DIR_MAX);
+    for(int i=0;i<n;++i) if(scan_dir(dirs[i])) return;
     if(scan_dir("") || scan_dir("roms")) return;
-    FILE *f=fopen("rom.cfg","rb");
-    if(f) {
-        char line[1024]={0};
-        size_t n=fread(line,1,sizeof(line)-1,f);fclose(f);line[n]=0;
+    char line[1024];
+    if(snesrecomp_rom_cache_read(line,sizeof(line))) {
         char *end=line+strlen(line);
-        while(end>line && (end[-1]=='\n' || end[-1]=='\r')) *--end=0;
         while(end>line && end[-1]!='/' && end[-1]!='\\') --end;
         if(end>line) { end[-1]=0;scan_dir(line); }
     }

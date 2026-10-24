@@ -397,6 +397,10 @@ Verified by disassembly, a 30-exit ROM audit and a Zone 1-A route-flag-7 run.
   observer on that line (`late_places`). Test overlays with all mods on.
 - The developer plays `build-lle/SuperBomberman5SNESRecomp.exe` through a
   desktop shortcut; source changes appear only after `./tools/build-windows.ps1`.
+- Never store absolute paths in files the player keeps (`rom.cfg`, mod `state.toml`): game folders are copied
+  between PCs. Write through `snesrecomp_portable_path` (relative to the game root, the folder holding
+  `rom_identity.txt`) and read through `snesrecomp_resolve_stored_path`; ROMs are also found by SHA-256 in the
+  game folder and `roms/` (v2.2.6, `portable_paths_tests`).
 
 - Netplay rollback with the LLE beam driver needs host state in the snapshot:
   the driver's resume PC/WAI latch and the PPU raster journal now ride in

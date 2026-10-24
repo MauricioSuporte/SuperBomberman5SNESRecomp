@@ -1275,6 +1275,15 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '2.2.6': (
+'''- **Portable game folder:** the ROM paths saved by the launcher (rom.cfg) and by the Mods page (the Super Bomberman 4 ROM of Bomber Kings) are now kept relative to the game folder. A folder with the game already generated can be moved or copied to another drive or PC and opens straight on **Play**: it no longer asks where the ROMs are or sends you to **Generate & rebuild** when everything is in place.
+- **ROMs found in the folder:** a valid Super Bomberman 5 or Super Bomberman 4 ROM in the game folder or its `roms/` subfolder is recognized by its checksum under any file name, and a path saved on another PC is looked up by its file name in the folder.
+- **Rebuild after moving:** **Generate & rebuild** in a folder that was moved reconfigures the build instead of failing on the old folder's paths. The setup decides whether the generated game is current by its version, not by file dates that change when files are copied.
+- Same online netplay as v2.2.5; everyone in a room needs v2.2.6.''',
+'''- **Pasta do jogo portátil:** os caminhos das ROMs salvos pelo launcher (rom.cfg) e pela página Mods (a ROM do Super Bomberman 4 do Bomber Kings) agora ficam relativos à pasta do jogo. Uma pasta com o jogo já gerado pode ser movida ou copiada para outro disco ou PC e abre direto no **Play**: não pergunta mais onde estão as ROMs nem manda para o **Generate & rebuild** quando está tudo certo.
+- **ROMs achadas na pasta:** uma ROM válida do Super Bomberman 5 ou do Super Bomberman 4 na pasta do jogo ou na subpasta `roms/` é reconhecida pelo checksum com qualquer nome de arquivo, e um caminho salvo em outro PC é procurado pelo nome do arquivo na pasta.
+- **Rebuild depois de mudar de pasta:** o **Generate & rebuild** numa pasta que foi movida reconfigura o build em vez de falhar com os caminhos da pasta antiga. O setup decide se o jogo gerado está atualizado pela versão, não pelas datas dos arquivos, que mudam ao copiar.
+- Mesmo jogo online da v2.2.5; todos na sala precisam da v2.2.6.'''),
     '2.2.5': (
 '''- **Fix: "This is a setup build" on Linux:** after updating the AppImage, a player who had turned on skipping the launcher (or who opened the AppImage with a ROM) got the error "This is a setup build with no recompiled game code" instead of the game. The setup now always opens the launcher; run **Generate & rebuild** once and the AppImage opens the rebuilt game as usual.
 - Same online netplay as v2.2.4; everyone in a room needs v2.2.5.''',

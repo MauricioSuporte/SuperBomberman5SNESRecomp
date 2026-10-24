@@ -1,5 +1,33 @@
 # Super Bomberman 5: estado do protótipo
 
+## v2.2.6 — 2026-10-24: portable game folder (relative ROM paths, ROM lookup in the folder)
+
+- Request (maintainer): a game folder generated on one PC, copied with both ROMs to a friend's PC, asked where the
+  ROM was and offered **Generate & rebuild** again. Causes (code review of the forks): `rom.cfg` (host
+  `launcher_cache.c`, launcher `lm_persist_*`, codegen relaunch) and the Mods page's external ROMs
+  (`mods/preloaded/state.toml`) stored absolute paths from the old machine; the host only looked for the ROM under
+  its exact file name beside the executable (`build/`), not in the folder above it; the launcher of a playable
+  build opens the setup wizard whenever its ROM is missing (and also when `src/gen/` is absent); the setup host's
+  handoff to `build/` compared file times, which a copy rewrites.
+- Changes (snesrecomp fork): `host_paths.c` gains the game root (nearest of the executable's folder and up to three
+  parents holding `rom_identity.txt` or `snesrecomp/snesrecomp_cli.py`), `snesrecomp_portable_path` (paths inside
+  it are stored relative, '/' separators) and `snesrecomp_resolve_stored_path` (relative → game root / exe dir /
+  cwd; a path that no longer opens → same file name in the game root, `roms/`, exe dir, cwd); `rom.cfg` is written
+  and read through them; the host also finds the ROM by SHA-256 under any name in those folders
+  (`snesrecomp_rom_locate_sha256`), and mod external ROMs resolve the same way, with a digest scan as fallback;
+  `snesrecomp_cli.py resolve-rom` tries the file name in the project. Codegen host: a playable build writes
+  `<target>.build-version` beside itself and the setup host hands off when the versions match (times only for
+  `dev`/no stamp); a playable build no longer forces the wizard when `src/gen/` is missing; a `build/` whose
+  `CMakeCache.txt` names another source folder is reconfigured. recomp-ui fork: `portable_path` /
+  `resolve_stored_path` hooks for its `rom.cfg`/`disc.cfg`/`bios.cfg` sidecars. Game: `sb4_rom.c` searches the game
+  folder and the resolved `rom.cfg`.
+- Evidence: Linux (portable toolchain 1.0.14, clang) setup-host build and the 20 native tests, including the new
+  `portable_paths_tests` (a synthetic game folder run from another directory, then moved: relative `rom.cfg`, name
+  lookup of a foreign absolute path, digest lookup of a renamed headered file in `roms/`); the framework's
+  `tests/launcher/launcher_test.c` with gcc `-Werror`; codegen host compiled with and without
+  `SNESRECOMP_SETUP_HOST`. Not run with a real ROM, on Windows or on a second PC; the Windows code paths are
+  checked by the Release workflow build only.
+
 ## v2.2.5 — 2026-10-24: Linux AppImage "This is a setup build" after starting
 
 - Report (v2.2.4, Linux AppImage, a player's screenshot): starting the AppImage showed "This is a setup build with
