@@ -1275,6 +1275,13 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '2.2.4': (
+'''- **Fix: choppy picture for online guests:** in v2.2.3 a guest repaid any delay at once, so when the host's frames arrived unevenly almost every other frame became a double step: the picture juddered and objects the game blinks on alternate frames (gates, labels, bombers) disappeared. The guest now catches up gradually, one extra frame every few frames, and only runs bursts when it is far behind. It also keeps one frame in reserve (about 16 ms more input lag for guests) so it stops less often.
+- The "Slow PC" message now only appears when the PC itself is slow, not when the host's frames simply arrive unevenly.
+- Everyone in a room needs v2.2.4. Not yet tried in a real internet match.''',
+'''- **Correção: imagem tremida para o convidado online:** na v2.2.3 o convidado recuperava qualquer atraso de uma vez, então quando os quadros do anfitrião chegavam irregulares quase todo segundo quadro virava um passo duplo: a imagem tremia e objetos que o jogo pisca em quadros alternados (portais, nomes, bombers) sumiam. Agora o convidado recupera aos poucos, um quadro extra a cada alguns quadros, e só faz rajadas quando está bem atrás. Ele também guarda um quadro de reserva (cerca de 16 ms a mais de atraso nos controles do convidado) para parar menos.
+- O aviso "Slow PC" agora só aparece quando o próprio PC está lento, não quando os quadros do anfitrião só chegam irregulares.
+- Todos na sala precisam da v2.2.4. Ainda não testado numa partida real pela internet.'''),
     '2.2.3': (
 '''- **Fix: online guest on a slow PC could not move:** a guest whose PC cannot hold 60 fps fell a little further behind the host every second, until the host stopped receiving its inputs and its bomber froze with no message. The guest now skips drawing the frames it uses to catch up (only the picture is skipped, the game runs the same) and catches up faster when far behind. The picture is choppier on that PC, but the match keeps up; the game shows "Slow PC: skipping frames to keep up with the host".
 - **Black screen while waiting for players:** a match starts only when every player has loaded. Instead of a black screen, the game now says who it is waiting for ("Waiting for P3..."), and the netplay log lists each player's state.

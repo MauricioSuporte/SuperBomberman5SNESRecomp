@@ -1,6 +1,6 @@
 # Super Bomberman 5: estado do protótipo
 
-## Unreleased — 2026-10-24: paced guest catch-up (no double-step judder)
+## v2.2.4 — 2026-10-24: paced guest catch-up (no double-step judder)
 
 - Report (v2.2.3, video from a friend's PC and the maintainer's guest log, session 3419): with "Slow PC" on, the
   picture juddered and sprites (portal gates, labels, bombers) blinked out. The maintainer's PC is fast (59.96 fps as
