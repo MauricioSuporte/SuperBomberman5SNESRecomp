@@ -30,6 +30,39 @@ class AppRunTests(unittest.TestCase):
             self.assertEqual(subprocess.check_output(command, env=env, text=True), 'rebuilt:argument with spaces')
             self.assertTrue((dest/'.appimage-ready').is_file())
 
+    def test_game_folder_not_anchored_beside_appimage(self):
+        # The runtime sets $APPIMAGE; the host would anchor config, rom.cfg,
+        # mods and the setup wizard's project lookup to its folder, so a setup
+        # host showed PLAY and died with "This is a setup build" (v2.2.4 report).
+        with tempfile.TemporaryDirectory(prefix='sb5-launch-') as temp:
+            root = Path(temp)
+            setup = root/'app/setup'
+            setup.mkdir(parents=True)
+            (setup/'VERSION').write_text('2.2.7\n')
+            host = setup/'SuperBomberman5SNESRecomp'
+            host.write_text('#!/bin/sh\nprintf "%s|%s|%s" "${APPIMAGE-unset}" "$SB5_APPIMAGE" "$PWD"\n')
+            host.chmod(0o755)
+            side = root/'Desktop folder'
+            (side/'saves').mkdir(parents=True)
+            (side/'saves/slot.srm').write_text('save')
+            (side/'keybinds.ini').write_text('side keys')
+            (side/'netplay_secret').write_text('secret')
+            (setup/'keybinds.ini').write_text('shipped keys')
+            image = side/'superbomberman5.AppImage'
+            image.write_text('')
+            env = {**os.environ, 'APPDIR': str(root/'app'), 'XDG_DATA_HOME': str(root/'data'),
+                   'APPIMAGE': str(image)}
+            out = subprocess.check_output(['bash', str(ROOT/'scripts/AppRun')], env=env, text=True)
+            dest = root/'data/superbomberman5/2.2.7'
+            self.assertEqual(out, f'unset|{image}|{dest}')
+            self.assertEqual((dest/'saves/slot.srm').read_text(), 'save')
+            self.assertEqual((dest/'netplay_secret').read_text(), 'secret')
+            self.assertEqual((dest/'keybinds.ini').read_text(), 'shipped keys')
+            # Once only: a later change beside the AppImage is not copied again.
+            (dest/'netplay_secret').unlink()
+            subprocess.check_output(['bash', str(ROOT/'scripts/AppRun')], env=env, text=True)
+            self.assertFalse((dest/'netplay_secret').exists())
+
     def test_incomplete_existing_directory_is_not_overwritten(self):
         with tempfile.TemporaryDirectory(prefix='sb5-launch-') as temp:
             root = Path(temp)

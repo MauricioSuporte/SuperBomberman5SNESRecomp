@@ -149,7 +149,10 @@ int Sb5StartUpdater(char *msg, size_t cap) {
     }
 #else
     {
-        const char *appimage = getenv("APPIMAGE");
+        /* AppRun hides $APPIMAGE from the game (it anchored the game folder to the
+         * .AppImage's folder) and passes the file as $SB5_APPIMAGE instead. */
+        const char *appimage = getenv("SB5_APPIMAGE");
+        if (!appimage || !appimage[0]) appimage = getenv("APPIMAGE");
         char pid[32];
         pid_t child;
         snprintf(pid, sizeof(pid), "%ld", (long)getpid());

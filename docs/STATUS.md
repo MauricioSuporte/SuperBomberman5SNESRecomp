@@ -1,5 +1,24 @@
 # Super Bomberman 5: estado do protótipo
 
+## Unreleased — 2026-10-24: Linux AppImage PLAY says "This is a setup build" (launcher opened normally)
+
+- Report (v2.2.4, Linux Mint, a player's screenshots): the launcher opened with no setup wizard; PLAY showed
+  "This is a setup build with no recompiled game code". `config.ini`, `keybinds.ini`, `netplay_secret` and `mods/`
+  had appeared beside the `.AppImage` file instead of in `~/.local/share/superbomberman5/<version>`.
+- Cause: the AppImage runtime exports `$APPIMAGE`, and the host (`host_paths.c` `get_exe_path`, since `ef79549`)
+  treats that file's folder as the executable's folder, so `snesrecomp_anchor_to_exe_dir` moved cwd there and
+  every exe-relative path (config, `rom.cfg`, mod catalog, codegen `discover_project_root`) followed it. With no
+  `snesrecomp/` there, `snesrecomp_codegen_host_apply` returned before setting `needs_setup`: no wizard, PLAY
+  enabled, `SnesInit` refused. The v2.2.5 launcher fix and the v2.2.6 portable folder do not change this.
+  Reproduced by compiling `host_paths.c` alone with `$APPIMAGE` set (anchors beside the AppImage) and unset
+  (anchors in the game folder). The CI smoke test only runs `--help`.
+- Fix (game repo only): `scripts/AppRun` unsets `$APPIMAGE` before starting the host and passes the file as
+  `$SB5_APPIMAGE` (read first by `sb5_launcher.c` and the updater); once per version folder it copies
+  `config.ini`, `keybinds.ini`, `netplay_secret`, `saves/` and `mods/preloaded/state.toml` from beside the AppImage
+  when the game folder lacks them. New `tests/test_appimage.py` case (fails on the old AppRun).
+- Not yet run as a real AppImage on a Linux desktop. Workaround for released versions, from a terminal:
+  `cd ~/.local/share/superbomberman5/<version> && LD_LIBRARY_PATH=$PWD ./SuperBomberman5SNESRecomp`.
+
 ## v2.2.6 — 2026-10-24: portable game folder (relative ROM paths, ROM lookup in the folder)
 
 - Request (maintainer): a game folder generated on one PC, copied with both ROMs to a friend's PC, asked where the

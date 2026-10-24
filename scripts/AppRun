@@ -35,6 +35,29 @@ if [[ ! -f "$DEST/.appimage-ready" ]]; then
   trap - EXIT
 fi
 flock -u 9
+# The game folder is $DEST, not the folder holding the .AppImage file. The host
+# anchors config, rom.cfg, saves, mods and its own project lookup to $APPIMAGE's
+# folder when that is set (meant for AppImages that run inside the read-only
+# mount). Ours runs a writable copy here, so with $APPIMAGE visible the setup
+# host never found its tree: no "Generate & rebuild" wizard, PLAY enabled, and
+# "This is a setup build" on PLAY. Keep the path for the updater only.
+APPIMAGE_FILE="${SB5_APPIMAGE:-${APPIMAGE:-}}"
+unset APPIMAGE
+if [[ -n "$APPIMAGE_FILE" ]]; then
+  export SB5_APPIMAGE="$APPIMAGE_FILE"
+  # v2.2.6 and earlier wrote the player's files beside the .AppImage; bring them
+  # into the game folder once, never over files already there.
+  SIDE="$(dirname "$APPIMAGE_FILE")"
+  if [[ ! -e "$DEST/.appimage-side-files" && "$SIDE" != "$DEST" && -d "$SIDE" ]]; then
+    for item in config.ini keybinds.ini netplay_secret saves mods/preloaded/state.toml; do
+      if [[ -e "$SIDE/$item" && ! -e "$DEST/$item" ]]; then
+        mkdir -p "$DEST/$(dirname "$item")"
+        cp -a "$SIDE/$item" "$DEST/$item" || true
+      fi
+    done
+    touch "$DEST/.appimage-side-files"
+  fi
+fi
 export LD_LIBRARY_PATH="$DEST${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 cd "$DEST"
 HOST="$DEST/SuperBomberman5SNESRecomp"

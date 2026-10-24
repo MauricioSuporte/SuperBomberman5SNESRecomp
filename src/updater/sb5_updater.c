@@ -562,7 +562,10 @@ static void cleanup_stale(const char *temp_root) {
 int main(int argc, char **argv) {
     int check = 0, do_launch = 0, force = 0, from_temp = 0, i;
     long wait_pid = 0;
-    const char *appimage = getenv("APPIMAGE");
+    /* AppRun hides $APPIMAGE from the game (it anchored the game folder to the
+     * .AppImage's folder) and passes the file as $SB5_APPIMAGE instead. */
+    const char *appimage = getenv("SB5_APPIMAGE");
+    if (!appimage || !appimage[0]) appimage = getenv("APPIMAGE");
     char path[PATH_CAP], json_path[PATH_CAP], sums_path[PATH_CAP], pkg_path[PATH_CAP], log_path[PATH_CAP];
     char local[64] = "0", expected[65], actual[65];
     unsigned char *json, *sums;
