@@ -1,6 +1,6 @@
 # Super Bomberman 5: estado do protótipo
 
-## Unreleased — 2026-10-24: Battle champion screen hung with extra characters; Super Bomberman 4 losers
+## v2.2.8 — 2026-10-24: Battle champion screen hung with extra characters; Super Bomberman 4 losers
 
 - Report: the Battle flow stopped on the VICTORY screen when Terrorin won, and the Super Bomberman 4 characters
   on that screen showed their electrocuted frame.

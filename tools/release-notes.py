@@ -1275,6 +1275,13 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '2.2.8': (
+'''- **Fix: Battle stuck on the VICTORY screen:** when an extra character (for example Honey, Emperor Terrorin or a Bomber King) won a Battle, the champion screen never ended. It now goes on to the item roulette and the next match as usual (the champion pose stays Bomberman's, as before).
+- **Fix: Super Bomberman 4 losers on the VICTORY screen:** the Bomber Kings who lost now show Super Bomberman 4's dejected loser pose instead of being electrocuted.
+- Same online netplay as v2.2.7; everyone in a room needs v2.2.8.''',
+'''- **Correção: Battle travado na tela VICTORY:** quando um personagem extra (por exemplo Honey, o Imperador Terrorin ou um Bomber King) vencia uma Battle, a tela do campeão nunca terminava. Agora ela segue para a roleta de itens e a próxima partida normalmente (a pose do campeão continua a do Bomberman, como antes).
+- **Correção: perdedores do Super Bomberman 4 na tela VICTORY:** os Bomber Kings que perderam agora aparecem com a pose de derrota do Super Bomberman 4 em vez de eletrocutados.
+- Mesmo jogo online da v2.2.7; todos na sala precisam da v2.2.8.'''),
     '2.2.7': (
 '''- **Fix: "This is a setup build" on Play (Linux):** the AppImage kept its settings, ROM choice and mods beside the `.AppImage` file instead of in its game folder (`~/.local/share/superbomberman5/<version>`). The launcher then opened without the setup wizard and **Play** ended in "This is a setup build with no recompiled game code". The AppImage now uses its game folder again, so the launcher asks for your ROM and **Generate & rebuild** as it should. Settings, controls, saves and the netplay identity already written beside the AppImage are copied into the game folder once.
 - Same online netplay as v2.2.6; everyone in a room needs v2.2.7.''',
