@@ -1,5 +1,16 @@
 # Super Bomberman 5: estado do protótipo
 
+## v2.2.9 — 2026-10-25: Infinite lives keeps the counter at its maximum
+
+- Report: with the infinite-lives cheat, the counter could stay low or at 0 (the mod only put back the value it had
+  before each charge), so five-player Start rejoins, which need a shared life, could not bring a player back.
+- Fix: while the cheat is on in a campaign stage, `$1D23` is pinned to 9 after every frame (`InfiniteLivesAfterFrame`,
+  after the co-op hooks) and the retry/respawn restore at `$C5:3B2D`/`$C5:065C` writes at least 9. Rejoins spend a
+  life as usual and it is refilled the same frame. Values above 9 are not lowered; Battle (`$1D1A` bit 0) and the
+  cheat off are unchanged.
+- Evidence: native `infinite_lives_tests` (Linux gcc) covers retry, respawn, rejoin refill, Battle and disabled cases.
+  Not exercised at runtime in this session (no ROM here); Windows not built here.
+
 ## v2.2.8 — 2026-10-24: Battle champion screen hung with extra characters; Super Bomberman 4 losers
 
 - Report: the Battle flow stopped on the VICTORY screen when Terrorin won, and the Super Bomberman 4 characters

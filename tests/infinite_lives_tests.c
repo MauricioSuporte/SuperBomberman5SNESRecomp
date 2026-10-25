@@ -29,19 +29,24 @@ int main(void) {
     retry(3); CHECK(g_ram[0x1d23]==1);           /* disabled: stock charges */
     activation(); InfiniteLivesBeforeFrame(); CHECK(g_interp_bridge_pc_hook==lives_hook);
     CHECK(InfiniteLivesEnabled());
-    g_ram[0x1d23]=5; retry(3); CHECK(g_ram[0x1d23]==5);
-    g_ram[0x1d23]=0; retry(1); CHECK(g_ram[0x1d23]==0); /* no Game Over underflow */
-    g_ram[0x1d23]=3; respawn(); CHECK(g_ram[0x1d23]==3);
+    g_ram[0x1d23]=5; retry(3); CHECK(g_ram[0x1d23]==9);
+    g_ram[0x1d23]=0; retry(1); CHECK(g_ram[0x1d23]==9); /* no Game Over underflow */
+    g_ram[0x1d23]=9; retry(3); CHECK(g_ram[0x1d23]==9);
+    g_ram[0x1d23]=8; InfiniteLivesAfterFrame(); CHECK(g_ram[0x1d23]==9); /* rejoin spent one */
+    g_ram[0x1d23]=12; InfiniteLivesAfterFrame(); CHECK(g_ram[0x1d23]==12); /* never lowered */
+    g_ram[0x1d23]=3; respawn(); CHECK(g_ram[0x1d23]==9);
     for (unsigned mode=0; mode<256; ++mode) {
         g_ram[0x1031]=(uint8_t)mode; g_ram[0x1d1a]=0; g_ram[0x1d23]=4; respawn();
-        CHECK((g_ram[0x1d23]==4)==(mode==8 || (mode>=13 && mode<116)));
+        CHECK((g_ram[0x1d23]==9)==(mode==8 || (mode>=13 && mode<116)));
     }
     g_ram[0x1031]=0x0d; g_ram[0x1d1a]=1; g_ram[0x1d23]=4; respawn(); CHECK(g_ram[0x1d23]==3); /* Battle */
+    g_ram[0x1d1a]=1; g_ram[0x1d23]=2; InfiniteLivesAfterFrame(); CHECK(g_ram[0x1d23]==2); /* Battle not pinned */
     g_ram[0x1d1a]=0; g_ram[0x1d23]=7; g_interp_bridge_pc_hook(0xc5065c,1,1); CHECK(g_ram[0x1d23]==7); /* no stale restore */
     CHECK(calls>0);
     InfiniteLivesReset(); CHECK(g_interp_bridge_pc_hook==coop);
     InfiniteLivesBeforeFrame(); CHECK(g_interp_bridge_pc_hook==lives_hook);
     reset_callback(); CHECK(g_interp_bridge_pc_hook==coop && !InfiniteLivesEnabled());
+    g_ram[0x1d23]=1; InfiniteLivesAfterFrame(); CHECK(g_ram[0x1d23]==1); /* disabled */
     InfiniteLivesBeforeFrame(); CHECK(g_interp_bridge_pc_hook==coop);
     puts("Infinite lives retry, respawn, co-op charge, guards and reset passed."); return 0;
 }

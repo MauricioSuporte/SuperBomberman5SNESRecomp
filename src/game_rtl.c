@@ -103,6 +103,7 @@ void GameRunOneFrame(void)
     LouieAfterFrame();
     PauseMenuAfterFrame();
     NormalCoopAfterFrame();
+    InfiniteLivesAfterFrame(); /* keep the shared counter at its maximum for Start rejoins */
     SelectionColorAfterFrame();
     NormalCharacterFrame();
     NameTagsAfterFrame(); /* presentation only: host overlay tags */

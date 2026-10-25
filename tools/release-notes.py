@@ -1275,6 +1275,11 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '2.2.9': (
+'''- **Infinite lives stays at the maximum:** with **Normal Game — infinite lives** on, the shared counter now stays at 9 instead of only keeping its value. Players who press Start to rejoin the five-player game spend a life that is refilled right away, so they can always come back (the counter could sit at 0 and block rejoins).
+- Same online netplay as v2.2.8; everyone in a room needs v2.2.9.''',
+'''- **Vidas infinitas no máximo:** com **Normal Game — infinite lives** ligado, o contador compartilhado agora fica em 9 em vez de só manter o valor. Quem aperta Start para voltar no modo de cinco jogadores gasta uma vida que é reposta na hora, então sempre dá para renascer (antes o contador podia ficar em 0 e impedir a volta).
+- Mesmo jogo online da v2.2.8; todos na sala precisam da v2.2.9.'''),
     '2.2.8': (
 '''- **Fix: Battle stuck on the VICTORY screen:** when an extra character (for example Honey, Emperor Terrorin or a Bomber King) won a Battle, the champion screen never ended. It now goes on to the item roulette and the next match as usual (the champion pose stays Bomberman's, as before).
 - **Fix: Super Bomberman 4 losers on the VICTORY screen:** the Bomber Kings who lost now show Super Bomberman 4's dejected loser pose instead of being electrocuted.
