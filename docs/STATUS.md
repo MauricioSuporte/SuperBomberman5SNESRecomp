@@ -1,6 +1,6 @@
 # Super Bomberman 5: estado do protótipo
 
-## v2.5.0 — 2026-10-29: Battle variant minimaps show the arena; menu sounds
+## v2.4.3 — 2026-10-29: Battle variant minimaps show the arena; menu sounds
 
 - Request: play the menu accept sound when the variant list opens and the back sound on B; show each variant's stage
   gimmicks (stage 8 rails, stage 2 conveyor belts...) in the minimap.

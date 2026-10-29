@@ -46,7 +46,7 @@ Como funciona:
   escolha.
 - As miniaturas são montadas **uma vez**, quando o mod é ativado, a partir da
   ROM do próprio jogador, e ficam prontas na memória (13 arenas × 5 imagens).
-  Desde a v2.5.0 o mod refaz os comandos gráficos do script da fase (`26` conjunto,
+  Desde a v2.4.3 o mod refaz os comandos gráficos do script da fase (`26` conjunto,
   `27`/`29` arquivos de tiles, `2a` paleta, `0a`/`0b`/`0c` mapas) numa VRAM e CGRAM
   de rascunho, desenha os metatiles das duas camadas (`$D0:0000 + (tileset−1)×2`,
   4 palavras de tilemap cada) com a prioridade do modo 1 e reduz a 7 pixels por
@@ -65,7 +65,7 @@ Como funciona:
 - O desenho é feito sobre a imagem final, depois que o PPU a compôs; VRAM,
   OAM, CGRAM e WRAM não são tocados para desenhar.
 
-Validação v2.5.0 (Linux LLE): as 52 miniaturas montadas da ROM comparadas lado
+Validação v2.4.3 (Linux LLE): as 52 miniaturas montadas da ROM comparadas lado
 a lado com a tela de cada fase em jogo (mesmo layout e mecânicas; a arena 11
 difere só na paleta animada); rotas com todos os mods: abrir manda o comando
 `$24`, ↓ `$A1`, B `$23` e confirmar só o `$02/$82` do carrossel, igual ao jogo
@@ -107,7 +107,7 @@ masks the saved ones until the stage has started, then restores both, and
 hands the A back to the selector on the next pad read. Input goes through
 `$C0:0AF9`; the menu state is a save-state extension, so netplay peers agree.
 Minimaps are built once, when the feature is enabled, from the player's own
-ROM: since v2.5.0 by replaying the stage script's graphics ops (`26` set,
+ROM: since v2.4.3 by replaying the stage script's graphics ops (`26` set,
 `27`/`29` tile archives, `2a` palette, `0a/0b/0c` maps) into a scratch
 VRAM/CGRAM and drawing both layers' metatiles (`$D0:0000 + (tileset-1)*2`)
 with Mode 1 priority, averaged to 7 pixels per cell (sprites such as carts are
@@ -119,7 +119,7 @@ at `$D0:8000`, spawns `22 P x y`). Everything is drawn over the finished
 frame. Nothing derived from the ROM is stored in the repository
 or the package.
 
-Validated for v2.5.0 on Linux LLE: the 52 ROM-built pictures compared side by
+Validated for v2.4.3 on Linux LLE: the 52 ROM-built pictures compared side by
 side with each stage in play (same layout and gimmicks; arena 11 differs only
 in its animated palette); with every mod on, opening sends command `$24`, Down
 `$A1`, B `$23`, and confirming only the carousel's `$02/$82`, as without the
