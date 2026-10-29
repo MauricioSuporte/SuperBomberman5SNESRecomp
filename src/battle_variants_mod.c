@@ -196,30 +196,58 @@ static void apply_choice(unsigned choice) {
     restore_pending = 1;
 }
 
+/* The pad reader computes "new" presses from the previous frame's held
+ * arrays ($C0:0A5A copies D+$2C/$31 to $039F/$03A4 before reading). Clearing
+ * the held arrays while the list is up therefore makes a key that is still
+ * held look new again on the cartridge's next frames, and the list confirmed
+ * itself a few frames after opening. The mod keeps its own previous held
+ * state for the list, and after the list closes it keeps the selector's input
+ * empty until every seat has released its keys. */
+static uint8_t prev_act[5], prev_dir[5], suppress;
 static void pad_hook(CpuState *cpu, uint32_t pc) {
     (void)pc;
     if (!enabled) return;
     const unsigned held = cpu->D + 0x2c, dirs = cpu->D + 0x31, fresh = cpu->D + 0x36, fresh_dirs = cpu->D + 0x3b;
+    uint8_t new_act[5], new_dir[5];
+    bool any_held = false;
+    for (unsigned seat = 0; seat < 5; ++seat) {
+        uint8_t act = g_ram[(held + seat) & 0xffff], dir = g_ram[(dirs + seat) & 0xffff];
+        new_act[seat] = act & (uint8_t)~prev_act[seat];
+        new_dir[seat] = dir & (uint8_t)~prev_dir[seat];
+        prev_act[seat] = act; prev_dir[seat] = dir;
+        if (act | dir) any_held = true;
+    }
+    const bool selector = in_selector();
     if (inject_seat) {
-        if (in_selector()) {
+        if (selector) {
             unsigned seat = inject_seat - 1u;
-            g_ram[(held + seat) & 0xffff] |= PAD_A; g_ram[(fresh + seat) & 0xffff] |= PAD_A;
+            for (unsigned s = 0; s < 5; ++s) {
+                g_ram[(held + s) & 0xffff] = 0; g_ram[(dirs + s) & 0xffff] = 0;
+                g_ram[(fresh + s) & 0xffff] = 0; g_ram[(fresh_dirs + s) & 0xffff] = 0;
+            }
+            g_ram[(held + seat) & 0xffff] = PAD_A; g_ram[(fresh + seat) & 0xffff] = PAD_A;
+            suppress = 1;
         }
         inject_seat = 0;
         return;
     }
-    if (!open_menu) {
-        if (!in_selector()) return;
+    if (suppress && !open_menu) {
+        if (!selector || !any_held) {
+            suppress = 0; /* released: this read (nothing held) goes through */
+            return;
+        }
+    } else if (!open_menu) {
+        if (!selector) return;
         for (unsigned seat = 0; seat < 5; ++seat)
-            if (g_ram[(fresh + seat) & 0xffff] & PAD_CONFIRM) { open_menu = 1; cursor = 0; break; }
+            if (new_act[seat] & PAD_CONFIRM) { open_menu = 1; cursor = 0; break; }
         if (!open_menu) return;
-    } else if (!in_selector()) {
+    } else if (!selector) {
         open_menu = 0; /* the screen went away underneath (reset, netplay resync) */
         return;
     } else {
         for (unsigned seat = 0; seat < 5; ++seat) {
-            uint8_t act = g_ram[(fresh + seat) & 0xffff], dir = g_ram[(fresh_dirs + seat) & 0xffff];
-            if (act & PAD_B) { open_menu = 0; break; }
+            uint8_t act = new_act[seat], dir = new_dir[seat];
+            if (act & PAD_B) { open_menu = 0; suppress = 1; break; }
             if (act & PAD_CONFIRM) {
                 apply_choice(cursor < choice_count() ? cursor : 0);
                 open_menu = 0; inject_seat = (uint8_t)(seat + 1); break;
@@ -439,7 +467,8 @@ static bool ptbr(void) { return PtbrEnabled(); }
 #endif
 
 void BattleVariantsReset(void) {
-    open_menu = cursor = inject_seat = 0;
+    open_menu = cursor = inject_seat = suppress = 0;
+    memset(prev_act, 0, sizeof(prev_act)); memset(prev_dir, 0, sizeof(prev_dir));
     if (restore_pending) { g_ram[BITS] = saved_bits; g_ram[SAVED_BITS] = saved_saved_bits; }
     restore_pending = 0;
 }
@@ -448,10 +477,15 @@ void BattleVariantsSave(struct SaveLoadInfo *sli) {
     uint32_t magic = BV_MAGIC;
     uint8_t state[6] = {open_menu, cursor, inject_seat, restore_pending, saved_bits, saved_saved_bits};
     sli->func(sli, &magic, 4); sli->func(sli, state, sizeof(state));
+    /* v2.4.2: input tracking (states from v2.4.0/2.4.1 end after state[]). */
+    uint8_t input[11];
+    memcpy(input, prev_act, 5); memcpy(input + 5, prev_dir, 5); input[10] = suppress;
+    sli->func(sli, input, sizeof(input));
 }
 void BattleVariantsLoad(struct SaveLoadInfo *sli, unsigned version) {
     (void)version;
-    open_menu = cursor = inject_seat = restore_pending = 0;
+    open_menu = cursor = inject_seat = restore_pending = suppress = 0;
+    memset(prev_act, 0, sizeof(prev_act)); memset(prev_dir, 0, sizeof(prev_dir));
     if (!RtlStateBytesRemaining(sli)) return;
     uint32_t magic = 0;
     uint8_t state[6] = {0};
@@ -462,6 +496,11 @@ void BattleVariantsLoad(struct SaveLoadInfo *sli, unsigned version) {
     }
     open_menu = state[0]; cursor = state[1]; inject_seat = state[2]; restore_pending = state[3];
     saved_bits = state[4]; saved_saved_bits = state[5];
+    if (RtlStateBytesRemaining(sli) < 11) return;
+    uint8_t input[11];
+    sli->func(sli, input, sizeof(input));
+    if (input[10] > 1) { RtlStateStreamFail(sli); return; }
+    memcpy(prev_act, input, 5); memcpy(prev_dir, input + 5, 5); suppress = input[10];
 }
 
 static void reset_plugin(void) { BattleVariantsReset(); enabled = false; }

@@ -90,20 +90,34 @@ int main(void) {
     /* Outside the selector the A goes through. */
     g_ram[0x1031] = 4; g_ram[0x0ce0] = 0xc7;
     frame(0, 0x80, 0); CHECK(!open_menu && g_ram[FRESH] == 0x80);
+    frame(0, 0, 0);
     /* A on the selector opens the list and is swallowed. */
     selector();
     frame(1, 0x80, 0); CHECK(open_menu && cursor == 0 && g_ram[FRESH + 1] == 0 && g_ram[HELD + 1] == 0);
+    /* Holding A (a keyboard press lasts several frames; the cartridge sees it
+     * as new again because its previous-held copy was cleared) neither
+     * confirms nor closes the list. */
+    for (int i = 0; i < 12; ++i) { g_ram[FRESH + 1] = 0x80; frame(1, 0x80, 0); g_ram[FRESH + 1] = 0x80; }
+    frame(1, 0x80, 0); CHECK(open_menu && !inject_seat && cursor == 0);
+    frame(1, 0, 0);
     frame(2, 0, 0x04); CHECK(cursor == 1 && g_ram[FRESH_DIRS + 2] == 0);
-    frame(0, 0, 0x08); frame(0, 0, 0x08); CHECK(cursor == 4); /* wraps to Items (arena 1) */
-    /* B closes; the carousel does not see it. */
-    frame(3, 0x08, 0); CHECK(!open_menu && g_ram[FRESH + 3] == 0);
+    frame(2, 0, 0x04); CHECK(cursor == 1); /* held: no repeat */
+    frame(0, 0, 0x08); frame(0, 0, 0); frame(0, 0, 0x08); CHECK(cursor == 4); /* wraps to Items (arena 1) */
+    /* B closes; the carousel does not see it, nor the rest of the hold. */
+    frame(3, 0x08, 0); CHECK(!open_menu && suppress && g_ram[FRESH + 3] == 0);
+    frame(3, 0x08, 0); frame(3, 0x08, 0); CHECK(!open_menu && g_ram[HELD + 3] == 0 && g_ram[FRESH + 3] == 0);
+    frame(3, 0, 0); CHECK(!suppress);
     /* Reopen, choose 0413 (third entry), confirm with seat 2. */
-    frame(0, 0x80, 0); frame(0, 0, 0x04); frame(0, 0, 0x04); CHECK(open_menu && cursor == 2);
+    frame(0, 0x80, 0); frame(0, 0, 0); frame(0, 0, 0x04); frame(0, 0, 0); frame(0, 0, 0x04);
+    CHECK(open_menu && cursor == 2);
     frame(2, 0x80, 0);
     CHECK(!open_menu && inject_seat == 3 && restore_pending);
     CHECK(g_ram[0x6274] == 0x42 && g_ram[0x6273] == 0x00 && g_ram[FRESH + 2] == 0);
-    /* Next pad read hands the A back to the same seat. */
-    frame(2, 0, 0); CHECK(g_ram[FRESH + 2] == 0x80 && g_ram[HELD + 2] == 0x80 && !inject_seat);
+    /* Next pad read hands one A back to the same seat; the rest of the hold
+     * stays away from the selector until it is released. */
+    frame(2, 0x80, 0); CHECK(g_ram[FRESH + 2] == 0x80 && g_ram[HELD + 2] == 0x80 && !inject_seat && suppress);
+    frame(2, 0x80, 0); CHECK(g_ram[FRESH + 2] == 0 && g_ram[HELD + 2] == 0 && !open_menu);
+    frame(2, 0, 0); CHECK(!suppress && !open_menu);
     /* Restored once the stage has started. */
     BattleVariantsAfterFrame(); CHECK(g_ram[0x6274] == 0x42);
     g_ram[0x1031] = 0x76; BattleVariantsAfterFrame();
@@ -111,20 +125,22 @@ int main(void) {
 
     /* Item rule: bit 5 plus script flag 3, variant bits cleared. */
     selector(); g_ram[0x2900] = 0;
-    frame(0, 0x80, 0); frame(0, 0, 0x08); CHECK(cursor == 4);
+    frame(0, 0x80, 0); frame(0, 0, 0); frame(0, 0, 0x08); CHECK(cursor == 4);
     frame(0, 0x80, 0); CHECK(g_ram[0x6274] == 0x60 && (g_ram[0x2900] & 0x08));
-    frame(0, 0, 0);
+    frame(0, 0, 0); frame(0, 0, 0);
     /* Start opens the list and confirms too (the carousel accepts it). */
     g_ram[0x1031] = 0x74; BattleVariantsAfterFrame();
     selector(); g_ram[0x2900] = 0;
     frame(1, 0x01, 0); CHECK(open_menu && cursor == 0 && g_ram[FRESH + 1] == 0);
+    frame(1, 0x01, 0); frame(1, 0x01, 0); CHECK(open_menu && !inject_seat);
     frame(1, 0, 0x04); frame(1, 0x01, 0);
     CHECK(!open_menu && inject_seat == 2 && g_ram[0x6274] == 0x41 && g_ram[FRESH + 1] == 0);
     frame(1, 0, 0); CHECK(g_ram[FRESH + 1] == 0x80);
+    frame(1, 0, 0);
     /* Arena without the rule: four entries, the cursor wraps at 3. */
     g_ram[0x1031] = 0x74; BattleVariantsAfterFrame();
     selector(); g_ram[0x625a] = 2;
-    frame(0, 0x80, 0); frame(0, 0, 0x08); CHECK(cursor == 3);
+    frame(0, 0x80, 0); frame(0, 0, 0); frame(0, 0, 0x08); CHECK(cursor == 3);
 
     /* Save state round trip, older states, corrupt data. */
     Stream w = {{transfer}, {0}, 0, 0, false};
@@ -134,14 +150,17 @@ int main(void) {
     BattleVariantsLoad(&r.base, 0); CHECK(!failed && open_menu && cursor == 3);
     Stream empty = {{transfer}, {0}, 0, 0, true};
     BattleVariantsLoad(&empty.base, 0); CHECK(!failed && !open_menu);
+    CHECK(w.end == 4 + 6 + 11);
+    Stream old = w; old.at = 0; old.reading = true; old.end = 10; /* v2.4.0/2.4.1 state */
+    BattleVariantsLoad(&old.base, 0); CHECK(!failed && open_menu && !suppress);
     r.at = 0; r.bytes[5] = 9; /* cursor out of range */
     BattleVariantsLoad(&r.base, 0); CHECK(failed);
     failed = false;
 
     /* Reset closes the list and gives the bits back. */
     open_menu = 1; restore_pending = 1; saved_bits = 0x11; saved_saved_bits = 0x22;
-    reset_callback(); CHECK(!open_menu && !restore_pending && g_ram[0x6274] == 0x11 && g_ram[0x6273] == 0x22);
-    selector(); frame(0, 0x80, 0); CHECK(!open_menu); /* disabled again */
+    reset_callback(); CHECK(!open_menu && !suppress && !restore_pending && g_ram[0x6274] == 0x11 && g_ram[0x6273] == 0x22);
+    selector(); frame(0, 0, 0); frame(0, 0x80, 0); CHECK(!open_menu); /* disabled again */
     puts("Battle variants layout parsing, menu input, bits, item rule, restore and states passed.");
     return 0;
 }

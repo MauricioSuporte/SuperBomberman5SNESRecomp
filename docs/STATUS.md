@@ -1,5 +1,19 @@
 # Super Bomberman 5: estado do protótipo
 
+## v2.4.2 — 2026-10-29: Battle variant list no longer confirms itself
+
+- Report (Windows, v2.4.1): with A or Start the list showed for a few frames and the match started.
+- Cause: the pad reader `$C0:0A56` copies the previous held arrays (`D+$2C/$31` → `$039F/$03A4`) and computes new
+  actions as `held & ~previous` (with a 3-frame `$03B3` / `$03B8` debounce). The mod cleared the held arrays while the
+  list was up, so a key still held looked new to the cartridge every few frames and confirmed the list. The 1-2 frame
+  presses of the earlier scripted routes hid it. Reproduced on Linux LLE with a 12-frame A press (task 9 at `$C6:A2EC`).
+- Fix: the mod keeps its own previous held state for the list (new press = held & ~previous), hands back one A on
+  confirm, and keeps the selector's input empty after the list closes until every seat releases its keys. That state
+  (10 bytes + flag) is appended to the save-state extension; v2.4.0/2.4.1 states still load.
+- Evidence: native test with held keys; Linux LLE, every mod enabled, 10-20 frame presses: A held 15 → list open 120
+  frames later, Down ×2 + A → mode `$76`; Start → mode `$75`; B held 20 → back on the carousel, which then moves to
+  arena 2 and reopens the list. No `interp_cap`/BRK. Not rerun on Windows.
+
 ## v2.4.1 — 2026-10-29: Battle stage variants also answer Start
 
 - Report: on Windows, with the mod enabled, choosing an arena started the match without the variant list.

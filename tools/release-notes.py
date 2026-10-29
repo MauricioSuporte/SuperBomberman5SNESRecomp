@@ -1275,6 +1275,11 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '2.4.2': (
+'''- **Fix: the Battle variant list confirmed itself:** with **Battle — stage variants** on, the list appeared for a few frames and the match started before you could choose, because a key still held (a normal keyboard press lasts several frames) was read as a new press. Holding A, Start or B no longer does anything extra: the list waits for a new press, and after it closes the arena carousel ignores keys until they are released.
+- Includes v2.4.1 (Start also opens the list). Everyone in an online room needs v2.4.2.''',
+'''- **Correção: a lista de variantes do Battle se confirmava sozinha:** com o **Battle — stage variants** ligado, a lista aparecia por poucos quadros e a partida começava antes da escolha, porque uma tecla ainda segurada (um toque normal no teclado dura vários quadros) era lida como um novo toque. Segurar A, Start ou B não faz mais nada a mais: a lista espera um novo toque e, depois de fechar, o carrossel de arenas ignora as teclas até elas serem soltas.
+- Inclui a v2.4.1 (Start também abre a lista). Todos na sala online precisam da v2.4.2.'''),
     '2.4.1': (
 '''- **Fix: Battle — stage variants with Start:** confirming a Battle arena with **Start** (Enter on the keyboard) skipped the variant screen and started the match. **Start** now opens the list as **A** does, and also confirms a variant.
 - Includes everything from v2.4.0 (the Battle — stage variants mod). Everyone in an online room needs v2.4.1.''',
