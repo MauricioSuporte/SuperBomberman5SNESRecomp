@@ -1,0 +1,9 @@
+name: helper-check
+on: push
+jobs:
+  win:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - shell: cmd
+        run: call helper_check.cmd
