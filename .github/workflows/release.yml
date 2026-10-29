@@ -6,7 +6,7 @@ on:
       version:
         description: 'Version matching VERSION (without v)'
         type: string
-        default: '2.3.0'
+        default: '2.3.1'
       publish_release:
         description: 'Publish audited Linux AppImage and Windows ZIP'
         type: boolean

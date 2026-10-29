@@ -1275,6 +1275,15 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '2.3.1': (
+'''- **Fix: Generate & rebuild silently kept the old game:** in a game folder that had been renamed or moved, every rebuild stopped at "Error: could not load cache", and the rebuild window then started the previously built game as if it had worked, so new versions (and the v2.3.0 **Battle — COM level 4** mod) never appeared. The rebuild now configures again in that case, and a failed build stops with "Build failed" instead of opening the old game.
+- **Generate & rebuild starts by itself after an update** when the game was already built and your ROM is known; if it fails, the button is still there.
+- **Updater progress:** download bar with percentage, speed and time left, unpacking timer and an install bar counting files. It shows from the next update on, because the updater already installed is the one that downloads a new version.
+- Same online netplay as v2.3.0; everyone in a room needs v2.3.1.''',
+'''- **Correção: Generate & rebuild mantinha o jogo antigo sem avisar:** numa pasta do jogo que foi renomeada ou movida, todo rebuild parava em "Error: could not load cache" e a janela do rebuild abria o jogo compilado antes como se tivesse dado certo, então versões novas (e o mod **Battle — COM level 4** da v2.3.0) não apareciam. Agora o rebuild reconfigura nesse caso, e um build com falha para em "Build failed" em vez de abrir o jogo antigo.
+- **O Generate & rebuild começa sozinho depois de atualizar** quando o jogo já estava compilado e a sua ROM é conhecida; se falhar, o botão continua lá.
+- **Progresso no atualizador:** barra de download com porcentagem, velocidade e tempo restante, cronômetro da extração e barra de instalação contando os arquivos. Aparece a partir da próxima atualização, porque é o atualizador já instalado que baixa a versão nova.
+- Mesmo jogo online da v2.3.0; todos na sala precisam da v2.3.1.'''),
     '2.3.0': (
 '''- **New mod: Battle — COM level 4:** in **Mods → Cheats**, turn on **COM level 4 (Super) in Battle** and the Battle settings let you choose the Super COM level, the one the cartridge only unlocks with password **1103**. Your save file is not changed: turn the mod off and the stock three levels are back. Disabled by default. [Details](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/blob/main/docs/COM_LEVEL_4.md)
 - Online rooms adopt the host's mods as before; everyone in a room needs v2.3.0.''',

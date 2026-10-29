@@ -1,5 +1,29 @@
 # Super Bomberman 5: estado do protótipo
 
+## v2.3.1 — 2026-10-29: rebuild kept the old game after a folder rename; auto rebuild; updater progress
+
+- Report (maintainer, v2.3.0 over a built v2.2.9 folder): **Battle — COM level 4** missing from the Mods page even
+  after Generate & rebuild; `build\mods\preloaded\packages` still dated 24/10 without the new package.
+- Cause (their `build\snesrecomp_rebuild.log`): the first build was configured in `...\superbomberman5-2.2.6-windows-x64`,
+  later renamed `Super Bomberman 5 Recomp`. Non-ASCII paths build through an ASCII junction named after the path, so
+  the helper dropped the old `CMakeCache.txt` but kept `build.ninja`; configure runs only without `build.ninja`, so
+  each rebuild ended in `Error: could not load cache`. The helper then tested `errorlevel` after
+  `cmake | powershell Tee-Object`, which in cmd is the last command's (PowerShell, 0): the failure passed as success
+  and the old `build\SuperBomberman5SNESRecomp.exe` (2.2.9, no COM level plugin, old catalog) was started.
+- Fix (snesrecomp fork `552fb6b`, `087005c`): no cache ⇒ `build.ninja` deleted ⇒ configure; PowerShell runs cmake
+  itself from the helper's environment variables, tees the log and exits with cmake's code, so "Build failed" stops.
+  Evidence: a windows-latest Actions run of the same lines in a `Área de Trabalho` folder: stale `build.ninja`
+  removed, missing cache and a C compile error reported as failures, a real build as success; the old pipe form
+  missed the failure. The whole helper was not run end to end on a player PC.
+- Auto rebuild (recomp-ui fork `489b7ba`, snesrecomp `f8e2728`): `RecompLauncherCGameInfo.prepare_autostart`
+  (appended, `RECOMP_LAUNCHER_HAS_PREPARE_AUTOSTART`); the setup host sets it when a rebuilt game exists but did not
+  get the handoff (older than the setup), and the wizard presses Generate & rebuild once with the selected verified
+  ROM. `SNESRECOMP_NO_AUTO_REBUILD=1` opts out. Built on Windows/Linux CI; not exercised interactively.
+- Updater progress bars (`src/updater/sb5_updater.c`): asset size from the release JSON, curl polled for file size,
+  unpack timer, install bar by file count, ETA from the average rate, `done in` lines in `updater.log`. Evidence:
+  `updater_tests` (formatting, sizes) and a real download of the v2.3.0 AppImage in a Linux pty. Windows console not
+  run here. The ZIP lists the analyzer twice (1627 entries, 1626 files); harmless, not changed in this release.
+
 ## v2.3.0 — 2026-10-29: Battle COM level 4 mod
 
 - Request: a mod that offers Battle's COM level 4 (Super), which the cartridge unlocks only with password 1103,
