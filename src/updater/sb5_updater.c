@@ -1045,8 +1045,8 @@ int main(int argc, char **argv) {
             pause_if_interactive(0);
             return 1;
         }
-        say("Updated to %s. The launcher will ask for one Generate & rebuild to build the new version "
-            "from your ROM.", rel.tag);
+        say("Updated to %s. The launcher now runs Generate & rebuild by itself to build the new "
+            "version from your ROM.", rel.tag);
         join(path, sizeof(path), g_dir, SB5_SETUP_EXE);
         if (do_launch) launch(path);
         pause_if_interactive(do_launch);
@@ -1058,8 +1058,8 @@ int main(int argc, char **argv) {
             return 1;
         }
         chmod(appimage, 0755);
-        say("Updated to %s. The launcher will ask for one Generate & rebuild to build the new version "
-            "from your ROM.", rel.tag);
+        say("Updated to %s. The launcher now runs Generate & rebuild by itself to build the new "
+            "version from your ROM.", rel.tag);
         if (do_launch) launch(appimage);
     }
 #endif

@@ -15,7 +15,9 @@ O atualizador:
    `config.ini`, `keybinds.ini`, `saves/`, `build/`, `src/gen/`, `recomp/funcs.h` e na seleção de mods
    (`mods/preloaded/state.toml`); **Linux:** substitui o AppImage (`$APPIMAGE`), e o AppRun leva `rom.cfg`,
    configurações, saves e a seleção de mods para a pasta da nova versão;
-4. abre o launcher, que pede **um Generate & rebuild** para compilar a nova versão a partir da sua ROM.
+4. abre o launcher, que pede **um Generate & rebuild** para compilar a nova versão a partir da sua ROM. Desde a
+   v2.3.1, se o jogo já estava compilado e a ROM já está escolhida, o launcher começa o **Generate & rebuild**
+   sozinho (uma vez; se falhar, o botão continua lá). `SNESRECOMP_NO_AUTO_REBUILD=1` mantém o clique manual.
 
 Desde a v2.3.1 a janela mostra o andamento: o download tem barra, porcentagem, MB baixados, velocidade e tempo
 estimado (`ETA`), calculados pelo tamanho do pacote informado pela release; a extração mostra o tempo
@@ -47,7 +49,9 @@ game and starts it. It reads the latest GitHub release, compares with `VERSION`,
 package and `SHA256SUMS`, verifies the digest, then on Windows unpacks the ZIP over the folder without
 touching ROMs, `rom.cfg`, config, saves, `build/`, generated sources or the Mods selection, and on Linux
 replaces the AppImage (AppRun carries `rom.cfg`, config, saves and the Mods selection into the new
-version folder). The launcher then asks for one **Generate & rebuild**. Since v2.3.1 the window shows progress: a
+version folder). The launcher then asks for one **Generate & rebuild**; since v2.3.1 it starts it by itself when a
+built game was already there and the ROM is known (once; a failure leaves the button; `SNESRECOMP_NO_AUTO_REBUILD=1`
+keeps it manual). Since v2.3.1 the window shows progress: a
 download bar with percentage, MB, speed and estimated time left (from the asset size in the release metadata),
 the elapsed time while unpacking, and an install bar counting copied files with its own estimate; each step ends
 with a `done in m:ss` line, also written to `updater.log` (only those lines when the output is not a console).
