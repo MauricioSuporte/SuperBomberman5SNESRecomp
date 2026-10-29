@@ -1,5 +1,15 @@
 # Super Bomberman 5: estado do protótipo
 
+## v2.3.3 — 2026-10-29: failed automatic rebuild restarted on every launch
+
+- Report (maintainer, still on v2.3.1): opening the game started Generate & rebuild by itself and failed again at
+  libjuice (fixed in v2.3.2, not yet installed); each launch repeated it, so the launcher (Update game) was unreachable.
+- Fix (snesrecomp fork): the Windows helper writes `build\snesrecomp_rebuild_failed.txt` on configure/build failure
+  and deletes it after a successful build; the setup host skips `prepare_autostart` while it exists. Syntax-checked
+  with gcc; Windows behaviour follows the helper lines validated earlier on windows-latest, not run on a player PC.
+- Player workaround on v2.3.1: run `updater\SuperBomberman5Updater.exe` directly (installs the fix), or delete
+  `build\_deps\*-subbuild`.
+
 ## v2.3.2 — 2026-10-29: rebuild after a folder rename stopped at libjuice's sub-build
 
 - Report (maintainer, v2.3.1 helper console): configure now ran, then `CMake Error: The current CMakeCache.txt

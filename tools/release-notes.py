@@ -1275,6 +1275,13 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '2.3.3': (
+'''- **Fix: a failing rebuild started again on every launch:** when the automatic Generate & rebuild failed on Windows, opening the game started it (and failed) again each time, so the launcher, and its Update button, could not be reached. After a failed rebuild the launcher now opens normally with the Generate & rebuild button; a successful rebuild turns the automatic start back on.
+- Includes v2.3.2's fix for rebuilding after renaming or moving the game folder ("CMake step for libjuice failed").
+- Same online netplay as v2.3.2; everyone in a room needs v2.3.3.''',
+'''- **Correção: rebuild com falha recomeçava a cada abertura:** quando o Generate & rebuild automático falhava no Windows, abrir o jogo começava (e falhava) de novo toda vez, sem chegar ao launcher e ao botão de atualizar. Depois de um rebuild com falha o launcher agora abre normalmente com o botão Generate & rebuild; um rebuild bem-sucedido religa o início automático.
+- Inclui a correção da v2.3.2 para o rebuild depois de renomear ou mover a pasta do jogo ("CMake step for libjuice failed").
+- Mesmo jogo online da v2.3.2; todos na sala precisam da v2.3.3.'''),
     '2.3.2': (
 '''- **Fix: Generate & rebuild after renaming or moving the game folder:** v2.3.1 configured the build again but then stopped at "CMake step for libjuice failed" ("The current CMakeCache.txt directory ... is different"), because a downloaded library kept its own build settings from the old folder. Those are now reset too, and the rebuild finishes. If v2.3.1 showed that error, update and run Generate & rebuild again (it starts by itself).
 - Same online netplay as v2.3.1; everyone in a room needs v2.3.2.''',
