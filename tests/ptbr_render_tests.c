@@ -11,6 +11,8 @@ uint8 g_ram[0x20000];
 #include "../src/ptbr_mod.c"
 static bool coop_fixture;
 bool NormalCoopPlayerMenu(void) { return coop_fixture; }
+static bool rush_title_fixture;
+bool BossRushTitleMenu(void) { return rush_title_fixture; }
 static unsigned coop_count_fixture=5;
 unsigned NormalCoopPlayerCount(void) { return coop_count_fixture; }
 
@@ -348,6 +350,55 @@ int main(int argc,char **argv) {
     }
     coop_count_fixture=5;s_enabled=true;
     coop_fixture=false;
+    /* Boss Rush title: four entries on rows 16-22 under the heading on row 14,
+     * the copyright on rows 25-26 untouched; English reuses the screen's own
+     * tile words, Portuguese renders the rows; render only, exact restore. */
+    {
+        static const uint16_t rows[11][32]={
+            [0]={[8]=0x2102,0x2103,0x2104,0x2103,0x2105,0x2104,0x2106,0x2107,0x2102,0x2108,0x2105,0x2102,0x2103,0x2108,0x2108,0x2109,0x210a},
+            [1]={[8]=0x210b,0x210c,0x210d,0x210e,0x2105,0x210d,0x210f,0x2110,0x2111,0x2112,0x2105,0x2113,0x210c,0x2112,0x2112,0x210c,0x2114},
+            [2]={[11]=0x2115,0x2116,0x2117,0x2118,0x2119,0x211a,0x2105,0x211b,0x2119,0x2118,0x211c,0x2105},
+            [3]={[11]=0x211d,0x211e,0x211f,0x2120,0x2121,0x2122,0x2105,0x2123,0x2121,0x2120,0x2124,0x2105},
+            [4]={[11]=0x2117,0x2119,0x2125,0x2125,0x211a,0x211c,0x2105,0x211b,0x2119,0x2118,0x211c,0x2105},
+            [5]={[11]=0x2126,0x2121,0x2127,0x2127,0x2122,0x2124,0x2105,0x2123,0x2121,0x2120,0x2124,0x2105},
+            [6]={[11]=0x2116,0x2117,0x2125,0x2128,0x2116,0x2115,0x2129,0x2105,0x2105,0x2105,0x2105,0x2105},
+            [7]={[11]=0x211e,0x212a,0x2127,0x2127,0x211e,0x211d,0x212b,0x2105,0x2105,0x2105,0x2105,0x2105},
+            [9]={[8]=0x212c,0x212d,0x212e,0x2116,0x2116,0x212f,0x2105,0x2130,0x2130,0x2117,0x2129,0x2116,0x2115},
+            [10]={[8]=0x2132,0x2133,0x2127,0x2134,0x2134,0x2135,0x2105,0x2136,0x211e,0x2137,0x212b,0x211e,0x211d},
+        };
+        memset(&fixture,0,sizeof(fixture));fixture.bgmode=9;fixture.bgXsc[2]=0x41;fixture.bgTileAdr=0x500;
+        fixture.screenWindowed[0]=23;fixture.oam[0]=(uint16_t)(175u<<8|64u);fixture.oam[1]=0x2be8;
+        for(unsigned r=0;r<11;++r) for(unsigned c=0;c<32;++c) fixture.vram[0x4000+(16+r)*32+c]=rows[r][c]?rows[r][c]:0x2000;
+        memcpy(original,fixture.vram,sizeof(original));
+        rush_title_fixture=true;
+        static const uint16_t boss[2][9]={{0x2117,0x2116,0x2129,0x2129,0x2105,0x2117,0x2130,0x2129,0x2130},
+                                          {0x2126,0x211e,0x212b,0x212b,0x2105,0x211f,0x211e,0x212b,0x2136}};
+        for(unsigned language=0;language<2;++language) for(unsigned hidden=0;hidden<2;++hidden) {
+            s_enabled=language!=0;fixture.windowsel=hidden?0x800:0;
+            fixture.renderFlags=kPpuRenderFlags_NewRenderer;
+            observe_line(&fixture,1,NULL);
+            if(fixture.renderFlags&kPpuRenderFlags_NewRenderer) return 90;
+            if(fixture.screenWindowed[0]&4 || fixture.oam[0]!=(uint16_t)(159u<<8|64u)) return 91;
+            const uint16_t *v=fixture.vram+0x4000;
+            if(!language) {
+                if((v[14*32+8]!=(hidden?0x2000:0x2102)) || v[16*32+11]!=0x2115 || v[18*32+11]!=0x2117 ||
+                   v[22*32+11]!=0x2116 || v[17*32+11]!=0x211d) return 92;
+                for(unsigned h=0;h<2;++h) for(unsigned i=0;i<9;++i) if(v[(20+h)*32+11+i]!=boss[h][i]) return 93;
+            } else {
+                if((v[16*32+11]&0x3ff)!=1+2*18 || (v[22*32+11]&0x3ff)!=1+8*18 || (v[14*32+8]&0x3ff)!=(hidden?0:1)) return 94;
+            }
+            for(unsigned r=24;r<27;++r) if(memcmp(v+r*32,original+0x4000+r*32,64)) return 95;
+            observe_line(&fixture,224,NULL);
+            if(fixture.renderFlags!=kPpuRenderFlags_NewRenderer || memcmp(original,fixture.vram,sizeof(original)) ||
+               fixture.screenWindowed[0]!=23 || fixture.oam[0]!=(uint16_t)(175u<<8|64u)) return 96;
+        }
+        /* Another screen (guards differ): untouched. */
+        s_enabled=false;fixture.vram[0x4000+18*32+11]=0x2000;memcpy(original,fixture.vram,sizeof(original));
+        observe_line(&fixture,1,NULL);
+        if(memcmp(original,fixture.vram,sizeof(original)) || fixture.oam[0]!=(uint16_t)(175u<<8|64u)) return 97;
+        observe_line(&fixture,224,NULL);
+        rush_title_fixture=false;s_enabled=true;
+    }
     int completion=completion_tests();if(completion) return completion;
     gold_fixture=true;
     for(unsigned language=0;language<2;++language) {

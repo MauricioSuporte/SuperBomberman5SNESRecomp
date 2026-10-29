@@ -49,6 +49,7 @@ void SubordinateActivate(void) { ++subordinate_on; }
 void SpecialAbilityDraw(void) {}
 int SelectionColorSeat(unsigned seat) { (void)seat;return -1; }
 unsigned NormalCoopPagelessArchive(unsigned object) { (void)object;return 0; }
+bool BossRushKeepChoices(void) { return false; }
 #include "../src/extra_characters_mod.c"
 uint8 g_ram[0x20000];
 static uint8 cartridge[0x400000];

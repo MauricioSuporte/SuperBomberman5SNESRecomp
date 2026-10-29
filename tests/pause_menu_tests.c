@@ -8,10 +8,14 @@ static SNESModActivationCallback activation,reset_callback;
 int snes_mod_register_reset_callback(SNESModActivationCallback fn) { reset_callback=fn;return 1; }
 int snes_mod_register_activation_plugin(const char *id,SNESModActivationCallback fn) { (void)id;activation=fn;return 1; }
 void NormalCoopPrepareWorldMapReturn(void) {}
+static bool rush_active;static int rush_quit;
+bool BossRushActive(void) { return rush_active; }
+bool BossRushEnabled(void) { return rush_active; }
+void BossRushQuitToTitle(void) { ++rush_quit; }
 static bool portuguese;
 const char *PtbrPauseLabel(unsigned i) {
-    static const char *const en[]={"ARE YOU SURE","NO","YES","RESUME","FORCE DRAW","RETURN TO WORLD MAP","RETURN TO STAGE SELECT"};
-    static const char *const pt[]={"TEM CERTEZA","NÃO","SIM","CONTINUAR","EMPATAR RODADA","VOLTAR AO MAPA","ESCOLHER ARENA"};
+    static const char *const en[]={"ARE YOU SURE","NO","YES","RESUME","FORCE DRAW","RETURN TO WORLD MAP","RETURN TO STAGE SELECT","RETURN TO TITLE"};
+    static const char *const pt[]={"TEM CERTEZA","NÃO","SIM","CONTINUAR","EMPATAR RODADA","VOLTAR AO MAPA","ESCOLHER ARENA","VOLTAR AO TÍTULO"};
     return portuguese?pt[i]:en[i];
 }
 #include "../src/pause_menu_mod.c"
@@ -107,6 +111,20 @@ int main(void) {
     PauseMenuObserve(p,224,NULL);CHECK(!memcmp(p->vram,copy->vram,sizeof(p->vram)));
     confirm_menu=false;selection=0;open_menu=true;g_ram[0x1d1d]=1;
     edge(8);CHECK(resume_requested && sound_pending==0);
+    /* Boss Rush with this mod off: the menu still opens, its second entry
+     * returns to the title, the text uses the accented I; afterwards the
+     * trampoline stays silent. */
+    enabled=false;rush_active=true;open_menu=confirm_menu=false;selection=0;
+    g_ram[0x1031]=0x67;g_ram[0x1d1a]=0x40;g_ram[0x1d1e]=0;g_ram[0x1d1d]=1;g_ram[0xaee]=1;
+    PauseMenuAfterFrame();CHECK(open_menu && selection==0);
+    *copy=*p;PauseMenuObserve(p,1,NULL);CHECK(drawn);
+    CHECK((p->vram[0x4000+19*32+8+11]&1023)==glyph_first+40); /* VOLTAR AO T[Í]TULO */
+    PauseMenuObserve(p,224,NULL);CHECK(!memcmp(p->vram,copy->vram,sizeof(p->vram)));
+    edge(0x20);CHECK(selection==1);edge(8);CHECK(confirm_menu && selection==0);
+    edge(0x20);edge(8);CHECK(action_requested);
+    instruction(0xc500c8,1,1);CHECK(rush_quit==1 && !open_menu);
+    sound_pending=4;rush_active=false;rom(0xc57185)[0]=4;instruction(0xc500b7,1,1);CHECK(rom(0xc57185)[0]==0);
+    portuguese=false;
     free(p);free(copy);
     reset_callback();CHECK(g_interp_bridge_pc_hook==other && !memcmp(rom(0xc500b7),signature,4) && !memcmp(rom(0xc50096),call,4) && rom(0xc57180)[0]==255);
     CHECK(chained>=3);puts("Pause menu defaults, confirmations, actions, states and render restoration passed.");return 0;

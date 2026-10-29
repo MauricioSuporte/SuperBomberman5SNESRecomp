@@ -15,6 +15,10 @@ uint8_t *PickerCellCharacters(void) { return g_ram+0x62c9; }
 uint8_t *PickerCellColors(void) { return g_ram+0x62d3; }
 unsigned PickerCellCount(void) { return 10; }
 unsigned ExtraBaseChoice(unsigned choice) { return choice>=11 && choice<=EXTRA_CHOICE_LAST ? 1 : choice; }
+static int boss_rush_done=-1;
+void BossRushPickerDone(bool cancelled) { boss_rush_done=cancelled; }
+static bool keep_choices;
+bool BossRushKeepChoices(void) { return keep_choices; }
 unsigned hk_seat_choice[5];
 void ExtraSetSeatChoice(unsigned seat,unsigned choice) { if(seat<5) hk_seat_choice[seat]=choice; }
 unsigned ExtraCharacterSeatColor(unsigned seat) { return g_ram[0x1f82d+seat]; }
@@ -172,5 +176,28 @@ int main(void) {
     memset(s,0,sizeof(*s));s->base.func=transfer;s->reading=true;
     uint32_t bad[]={0x32434e42,1,1,RESUME_CAP+1,RESUME_CAP};memcpy(s->bytes,bad,sizeof(bad));
     NormalCharacterLoad(&s->base,10);CHECK(failed && !resume);
+    /* Boss Rush: the title snapshot is the picker's return point; B reports a
+     * cancel, A a choice mapped onto the restored title, never a repick. */
+    failed=0;NormalCharacterReset();activation();
+    memset(g_ram,0,sizeof(g_ram));g_ram[0x1031]=2;g_ram[0x1d25]=1;g_ram[0x4100]=0x5a;
+    CHECK(!NormalCharacterOpenBossRush()); /* no snapshot yet */
+    CHECK(NormalCharacterSnapshotBossRush() && rush_title);
+    g_ram[0x1031]=3;g_ram[0x4100]=0;
+    CHECK(NormalCharacterOpenBossRush() && picking && boss_rush && resume && !rush_title && g_ram[0x1031]==4);
+    {   /* A save state taken in the picker says so (state 7) and loads back. */
+        memset(s,0,sizeof(*s));s->base.func=transfer;NormalCharacterSave(&s->base);
+        uint32_t header[5];memcpy(header,s->bytes,sizeof(header));CHECK(header[1]==7);
+        s->at=0;s->reading=true;NormalCharacterLoad(&s->base,10);CHECK(!failed && picking && boss_rush && resume);
+    }
+    boss_rush_done=-1;pad=0;NormalCharacterBeforeFrame();
+    set_picker_pc(0xc68e68);pad=1;NormalCharacterBeforeFrame();
+    CHECK(!picking && !chosen && !repick && boss_rush_done==1 && g_ram[0x1031]==2 && g_ram[0x4100]==0x5a);
+    pad=0;CHECK(NormalCharacterSnapshotBossRush() && NormalCharacterOpenBossRush());
+    g_ram[0x625f]=4;g_ram[0x6264]=2;rom[0xbb51]=30;
+    set_picker_pc(0xc68e68);g_ram[0x1038]=1;NormalCharacterFrame();
+    CHECK(!picking && chosen && !repick && boss_rush_done==0 && g_ram[0x1031]==2 && g_ram[0x625f]==4 && g_ram[0x16c2]==3 && g_ram[0x16da]==32);
+    /* The title keeps the choice while the rush is about to start. */
+    keep_choices=true;NormalCharacterFrame();CHECK(chosen);
+    keep_choices=false;NormalCharacterFrame();CHECK(!chosen);
     NormalCharacterReset();free(s);return 0;
 }

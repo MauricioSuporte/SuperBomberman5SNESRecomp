@@ -519,3 +519,44 @@ skin route and adds his barrier as a B + direction ability. Recipe:
 8. **Grid growth:** cells hold their own choice (0 = absent), tables are 20
    entries, movement skips absent cells; `PickerCellCount()` stays the single
    source for the other picker mods.
+
+### A title-menu entry that starts a mode (Boss Rush, title screen)
+
+`src/boss_rush_mod.c` adds BOSS RUSH to the title menu and starts the
+cartridge's password-3879 rush. Recipe for any new title entry or a mode
+started from a menu:
+
+1. **Trace the script VM, don't guess op lengths.** A lab-only pre-opcode hook
+   at `$C2:0230` (`JSL $C2:038F`, X = task, op at `[$0A]`) printing the task,
+   PC and next bytes gives every executed op in order; consecutive PCs give the
+   lengths. See AGENTS.md §6 "Script VM ops" and "Title menu".
+2. **Add entries by remapping, not by rewriting the menu.** Raise the menu's
+   cursor limit (`$1037` immediate) and, at the confirmation op, map the new
+   index to an existing branch (Boss Rush → Normal's player-count menu) and the
+   shifted ones back to their native index (Options 3 → 2). Remember the choice
+   in mod state: the confirmation waits a few frames before `$1036` changes.
+3. **Lay the screen out render-only.** Move BG3 rows in the observer (copy the
+   screen's own tile words; build missing words from letters already on screen;
+   PT-BR renders with the cartridge font), turn off a blink window that now
+   covers other rows and follow its phase (`W34SEL` bit 11), move the cursor
+   OAM. Keep the copyright and restore everything on line 224.
+4. **Run the native handler, with your parameters.** Rebuild a password handler
+   from its own routines injected as `JSL`s from the `$C2:0230` hook (push a
+   return frame to `$C2:022F`, `interp_bridge_pre_opcode_redirect`), restoring
+   A/X/Y/D/DB/S/P after the last one. Change scene as op `0F` does and let the
+   current script end its own way: skip the replaced op (`[$0A]` += size,
+   redirect to `$C2:0234`).
+5. **Start from a scene whose script ends.** The scene manager (`$C5:3AA0`)
+   waits for the scene's script runner before it honours `$1D1E` bit 2; the
+   file-menu scene's runner moves on to more scripts, so a request made there
+   hangs on a black screen. The title works (as Options does).
+6. **Borrowing the Normal picker from elsewhere:** park the calling script on
+   its op (one-frame wait `fd 0e 01 00 00` + `44` jump back, in `$FF` padding),
+   let the Normal character mod snapshot that state, go on into a scene that
+   can host the picker (file menu, its script parked at `$C7:0B82`), open the
+   picker, and let the picker's snapshot restore bring you back; title-time
+   resets of other mods (extra-character seat choices, `chosen`) must wait
+   (`BossRushKeepChoices()`).
+7. **Pause integration without the pause mod:** make the pause menu's
+   `enabled` checks also true while your mode runs, add its own entry, and keep
+   its trampoline silent once the mode ends.

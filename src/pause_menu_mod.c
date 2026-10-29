@@ -5,6 +5,7 @@
 #include "mod_runtime.h"
 #include "normal_coop_mod.h"
 #include "ptbr_mod.h"
+#include "boss_rush_mod.h"
 #include "snes/interp_bridge.h"
 #include "snes/ppu.h"
 #include "snes/saveload.h"
@@ -25,13 +26,19 @@ static bool stage(void) {
         !(g_ram[0x1d1e]&7) && (battle() || (g_ram[0x1031]>=13 && g_ram[0x1031]<116));
 }
 static void action(void);
+/* The Boss Rush offers "return to title" through this menu even when the
+ * pause-menu mod itself is off. */
+static bool on(void) { return enabled || BossRushActive(); }
+static bool rush(void) { return !battle() && BossRushActive(); }
 static void instruction(uint32_t pc,int m,int x) {
     if(previous_hook) previous_hook(pc,m,x);
-    if(!enabled) return;
     if(pc==0xc500b7) {
-        rom(0xc57185)[0]=sound_pending;
+        /* The trampoline stays installed after a Boss Rush ends with this
+         * mod off: it must then play nothing. */
+        rom(0xc57185)[0]=on()?sound_pending:0;
         sound_pending=0;
     }
+    if(!on()) return;
     if(pc==0xc500c8 && open_menu) {
         if(action_requested) { action_requested=false;action(); }
         g_ram[0xb1]=resume_requested?1:0;
@@ -90,6 +97,12 @@ static void install(void) {
     previous_hook=g_interp_bridge_pc_hook;g_interp_bridge_pc_hook=instruction;installed=true;
 }
 static void action(void) {
+    if(rush()) {
+        /* Native stage teardown (bit 2 of $1D1E), then the title scene. */
+        BossRushQuitToTitle();
+        open_menu=false;
+        return;
+    }
     if(battle() && selection==1) {
         /* The round resolver counts these statuses. Zero survivors takes its
          * existing Draw branch, with no fabricated winner or victory count. */
@@ -117,7 +130,7 @@ static void action(void) {
     }
 }
 void PauseMenuBeforeFrame(void) {
-    if(!enabled) return;
+    if(!on()) return;
     if(!installed) install();
     if(!installed) return;
     if(returning && g_ram[0x1031]!=3) returning=0;
@@ -145,13 +158,13 @@ void PauseMenuBeforeFrame(void) {
     }
 }
 void PauseMenuAfterFrame(void) {
-    if(!enabled || !installed) return;
+    if(!on() || !installed) return;
     if(keep_campaign && stage()) keep_campaign=false;
     if(keep_campaign && g_ram[0x1031]<=2) keep_campaign=false; /* back at the title */
     if(!g_ram[0x1d1d]) { open_menu=false;confirm_menu=false;selection=0; }
     else if(!open_menu && stage()) { open_menu=true;confirm_menu=false;selection=0; }
 }
-bool PauseMenuEnabled(void) { return enabled; }
+bool PauseMenuEnabled(void) { return enabled || BossRushEnabled(); }
 
 /* The same authored alphabet used by the translation overlay. */
 static const uint8_t kFont[26][7] = {
@@ -183,6 +196,7 @@ static void text(Ppu *p,unsigned row,unsigned col,const char *s) {
     for(;*s;++s,++col) {
         unsigned glyph=*s>='A'&&*s<='Z'?*s-'A'+1:0;
         if((unsigned char)s[0]==0xc3 && (unsigned char)s[1]==0x83) { glyph=39;++s; }
+        else if((unsigned char)s[0]==0xc3 && (unsigned char)s[1]==0x8d) { glyph=40;++s; }
         write_word(p,map+row*32+col,0x2000+glyph_first+glyph);
     }
 }
@@ -208,7 +222,7 @@ void PauseMenuObserve(const struct Ppu *view,unsigned line,void *context) {
             restore_panel_math(p);
         }
     }
-    if(line!=1 || !open_menu || !enabled || PPU_mode(p)!=1) return;
+    if(line!=1 || !open_menu || !on() || PPU_mode(p)!=1) return;
     /* Stay inside the BG3 character region, before the live OBJ pages. */
     unsigned chars=PPU_bgTileAdr(p,2),map=PPU_bgTilemapAdr(p,2);
     if(chars!=0x5000 || PPU_objTileAdr1(p)!=0x6000) return;
@@ -219,9 +233,9 @@ void PauseMenuObserve(const struct Ppu *view,unsigned line,void *context) {
         if(tile<512) used[tile]=true;
     }
     glyph_first=0;
-    for(unsigned candidate=256;candidate+40<=512;++candidate) {
+    for(unsigned candidate=256;candidate+41<=512;++candidate) {
         bool free=true;
-        for(unsigned i=0;i<40;++i) if(used[candidate+i]) { free=false;break; }
+        for(unsigned i=0;i<41;++i) if(used[candidate+i]) { free=false;break; }
         if(free) { glyph_first=candidate;break; }
     }
     if(!glyph_first) return;
@@ -233,9 +247,10 @@ void PauseMenuObserve(const struct Ppu *view,unsigned line,void *context) {
     panel_top=battle()?13:10;panel_bottom=confirm_menu || battle()?24:22;
     p->screenEnabled[0]|=4;p->screenWindowed[0]&=(uint8_t)~4u;
     unsigned base=chars+glyph_first*8;
-    for(unsigned c=0;c<40;++c) for(unsigned y=0;y<8;++y) {
+    for(unsigned c=0;c<41;++c) for(unsigned y=0;y<8;++y) {
         unsigned bits=c>=1&&c<=26&&y<7?kFont[c-1][y]<<2:0;
         if(c==39) { static const uint8_t a_tilde[8]={10,5,14,17,31,17,17,0};bits=a_tilde[y]<<2; }
+        if(c==40) { static const uint8_t i_acute[8]={2,14,4,4,4,4,14,0};bits=i_acute[y]<<2; }
         /* Opaque dark fill, white glyphs. */
         write_word(p,base+c*8+y,(uint16_t)((blend_panel?bits:0xff)|(bits<<8)));
     }
@@ -285,7 +300,7 @@ void PauseMenuObserve(const struct Ppu *view,unsigned line,void *context) {
         label_col=16;cursor_col=13;
     } else {
         text(p,17,label_col,PtbrPauseLabel(3));
-        text(p,19,label_col,PtbrPauseLabel(battle()?4:5));
+        text(p,19,label_col,PtbrPauseLabel(battle()?4:rush()?7:5));
         if(battle()) text(p,21,label_col,PtbrPauseLabel(6));
     }
     unsigned cursor_row=(confirm_menu?19:17)+selection*2;

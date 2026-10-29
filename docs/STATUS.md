@@ -1,5 +1,42 @@
 # Super Bomberman 5: estado do protótipo
 
+## Unreleased — 2026-10-29: Boss Rush mod (title screen)
+
+- Request: a BOSS RUSH entry on the title menu between BATTLE GAME and OPTIONS, laid out like the original with
+  PUSH START BUTTON still above NORMAL GAME and blinking; PT-BR JOGO NORMAL / MODO BATALHA / CORRIDA DE CHEFES /
+  OPÇÕES; the same rush as password 3879 after the player-count menu (up to five with co-op), with the Normal
+  character picker (+ colors) first when that mod is on (B back to the title) and its choices kept for the rush; a
+  run timer at the top right; "return to title" in the pause menu.
+- Research (JPN disassembly + Linux LLE traces of the script VM through a lab-only pre-opcode hook at `$C2:0230`):
+  password table `$C5:6875`, 3879 handler `$C5:695E` (`$C0:499C`, `$C2:033A` A=4, `$6274` |= `$80`, `$6248` = `$67`,
+  `$1D25/$1D24` = 1, `$6254` = 0, `$C4:286F`); script op `0F n` = `$1031` = n, `$1D1E` = 4 (`$C2:0C20`); title
+  menu script (task 11): limit `$C7:19DA`, confirmation `$C7:18A8`, player-count `0F 03` at `$C7:1918/$193A`; VM op
+  `00` returns from a call or ends the script (`$C2:0242`), `fd 0e 01 00 00` waits a frame, `44 lo hi` jumps
+  relative; the scene manager (actor 0, `$C5:3AA0`) waits for the scene's script runner (`$C2:00D7`) before it
+  honours `$1D1E` bit 2. See AGENTS.md §6.
+- Implementation: `src/boss_rush_mod.c` (package `superbomberman5.boss-rush` 0.1.0, Gameplay). Title limit patch
+  and three park programs in `$FF` padding `$C7:3100-$C7:3117` (in memory, while enabled); the 3879 handler rebuilt
+  from injected `JSL`s at the player-count menu's `0F 03`, with the chosen player mask, then `0F $67`. The picker
+  is hosted by the file-menu scene (task 9 parked at `$C7:0B82`) with a title snapshot taken by the Normal
+  character mod as its return point (`NormalCharacterSnapshotBossRush/OpenBossRush`, save-state header 7).
+  Render-only title layout in `ptbr_mod.c` (BG3 rows 14-23, cursor OAM 0 16 lines up, blink window phase
+  followed), PT-BR strings in `labels.json` (`boss_rush_title`, pause text 8 `VOLTAR AO TÍTULO`; the title's
+  BATTLE GAME label becomes MODO BATALHA). Timer counted in the extension, drawn over the finished frame. The pause
+  menu opens during the rush even with its mod off (`PauseMenuEnabled()` covers both).
+- First attempt started the rush from the file-menu scene: the request (`$1D1E` = 4) was never honoured because
+  that scene's runner moves on to its next scripts after one ends, so the manager kept waiting; starting from the
+  title (like Options) works.
+- Evidence (local Linux LLE build of this tree with the user's ROM, headless scripted routes): title EN and PT-BR
+  with four entries, cursor on all four, heading blink phases; Options, Battle and Normal still open; Boss Rush 1P
+  → ZONE1 - A (`$6274` = `$80`, script flag 4 set, as after the password); picker + colors 1P (choice 3 color 1 →
+  `$16C2` = 2, `$16DA` = `$11` in the stage); B in the picker → title, then again → stage; 2P with every mod and
+  PT-BR (choices 2/1); five-player co-op; pause → Return to title with and without the pause mod (PT-BR text);
+  native password 3879 still works with the mod on. Native tests: `boss_rush_tests` (new) and extended
+  `normal_character_tests`, `pause_menu_tests`, `ptbr_render_tests`. No `interp_cap`/BRK in the logs.
+- Not validated: a whole rush to the last boss and what follows it, netplay, Windows. A save state loaded during
+  the one or two frames between the title snapshot and the picker loses the snapshot (the Normal file menu then
+  simply continues).
+
 ## v2.4.3 — 2026-10-29: Battle variant minimaps show the arena; menu sounds
 
 - Request: play the menu accept sound when the variant list opens and the back sound on B; show each variant's stage

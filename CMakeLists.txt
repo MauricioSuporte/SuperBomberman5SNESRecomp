@@ -62,6 +62,7 @@ add_executable(SuperBomberman5SNESRecomp
     src/infinite_time_mod.c
     src/com_level4_mod.c
     src/battle_variants_mod.c
+    src/boss_rush_mod.c
     src/normal_coop_mod.c
     src/coop_corner_spawns_mod.c
     src/selection_color_mod.c
@@ -168,6 +169,9 @@ if(BUILD_TESTING)
     add_executable(battle_variants_tests tests/battle_variants_tests.c)
     target_include_directories(battle_variants_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src" "${CMAKE_SOURCE_DIR}/src")
     add_test(NAME battle_variants COMMAND battle_variants_tests)
+    add_executable(boss_rush_tests tests/boss_rush_tests.c)
+    target_include_directories(boss_rush_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src" "${CMAKE_SOURCE_DIR}/src")
+    add_test(NAME boss_rush COMMAND boss_rush_tests)
     add_executable(updater_tests tests/updater_tests.c ${SNESRECOMP_ROOT}/runner/src/sha256.c)
     target_include_directories(updater_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src")
     if(NOT WIN32)

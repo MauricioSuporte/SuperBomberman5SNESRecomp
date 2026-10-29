@@ -52,6 +52,7 @@
  *   6  7  8  9 10 12  -     (Subordinate 10, Kotetsu 12)
  *  13 14 15 16 17 18  -     (Bomber Kings) */
 #include "extra_characters_mod.h"
+#include "boss_rush_mod.h"
 #include "actor_layout.h"
 #include "normal_coop_mod.h"
 #include "bomber_kings_mod.h"
@@ -477,7 +478,7 @@ void ExtraCharactersBeforeFrame(void) {
         if(g_ram[CELL_COLORS+c]>=(count>1?count:7)) g_ram[CELL_COLORS+c]=0;
     }
     /* A new session (title / player menu) forgets the previous choices. */
-    if(g_ram[0x1031]==2) memset(g_ram+SEAT_CHOICE,0,10);
+    if(g_ram[0x1031]==2 && !BossRushKeepChoices()) memset(g_ram+SEAT_CHOICE,0,10);
     /* Seat colors of extra characters: the L/R choice with the color mod,
      * otherwise one color per seat (as in Super Bomberman 4). */
     if(g_ram[0x1031]==4) for(unsigned i=0;i<5;++i) {

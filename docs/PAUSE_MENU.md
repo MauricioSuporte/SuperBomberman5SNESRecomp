@@ -32,6 +32,14 @@ Empatar rodada, Voltar ao mapa, Escolher arena, Tem certeza, Não e Sim.
 Os efeitos de mover, confirmar e voltar são os comandos 1, 4 e 3 do grupo 2
 usados na configuração do Battle, executados pelo código/APU do cartucho.
 
+- **Boss Rush** (mod [Boss Rush](BOSS_RUSH.md)): durante o boss rush começado
+  pela tela de título, este menu aparece mesmo com o mod de pausa desligado,
+  com Continuar e **Voltar ao título** (mesma confirmação, inicialmente em
+  Não). Confirmar termina a fase pela troca de cena nativa (`$1D1E` bit 2) e
+  abre a tela de título (`$1031 = 2`), sem registrar fase concluída. Depois que
+  o boss rush acaba, o trampolim instalado continua sem tocar som enquanto o
+  mod de pausa estiver desligado.
+
 ### Implementação
 
 A pausa e seu congelamento continuam nativos (`$1D1D`, tarefa em
@@ -89,7 +97,10 @@ Start opens the native in-stage pause. Up/down move the authored right-pointing
 glove, Start accepts the selected option and B goes back. B on the main menu
 resumes play; A does not accept options.
 Held buttons never repeat an action. Labels and confirmation follow the PT-BR
-translation mod. Native pause-entry and resume audio calls remain intact;
+translation mod. During a title-screen Boss Rush ([Boss Rush](BOSS_RUSH.md))
+this menu is offered even with this mod off: Resume and **Return to title**
+(same confirmation), which ends the stage through the native scene change and
+opens the title without recording a cleared stage. Native pause-entry and resume audio calls remain intact;
 resuming does not queue an additional menu accept/back sound.
 
 - **Normal:** Resume / Return to world map, initially Resume. Return opens

@@ -1,0 +1,25 @@
+format_version = 1
+id = "superbomberman5.boss-rush"
+version = "0.1.0"
+name = "Boss Rush"
+author = "MauricioSuporte"
+description = "Adds BOSS RUSH to the title menu, between BATTLE GAME and OPTIONS. It starts the cartridge's own boss rush (password 3879) after the player-count menu (up to five players with the 5 Players mod) and, with the Normal character select mod, after the character picker (B returns to the title). A run timer is shown at the top right, and the pause menu can return to the title. Requires a native host built with this mod (v2.5.0 or newer)."
+license = "PolyForm-Noncommercial-1.0.0"
+resolver = "declarative"
+save_compatibility = "shared"
+
+[[target]]
+game_id = "superbomberman5-jpn"
+rom_sha256 = "5251e6491872dc51879b630a34d76a92e29ea0c39026c4f8773c1fe006d047c4"
+
+[[feature]]
+id = "boss_rush"
+name = "Boss Rush on the title screen"
+description = "Adds BOSS RUSH to the title menu, between BATTLE GAME and OPTIONS. It starts the cartridge's own boss rush (password 3879) after the player-count menu (up to five players with the 5 Players mod) and, with the Normal character select mod, after the character picker (B returns to the title). A run timer is shown at the top right, and the pause menu can return to the title. Requires a native host built with this mod (v2.5.0 or newer)."
+group = "Gameplay"
+default_enabled = false
+presentation_only = false
+
+[[plugin]]
+feature = "boss_rush"
+id = "superbomberman5.boss.rush"

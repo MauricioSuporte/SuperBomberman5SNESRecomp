@@ -64,9 +64,14 @@ if len(arenas)!=13 or any(not t or set(t)-arena_allowed or len(t)>28 for t in [d
 lines.append('static const char kBattleStage[] = ' + json.dumps(data['battle_stage'],ensure_ascii=False) + ';')
 lines.append('static const char *const kBattleArenas[] = {' + ','.join(json.dumps(t,ensure_ascii=False) for t in arenas) + '};')
 pause = data['pause_text']
-if len(pause)!=7 or any(not t or set(t)-allowed or len(t)>21 for t in pause):
+if len(pause)!=8 or any(not t or set(t)-allowed or len(t)>21 for t in pause):
     raise SystemExit('Invalid pause translation')
 lines.append('static const char *const kPauseText[] = {' + ','.join(json.dumps(t,ensure_ascii=False) for t in pause) + '};')
+# Boss Rush title layout: heading, Normal, Battle, Boss Rush, Options (8-pixel title font, 18 tiles).
+rush = data['boss_rush_title']
+if len(rush)!=5 or any(not t or set(t)-allowed or len(t)>18 for t in rush):
+    raise SystemExit('Invalid Boss Rush title translation')
+lines.append('static const char *const kBossRushTitle[] = {' + ','.join(json.dumps(t,ensure_ascii=False) for t in rush) + '};')
 lines.append('static const PtbrEnding kEndings[] = {')
 endings = data.get('endings', [])
 if len(endings) != 33 or [e['id'] for e in endings] != list(range(33)):

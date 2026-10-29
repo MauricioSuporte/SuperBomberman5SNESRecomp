@@ -22,7 +22,8 @@ A prévia foi ampliada para título, quantidade de jogadores, modo normal, arqui
 |---|---|
 | PUSH START BUTTON | PRESSIONE START |
 | NORMAL GAME | JOGO NORMAL |
-| BATTLE GAME | BATALHA |
+| BATTLE GAME | MODO BATALHA |
+| BOSS RUSH (mod Boss Rush) | CORRIDA DE CHEFES |
 | OPTIONS | OPÇÕES |
 | New Game | Novo jogo |
 | Continue | Continuar |
@@ -147,7 +148,7 @@ or physical multiplayer coverage.
 ## Integrações das fontes atuais / Current-source integrations — 2026-10-15
 
 O menu de pausa acompanha o PT-BR: Continuar, Empatar rodada, Voltar ao mapa,
-Escolher arena e Tem certeza / Não / Sim. Gold Battle acrescenta Hiper
+Escolher arena, Voltar ao título (Boss Rush) e Tem certeza / Não / Sim. Gold Battle acrescenta Hiper
 à linha Revanche. A seleção traduz Fase e os nomes das arenas 1–13, inclusive
 as dez originais sem Gold Battle. Usa a fonte OBJ 8×16 da própria VRAM,
 com acentos autorais, preservando cores, contorno e sombra. O número nativo

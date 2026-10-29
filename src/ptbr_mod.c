@@ -3,6 +3,7 @@
 #include "common_rtl.h"
 #include "gold_battle_mod.h"
 #include "normal_coop_mod.h"
+#include "boss_rush_mod.h"
 #include "beam_frame_driver.h"
 #include "mod_runtime.h"
 #include "snes/ppu.h"
@@ -39,6 +40,9 @@ static unsigned s_saved_count;
 static bool coop_menu_applied,coop_cursor_moved;
 static uint8_t coop_windowed;
 static uint16_t coop_cursor;
+static bool rush_title_applied,rush_cursor_moved;
+static uint8_t rush_windowed;
+static uint16_t rush_cursor;
 
 static void reset_ptbr(void) { s_enabled = false; s_saved_count = 0;arena_drawn=false;arena_last=0; }
 static void enable_ptbr(void) { s_enabled = true; }
@@ -512,6 +516,11 @@ static void restore_labels(Ppu *ppu) {
         ++ppu->oamWriteCount;arena_drawn=false;
     }
     while(s_saved_count) { SavedWord w=s_saved[--s_saved_count]; ppu->vram[w.address]=w.original; }
+    if(rush_title_applied) {
+        ppu->screenWindowed[0]=rush_windowed;
+        if(rush_cursor_moved) { ppu->oam[0]=rush_cursor;++ppu->oamWriteCount; }
+        rush_title_applied=rush_cursor_moved=false;
+    }
     if(coop_menu_applied) {
         ppu->screenWindowed[0]=coop_windowed;
         if(coop_cursor_moved) { ppu->oam[0]=coop_cursor;++ppu->oamWriteCount; }
@@ -584,6 +593,84 @@ static void apply_coop_menu(Ppu *ppu) {
     ++ppu->vramWriteCount;
 }
 
+/* Boss Rush title layout: PUSH START BUTTON, NORMAL GAME, BATTLE GAME,
+ * BOSS RUSH and OPTIONS on BG3 rows 14-23 (native: rows 16-22 with three
+ * entries; the copyright keeps rows 25-26). The game's cursor (OAM 0, tiles
+ * $1E8-$1EE at x 64) keeps its native y $A0 + 16 * entry - 17 and is drawn
+ * 16 lines higher. The heading blinks through BG3 window 2 on its native
+ * lines 128-143 (W34SEL bit 11 set while hidden); the layout turns that
+ * window off and follows the same phase. English reuses the screen's own
+ * tile words (BOSS RUSH from letters already on screen); Portuguese renders
+ * the five rows with the cartridge-derived title font. Render only. */
+enum { TITLE_MAP=0x4000 };
+static bool native_title(const Ppu *ppu) {
+    static const struct { uint8_t row,col;uint16_t tile; } guard[]={
+        {18,11,0x115},{18,12,0x116},{18,13,0x117},{20,11,0x117},{20,12,0x119},
+        {22,11,0x116},{22,12,0x117},{22,17,0x129},{25,15,0x130},{25,16,0x130},{16,8,0x102},
+    };
+    for(unsigned i=0;i<sizeof(guard)/sizeof(*guard);++i)
+        if((ppu->vram[TITLE_MAP+guard[i].row*32+guard[i].col]&0x3ff)!=guard[i].tile) return false;
+    return true;
+}
+static void apply_boss_rush_title(Ppu *ppu) {
+    if(!BossRushTitleMenu() || (ppu->bgmode&7)!=1 || PPU_bgTilemapAdr(ppu,2)!=TITLE_MAP || !native_title(ppu)) return;
+    const unsigned map=TITLE_MAP,base=PPU_bgTileAdr(ppu,2);
+    const uint16_t blank=0x2000;
+    rush_title_applied=true;rush_windowed=ppu->screenWindowed[0];
+    ppu->screenWindowed[0]&=(uint8_t)~4;
+    const bool heading_hidden=(ppu->windowsel & 0x800)!=0;
+    if((ppu->oam[1]&0xfff9)==0x2be8 && (ppu->oam[0]&0xff)==0x40) {
+        rush_cursor_moved=true;rush_cursor=ppu->oam[0];
+        ppu->oam[0]=(uint16_t)((ppu->oam[0]&0xff)|((((ppu->oam[0]>>8)-16)&0xff)<<8));
+        ++ppu->oamWriteCount;
+    }
+    if(!s_enabled) {
+        /* Letters for BOSS RUSH, top and bottom halves, read from the screen. */
+        const unsigned at[9][2]={{20,11},{18,12},{22,17},{22,17},{18,17},{18,13},{25,16},{22,17},{25,15}};
+        uint16_t letters[9][2];
+        for(unsigned i=0;i<9;++i) for(unsigned h=0;h<2;++h)
+            letters[i][h]=ppu->vram[map+(at[i][0]+h)*32+at[i][1]];
+        uint16_t rows[6][32];
+        for(unsigned r=0;r<6;++r) for(unsigned c=0;c<32;++c) rows[r][c]=ppu->vram[map+(16+r)*32+c];
+        for(unsigned r=0;r<6;++r) for(unsigned c=0;c<32;++c) {
+            uint16_t word=rows[r][c];
+            if(r<2 && heading_hidden) word=blank;
+            save_write(ppu,map+(14+r)*32+c,word);
+        }
+        for(unsigned h=0;h<2;++h) for(unsigned c=0;c<32;++c) {
+            uint16_t word=c>=11 && c<20?letters[c-11][h]:blank;
+            save_write(ppu,map+(20+h)*32+c,word);
+        }
+    } else {
+        for(unsigned row=14;row<24;++row) for(unsigned col=6;col<30;++col)
+            save_write(ppu,map+row*32+col,blank);
+        for(unsigned line=0;line<5;++line) {
+            if(!line && heading_hidden) continue;
+            /* Heading centered on the native PUSH START BUTTON span, entries
+             * at the native column 11. */
+            PtbrLabel label={.width=18,.height=16,.style=1,.ink=line?2:3,.text=kBossRushTitle[line]};
+            uint8_t pixels[32][224];render_text(pixels,&label);
+            unsigned row=14+line*2,col=line?11:8;
+            for(unsigned ty=0;ty<2;++ty) for(unsigned tx=0;tx<18;++tx) {
+                /* Native text starts at tile $100: use the free lower page,
+                 * keeping tile zero blank. */
+                unsigned tile=1+(line*2+ty)*18+tx;
+                save_write(ppu,map+(row+ty)*32+col+tx,(uint16_t)(0x2000|tile));
+                for(unsigned y=0;y<8;++y) {
+                    uint16_t planes=0;
+                    for(unsigned x=0;x<8;++x) {
+                        unsigned color=pixels[ty*8+y][tx*8+x];
+                        if(color&1) planes|=1u<<(7-x);
+                        if(color&2) planes|=1u<<(15-x);
+                    }
+                    save_write(ppu,base+tile*8+y,planes);
+                }
+            }
+        }
+    }
+    ++ppu->vramWriteCount;
+}
+
 static SnesBeamRasterObserver *extra_observer;
 static void *extra_context;
 static uint32_t coop_render_flags;
@@ -592,11 +679,12 @@ static void observe_line(const Ppu *view, unsigned line, void *unused) {
     (void)unused;
     Ppu *ppu=(Ppu *)view;
     if(line==1) {
-        coop_renderer_changed=NormalCoopPlayerMenu();
+        coop_renderer_changed=NormalCoopPlayerMenu() || BossRushTitleMenu();
         if(coop_renderer_changed) {
             coop_render_flags=ppu->renderFlags;
             ppu->renderFlags&=~kPpuRenderFlags_NewRenderer;
         }
+        apply_boss_rush_title(ppu);
         if(s_enabled || GoldBattleHyper()) apply_labels(ppu);apply_coop_menu(ppu);
     }
     if(extra_observer) extra_observer(view,line,extra_context);
@@ -616,12 +704,12 @@ void PtbrDrawPpuFrameObserved(SnesBeamRasterObserver *observer,void *context) {
      * BG3 replacement correctly. Use the accurate compositor for this
      * menu only, keeping the user's renderer setting for every other screen. */
     extra_observer=observer;extra_context=context;
-    if(s_enabled || GoldBattleHyper() || observer || NormalCoopPlayerMenu()) snes_beam_frame_driver_draw_ppu_frame_observed(observe_line,NULL);
+    if(s_enabled || GoldBattleHyper() || observer || NormalCoopPlayerMenu() || BossRushTitleMenu()) snes_beam_frame_driver_draw_ppu_frame_observed(observe_line,NULL);
     else snes_beam_frame_driver_draw_ppu_frame();
     extra_observer=NULL;extra_context=NULL;
 }
 
 const char *PtbrPauseLabel(unsigned index) {
-    static const char *const english[]={"ARE YOU SURE","NO","YES","RESUME","FORCE DRAW","RETURN TO WORLD MAP","RETURN TO STAGE SELECT"};
-    return index<7?(s_enabled?kPauseText[index]:english[index]):"";
+    static const char *const english[]={"ARE YOU SURE","NO","YES","RESUME","FORCE DRAW","RETURN TO WORLD MAP","RETURN TO STAGE SELECT","RETURN TO TITLE"};
+    return index<8?(s_enabled?kPauseText[index]:english[index]):"";
 }

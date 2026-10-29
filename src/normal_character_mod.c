@@ -3,6 +3,7 @@
 #include "normal_character_mod.h"
 #include "extra_characters_mod.h"
 #include "normal_coop_mod.h"
+#include "boss_rush_mod.h"
 #include "common_rtl.h"
 #include "common_cpu_infra.h"
 #include "mod_runtime.h"
@@ -16,6 +17,7 @@ enum { SNAP_CAP = 1024*1024, RESUME_CAP = 384*1024 };
 static bool enabled, picking, picker_ready, chosen, loaded;
 static bool internal_snapshot;
 static bool from_continue;   /* picker opened from Continue -> File */
+static bool boss_rush;       /* picker opened for the title's Boss Rush */
 static unsigned players;
 static bool hook_installed, restarting;
 static void (*previous_hook)(uint32_t,int,int);
@@ -57,6 +59,8 @@ static uint8_t masked_b;
  * map, before any stage was played, reopens the picker from it. */
 static uint8_t *repick;
 static uint32_t repick_size;
+static uint8_t *rush_title;
+static uint32_t rush_title_size;
 
 static uint32_t picker_pc(void) {
     /* Script task 9. These are three parallel arrays, not CPU registers. */
@@ -71,11 +75,13 @@ void NormalCharacterReset(void) {
     hook_installed=false;previous_hook=NULL;restarting=false;
     free(resume);resume=NULL;resume_size=0;
     free(repick);repick=NULL;repick_size=0;
-    picking=picker_ready=chosen=loaded=from_continue=false;players=1;previous_pad=0;
+    free(rush_title);rush_title=NULL;rush_title_size=0;
+    picking=picker_ready=chosen=loaded=from_continue=boss_rush=false;players=1;previous_pad=0;
     memset(previous_seat_pads,0,sizeof(previous_seat_pads));masked_b=0;
 }
 static void reset_plugin(void) { NormalCharacterReset();enabled=false; }
 static void activate(void) { enabled=true; }
+bool NormalCharacterEnabled(void) { return enabled; }
 SNES_MOD_CONSTRUCTOR(register_normal_characters) {
     snes_mod_register_reset_callback(reset_plugin);
     snes_mod_register_activation_plugin("superbomberman5.normal.characters",activate);
@@ -95,17 +101,19 @@ static void finish_picker(bool cancel) {
     memcpy(choices,g_ram+0x625f,sizeof(choices));
     memcpy(palettes,g_ram+0x6264,sizeof(palettes));
     unsigned count=players;
-    bool continued=from_continue;
+    bool continued=from_continue,rush=boss_rush;
     /* Detach before loading: the save extension replaces its own buffer. */
     uint8_t *snapshot=resume;uint32_t size=resume_size;
     resume=NULL;resume_size=0;
     bool ok=RtlLoadSnapshotFromMemory(snapshot,size);
-    picking=false;
+    picking=false;boss_rush=false;
     free(repick);repick=NULL;repick_size=0;
-    if(ok && !cancel) { repick=snapshot;repick_size=size; } else free(snapshot);
-    if (!ok) return;
+    /* Boss Rush has no world map to come back to the picker from. */
+    if(ok && !cancel && !rush) { repick=snapshot;repick_size=size; } else free(snapshot);
+    if (!ok) { if(rush) BossRushPickerDone(true);return; }
     players=count;from_continue=continued;
-    if (cancel) {
+    if (rush && cancel) chosen=false;
+    else if (cancel) {
         chosen=false;
         /* Restart the whole native file-list entry, including screen cleanup
          * and the FF.8D archive load. $C7:1014 is inside that load's operands.
@@ -135,6 +143,8 @@ static void finish_picker(bool cancel) {
             g_ram[0x16da+i]=g_rom[0xbb4e + character]+palettes[i];
         }
     }
+    /* The restored machine holds the rush waiting at its parked script. */
+    if(rush) BossRushPickerDone(cancel);
 }
 
 /* Return stacks of the file-confirmation fade: New Game ($C7:0BFF/$C7:10E6)
@@ -210,7 +220,7 @@ void NormalCharacterFrame(void) {
     if(repick && g_ram[0x1031]!=3) { free(repick);repick=NULL;repick_size=0; } /* a stage started */
     if (g_ram[0x1031]!=3) {
         /* Game Over and its Continue map keep the current campaign choice. */
-        if(g_ram[0x1031]==2){chosen=false;restarting=false;}
+        if(g_ram[0x1031]==2 && !BossRushKeepChoices()){chosen=false;restarting=false;}
         return;
     }
     if(pc==0xc7100e || pc==0xc70d59){chosen=false;restarting=false;}
@@ -229,14 +239,41 @@ void NormalCharacterFrame(void) {
     }
 }
 
+/* Boss Rush: the title's player-count menu waits on its start op while this
+ * snapshot is taken (not part of save states: it lives for the frame or two
+ * until the file-menu scene that hosts the picker has started). The picker
+ * returns to it, as it returns to the file confirmation for Normal. */
+bool NormalCharacterSnapshotBossRush(void) {
+    if(!enabled || picking) return false;
+    free(rush_title);rush_title=NULL;rush_title_size=0;
+    uint8_t *snapshot=malloc(SNAP_CAP);
+    if(!snapshot) return false;
+    internal_snapshot=true;
+    size_t size=RtlSaveSnapshotToMemory(snapshot,SNAP_CAP);
+    internal_snapshot=false;
+    if(!size || size>RESUME_CAP) { free(snapshot);return false; }
+    rush_title=snapshot;rush_title_size=(uint32_t)size;
+    return true;
+}
+bool NormalCharacterOpenBossRush(void) {
+    if(!enabled || picking || !rush_title) return false;
+    free(repick);repick=NULL;repick_size=0;
+    resume=rush_title;resume_size=rush_title_size;rush_title=NULL;rush_title_size=0;
+    from_continue=false;chosen=false;
+    open_picker();
+    boss_rush=true;
+    return true;
+}
+
 /* Rewind and save states include the suspended Normal machine, so loading
  * inside the picker is as safe as loading during a stage. No SRAM changes. */
 void NormalCharacterSave(SaveLoadInfo *sli) {
     RtlSaveExecutionState(sli);
     uint32_t capacity=internal_snapshot?0:RESUME_CAP;
     /* State 3: picker from Continue. State 6: selected campaign awaiting
-     * its post-Continue spawn. The header and rewind slot sizes stay fixed. */
-    uint32_t header[5]={0x32434e42, picking?(from_continue?3u:1u):chosen?(restarting?6u:2u):0u,players,resume_size,capacity};
+     * its post-Continue spawn. State 7: picker for the Boss Rush. The header
+     * and rewind slot sizes stay fixed. */
+    uint32_t header[5]={0x32434e42, picking?(boss_rush?7u:from_continue?3u:1u):chosen?(restarting?6u:2u):0u,players,resume_size,capacity};
     sli->func(sli,header,sizeof(header));
     if(resume_size) sli->func(sli,resume,resume_size);
     /* The rewind ring sizes its slots from the first capture. Keep public
@@ -254,13 +291,13 @@ void NormalCharacterLoad(SaveLoadInfo *sli,uint32_t version) {
     if(!RtlLoadExecutionState(sli)) { RtlStateStreamFail(sli);return; }
     uint32_t header[5]={0};
     sli->func(sli,header,sizeof(header));
-    bool header_picking=header[1]==1 || header[1]==3;
-    if(header[0]!=0x32434e42 || (header[1]>3 && header[1]!=6) || header[2]<1 || header[2]>5 ||
+    bool header_picking=header[1]==1 || header[1]==3 || header[1]==7;
+    if(header[0]!=0x32434e42 || (header[1]>3 && header[1]!=6 && header[1]!=7) || header[2]<1 || header[2]>5 ||
        (header[4]!=0 && header[4]!=RESUME_CAP) || header[3]>header[4] ||
        (header_picking!=(header[3]>0))) {
         RtlStateStreamFail(sli);return;
     }
-    picking=header_picking;from_continue=header[1]==3;chosen=header[1]==2 || header[1]==6;restarting=header[1]==6;players=header[2];
+    picking=header_picking;from_continue=header[1]==3;boss_rush=header[1]==7;chosen=header[1]==2 || header[1]==6;restarting=header[1]==6;players=header[2];
     if(header[3]) {
         resume=malloc(header[3]);
         if(!resume) { RtlStateStreamFail(sli);return; }

@@ -14,7 +14,7 @@ An unofficial, noncommercial **Super Bomberman 5** PC port built with [SNESRecom
 
 - Windows x64 setup and an experimental Linux x86_64 AppImage; the game is generated and compiled locally from your ROM.
 - Launcher with **PLAYER 1–5** input tabs (keyboard or gamepad per player, including several identical controllers such as two DualSense pads).
-- Sixteen optional mods, all disabled by default: five-player Normal Game (with an optional corner spawn layout), character and color selection in Normal, extra characters, Super Bomberman 4 Bomber Kings, Louie improvements, PT-BR menus, a **Cheats** group (infinite time, infinite lives and Battle COM level 4) and more.
+- Seventeen optional mods, all disabled by default: a title-screen Boss Rush, five-player Normal Game (with an optional corner spawn layout), character and color selection in Normal, extra characters, Super Bomberman 4 Bomber Kings, Louie improvements, PT-BR menus, a **Cheats** group (infinite time, infinite lives and Battle COM level 4) and more.
 - **New in v2.4.0 — Battle stage variants:** the **Battle — stage variants** mod adds a screen after choosing a Battle arena to pick its original layout or one of the variants the cartridge only unlocks with passwords 4622, 0413, 0926 and 0110, each with a minimap showing where P1–P5 start. Since v2.4.3 the minimap is the arena itself, drawn from your cartridge (rails, conveyor belts, ice and the other stage gimmicks where each variant puts them), and the screen plays the menu sounds. [Details](docs/BATTLE_VARIANTS.md)
 - **New in v2.3.0 — Battle COM level 4:** the **Battle — COM level 4** mod (**Mods → Cheats**) offers the Super COM level that the cartridge only unlocks with password 1103, without changing your save. [Details](docs/COM_LEVEL_4.md)
 - **New in v2.0.0 — netplay:** play online (lobby with Discord sign-in, rooms for all five players) or over LAN / Direct IP, like Mega Man X Recompiled. [Details](docs/NETPLAY.md)
@@ -65,6 +65,7 @@ Each setup package already includes these mods (no separate download). They can 
 | **Pause — exit & draw** | Return to the map in Normal; force a draw or return to stage select in Battle. [Details](docs/PAUSE_MENU.md) |
 | **Gold Cartridge — Battle** | Arenas 11–13 and Hyper Revenge. [Details](docs/GOLD_BATTLE.md) |
 | **Battle — stage variants** | After choosing an arena: Original or Variant 1–4 (passwords 4622, 0413, 0926; Variant 4 = 0110 item rule, arena 1), with a minimap and P1–P5 starts. B returns to the arena carousel. [Details](docs/BATTLE_VARIANTS.md) |
+| **Boss Rush** | **BOSS RUSH** on the title menu (between BATTLE GAME and OPTIONS): the cartridge's boss rush (password 3879) after the player-count menu (1–5 players with the 5 Players mod) and, with Normal character selection, the character picker (B returns to the title); characters and colors stay for the whole rush. Run timer at the top right; the pause menu can return to the title. [Details](docs/BOSS_RUSH.md) |
 | **Português brasileiro — menus** | PT-BR menus, HUD and certificates using the cartridge fonts. [Details](docs/TRANSLATION_PTBR.md) |
 
 ![Normal Game portal destination hints](docs/images/portal-destinations.png)
@@ -121,7 +122,7 @@ Thanks to Matthew Stanley and the RetroPorting ToolKit contributors for SNESReco
 
 - Setup Windows x64 e AppImage Linux x86_64 experimental; o jogo é gerado e compilado localmente a partir da sua ROM.
 - Launcher com abas **PLAYER 1–5** (teclado ou controle por jogador, inclusive vários controles iguais, como dois DualSense).
-- Dezesseis mods opcionais, desligados por padrão: Normal Game com cinco jogadores (com layout opcional de spawn nos cantos), seleção de personagem e cor no Normal, personagens extras, Reis Bomber do Super Bomberman 4, melhorias dos Louies, menus em PT-BR, o grupo **Cheats** (tempo infinito, vidas infinitas e nível 4 do COM no Battle) e mais.
+- Dezessete mods opcionais, desligados por padrão: Boss Rush na tela de título, Normal Game com cinco jogadores (com layout opcional de spawn nos cantos), seleção de personagem e cor no Normal, personagens extras, Reis Bomber do Super Bomberman 4, melhorias dos Louies, menus em PT-BR, o grupo **Cheats** (tempo infinito, vidas infinitas e nível 4 do COM no Battle) e mais.
 - **Novo na v2.4.0 — variantes das fases do Battle:** o mod **Battle — stage variants** adiciona, depois de escolher a arena do Battle, uma tela para jogar o layout original ou uma das variantes que o cartucho só libera com as senhas 4622, 0413, 0926 e 0110, cada uma com uma miniatura mostrando onde P1–P5 começam. Desde a v2.4.3 a miniatura é a própria arena, desenhada a partir do seu cartucho (trilhos, esteiras, gelo e as outras mecânicas da fase onde cada variante as coloca), e a tela toca os sons do menu. [Detalhes](docs/BATTLE_VARIANTS.md)
 - **Novo na v2.3.0 — nível 4 do COM no Battle:** o mod **Battle — COM level 4** (**Mods → Cheats**) libera o nível Super do COM, que o cartucho só abre com a senha 1103, sem alterar o seu save. [Detalhes](docs/COM_LEVEL_4.md)
 - **Novo na v2.0.0 — netplay:** jogue online (lobby com login do Discord, salas para os cinco jogadores) ou por LAN / IP direto, como no Mega Man X Recompiled. [Detalhes](docs/NETPLAY.md)
@@ -165,6 +166,7 @@ Todos já vêm no pacote de setup (sem download separado) e podem ser ativados j
 | **Pause — exit & draw** | Voltar ao mapa no Normal; empatar a rodada ou voltar às arenas no Battle. [Detalhes](docs/PAUSE_MENU.md) |
 | **Gold Cartridge — Battle** | Arenas 11–13 e Revanche Hiper. [Detalhes](docs/GOLD_BATTLE.md) |
 | **Battle — stage variants** | Depois de escolher a arena: Original ou Variante 1–4 (senhas 4622, 0413, 0926; a Variante 4 é a regra de itens 0110, só na arena 1), com miniatura e início de P1–P5. B volta ao carrossel de arenas. [Detalhes](docs/BATTLE_VARIANTS.md) |
+| **Boss Rush** | **CORRIDA DE CHEFES** no menu da tela de título (entre MODO BATALHA e OPÇÕES): o boss rush do cartucho (senha 3879) depois da escolha de jogadores (1–5 com o mod de 5 jogadores) e, com a seleção de personagens do Normal, da tela de personagens (B volta ao título); personagens e cores valem para todo o boss rush. Cronômetro no canto superior direito; a pausa permite voltar ao título. [Detalhes](docs/BOSS_RUSH.md) |
 | **Português brasileiro — menus** | Menus, HUD e certificados em PT-BR com as fontes do cartucho. [Detalhes](docs/TRANSLATION_PTBR.md) |
 
 ### Netplay, Discord e atualizações

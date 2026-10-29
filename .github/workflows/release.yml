@@ -65,6 +65,7 @@ jobs:
           ./build-ci/infinite_lives_tests.exe
           ./build-ci/com_level4_tests.exe
           ./build-ci/battle_variants_tests.exe
+          ./build-ci/boss_rush_tests.exe
           ./build-ci/updater_tests.exe
           ./build-ci/normal_coop_tests.exe
           ./build-ci/subordinate_tests.exe
