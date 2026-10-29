@@ -11,6 +11,8 @@ mklink /J C:\aliasbase\A "%~dp0fc" >NUL
 mklink /J C:\aliasbase\B "%~dp0fc" >NUL
 rem first build through alias A
 "%CMAKE%" -S C:\aliasbase\A -B C:\aliasbase\A\build "-DDEP_ZIP=%DEPZIP%" -G Ninja -DCMAKE_C_COMPILER=gcc > "%TEMP%\first.txt" 2>&1 || (echo FAIL first configure & type "%TEMP%\first.txt" & exit /b 1)
+rem the old alias no longer resolves (folder renamed: its junction points nowhere)
+rmdir C:\aliasbase\A
 set "BUILD_DIR=C:\aliasbase\B\build"
 rem the alias step drops the top-level cache configured through A
 del /q "%BUILD_DIR%\CMakeCache.txt" & rmdir /s /q "%BUILD_DIR%\CMakeFiles" 2>NUL
