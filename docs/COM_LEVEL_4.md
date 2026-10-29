@@ -23,8 +23,9 @@ netplay já levam o valor; nenhum gancho do interpretador nem patch de ROM.
 
 Validação: disassembly da imagem JPN (tabela de senhas, rotinas `$C5:68E0`/
 `$C5:6909`, boot `$C0:3190`/`$C0:486D` e o script `$C6:91F1`) e o teste nativo
-`com_level4_tests`. Ainda **não** foi validado em runtime: falta confirmar no
-jogo que o seletor chega ao nível 4 e que os COM jogam nesse nível.
+`com_level4_tests`. Em runtime (Linux LLE, v2.4.0): com o mod, `$6247` = 4 e a
+linha de nível do COM nas regras do Battle chega a 4 (`$625B` = 4) apertando →;
+sem o mod para em 3. O comportamento dos COM nesse nível não foi medido.
 
 ## English
 
@@ -48,8 +49,9 @@ interpreter hook and no ROM patch.
 
 Validation: JPN disassembly (password table, handlers `$C5:68E0`/`$C5:6909`,
 boot `$C0:3190`/`$C0:486D` and script `$C6:91F1`) and the native
-`com_level4_tests`. **Not yet validated at runtime**: still to confirm in game
-that the selector reaches level 4 and that COM players use it.
+`com_level4_tests`. At runtime (Linux LLE, v2.4.0): with the mod `$6247` = 4 and
+the COM level row of the Battle rules reaches 4 (`$625B` = 4) pressing Right;
+without it it stops at 3. COM behaviour at that level was not measured.
 
 ## Password table / Tabela de senhas
 

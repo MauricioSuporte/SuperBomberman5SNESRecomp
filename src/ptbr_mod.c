@@ -42,6 +42,7 @@ static uint16_t coop_cursor;
 
 static void reset_ptbr(void) { s_enabled = false; s_saved_count = 0;arena_drawn=false;arena_last=0; }
 static void enable_ptbr(void) { s_enabled = true; }
+bool PtbrEnabled(void) { return s_enabled; }
 SNES_MOD_CONSTRUCTOR(register_ptbr) {
     snes_mod_register_reset_callback(reset_ptbr);
     snes_mod_register_presentation_plugin("superbomberman5.ptbr.menus", enable_ptbr);

@@ -1,5 +1,24 @@
 # Super Bomberman 5: estado do protótipo
 
+## v2.4.0 — 2026-10-29: Battle stage variants mod; COM level 4 checked in game
+
+- Request: after choosing a Battle arena, pick its original layout or the variants of passwords 4622/0413/0926 and
+  the 0110 item rule, with a minimap and P1-P5 starts; B back to the carousel, A into the native match start; PT-BR
+  with the translation mod; names Original / Variante 1-4.
+- Research (JPN disassembly + Linux LLE routes, ROM USA): see AGENTS.md §6 rows "Match-start script" and "Battle
+  stage data". The 0110 rule exists only in arena 1's setup script; elsewhere the list offers four entries.
+- Implementation: `src/battle_variants_mod.c` (package `superbomberman5.battle-variants` 0.1.0, Gameplay). Pre-opcode
+  hook `$C0:0AF9` (swallow A on the selector, menu input from all seats, A re-injected on the next read), `$6274`
+  bits / flag 3 written on confirm, `$6273` masked until `$1031 >= $74` then both restored, save-state extension
+  appended after Louie. 65 minimaps (13 arenas × 4 layouts + item views) decoded from the ROM and rendered once at
+  activation; drawing writes the finished renderBuffer only. `PtbrEnabled()` exported for the language.
+- Evidence (local Linux LLE build of this tree with the user's ROM): 52/52 decoded layouts match `$1052` hard cells
+  and P1/P2 `$16AA`; 52/52 on-screen minimaps match cell by cell; routes open/move/B/reopen on arena 2/confirm
+  Variant 2 → mode `$76`, Variant 4 in arena 1 → 0 soft blocks, PT-BR and English captures; rollback probe with the
+  menu used shows only PPU-partition divergences (6) like the same route without the mod (7), no WRAM divergence;
+  native `battle_variants_tests`; 22/22 ctest. Not run on Windows or in a real netplay match.
+- COM level 4 (v2.3.0) at runtime: with the mod `$6247` = 4 and the rules' COM row reaches `$625B` = 4; without it 3.
+
 ## v2.3.3 — 2026-10-29: failed automatic rebuild restarted on every launch
 
 - Report (maintainer, still on v2.3.1): opening the game started Generate & rebuild by itself and failed again at

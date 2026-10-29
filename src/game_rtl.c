@@ -42,6 +42,7 @@
 #include "infinite_time_mod.h"
 #include "infinite_lives_mod.h"
 #include "com_level4_mod.h"
+#include "battle_variants_mod.h"
 #include "pause_menu_mod.h"
 #include "portal_labels_mod.h"
 #include "selection_color_mod.h"
@@ -100,12 +101,14 @@ void GameRunOneFrame(void)
     LouieBeforeFrame();
     NormalHudBeforeFrame();
     ComLevel4BeforeFrame(); /* WRAM limit only; no hook */
+    BattleVariantsBeforeFrame();
     NormalCharacterInstallHook(); /* Outermost hook: restore after co-op. */
     snes_beam_frame_driver_run_frame();
     LouieAfterFrame();
     PauseMenuAfterFrame();
     NormalCoopAfterFrame();
     InfiniteLivesAfterFrame(); /* keep the shared counter at its maximum for Start rejoins */
+    BattleVariantsAfterFrame(); /* restore password bits once the stage has read them */
     SelectionColorAfterFrame();
     NormalCharacterFrame();
     NameTagsAfterFrame(); /* presentation only: host overlay tags */
@@ -139,6 +142,7 @@ void GameDrawPpuFrame(void)
     bool overlays = NormalHudEnabled() || SelectionColorEnabled() || SubordinateEnabled() || ExtraCharactersEnabled() ||
                     ExtraCharactersPagelessMounts() || PauseMenuEnabled() || PortalLabelsEnabled();
     PtbrDrawPpuFrameObserved(overlays ? ObserveOverlays : NULL, NULL);
+    BattleVariantsDraw(); /* over the finished frame; presentation only */
 }
 
 void GameSessionReset(void)
@@ -153,6 +157,7 @@ void GameSessionReset(void)
     LouieReset();
     GoldBattleReset();
     PauseMenuReset();
+    BattleVariantsReset();
     InfiniteLivesReset();
     InfiniteTimeReset();
     NormalCoopReset();
@@ -167,6 +172,7 @@ static void GameHardwareReset(void)
     LouieReset();
     GoldBattleReset();
     PauseMenuReset();
+    BattleVariantsReset();
     InfiniteLivesReset();
     InfiniteTimeReset();
     NormalCoopReset();
@@ -174,10 +180,10 @@ static void GameHardwareReset(void)
 }
 
 static void GameSaveExtra(struct SaveLoadInfo *sli) {
-    NormalCharacterSave(sli);SelectionColorSave(sli);NormalCoopSave(sli);PauseMenuSave(sli);GoldBattleSave(sli);LouieSave(sli);
+    NormalCharacterSave(sli);SelectionColorSave(sli);NormalCoopSave(sli);PauseMenuSave(sli);GoldBattleSave(sli);LouieSave(sli);BattleVariantsSave(sli);
 }
 static void GameLoadExtra(struct SaveLoadInfo *sli,uint32_t version) {
-    NormalCharacterLoad(sli,version);SelectionColorLoad(sli,version);NormalCoopLoad(sli,version);PauseMenuLoad(sli,version);GoldBattleLoad(sli,version);LouieLoad(sli,version);
+    NormalCharacterLoad(sli,version);SelectionColorLoad(sli,version);NormalCoopLoad(sli,version);PauseMenuLoad(sli,version);GoldBattleLoad(sli,version);LouieLoad(sli,version);BattleVariantsLoad(sli,version);
 }
 
 const RtlGameInfo kGameInfo = {

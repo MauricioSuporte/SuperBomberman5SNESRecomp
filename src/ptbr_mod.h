@@ -4,3 +4,5 @@ void PtbrDrawPpuFrame(void);
 void PtbrDrawPpuFrameObserved(SnesBeamRasterObserver *observer,void *context);
 
 const char *PtbrPauseLabel(unsigned index);
+#include <stdbool.h>
+bool PtbrEnabled(void);

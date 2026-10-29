@@ -1275,6 +1275,13 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '2.4.0': (
+'''- **New mod: Battle — stage variants** (Mods → Gameplay): after choosing an arena, a screen lets you play its **Original** layout or **Variant 1–4**, the layouts the cartridge only unlocks with passwords **4622**, **0413** and **0926**, plus the **0110** rule that turns every soft block into an item (arena 1, the only stage with that rule). A minimap shows the hard blocks and where P1–P5 start; **B** goes back to the arena carousel, **A** starts the match as usual. In PT-BR with the translation mod. Disabled by default. [Details](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/blob/main/docs/BATTLE_VARIANTS.md)
+- **COM level 4** (v2.3.0) is now confirmed in game: with the mod on, the Battle rules reach level 4.
+- Online rooms adopt the host's mods as before; everyone in a room needs v2.4.0.''',
+'''- **Novo mod: Battle — stage variants** (Mods → Gameplay): depois de escolher a arena, uma tela deixa jogar o layout **Original** ou as **Variantes 1–4**, os layouts que o cartucho só libera com as senhas **4622**, **0413** e **0926**, além da regra **0110**, que transforma todos os blocos macios em itens (arena 1, a única fase com essa regra). Uma miniatura mostra os blocos fixos e onde P1–P5 começam; **B** volta ao carrossel de arenas, **A** começa a partida normalmente. Em PT-BR com o mod de tradução. Desligado por padrão. [Detalhes](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/blob/main/docs/BATTLE_VARIANTS.md)
+- O **nível 4 do COM** (v2.3.0) agora foi confirmado no jogo: com o mod ligado, as regras do Battle chegam ao nível 4.
+- As salas online continuam adotando os mods do anfitrião; todos na sala precisam da v2.4.0.'''),
     '2.3.3': (
 '''- **Fix: a failing rebuild started again on every launch:** when the automatic Generate & rebuild failed on Windows, opening the game started it (and failed) again each time, so the launcher, and its Update button, could not be reached. After a failed rebuild the launcher now opens normally with the Generate & rebuild button; a successful rebuild turns the automatic start back on.
 - Includes v2.3.2's fix for rebuilding after renaming or moving the game folder ("CMake step for libjuice failed").
