@@ -1,6 +1,6 @@
 # Super Bomberman 5: estado do protótipo
 
-## Unreleased — 2026-10-29: Boss Rush mod (title screen)
+## v2.5.0 — 2026-10-29: Boss Rush mod (title screen); Direct3D 11 launcher
 
 - Request: a BOSS RUSH entry on the title menu between BATTLE GAME and OPTIONS, laid out like the original with
   PUSH START BUTTON still above NORMAL GAME and blinking; PT-BR JOGO NORMAL / MODO BATALHA / CORRIDA DE CHEFES /
@@ -33,6 +33,14 @@
   PT-BR (choices 2/1); five-player co-op; pause → Return to title with and without the pause mod (PT-BR text);
   native password 3879 still works with the mod on. Native tests: `boss_rush_tests` (new) and extended
   `normal_character_tests`, `pause_menu_tests`, `ptbr_render_tests`. No `interp_cap`/BRK in the logs.
+- Timer format `MM:SS.CC` (two-digit minutes, capped at 99).
+- Launcher on Direct3D 11 (Windows): recomp-ui `a0c901c` adds the opt-in `RECOMP_UI_SDL_RENDERER` (SDL3 only,
+  `LNG_SDL_RENDERER`): the launcher window gets an SDL_Renderer instead of a GL context, ImGui draws through
+  `imgui_impl_sdlrenderer3` (vendored from Dear ImGui v1.91.9b), textures/font rebuilds/LNG_SCRIPT screenshots follow
+  the renderer. It asks for `direct3d11` first on Windows, then SDL's default order; `LNG_RENDER_DRIVER` overrides.
+  SB5's CMake turns it on for WIN32 only; Linux keeps OpenGL. Evidence: Linux build with the option forced on,
+  offscreen `software` and `opengl` renderers, dashboard and settings screenshots identical to the GL build, Play →
+  game boots and runs. Direct3D 11 itself is exercised only by the Windows CI build and players.
 - Not validated: a whole rush to the last boss and what follows it, netplay, Windows. A save state loaded during
   the one or two frames between the title snapshot and the picker loses the snapshot (the Normal file menu then
   simply continues).

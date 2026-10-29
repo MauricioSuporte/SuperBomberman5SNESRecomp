@@ -1275,6 +1275,13 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '2.5.0': (
+'''- **New mod: Boss Rush** (Mods → Gameplay): **BOSS RUSH** on the title menu, between BATTLE GAME and OPTIONS. It is the cartridge's own boss rush (password **3879**): the player-count menu first (up to five players with the 5 Players mod), then, with **Normal Game — character selection** on, the character picker (with colors when that mod is on; **B** returns to the title). The characters and colors chosen stay for the whole rush. A run timer (`MM:SS.CC`) sits at the top right, and the pause menu offers **Return to title**. In PT-BR: **CORRIDA DE CHEFES**, and the title menu reads JOGO NORMAL / MODO BATALHA / OPÇÕES. Disabled by default. [Details](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/blob/main/docs/BOSS_RUSH.md)
+- **Launcher on Direct3D 11 (Windows):** the launcher now renders with Direct3D 11 instead of OpenGL, falling back to SDL's other renderers when D3D11 is unavailable. The game window is unchanged.
+- Everyone in an online room needs v2.5.0.''',
+'''- **Novo mod: Boss Rush** (Mods → Gameplay): **BOSS RUSH** no menu da tela de título, entre BATTLE GAME e OPTIONS. É o boss rush do próprio cartucho (senha **3879**): primeiro a escolha de jogadores (até cinco com o mod de 5 jogadores) e, com o **Normal Game — character selection** ligado, a tela de personagens (com as cores quando esse mod está ligado; **B** volta ao título). Os personagens e cores escolhidos valem para todo o boss rush. Um cronômetro (`MM:SS.CC`) fica no canto superior direito e o menu de pausa oferece **Voltar ao título**. Em PT-BR: **CORRIDA DE CHEFES**, e o menu de título mostra JOGO NORMAL / MODO BATALHA / OPÇÕES. Desligado por padrão. [Detalhes](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/blob/main/docs/BOSS_RUSH.md)
+- **Launcher em Direct3D 11 (Windows):** o launcher agora desenha com Direct3D 11 em vez de OpenGL, usando os outros renderizadores do SDL quando o D3D11 não está disponível. A janela do jogo não muda.
+- Todos na sala online precisam da v2.5.0.'''),
     '2.4.3': (
 '''- **Battle — stage variants: the minimap is now the arena itself**, drawn from your cartridge when the mod is enabled: rails (stage 8), conveyor belts (stage 2), ice, tunnels and the other stage gimmicks appear where each variant puts them, with the P1–P5 starts on top.
 - **Menu sounds on the variant screen:** opening it plays the Battle menu's confirm sound, moving plays the cursor sound and **B** plays the back sound as it returns to the arena carousel.

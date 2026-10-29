@@ -22,7 +22,7 @@ Vem desligado por padrão e exige um host compilado com este mod.
 - **O boss rush** é o mesmo da senha **3879**: começa no chefe da ZONA 1 e cada
   portal leva ao chefe seguinte; nada é salvo no arquivo de jogo.
 - **Cronômetro:** no canto superior direito, logo abaixo do HUD, aparece o tempo
-  do boss rush (`M:SS.CC`). Ele para enquanto o jogo está pausado e nas
+  do boss rush (`MM:SS.CC`). Ele para enquanto o jogo está pausado e nas
   transições com a tela preta.
 - **Pausa:** Start abre o menu de pausa com **Continuar** e **Voltar ao título**
   (com confirmação, inicialmente em **Não**), mesmo sem o mod de pausa ligado.
@@ -97,7 +97,7 @@ off by default and needs a host built with this mod.
   characters and colors chosen are used for the whole rush.
 - **The rush** is the cartridge's own, the one password **3879** starts: ZONE 1's
   boss first, each gate leads to the next boss, nothing is saved.
-- **Timer** at the top right, just under the HUD (`M:SS.CC`); it stops while
+- **Timer** at the top right, just under the HUD (`MM:SS.CC`); it stops while
   paused and during black transitions.
 - **Pause:** Start opens **Resume** / **Return to title** (with a confirmation
   that starts on **No**), even when the pause-menu mod is off.

@@ -297,6 +297,11 @@ if(NOT EXISTS "${RECOMP_UI_ROOT}/recomp_ui.cmake")
         "recomp-ui missing at ${RECOMP_UI_ROOT}.\n"
         "Run: git submodule update --init --recursive recomp-ui")
 endif()
+# Windows: the launcher renders through SDL_Renderer on Direct3D 11.
+if(WIN32)
+    set(RECOMP_UI_SDL_RENDERER ON CACHE BOOL
+        "Render the launcher with SDL_Renderer (Direct3D 11 on Windows)" FORCE)
+endif()
 include(${RECOMP_UI_ROOT}/recomp_ui.cmake)
 # BOXART stages launcher_assets/img/boxart.tga beside the exe; the launcher
 # shows assets/img/boxart.tga by default. EXISTS-guarded in recomp_ui.cmake,

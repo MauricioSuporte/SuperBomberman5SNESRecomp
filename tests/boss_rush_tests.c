@@ -133,8 +133,8 @@ int main(void) {
     g_ram[0x0300] = 0x0f; g_ram[0x1031] = 0x74; g_ram[0x1d1a] = 1; BossRushAfterFrame(); CHECK(frames == 2);
     g_ram[0x1031] = 0x68; g_ram[0x1d1a] = 0; BossRushAfterFrame(); CHECK(frames == 3);
     char text[16];
-    BossRushFormat(0, text, sizeof(text)); CHECK(!strcmp(text, "0:00.00"));
-    BossRushFormat(60 * 75 + 30, text, sizeof(text)); CHECK(!strcmp(text, "1:15.50"));
+    BossRushFormat(0, text, sizeof(text)); CHECK(!strcmp(text, "00:00.00"));
+    BossRushFormat(60 * 75 + 30, text, sizeof(text)); CHECK(!strcmp(text, "01:15.50"));
     /* Save/load round trip and corrupt rejection. */
     Stream st = {{transfer}, {0}, 0, 0, false};
     BossRushSave(&st.base);

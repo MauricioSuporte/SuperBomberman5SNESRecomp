@@ -332,7 +332,7 @@ static int text_width(const char *s) {
 void BossRushFormat(uint32_t f, char *out, size_t n) {
     uint32_t cs = f * 100u / 60u;
     unsigned c = cs % 100, s = (cs / 100) % 60, m = cs / 6000;
-    snprintf(out, n, "%u:%02u.%02u", m > 999 ? 999 : m, s, c);
+    snprintf(out, n, "%02u:%02u.%02u", m > 99 ? 99 : m, s, c);
 }
 void BossRushDraw(void) {
     if (!BossRushActive() || !g_ppu || !g_ppu->renderBuffer) return;
