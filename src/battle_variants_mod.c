@@ -30,6 +30,7 @@
 #include "mod_runtime.h"
 #include "menu_font.h"
 #include "snes/interp_bridge.h"
+#include "common_cpu_infra.h"
 #include "snes/ppu.h"
 #include <stdbool.h>
 #include <stdio.h>
@@ -163,6 +164,105 @@ static const Layout *layout(unsigned arena, unsigned variant) {
     }
     return layouts[arena - 1][variant].ok ? &layouts[arena - 1][variant] : NULL;
 }
+/* ---- Stage picture ------------------------------------------------------
+ * The arena as the cartridge draws it, so rails, conveyor belts, ice and the
+ * rest show where each variant puts them. Handler 2 of the stage script is
+ * replayed into a scratch VRAM/CGRAM: "26 n" graphics/palette set ($0AE7,
+ * 4 for Battle), "27 n" archive n ($C0:180F -> $C0:1B04: table word
+ * $C0:1C96 + 2*set in bank $E3, 8-byte entries VRAM word, size, source,
+ * flags; bit 7 = raw, else the $C0:1CB0 stream), "29 n vram" the same at
+ * another VRAM address ($C0:17F3), "2a n" palette ($C0:01AC: table word
+ * $C0:0379 + 2*set in bank $81, entry = first color, count, colors), "0a map
+ * ts" layer 2, "0b ts", "0c map" layer 1. Metatiles: $D0:0000 + (ts-1)*2 ->
+ * 8 bytes = four BG tilemap words (verified against the running game's VRAM
+ * tilemaps). Layers composed as Mode 1 (BG1 high, BG2 high, BG1 low, BG2
+ * low), then area-averaged from 16 to 7 pixels per cell. */
+enum { PIC_CELLS_X = 15, PIC_CELLS_Y = 13, PIC_W = PIC_CELLS_X * 16, PIC_H = PIC_CELLS_Y * 16 };
+static uint8_t scratch_vram[0x10000];
+static uint16_t scratch_cgram[256];
+static uint32_t scratch_pic[PIC_W * PIC_H];
+static uint8_t scratch_prio[PIC_W * PIC_H];
+static void load_archive(unsigned set, unsigned id, int vram_override) {
+    if (!id) return;
+    uint32_t entry = 0xe30000 | (rw(0xc01c96 + 2 * set) + (id - 1) * 8u);
+    unsigned vram = vram_override >= 0 ? (unsigned)vram_override : rw(entry), size = rw(entry + 2);
+    uint32_t src = rl(entry + 4);
+    if (!size || 2u * (vram & 0x7fff) + size > sizeof(scratch_vram)) return;
+    uint8_t *dst = scratch_vram + 2u * (vram & 0x7fff);
+    if (rb(entry + 7) & 0x80) for (unsigned i = 0; i < size; ++i) dst[i] = rb(src + i);
+    else decompress(src, dst, size);
+}
+static void load_palette(unsigned set, unsigned id) {
+    if (!id) return;
+    uint32_t entry = 0x810000 | rw(0x810000 | (rw(0xc00379 + 2 * set) + 2u * (id - 1)));
+    unsigned first = rw(entry), count = rw(entry + 2);
+    for (unsigned k = 0; k < count && k < 256; ++k) scratch_cgram[(first + k) & 255] = (uint16_t)rw(entry + 4 + 2 * k);
+}
+static uint32_t rgb(uint16_t c) {
+    uint32_t r = c & 31, g = c >> 5 & 31, b = c >> 10 & 31;
+    return 0xff000000u | (r << 19 | (r >> 2) << 16) | (g << 11 | (g >> 2) << 8) | (b << 3 | b >> 2);
+}
+static bool render_stage(unsigned mode, uint32_t *out /* MAP_W x MAP_H */, unsigned out_w, unsigned out_h) {
+    uint32_t script = handler(mode, 2);
+    if (!script) return false;
+    memset(scratch_vram, 0, sizeof(scratch_vram)); memset(scratch_cgram, 0, sizeof(scratch_cgram));
+    unsigned set = 4, tileset = 0, maps[3] = {0, 0, 0};
+    for (uint32_t i = script, end = script + 64; i < end && rb(i);) {
+        unsigned op = rb(i);
+        if (op == 0x26) { set = rb(i + 1); i += 2; }
+        else if (op == 0x27) { load_archive(set, rb(i + 1), -1); i += 2; }
+        else if (op == 0x29) { load_archive(set, rb(i + 1), (int)rw(i + 2)); i += 4; }
+        else if (op == 0x2a) { load_palette(set, rb(i + 1)); i += 2; }
+        else if (op == 0x0a) { maps[2] = rb(i + 1); tileset = rb(i + 2); i += 3; }
+        else if (op == 0x0b) { tileset = rb(i + 1); i += 2; }
+        else if (op == 0x0c) { maps[1] = rb(i + 1); i += 2; }
+        else break;
+    }
+    if (!tileset || (!maps[1] && !maps[2])) return false;
+    uint32_t metatiles = 0xd00000 | rw(0xd00000 + (tileset - 1) * 2);
+    const uint32_t backdrop = rgb(scratch_cgram[0]);
+    for (unsigned i = 0; i < PIC_W * PIC_H; ++i) { scratch_pic[i] = backdrop; scratch_prio[i] = 0; }
+    /* Ranks: BG2 low 1, BG1 low 2, BG2 high 3, BG1 high 4. */
+    for (unsigned layer = 2; layer >= 1; --layer) {
+        if (!maps[layer]) continue;
+        uint8_t cells[256];
+        decompress(rl(rl(0xd0a000 + (maps[layer] - 1) * 3)), cells, 256);
+        for (unsigned cy = 0; cy < PIC_CELLS_Y; ++cy)
+            for (unsigned cx = 0; cx < PIC_CELLS_X; ++cx)
+                for (unsigned q = 0; q < 4; ++q) {
+                    unsigned word = rw(metatiles + 8u * cells[cy * 16 + cx] + 2 * q);
+                    unsigned tile = word & 0x3ff, pal = word >> 10 & 7;
+                    uint8_t rank = (uint8_t)((word & 0x2000 ? 3 : 1) + (layer == 1));
+                    const uint8_t *t = scratch_vram + (tile * 32u & 0xffff);
+                    for (unsigned y = 0; y < 8; ++y)
+                        for (unsigned x = 0; x < 8; ++x) {
+                            unsigned sx = word & 0x4000 ? 7 - x : x, sy = word & 0x8000 ? 7 - y : y, bit = 7 - sx;
+                            unsigned p = (t[2 * sy] >> bit & 1) | (t[2 * sy + 1] >> bit & 1) << 1 |
+                                         (t[16 + 2 * sy] >> bit & 1) << 2 | (t[16 + 2 * sy + 1] >> bit & 1) << 3;
+                            if (!p) continue;
+                            unsigned px = cx * 16 + (q & 1) * 8 + x, py = cy * 16 + (q >> 1) * 8 + y;
+                            unsigned at = py * PIC_W + px;
+                            if (rank < scratch_prio[at]) continue;
+                            scratch_prio[at] = rank; scratch_pic[at] = rgb(scratch_cgram[pal * 16 + p]);
+                        }
+                }
+    }
+    /* Area average: output pixel (ox, oy) covers source [ox*W/w, (ox+1)*W/w). */
+    for (unsigned oy = 0; oy < out_h; ++oy)
+        for (unsigned ox = 0; ox < out_w; ++ox) {
+            unsigned x0 = ox * PIC_W / out_w, x1 = (ox + 1) * PIC_W / out_w;
+            unsigned y0 = oy * PIC_H / out_h, y1 = (oy + 1) * PIC_H / out_h;
+            unsigned r = 0, g = 0, b = 0, n = 0;
+            for (unsigned y = y0; y < y1; ++y)
+                for (unsigned x = x0; x < x1; ++x) {
+                    uint32_t c = scratch_pic[y * PIC_W + x];
+                    r += c >> 16 & 255; g += c >> 8 & 255; b += c & 255; ++n;
+                }
+            out[oy * out_w + ox] = n ? 0xff000000u | (r / n) << 16 | (g / n) << 8 | (b / n) : backdrop;
+        }
+    return true;
+}
+
 static unsigned choice_variant(unsigned choice) { return choice < 4 ? choice : 0; }
 
 /* Only stages whose setup script tests script flag 3 ("08 03 49 ..": no soft
@@ -204,6 +304,39 @@ static void apply_choice(unsigned choice) {
  * state for the list, and after the list closes it keeps the selector's input
  * empty until every seat has released its keys. */
 static uint8_t prev_act[5], prev_dir[5], suppress;
+
+/* Menu sounds: the native group-2 menu commands (move 1, back 3, accept 4,
+ * as the Battle setup screens use them) played through $C0:0CED from a small
+ * trampoline in $FF padding at $C5:7500, entered from the pad reader's tail
+ * like Louie's dash sound: it saves registers and flags, calls the driver
+ * with 8-bit registers, then runs the original PLX/PLY/RTL. The id byte is
+ * written right before the redirect, so the sound is part of the emulated
+ * frame (save states and netplay replay it). */
+enum { SFX_CODE = 0xc57500, SFX_ID = SFX_CODE + 7, SFX_MOVE = 1, SFX_BACK = 3, SFX_ACCEPT = 4 };
+static const uint8_t kSfxCode[24] = {0x08, 0xc2, 0x30, 0x48, 0xda, 0x5a, 0xa9, 0x00, 0x02, 0xe2, 0x30,
+                                     0x22, 0xed, 0x0c, 0xc0, 0xc2, 0x30, 0x7a, 0xfa, 0x68, 0x28, 0xfa, 0x7a, 0x6b};
+static uint8_t sfx_original[sizeof(kSfxCode)];
+static bool sfx_installed;
+static void install_sfx(void) {
+    if (sfx_installed) return;
+    uint8_t *code = SnesRomPtr(SFX_CODE);
+    const uint8_t *tail = SnesRomPtr(PAD_HOOK);
+    if (!code || !tail || tail[0] != 0xfa || tail[1] != 0x7a || tail[2] != 0x6b) return; /* PLX PLY RTL */
+    for (unsigned i = 0; i < sizeof(kSfxCode); ++i) if (code[i] != 0xff) return;
+    memcpy(sfx_original, code, sizeof(sfx_original));
+    memcpy(code, kSfxCode, sizeof(kSfxCode));
+    sfx_installed = true;
+}
+static void remove_sfx(void) {
+    if (!sfx_installed) return;
+    memcpy(SnesRomPtr(SFX_CODE), sfx_original, sizeof(sfx_original));
+    sfx_installed = false;
+}
+static void play_sfx(uint8_t id) {
+    if (!sfx_installed || !id) return;
+    SnesRomPtr(SFX_ID)[0] = id;
+    interp_bridge_pre_opcode_redirect(SFX_CODE);
+}
 static void pad_hook(CpuState *cpu, uint32_t pc) {
     (void)pc;
     if (!enabled) return;
@@ -218,6 +351,7 @@ static void pad_hook(CpuState *cpu, uint32_t pc) {
         if (act | dir) any_held = true;
     }
     const bool selector = in_selector();
+    uint8_t sound = 0;
     if (inject_seat) {
         if (selector) {
             unsigned seat = inject_seat - 1u;
@@ -239,7 +373,7 @@ static void pad_hook(CpuState *cpu, uint32_t pc) {
     } else if (!open_menu) {
         if (!selector) return;
         for (unsigned seat = 0; seat < 5; ++seat)
-            if (new_act[seat] & PAD_CONFIRM) { open_menu = 1; cursor = 0; break; }
+            if (new_act[seat] & PAD_CONFIRM) { open_menu = 1; cursor = 0; sound = SFX_ACCEPT; break; }
         if (!open_menu) return;
     } else if (!selector) {
         open_menu = 0; /* the screen went away underneath (reset, netplay resync) */
@@ -247,14 +381,14 @@ static void pad_hook(CpuState *cpu, uint32_t pc) {
     } else {
         for (unsigned seat = 0; seat < 5; ++seat) {
             uint8_t act = new_act[seat], dir = new_dir[seat];
-            if (act & PAD_B) { open_menu = 0; suppress = 1; break; }
+            if (act & PAD_B) { open_menu = 0; suppress = 1; sound = SFX_BACK; break; }
             if (act & PAD_CONFIRM) {
                 apply_choice(cursor < choice_count() ? cursor : 0);
                 open_menu = 0; inject_seat = (uint8_t)(seat + 1); break;
             }
             unsigned count = choice_count();
-            if (dir & DIR_UP) { cursor = (uint8_t)((cursor + count - 1) % count); break; }
-            if (dir & DIR_DOWN) { cursor = (uint8_t)((cursor + 1) % count); break; }
+            if (dir & DIR_UP) { cursor = (uint8_t)((cursor + count - 1) % count); sound = SFX_MOVE; break; }
+            if (dir & DIR_DOWN) { cursor = (uint8_t)((cursor + 1) % count); sound = SFX_MOVE; break; }
         }
     }
     /* The carousel sees no input while the list is (or was just) up. */
@@ -262,6 +396,7 @@ static void pad_hook(CpuState *cpu, uint32_t pc) {
         g_ram[(held + seat) & 0xffff] = 0; g_ram[(dirs + seat) & 0xffff] = 0;
         g_ram[(fresh + seat) & 0xffff] = 0; g_ram[(fresh_dirs + seat) & 0xffff] = 0;
     }
+    play_sfx(sound); /* last: a redirect ends this PC's hooks for the frame */
 }
 
 void BattleVariantsAfterFrame(void) {
@@ -279,6 +414,7 @@ static void prepare_all(void);
 void BattleVariantsBeforeFrame(void) {
     if (!enabled) return;
     if (!hook_installed) hook_installed = interp_bridge_add_pre_opcode_hook(PAD_HOOK, pad_hook);
+    install_sfx();
     prepare_all();
 }
 
@@ -336,15 +472,21 @@ static bool ptbr(void);
 static const char *const kNamesPt[CHOICES] = {"ORIGINAL", "VARIANTE 1", "VARIANTE 2", "VARIANTE 3", "VARIANTE 4"};
 static const char *const kNamesEn[CHOICES] = {"ORIGINAL", "VARIANT 1", "VARIANT 2", "VARIANT 3", "VARIANT 4"};
 
-static void draw_minimap(Canvas *c, int x0, int y0, const Layout *l, bool items) {
-    /* Rendered once per arena and choice (prepare_all) into a 120x104 image. */
+static void draw_minimap(Canvas *c, int x0, int y0, const Layout *l, bool items, bool picture) {
+    /* Drawn once per arena and choice (prepare_all): over the stage picture when
+     * it could be rebuilt (badges and item marks only), else flat cells. */
     static const uint32_t seat[5] = {0xfff4f4f4u, 0xff383838u, 0xffe04848u, 0xff4870e8u, 0xff48c048u};
     static const uint32_t ink[5] = {0xff202020u, 0xfff4f4f4u, 0xfff4f4f4u, 0xfff4f4f4u, 0xff202020u};
     const int cell = 7;
     for (int y = 0; y < 13; ++y)
         for (int x = 0; x < 15; ++x) {
             int px = x0 + x * cell, py = y0 + y * cell;
-            if (l->solid[y * 16 + x]) {
+            if (picture) {
+                if (items && !l->solid[y * 16 + x]) {
+                    fill(c, px + 2, py + 2, 3, 3, 0xff000000u);
+                    put(c, px + 3, py + 3, 0xfff0c040u);
+                }
+            } else if (l->solid[y * 16 + x]) {
                 fill(c, px, py, cell, cell, 0xff9da0c0u);
                 fill(c, px, py, cell, 1, 0xffd8daf0u); fill(c, px, py, 1, cell, 0xffd8daf0u);
                 fill(c, px, py + cell - 1, cell, 1, 0xff5a5c7au); fill(c, px + cell - 1, py, 1, cell, 0xff5a5c7au);
@@ -387,7 +529,9 @@ static void prepare_all(void) {
             const Layout *l = layout(a, choice_variant(choice));
             Canvas img = {images[a - 1][choice], MAP_W, MAP_W, MAP_H};
             images_ready[a - 1][choice] = l != NULL;
-            if (l) draw_minimap(&img, 0, 0, l, choice == 4);
+            if (!l) continue;
+            bool picture = render_stage(0x74 + 4 * (a - 1) + choice_variant(choice), images[a - 1][choice], MAP_W, MAP_H);
+            draw_minimap(&img, 0, 0, l, choice == 4, picture);
         }
     }
     prepared = true;
@@ -467,6 +611,7 @@ static bool ptbr(void) { return PtbrEnabled(); }
 #endif
 
 void BattleVariantsReset(void) {
+    remove_sfx();
     open_menu = cursor = inject_seat = suppress = 0;
     memset(prev_act, 0, sizeof(prev_act)); memset(prev_dir, 0, sizeof(prev_dir));
     if (restore_pending) { g_ram[BITS] = saved_bits; g_ram[SAVED_BITS] = saved_saved_bits; }

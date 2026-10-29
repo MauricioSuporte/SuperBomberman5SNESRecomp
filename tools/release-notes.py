@@ -1275,6 +1275,13 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '2.5.0': (
+'''- **Battle — stage variants: the minimap is now the arena itself**, drawn from your cartridge when the mod is enabled: rails (stage 8), conveyor belts (stage 2), ice, tunnels and the other stage gimmicks appear where each variant puts them, with the P1–P5 starts on top.
+- **Menu sounds on the variant screen:** opening it plays the Battle menu's confirm sound, moving plays the cursor sound and **B** plays the back sound as it returns to the arena carousel.
+- Includes v2.4.1–v2.4.2 (Start opens the list; held keys no longer confirm it). Everyone in an online room needs v2.5.0.''',
+'''- **Battle — stage variants: a miniatura agora é a própria arena**, desenhada a partir do seu cartucho quando o mod é ativado: trilhos (fase 8), esteiras (fase 2), gelo, túneis e as outras mecânicas das fases aparecem onde cada variante as coloca, com os pontos de início de P1–P5 por cima.
+- **Sons do menu na tela de variantes:** abrir toca o som de confirmação do menu do Battle, mover toca o som do cursor e o **B** toca o som de voltar ao retornar ao carrossel de arenas.
+- Inclui a v2.4.1–v2.4.2 (Start abre a lista; tecla segurada não confirma mais). Todos na sala online precisam da v2.5.0.'''),
     '2.4.2': (
 '''- **Fix: the Battle variant list confirmed itself:** with **Battle — stage variants** on, the list appeared for a few frames and the match started before you could choose, because a key still held (a normal keyboard press lasts several frames) was read as a new press. Holding A, Start or B no longer does anything extra: the list waits for a new press, and after it closes the arena carousel ignores keys until they are released.
 - Includes v2.4.1 (Start also opens the list). Everyone in an online room needs v2.4.2.''',

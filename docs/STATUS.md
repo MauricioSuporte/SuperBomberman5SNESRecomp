@@ -1,5 +1,26 @@
 # Super Bomberman 5: estado do protótipo
 
+## v2.5.0 — 2026-10-29: Battle variant minimaps show the arena; menu sounds
+
+- Request: play the menu accept sound when the variant list opens and the back sound on B; show each variant's stage
+  gimmicks (stage 8 rails, stage 2 conveyor belts...) in the minimap.
+- Sounds: native group-2 commands (move 1, back 3, accept 4) through `$C0:0CED`, from a 24-byte trampoline written in
+  `$FF` padding at `$C5:7500-$C5:7517` (in memory, while enabled, restored on reset; same PLX/PLY/RTL tail as Louie's
+  dash sound) and entered by a pre-opcode redirect at `$C0:0AF9`. Confirming plays no extra sound: the carousel plays
+  its own. Linux LLE route with every mod on: open → APU port 0 `$24`, Down → `$A1`, B → `$23`; confirm → `$02/$82`
+  only, as without the mod.
+- Minimaps: the gimmicks are not in `$1052` (only floor/soft/hard at stage start) and each arena drives them with its
+  own script ops, so the mod draws the stage picture instead. Research (JPN disassembly + Linux LLE VRAM/CGRAM dumps):
+  script VM ops `26 n` → `$0AE7` (`$C2:1884`), `27 n` → `$C0:180F`/`$C0:1B04` (archive table word `$C0:1C96 + 2*set`,
+  bank `$E3`, 8-byte entries VRAM word/size/source/flags, bit 7 raw), `29 n vram` → `$C0:17F3` (same, other VRAM
+  address), `2a n` → `$C0:01AC` (palette table `$C0:0379`, bank `$81`), `0a map ts` / `0b ts` / `0c map` (`$C2:0BED/
+  0C06/0C0C`); Battle stages use set 4. Metatiles: `$D0:0000 + (ts-1)*2` → 8 bytes = four BG tilemap words (matched
+  against the BG2 tilemap at VRAM `$3800` on arena 8, zero mismatches). The 52 ROM-built pictures were compared side by
+  side with each stage in play: same layout and gimmicks; arena 11 animates palette 7 during play (cycle data near
+  `$C1:D480`), so its blocks keep their first colors in the minimap. Sprites (carts, cannons) are not drawn.
+- Native test extended (trampoline install/restore, sounds on open/move/back, none on confirm or while holding).
+  Not rerun on Windows.
+
 ## v2.4.2 — 2026-10-29: Battle variant list no longer confirms itself
 
 - Report (Windows, v2.4.1): with A or Start the list showed for a few frames and the match started.

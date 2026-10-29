@@ -14,12 +14,15 @@ int snes_mod_register_activation_plugin(const char *id, SNESModActivationCallbac
 static InterpPreOpcodeHook hook;
 static uint32_t hook_pc;
 bool interp_bridge_add_pre_opcode_hook(uint32_t pc, InterpPreOpcodeHook fn) { hook_pc = pc; hook = fn; return true; }
+static uint32_t redirect_pc;
+void interp_bridge_pre_opcode_redirect(uint32_t pc) { redirect_pc = pc; }
+static uint8 *image;
+uint8_t *SnesRomPtr(uint32 v) { return image + (((v >> 16) & 0x3f) << 16 | (v & 0xffff)); }
 #define BATTLE_VARIANTS_TEST 1
 #include "../src/battle_variants_mod.c"
 static bool ptbr(void) { return false; }
 uint8 g_ram[0x20000];
 const uint8 *g_rom;
-static uint8 *image;
 Ppu *g_ppu;
 typedef struct { SaveLoadInfo base; uint8 bytes[64]; size_t at, end; bool reading; } Stream;
 static bool failed;
@@ -51,6 +54,7 @@ static void selector(void) {
 
 int main(void) {
     image = calloc(0x400000, 1); g_rom = image;
+    memset(at(0xc57500), 0xff, 0x40); at(0xc00af9)[0] = 0xfa; at(0xc00af9)[1] = 0x7a; at(0xc00af9)[2] = 0x6b;
     CHECK(image && !strcmp(plugin, "superbomberman5.battle.variants"));
     /* Synthetic arena 1 / variant 0 (mode $74): header -> handler list with
      * setup (1) testing flag 3, map handler (2) "27 20 0a 01 01 00" and
@@ -84,6 +88,7 @@ int main(void) {
     /* Disabled: no hook, nothing changes. */
     BattleVariantsBeforeFrame(); CHECK(!hook);
     activation(); BattleVariantsBeforeFrame(); CHECK(hook && hook_pc == 0xc00af9 && prepared);
+    CHECK(at(0xc57500)[0] == 0x08 && at(0xc57517)[0] == 0x6b); /* menu sound trampoline */
     cpu.D = 0;
     g_ram[0x625a] = 1; g_ram[0x6274] = 0x41; g_ram[0x6273] = 0x27;
 
@@ -93,25 +98,33 @@ int main(void) {
     frame(0, 0, 0);
     /* A on the selector opens the list and is swallowed. */
     selector();
+    redirect_pc = 0;
     frame(1, 0x80, 0); CHECK(open_menu && cursor == 0 && g_ram[FRESH + 1] == 0 && g_ram[HELD + 1] == 0);
+    CHECK(redirect_pc == 0xc57500 && at(0xc57507)[0] == 4); /* accept sound */
+    redirect_pc = 0;
     /* Holding A (a keyboard press lasts several frames; the cartridge sees it
      * as new again because its previous-held copy was cleared) neither
      * confirms nor closes the list. */
     for (int i = 0; i < 12; ++i) { g_ram[FRESH + 1] = 0x80; frame(1, 0x80, 0); g_ram[FRESH + 1] = 0x80; }
     frame(1, 0x80, 0); CHECK(open_menu && !inject_seat && cursor == 0);
     frame(1, 0, 0);
+    CHECK(!redirect_pc); /* holding: no sound */
     frame(2, 0, 0x04); CHECK(cursor == 1 && g_ram[FRESH_DIRS + 2] == 0);
+    CHECK(redirect_pc == 0xc57500 && at(0xc57507)[0] == 1); /* move sound */
     frame(2, 0, 0x04); CHECK(cursor == 1); /* held: no repeat */
     frame(0, 0, 0x08); frame(0, 0, 0); frame(0, 0, 0x08); CHECK(cursor == 4); /* wraps to Items (arena 1) */
     /* B closes; the carousel does not see it, nor the rest of the hold. */
+    redirect_pc = 0;
     frame(3, 0x08, 0); CHECK(!open_menu && suppress && g_ram[FRESH + 3] == 0);
+    CHECK(redirect_pc == 0xc57500 && at(0xc57507)[0] == 3); /* back sound */
     frame(3, 0x08, 0); frame(3, 0x08, 0); CHECK(!open_menu && g_ram[HELD + 3] == 0 && g_ram[FRESH + 3] == 0);
     frame(3, 0, 0); CHECK(!suppress);
     /* Reopen, choose 0413 (third entry), confirm with seat 2. */
     frame(0, 0x80, 0); frame(0, 0, 0); frame(0, 0, 0x04); frame(0, 0, 0); frame(0, 0, 0x04);
     CHECK(open_menu && cursor == 2);
+    redirect_pc = 0;
     frame(2, 0x80, 0);
-    CHECK(!open_menu && inject_seat == 3 && restore_pending);
+    CHECK(!open_menu && inject_seat == 3 && restore_pending && !redirect_pc); /* the carousel plays its own */
     CHECK(g_ram[0x6274] == 0x42 && g_ram[0x6273] == 0x00 && g_ram[FRESH + 2] == 0);
     /* Next pad read hands one A back to the same seat; the rest of the hold
      * stays away from the selector until it is released. */
@@ -159,7 +172,8 @@ int main(void) {
 
     /* Reset closes the list and gives the bits back. */
     open_menu = 1; restore_pending = 1; saved_bits = 0x11; saved_saved_bits = 0x22;
-    reset_callback(); CHECK(!open_menu && !suppress && !restore_pending && g_ram[0x6274] == 0x11 && g_ram[0x6273] == 0x22);
+    reset_callback(); CHECK(at(0xc57500)[0] == 0xff && at(0xc57517)[0] == 0xff);
+    CHECK(!open_menu && !suppress && !restore_pending && g_ram[0x6274] == 0x11 && g_ram[0x6273] == 0x22);
     selector(); frame(0, 0, 0); frame(0, 0x80, 0); CHECK(!open_menu); /* disabled again */
     puts("Battle variants layout parsing, menu input, bits, item rule, restore and states passed.");
     return 0;
