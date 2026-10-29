@@ -1,5 +1,22 @@
 # Super Bomberman 5: estado do protótipo
 
+## v2.2.10 — 2026-10-28: Generate & rebuild stops at "ninja: error: loading 'build.ninja'"
+
+- Report (v2.2.7, Linux AppImage, a player's screenshot): with the setup wizard now showing, **Generate & rebuild**
+  failed with `cmake --build failed (exit 1)` / `ninja: error: loading 'build.ninja': No such file or directory`.
+- Cause (snesrecomp fork `snesrecomp_codegen_host.c`): the POSIX rebuild configures only when `build/CMakeCache.txt`
+  is missing, and CMake writes that cache even when configure fails or is closed. After one failed or interrupted
+  configure, every retry skipped configure and ran `cmake --build` on a tree with no `build.ninja`. The Windows
+  helper had the same check. Reproduced with CMake 3 + Ninja: a `FATAL_ERROR` configure leaves `CMakeCache.txt` and
+  `CMakeFiles/` only, and `cmake --build` prints the reported line. Why the player's first configure failed is not
+  known yet; it is in the earlier sections of `build/snesrecomp_rebuild.log` (appended, not overwritten).
+- Fix: `build_dir_is_configured` requires `build.ninja` or `Makefile` beside the cache; otherwise it drops
+  `CMakeCache.txt` and `CMakeFiles/`, logs it and configure runs again (so a real configure error is shown). The
+  Windows helper configures when `build.ninja` is missing and clears a stale cache first.
+- Evidence: a focused test compiling the codegen host (Linux gcc) for empty, cache-only, Ninja and Makefile trees
+  passes and fails on the previous code; codegen host syntax-checked with `-Wall -Wextra -Werror` with and without
+  `SNESRECOMP_SETUP_HOST`. Not run as an AppImage on a Linux desktop or on Windows here.
+
 ## v2.2.9 — 2026-10-25: Infinite lives keeps the counter at its maximum
 
 - Report: with the infinite-lives cheat, the counter could stay low or at 0 (the mod only put back the value it had

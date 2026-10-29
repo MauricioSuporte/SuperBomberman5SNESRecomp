@@ -1275,6 +1275,11 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '2.2.10': (
+'''- **Fix: "ninja: error: loading 'build.ninja'" on Generate & rebuild:** if the first build setup was interrupted or failed, every later **Generate & rebuild** skipped that step and stopped with this error, hiding the real cause. The rebuild now notices the incomplete build folder, sets it up again and, if something is still missing, shows the actual error. Linux and Windows.
+- Same online netplay as v2.2.9; everyone in a room needs v2.2.10.''',
+'''- **Correção: "ninja: error: loading 'build.ninja'" no Generate & rebuild:** se a primeira preparação do build fosse interrompida ou falhasse, todo **Generate & rebuild** seguinte pulava essa etapa e parava com esse erro, escondendo a causa real. Agora o rebuild percebe a pasta de build incompleta, prepara de novo e, se ainda faltar algo, mostra o erro de verdade. Linux e Windows.
+- Mesmo jogo online da v2.2.9; todos na sala precisam da v2.2.10.'''),
     '2.2.9': (
 '''- **Infinite lives stays at the maximum:** with **Normal Game — infinite lives** on, the shared counter now stays at 9 instead of only keeping its value. Players who press Start to rejoin the five-player game spend a life that is refilled right away, so they can always come back (the counter could sit at 0 and block rejoins).
 - Same online netplay as v2.2.8; everyone in a room needs v2.2.9.''',
