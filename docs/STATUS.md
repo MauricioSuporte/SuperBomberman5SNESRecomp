@@ -1,5 +1,30 @@
 # Super Bomberman 5: estado do protótipo
 
+## Unreleased — 2026-10-29: Boss Rush online ranking (Discord)
+
+- Request: at the end of the rush, a ranking per player count (1-5, top 5) posted to a Discord channel through a
+  webhook bot; online the room host sends the time with every player's name and character, offline the player types a
+  name and chooses whether to send; a notice for every new top-5 time; the top 5 of the count under the cursor at the
+  top right of the Boss Rush player-count menu when online; nothing may get in the way without internet.
+- Research (Linux LLE, VM traces with the lab hook): the rush order is `$67`→`$6E` then `$6F` (ZONE5 - J, no flag-4
+  branch); `$6F`'s script ends with scene `$AA`, the ending (space cut, then a night field; its cutscenes reuse
+  `$67-$6E`). Completion = `$1031` `$6F` → `$AA` during a rush (save-state byte 4, last mode byte 7); the timer stops
+  there. Beating Terrorin by play was not done: routes force the transition.
+- Implementation: `boss_rush_ranking.c` (pure: entries, merge, Discord JSON, reading back the board from each embed's
+  footer `sb5br1 c=N`), `boss_rush_net.c` (config `boss_rush_ranking.cfg` in the game root or
+  `SB5_BOSS_RUSH_WEBHOOK/BOARD`; `curl -K <temp file>` on a thread, `CREATE_NO_WINDOW`, 12 s limit; the token never
+  on a command line), `boss_rush_results.c` (screens; no WRAM writes; pads masked only while typing offline; host via
+  `snes_netplay_is_host`, names via `host_chat_seat_name`). CI: `tools/boss-rush-ranking.py --add-to-zip` with the
+  secrets `BOSS_RUSH_WEBHOOK/BOSS_RUSH_BOARD`; `--create-board` makes the board message once. The audit refuses a
+  tracked `boss_rush_ranking.cfg`; `.gitignore` lists it.
+- Evidence: `boss_rush_ranking_tests` (names/UTF-8, merge and ties, payload → parse round trip, `\u` escapes),
+  extended `boss_rush_tests` (completion edge, frozen timer, save state), `test_boss_rush_ranking_tool.py`; MinGW
+  syntax check of the Windows branch. Linux LLE route against a local stand-in for the webhook API: preview empty and
+  filled (cursor 1P/2P), forced end, name MAU typed, Yes → GET, PATCH board, POST notice (rank 1, 00:17.70); a closed
+  port shows only the time and nothing waits.
+- Not validated: real Discord (no webhook yet), a netplay host's automatic send, Windows, a played (not forced) end.
+  Stock picker characters 2-9 have placeholder names in the posts until their names are confirmed.
+
 ## v2.5.0 — 2026-10-29: Boss Rush mod (title screen); Direct3D 11 launcher
 
 - Request: a BOSS RUSH entry on the title menu between BATTLE GAME and OPTIONS, laid out like the original with

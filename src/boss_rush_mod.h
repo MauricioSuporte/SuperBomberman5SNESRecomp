@@ -18,6 +18,17 @@ void BossRushQuitToTitle(void);
  * rush has closed (snapshot already restored). */
 void BossRushPickerDone(bool cancelled);
 uint32_t BossRushFrames(void);
+/* Terrorin beaten during the rush: BossRushFrames() is the final time. */
+bool BossRushFinished(void);
+/* Participation mask of the rush ($1D25 bits). */
+uint8_t BossRushRoster(void);
+/* 1-5 while the cursor of the Boss Rush player-count menu is on that count. */
+unsigned BossRushPlayerMenuCategory(void);
+/* Text over the finished frame (menu font, black outline), for the ranking
+ * screens. Lowercase prints as uppercase, other bytes >= 0x80 as '?'. */
+int BossRushTextWidth(const char *s);
+void BossRushText(int x, int y, const char *s, uint32_t rgb);
+void BossRushShade(int x0, int y0, int x1, int y1);
 /* "M:SS.CC" for a frame count (60 frames per second). */
 void BossRushFormat(uint32_t frames, char *out, size_t size);
 /* The picker closed and the rush starts from the title in a moment: the

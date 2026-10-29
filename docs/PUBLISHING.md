@@ -36,7 +36,7 @@ python -m unittest discover -s tests -v
 git diff --check
 ```
 
-Run all nineteen native tests in the release source (`boss_rush_tests`, `battle_variants_tests`, `ptbr_render_tests`, `normal_character_tests`, `normal_hud_tests`, `selection_color_tests`, `infinite_time_tests`, `infinite_lives_tests`, `com_level4_tests`, `updater_tests`, `normal_coop_tests`, `subordinate_tests`, `pause_menu_tests`, `portal_labels_tests`, `extra_characters_tests`, `special_abilities_tests`, `sb4_rom_tests`, `gold_battle_tests`, `louie_tests`). Test package extraction, the native analyzer, first/repeat launcher startup and local ROM generation/rebuild. Exercise a real-ROM route locally and record its platform/frames and limitations in STATUS.md. No ROM enters CI or public artifacts.
+Run all twenty native tests in the release source (`boss_rush_tests`, `boss_rush_ranking_tests`, `battle_variants_tests`, `ptbr_render_tests`, `normal_character_tests`, `normal_hud_tests`, `selection_color_tests`, `infinite_time_tests`, `infinite_lives_tests`, `com_level4_tests`, `updater_tests`, `normal_coop_tests`, `subordinate_tests`, `pause_menu_tests`, `portal_labels_tests`, `extra_characters_tests`, `special_abilities_tests`, `sb4_rom_tests`, `gold_battle_tests`, `louie_tests`). Test package extraction, the native analyzer, first/repeat launcher startup and local ROM generation/rebuild. Exercise a real-ROM route locally and record its platform/frames and limitations in STATUS.md. No ROM enters CI or public artifacts.
 
 ## Build and package
 
@@ -106,3 +106,17 @@ pacotes, de `VERSION` igual à tag e de um único executável na raiz do ZIP.
 Cada release publicada é anunciada no canal #patch-notes do Discord pelo último passo do workflow
 (`tools/discord-release-post.py`). A URL do webhook fica só no secret `DISCORD_PATCH_NOTES_WEBHOOK` do
 Actions; nunca entra no Git nem em logs.
+
+## Boss Rush online ranking (Discord webhook)
+
+The Boss Rush ranking is one message in a Discord channel that the game edits through a channel webhook
+(`src/boss_rush_net.c`). The webhook URL is a credential: it lives only in the repository secrets
+`BOSS_RUSH_WEBHOOK` and `BOSS_RUSH_BOARD`, and the release workflow writes it into both packages as
+`boss_rush_ranking.cfg` (`tools/boss-rush-ranking.py --add-to-zip`). Without the secrets the packages ship
+without it and the game shows only the time. Never commit the file (the audit refuses it).
+
+Setup, once: in Discord, channel settings → Integrations → Webhooks → New Webhook, copy its URL; run
+`BOSS_RUSH_WEBHOOK=<url> python tools/boss-rush-ranking.py --create-board` (posts the empty board and prints its
+message id; pin it); then `gh secret set BOSS_RUSH_WEBHOOK` and `gh secret set BOSS_RUSH_BOARD` (values from stdin).
+The URL can be read by anyone who unpacks a release: if the channel is abused, delete the webhook, create a new one,
+create a new board, update both secrets and publish a release.

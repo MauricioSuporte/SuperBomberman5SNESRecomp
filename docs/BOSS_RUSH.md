@@ -26,6 +26,29 @@ Vem desligado por padrão e exige um host compilado com este mod.
   transições com a tela preta.
 - **Pausa:** Start abre o menu de pausa com **Continuar** e **Voltar ao título**
   (com confirmação, inicialmente em **Não**), mesmo sem o mod de pausa ligado.
+- **Fim do boss rush:** vencer o Terrorin (ZONE5 - J) encerra o tempo, que fica
+  parado durante o final do jogo, e mostra **BOSS RUSH CONCLUÍDO** com o tempo.
+
+### Ranking online (Discord)
+
+Os cinco melhores tempos de cada quantidade de jogadores (1 a 5) ficam numa
+mensagem de um canal do Discord, que o jogo atualiza por um webhook; cada novo
+tempo no top 5 também gera um aviso no canal com o ranking da categoria.
+
+- **Menu de jogadores do BOSS RUSH:** com o jogo conectado, o canto superior
+  direito mostra o top 5 da quantidade sob o cursor.
+- **Online (sala do netplay):** ao terminar, o anfitrião da sala envia o tempo
+  com o nome de cada jogador na sala e o personagem que usou.
+- **Offline:** se o ranking foi lido e o tempo entra no top 5, cada jogador
+  digita o nome (A escolhe a letra, B apaga, Start confirma) e depois escolhe
+  **Enviar ao Discord? Sim/Não**.
+- **Sem internet** (ou sem a configuração do ranking) nada disso aparece além do
+  tempo, e o jogo nunca espera: as requisições rodam em segundo plano pelo
+  `curl` do sistema (já incluso no Windows 10+), com tempo limite curto.
+- O endereço do webhook vem de `boss_rush_ranking.cfg` na pasta do jogo, que o
+  workflow de release grava nos pacotes a partir dos segredos do repositório
+  (nunca no Git). Quem abrir o pacote consegue lê-lo; se o canal for abusado,
+  basta trocar o webhook (veja [PUBLISHING.md](PUBLISHING.md)).
 
 ### Como funciona
 
@@ -63,7 +86,15 @@ Vem desligado por padrão e exige um host compilado com este mod.
   do cartucho. Tudo é restaurado na linha 224.
 - O cronômetro conta quadros dentro da simulação (extensão de save state) e é
   desenhado sobre o quadro pronto, com a fonte autoral dos menus, seguindo o
-  brilho da tela.
+  brilho da tela. O fim é a troca de `$6F` (ZONE5 - J) para `$AA` (o final do
+  jogo, pedido no fim do script de `$6F`); as cenas do final reutilizam
+  os números das fases de chefe, por isso o tempo para de vez ali.
+- Ranking: `boss_rush_ranking.c` (entradas, top 5, mensagens do Discord e
+  leitura de volta: cada embed da mensagem do ranking tem no rodapé os dados
+  `sb5br1 c=N ...`), `boss_rush_net.c` (webhook por `curl` numa thread, sem
+  janela de console no Windows) e `boss_rush_results.c` (telas; nada é escrito
+  na WRAM, e os controles só são tirados do jogo enquanto um nome é digitado,
+  nunca no netplay).
 - Nada na ROM em disco nem no SRAM é alterado; os patches na memória são
   desfeitos ao desligar/resetar.
 
@@ -77,6 +108,14 @@ jogadores do co-op, pausa → voltar ao título (com e sem o mod de pausa), a
 senha 3879 nativa continua funcionando. **Não** validado: boss rush completo
 até o fim (só a primeira luta foi jogada), fim de jogo e créditos depois do
 último chefe, netplay, Windows.
+
+Ranking (2026-10-29): rota roteirizada no Linux com um servidor local no lugar
+da API de webhooks do Discord (GET/PATCH/POST): prévia do top 5 no menu de
+jogadores (vazia e com dados, cursor em 1P/2P), fim forçado (`$6F` → `$AA`),
+nome digitado, envio, mensagem do ranking editada e aviso publicado; sem
+conexão (porta fechada) só o tempo aparece. **Não** validados: o Discord de
+verdade (o webhook ainda não existe), o envio pelo anfitrião numa sala online,
+Windows, e vencer o Terrorin jogando (o fim foi forçado).
 
 ## English
 
@@ -101,8 +140,40 @@ off by default and needs a host built with this mod.
   paused and during black transitions.
 - **Pause:** Start opens **Resume** / **Return to title** (with a confirmation
   that starts on **No**), even when the pause-menu mod is off.
+- **End:** beating Terrorin (ZONE5 - J) stops the clock for good (it stays
+  frozen through the ending) and shows **BOSS RUSH CLEAR** with the time.
+
+### Online ranking (Discord)
+
+The five best times for each player count (1-5) live in one message of a
+Discord channel, which the game edits through a webhook; every new top-5 time
+also posts a notice with that category's ranking.
+
+- **Boss Rush player-count menu:** when online, the top right shows the top 5
+  of the count under the cursor.
+- **Online (netplay room):** at the end, the room's host sends the time with
+  each player's room name and character.
+- **Offline:** when the ranking could be read and the time makes the top 5,
+  each player types a name (A picks a letter, B deletes, Start confirms) and
+  then chooses **Send to Discord? Yes/No**.
+- **Without internet** (or without the ranking configuration) nothing of this
+  shows beyond the time, and the game never waits: requests run in the
+  background through the system's `curl` (built into Windows 10+) with a short
+  timeout.
+- The webhook comes from `boss_rush_ranking.cfg` in the game folder, which the
+  release workflow writes into the packages from repository secrets (never in
+  Git). Anyone who opens a package can read it; if the channel is abused,
+  rotate the webhook (see [PUBLISHING.md](PUBLISHING.md)).
 
 ### How it works
+
+The end is `$6F` (ZONE5 - J) → `$AA` (the ending, requested at the end of `$6F`'s
+script); the ending's cutscenes reuse the boss stage numbers, so the time
+freezes there. Ranking: `boss_rush_ranking.c` (entries, top 5, Discord payloads
+and reading them back from each board embed's footer `sb5br1 c=N ...`),
+`boss_rush_net.c` (webhook through `curl` on a thread) and
+`boss_rush_results.c` (screens; no WRAM writes; pads are taken from the game
+only while a name is typed, never in netplay).
 
 See the Portuguese section for addresses: the title menu limit and cursor
 remap (`$C7:19DA`, `$C7:18A8`), the 3879 handler rebuilt from the cartridge's
@@ -115,4 +186,7 @@ title layout and the frame-counted timer (save-state extension).
 ### Validation and limits
 
 Linux LLE headless routes only (see STATUS.md). Not validated: a complete rush
-to the end, the ending after the last boss, netplay and Windows.
+to the end, the ending after the last boss, netplay and Windows. Ranking: checked
+against a local stand-in for Discord's webhook API (menu preview, forced end,
+name entry, board edit, notice, no-connection path); not yet against Discord
+itself, from a netplay host, on Windows, or after actually beating Terrorin.

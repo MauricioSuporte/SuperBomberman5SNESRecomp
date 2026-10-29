@@ -147,6 +147,22 @@ int main(void) {
     Stream empty = {{transfer}, {0}, 0, 0, true};
     BossRushLoad(&empty.base, 1); CHECK(!failed && !active && !frames);
     st.at = 0; BossRushLoad(&st.base, 1); CHECK(!failed && active);
+    /* Completion: leaving ZONE5 - J ($6F) for the ending ($AA) freezes the
+     * time; the ending's cutscenes reuse boss stage numbers. Reaching $AA
+     * from another stage is not a completion. */
+    unsigned before = frames;
+    g_ram[0x1031] = 0x6e; BossRushAfterFrame(); g_ram[0x1031] = 0xaa; BossRushAfterFrame();
+    CHECK(!BossRushFinished());
+    g_ram[0x1031] = 0x6f; BossRushAfterFrame(); CHECK(frames == before + 2 && !BossRushFinished());
+    g_ram[0x1031] = 0xaa; BossRushAfterFrame(); CHECK(BossRushFinished());
+    g_ram[0x1031] = 0x67; BossRushAfterFrame(); BossRushAfterFrame(); CHECK(frames == before + 2 && BossRushFinished());
+    /* ...and survives a save state. */
+    Stream fin = {{transfer}, {0}, 0, 0, false};
+    BossRushSave(&fin.base);
+    finished = 0; fin.at = 0; fin.reading = true; BossRushLoad(&fin.base, 1);
+    CHECK(!failed && BossRushFinished());
+    fin.bytes[4 + 4] = 2; fin.at = 0; BossRushLoad(&fin.base, 1); CHECK(failed);
+    failed = false; fin.bytes[4 + 4] = 1; fin.at = 0; BossRushLoad(&fin.base, 1); CHECK(!failed);
     /* Pause: back to the title, never awarding the stage. */
     g_ram[0x1031] = 0x67; g_ram[0x1d1a] = 0x40; g_ram[0x1d1d] = 1; g_ram[0x1d1e] = 0;
     BossRushQuitToTitle();

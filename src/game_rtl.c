@@ -44,6 +44,7 @@
 #include "com_level4_mod.h"
 #include "battle_variants_mod.h"
 #include "boss_rush_mod.h"
+#include "boss_rush_results.h"
 #include "pause_menu_mod.h"
 #include "portal_labels_mod.h"
 #include "selection_color_mod.h"
@@ -90,6 +91,7 @@ void GameRunOneFrame(void)
     extern void CoopInputFixture(void);
     CoopInputFixture();
 #endif
+    BossRushResultsBeforeFrame(); /* first: hides the pads while a ranking name is typed */
     SubordinateBeforeFrame();
     ExtraCharactersBeforeFrame();
     NormalCharacterBeforeFrame();
@@ -115,6 +117,7 @@ void GameRunOneFrame(void)
     BossRushAfterFrame(); /* may open the character picker: right before its owner */
     NormalCharacterFrame();
     NameTagsAfterFrame(); /* presentation only: host overlay tags */
+    BossRushResultsAfterFrame(); /* last: gives the pads back */
     Sb5DiscordFrame();    /* Discord Rich Presence, reads WRAM only */
     StateTrace();
 }
@@ -147,6 +150,7 @@ void GameDrawPpuFrame(void)
     PtbrDrawPpuFrameObserved(overlays ? ObserveOverlays : NULL, NULL);
     BattleVariantsDraw(); /* over the finished frame; presentation only */
     BossRushDraw();       /* run timer, presentation only */
+    BossRushResultsDraw(); /* ranking screens, presentation only */
 }
 
 void GameSessionReset(void)
@@ -163,6 +167,7 @@ void GameSessionReset(void)
     PauseMenuReset();
     BattleVariantsReset();
     BossRushReset();
+    BossRushResultsReset();
     InfiniteLivesReset();
     InfiniteTimeReset();
     NormalCoopReset();
@@ -179,6 +184,7 @@ static void GameHardwareReset(void)
     PauseMenuReset();
     BattleVariantsReset();
     BossRushReset();
+    BossRushResultsReset();
     InfiniteLivesReset();
     InfiniteTimeReset();
     NormalCoopReset();

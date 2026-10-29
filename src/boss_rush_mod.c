@@ -60,7 +60,7 @@ enum {
     PARK_FILE = PARK, PARK_1P = PARK + 8, PARK_2P = PARK + 16, PARK_SIZE = 24,
     CLEAR_FLAGS = 0xc0499c, SET_FLAG = 0xc2033a, RESET_PLAYERS = 0xc4286f,
     MODE = 0x1031, SCENE = 0x1d1e, MENU = 0x1036, CURSOR = 0x1032, PAUSED = 0x1d1d,
-    BITS = 0x6274, RUSH_BIT = 0x80, FIRST_BOSS = 0x67,
+    BITS = 0x6274, RUSH_BIT = 0x80, FIRST_BOSS = 0x67, FINAL_BOSS = 0x6f, ENDING = 0xaa,
 };
 enum { PICK_NONE, PICK_SNAPSHOT, PICK_DONE, PICK_CANCELLED, PICK_HOSTING };
 
@@ -71,6 +71,8 @@ static uint8_t picker;       /* PICK_* */
 static uint8_t active;       /* rush running */
 static uint8_t saved_bit;    /* $6274 bit 7 before the rush */
 static uint32_t frames;
+static uint8_t finished;     /* Terrorin beaten: the time is final */
+static uint8_t last_mode;    /* $1031 at the end of the previous frame */
 /* Only inside one interpreted op (never across a frame boundary). */
 static bool injecting;
 static unsigned step;
@@ -82,6 +84,15 @@ bool BossRushEnabled(void) { return enabled; }
 bool BossRushActive(void) { return enabled && active; }
 bool BossRushKeepChoices(void) { return enabled && pending && picker == PICK_DONE; }
 uint32_t BossRushFrames(void) { return frames; }
+bool BossRushFinished(void) { return enabled && active && finished; }
+uint8_t BossRushRoster(void) { return mask; }
+/* The Boss Rush player-count menu on the title: the category (1-5) under
+ * the cursor, 0 elsewhere. */
+unsigned BossRushPlayerMenuCategory(void) {
+    if (!enabled || !installed || !pending || g_ram[MODE] != 2 || g_ram[MENU] != 1) return 0;
+    unsigned c = g_ram[CURSOR] + 1u;
+    return c >= 1 && c <= 5 ? c : 0;
+}
 
 static uint32_t task_pc(unsigned task) {
     return g_ram[0x0c87 + task] | g_ram[0x0caf + task] << 8 | (uint32_t)g_ram[0x0cd7 + task] << 16;
@@ -177,7 +188,7 @@ static void run_step(CpuState *cpu) {
         g_ram[0x1d25] = mask; g_ram[0x1d24] = flag;
         change_scene(FIRST_BOSS);
         skip_start_op();
-        pending = 0; picker = PICK_NONE; active = 1; frames = 0;
+        pending = 0; picker = PICK_NONE; active = 1; frames = 0; finished = 0;
         return;
     }
 }
@@ -260,7 +271,14 @@ void BossRushAfterFrame(void) {
          * menu simply goes on. */
         if (!NormalCharacterOpenBossRush()) { pending = 0; picker = PICK_NONE; }
     }
+    uint8_t previous = last_mode;
+    last_mode = (uint8_t)mode;
     if (!active) return;
+    /* The rush ends where the cartridge's ends: beating ZONE5 - J
+     * (Terrorin, $6F) runs its "0F AA" (the ending). No other way out of
+     * $6F leads there (Game Over and quitting go elsewhere). The ending's
+     * cutscenes reuse the boss stage numbers, so the time stops for good. */
+    if (!finished && previous == FINAL_BOSS && mode == ENDING) finished = 1;
     if (mode <= 2) {
         /* The title is back: the rush is over. Saving works again. */
         g_ram[BITS] = (uint8_t)((g_ram[BITS] & ~RUSH_BIT) | saved_bit);
@@ -272,7 +290,7 @@ void BossRushAfterFrame(void) {
      * not part of the time. */
     bool stage = mode >= 0x0d && mode < 0x74 && !(g_ram[0x1d1a] & 1);
     bool shown = !(g_ram[0x0300] & 0x80) && (g_ram[0x0300] & 0x0f);
-    if (stage && shown && !g_ram[PAUSED]) ++frames;
+    if (stage && shown && !g_ram[PAUSED] && !finished) ++frames;
 }
 
 void BossRushQuitToTitle(void) {
@@ -293,13 +311,29 @@ bool BossRushTitleMenu(void) {
 static void put(uint32_t *px, unsigned pitch, int x, int y, uint32_t c) {
     if (x >= 0 && x < 256 && y >= 0 && y < 224) px[(unsigned)y * pitch + (unsigned)x] = c;
 }
-static const uint8_t kColon[7] = {0, 4, 4, 0, 4, 4, 0}, kDot[7] = {0, 0, 0, 0, 0, 12, 12};
+static const uint8_t kColon[7] = {0, 4, 4, 0, 4, 4, 0}, kDot[7] = {0, 0, 0, 0, 0, 12, 12},
+    kQuestion[7] = {14, 17, 1, 2, 4, 0, 4}, kHash[7] = {10, 31, 10, 10, 31, 10, 0}, kPlus[7] = {0, 4, 4, 31, 4, 4, 0},
+    kSlash[7] = {1, 1, 2, 4, 8, 16, 16}, kBang[7] = {4, 4, 4, 4, 4, 0, 4}, kLess[7] = {2, 4, 8, 16, 8, 4, 2},
+    kGreater[7] = {8, 4, 2, 1, 2, 4, 8}, kUnder[7] = {0, 0, 0, 0, 0, 0, 31};
 static const uint8_t *glyph(char c) {
-    if (c == ':') return kColon;
-    if (c == '.') return kDot;
+    switch (c) {
+    case ':': return kColon;
+    case '.': return kDot;
+    case '?': return kQuestion;
+    case '#': return kHash;
+    case '+': return kPlus;
+    case '/': return kSlash;
+    case '!': return kBang;
+    case '<': return kLess;
+    case '>': return kGreater;
+    case '_': return kUnder;
+    default: break;
+    }
+    if (c >= 'a' && c <= 'z') c = (char)(c - 32);
+    if ((unsigned char)c >= 0x80) return kQuestion;
     return Sb5MenuGlyph((unsigned char)c);
 }
-static void draw_text(uint32_t *px, unsigned pitch, int x, int y, const char *s, unsigned brightness) {
+static void draw_text_rgb(uint32_t *px, unsigned pitch, int x, int y, const char *s, uint32_t ink) {
     /* One-pixel black outline, white ink. */
     int len = (int)strlen(s);
     for (int pass = 0; pass < 2; ++pass) {
@@ -315,19 +349,43 @@ static void draw_text(uint32_t *px, unsigned pitch, int x, int y, const char *s,
                             for (int dy = -1; dy <= 1; ++dy)
                                 for (int dx = -1; dx <= 1; ++dx) put(px, pitch, cx + b + dx, y + r + dy, 0xff000000u);
                         } else {
-                            /* Follows the screen's fades (INIDISP brightness). */
-                            uint32_t v = 0xf8u * brightness / 15u;
-                            put(px, pitch, cx + b, y + r, 0xff000000u | v << 16 | v << 8 | v);
+                            put(px, pitch, cx + b, y + r, ink);
                         }
                     }
             cx += w;
         }
     }
 }
+static void draw_text(uint32_t *px, unsigned pitch, int x, int y, const char *s, unsigned brightness) {
+    /* Follows the screen's fades (INIDISP brightness). */
+    uint32_t v = 0xf8u * brightness / 15u;
+    draw_text_rgb(px, pitch, x, y, s, 0xff000000u | v << 16 | v << 8 | v);
+}
 static int text_width(const char *s) {
     int w = 0;
     for (; *s; ++s) w += (*s == ':' || *s == '.') ? 4 : 6;
     return w - 1;
+}
+/* Shared with the ranking screens (boss_rush_results.c). */
+static bool frame_buffer(uint32_t **px, unsigned *pitch) {
+    if (!g_ppu || !g_ppu->renderBuffer) return false;
+    *px = (uint32_t *)g_ppu->renderBuffer + g_ppu->extraLeftRight;
+    *pitch = g_ppu->renderPitch / 4u;
+    return true;
+}
+int BossRushTextWidth(const char *s) { return text_width(s); }
+void BossRushText(int x, int y, const char *s, uint32_t rgb) {
+    uint32_t *px; unsigned pitch;
+    if (frame_buffer(&px, &pitch)) draw_text_rgb(px, pitch, x, y, s, 0xff000000u | rgb);
+}
+void BossRushShade(int x0, int y0, int x1, int y1) {
+    uint32_t *px; unsigned pitch;
+    if (!frame_buffer(&px, &pitch)) return;
+    for (int y = y0 < 0 ? 0 : y0; y < y1 && y < 224; ++y)
+        for (int x = x0 < 0 ? 0 : x0; x < x1 && x < 256; ++x) {
+            uint32_t c = px[(unsigned)y * pitch + (unsigned)x];
+            px[(unsigned)y * pitch + (unsigned)x] = 0xff000000u | ((c >> 2) & 0x3f3f3f);
+        }
 }
 void BossRushFormat(uint32_t f, char *out, size_t n) {
     uint32_t cs = f * 100u / 60u;
@@ -349,12 +407,12 @@ void BossRushDraw(void) {
 
 void BossRushReset(void) {
     injecting = false; step = 0; start_op = 0;
-    pending = picker = active = 0; frames = 0; saved_bit = 0;
+    pending = picker = active = finished = 0; frames = 0; saved_bit = 0; last_mode = 0;
 }
 #define BR_MAGIC 0x48535242u /* "BRSH" */
 void BossRushSave(struct SaveLoadInfo *sli) {
     uint32_t magic = BR_MAGIC;
-    uint8_t state[8] = {pending, picker, active, saved_bit, 0, mask, flag, 0};
+    uint8_t state[8] = {pending, picker, active, saved_bit, finished, mask, flag, last_mode};
     sli->func(sli, &magic, 4); sli->func(sli, state, sizeof(state)); sli->func(sli, &frames, 4);
 }
 void BossRushLoad(struct SaveLoadInfo *sli, unsigned version) {
@@ -364,13 +422,13 @@ void BossRushLoad(struct SaveLoadInfo *sli, unsigned version) {
     uint32_t magic = 0, f = 0;
     uint8_t state[8] = {0};
     sli->func(sli, &magic, 4); sli->func(sli, state, sizeof(state)); sli->func(sli, &f, 4);
-    if (magic != BR_MAGIC || state[0] > 2 || state[1] > PICK_HOSTING || state[2] > 1 || (state[3] & ~RUSH_BIT) || state[4] || state[7] ||
+    if (magic != BR_MAGIC || state[0] > 2 || state[1] > PICK_HOSTING || state[2] > 1 || (state[3] & ~RUSH_BIT) || state[4] > 1 ||
         state[5] > 0x1f || state[6] > 3) {
         RtlStateStreamFail(sli);
         return;
     }
     pending = state[0]; picker = state[1]; active = state[2]; saved_bit = state[3];
-    mask = state[5]; flag = state[6]; frames = f;
+    mask = state[5]; flag = state[6]; frames = f; finished = state[4]; last_mode = state[7];
 }
 
 static void reset_plugin(void) { BossRushReset(); uninstall(); enabled = false; }

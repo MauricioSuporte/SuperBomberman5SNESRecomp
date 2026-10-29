@@ -46,6 +46,10 @@ def forbidden(path: str, release: bool = False) -> str | None:
         return 'credentials or Git internals'
     if name.startswith(('last_run_report', 'crash_report', 'crash_minidump')) or name == 'rom.cfg':
         return 'local diagnostic or ROM path'
+    # The Boss Rush ranking webhook is a credential: written into release
+    # packages by CI from repository secrets, never tracked.
+    if name == 'boss_rush_ranking.cfg' and not release:
+        return 'Boss Rush ranking webhook (credential)'
     # User-supplied application icon approved for this release; provenance is
     # recorded in assets/README.md. Other media still require separate review.
     if not release and path == 'assets/app.ico':

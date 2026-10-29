@@ -66,6 +66,7 @@ jobs:
           ./build-ci/com_level4_tests.exe
           ./build-ci/battle_variants_tests.exe
           ./build-ci/boss_rush_tests.exe
+          ./build-ci/boss_rush_ranking_tests.exe
           ./build-ci/updater_tests.exe
           ./build-ci/normal_coop_tests.exe
           ./build-ci/subordinate_tests.exe
@@ -77,9 +78,14 @@ jobs:
           ./build-ci/gold_battle_tests.exe
           ./build-ci/louie_tests.exe
       - name: Package and audit Windows setup release
+        env:
+          # Boss Rush online ranking (Discord webhook), written into the package only.
+          BOSS_RUSH_WEBHOOK: ${{ secrets.BOSS_RUSH_WEBHOOK }}
+          BOSS_RUSH_BOARD: ${{ secrets.BOSS_RUSH_BOARD }}
         run: |
           source "${TOOLCHAIN_DIR}/env.sh"
           bash scripts/package_release.sh build-ci windows-x64 --no-embed-toolchain
+          python tools/boss-rush-ranking.py --add-to-zip "dist/superbomberman5-${RELEASE_VERSION}-windows-x64.zip"
           python tools/finalize-release.py \
             --zip "dist/superbomberman5-${RELEASE_VERSION}-windows-x64.zip" \
             --build-dir build-ci \
@@ -137,9 +143,14 @@ jobs:
           cmake --build build-ci --parallel 4
           ctest --test-dir build-ci --output-on-failure
       - name: Package and audit AppImage
+        env:
+          # Boss Rush online ranking (Discord webhook), written into the package only.
+          BOSS_RUSH_WEBHOOK: ${{ secrets.BOSS_RUSH_WEBHOOK }}
+          BOSS_RUSH_BOARD: ${{ secrets.BOSS_RUSH_BOARD }}
         run: |
           source "${TOOLCHAIN_DIR}/env.sh"
           bash scripts/package_release.sh build-ci linux-x64 --no-embed-toolchain
+          python3 tools/boss-rush-ranking.py --add-to-zip "dist/superbomberman5-${RELEASE_VERSION}-linux-x64.zip"
           curl -fL https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage -o "$RUNNER_TEMP/appimagetool"
           echo '95cbe7cce9717fce90c484e34052ee7c7f1d7635b33c12525b4776826a7d29b6  '"$RUNNER_TEMP/appimagetool" | sha256sum -c -
           curl -fL https://github.com/AppImage/type2-runtime/releases/download/continuous/runtime-x86_64 -o "$RUNNER_TEMP/runtime-x86_64"

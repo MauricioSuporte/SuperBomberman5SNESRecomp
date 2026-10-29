@@ -104,3 +104,5 @@ __pycache__/
 
 # User-supplied local mod audio (never published)
 /mods/local/
+# Boss Rush ranking webhook (credential; CI writes it into release packages)
+boss_rush_ranking.cfg
