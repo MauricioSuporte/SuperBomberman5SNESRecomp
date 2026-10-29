@@ -7,3 +7,5 @@ jobs:
       - uses: actions/checkout@v4
       - shell: cmd
         run: call helper_check.cmd
+      - shell: cmd
+        run: call fc_check.cmd

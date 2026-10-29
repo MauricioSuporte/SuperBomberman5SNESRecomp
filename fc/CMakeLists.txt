@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.20)
+project(fcdemo C)
+include(FetchContent)
+FetchContent_Declare(dep URL "${DEP_ZIP}")
+FetchContent_MakeAvailable(dep)
