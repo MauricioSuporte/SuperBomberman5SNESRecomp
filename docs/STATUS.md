@@ -1,5 +1,19 @@
 # Super Bomberman 5: estado do protótipo
 
+## v2.3.2 — 2026-10-29: rebuild after a folder rename stopped at libjuice's sub-build
+
+- Report (maintainer, v2.3.1 helper console): configure now ran, then `CMake Error: The current CMakeCache.txt
+  directory .../SuperBomberman5SNESRecomp-fbccc715/build/_deps/libjuice-subbuild/CMakeCache.txt is different than the
+  directory c:/Users/Public/retcomm-builds/SuperBomberman5SNESRecomp-67e6de53/build/_deps/libjuice-subbuild` and
+  "CMake step for libjuice failed" (FetchContent in `snesrecomp/lib/recomp-net`).
+- Cause: FetchContent sub-builds keep their own cache with the folder they were configured in; v2.3.1 dropped only
+  the top-level cache.
+- Fix (snesrecomp fork `fd6a11f`): whenever the top-level cache is missing, the Windows helper removes
+  `build\_deps\*-subbuild` (the in-process path does the same after dropping a moved cache); `_deps\*-src` stays.
+- Evidence: windows-latest Actions run with CMake 3.31.6 + Ninja: a FetchContent project configured through junction
+  A, A removed (the renamed folder's alias), reconfigured through junction B reproduces the exact error; with the
+  helper's new lines configure succeeds. Not yet run end to end on the player's PC.
+
 ## v2.3.1 — 2026-10-29: rebuild kept the old game after a folder rename; auto rebuild; updater progress
 
 - Report (maintainer, v2.3.0 over a built v2.2.9 folder): **Battle — COM level 4** missing from the Mods page even

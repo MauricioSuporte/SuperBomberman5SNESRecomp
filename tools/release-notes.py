@@ -1275,6 +1275,11 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '2.3.2': (
+'''- **Fix: Generate & rebuild after renaming or moving the game folder:** v2.3.1 configured the build again but then stopped at "CMake step for libjuice failed" ("The current CMakeCache.txt directory ... is different"), because a downloaded library kept its own build settings from the old folder. Those are now reset too, and the rebuild finishes. If v2.3.1 showed that error, update and run Generate & rebuild again (it starts by itself).
+- Same online netplay as v2.3.1; everyone in a room needs v2.3.2.''',
+'''- **Correção: Generate & rebuild depois de renomear ou mover a pasta do jogo:** a v2.3.1 configurava o build de novo, mas parava em "CMake step for libjuice failed" ("The current CMakeCache.txt directory ... is different"), porque uma biblioteca baixada guardava as configurações de build da pasta antiga. Agora elas também são refeitas e o rebuild termina. Se a v2.3.1 mostrou esse erro, atualize e rode o Generate & rebuild de novo (ele começa sozinho).
+- Mesmo jogo online da v2.3.1; todos na sala precisam da v2.3.2.'''),
     '2.3.1': (
 '''- **Fix: Generate & rebuild silently kept the old game:** in a game folder that had been renamed or moved, every rebuild stopped at "Error: could not load cache", and the rebuild window then started the previously built game as if it had worked, so new versions (and the v2.3.0 **Battle — COM level 4** mod) never appeared. The rebuild now configures again in that case, and a failed build stops with "Build failed" instead of opening the old game.
 - **Generate & rebuild starts by itself after an update** when the game was already built and your ROM is known; if it fails, the button is still there.
