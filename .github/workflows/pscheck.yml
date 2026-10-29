@@ -13,5 +13,5 @@ jobs:
           Expand-Archive cm.zip C:\cm
           $env:PATH = "$cm;$env:PATH"
           $out2 = cmd /c "call fc_check.cmd 2>&1"; $rc2 = $LASTEXITCODE
-          $out2 | Where-Object { $_ -match "PASS|FAIL|Error|different|error" } | Select-Object -First 30 | ForEach-Object { Write-Output "::notice::fc $_" }
+          $out2 | Where-Object { $_ -match "PASS|FAIL|NOFIX" } | Select-Object -First 30 | ForEach-Object { Write-Output "::notice::fc $_" }
           if ($rc2 -ne 0) { exit 1 }

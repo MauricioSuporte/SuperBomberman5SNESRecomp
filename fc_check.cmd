@@ -16,7 +16,7 @@ rem the alias step drops the top-level cache configured through A
 del /q "%BUILD_DIR%\CMakeCache.txt" & rmdir /s /q "%BUILD_DIR%\CMakeFiles" 2>NUL
 rem without the fix: expect the reported error
 "%CMAKE%" -S C:\aliasbase\B -B "%BUILD_DIR%" "-DDEP_ZIP=%DEPZIP%" -G Ninja -DCMAKE_C_COMPILER=gcc > "%TEMP%\nofix.txt" 2>&1
-findstr /C:"is different than the directory" "%TEMP%\nofix.txt" >NUL && (echo PASS reproduced the player's error) || (echo FAIL could not reproduce & type "%TEMP%\nofix.txt" & set "FAILS=1")
+findstr /C:"is different than the directory" "%TEMP%\nofix.txt" >NUL && (echo PASS reproduced the player's error) || (echo FAIL could not reproduce & powershell -NoProfile -Command "Get-Content $env:TEMP\nofix.txt | Select-Object -Last 15 | ForEach-Object { 'NOFIX ' + $_ }" & set "FAILS=1")
 del /q "%BUILD_DIR%\CMakeCache.txt" & rmdir /s /q "%BUILD_DIR%\CMakeFiles" 2>NUL
 rem the helper's new lines
 if not exist "%BUILD_DIR%\CMakeCache.txt" del /q "%BUILD_DIR%\build.ninja" 2>NUL
