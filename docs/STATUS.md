@@ -1,5 +1,15 @@
 # Super Bomberman 5: estado do protótipo
 
+## v2.4.1 — 2026-10-29: Battle stage variants also answer Start
+
+- Report: on Windows, with the mod enabled, choosing an arena started the match without the variant list.
+- Cause: the carousel also confirms with Start (action bit `$01` in `D+$2C/$36`, measured: A `$80`, X `$40`, L `$20`,
+  R `$10`, B `$08`, Y `$04`, Select `$02`, Start `$01`); the mod only intercepted A. Reproduced on Linux LLE (Start →
+  `$1031` = `$74`, no list).
+- Fix: Start opens the list and confirms like A (A is still what is handed back to the selector). Native test extended;
+  Linux LLE route with every mod enabled: Start opens the list, Down + Start starts mode `$75` (Variant 1), password
+  bits restored, no `interp_cap`/BRK. Not rerun on Windows.
+
 ## v2.4.0 — 2026-10-29: Battle stage variants mod; COM level 4 checked in game
 
 - Request: after choosing a Battle arena, pick its original layout or the variants of passwords 4622/0413/0926 and

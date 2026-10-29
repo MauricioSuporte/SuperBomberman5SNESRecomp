@@ -1275,6 +1275,11 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '2.4.1': (
+'''- **Fix: Battle — stage variants with Start:** confirming a Battle arena with **Start** (Enter on the keyboard) skipped the variant screen and started the match. **Start** now opens the list as **A** does, and also confirms a variant.
+- Includes everything from v2.4.0 (the Battle — stage variants mod). Everyone in an online room needs v2.4.1.''',
+'''- **Correção: Battle — stage variants com Start:** confirmar a arena do Battle com **Start** (Enter no teclado) pulava a tela de variantes e começava a partida. Agora o **Start** abre a lista como o **A** e também confirma a variante.
+- Inclui tudo da v2.4.0 (o mod Battle — stage variants). Todos na sala online precisam da v2.4.1.'''),
     '2.4.0': (
 '''- **New mod: Battle — stage variants** (Mods → Gameplay): after choosing an arena, a screen lets you play its **Original** layout or **Variant 1–4**, the layouts the cartridge only unlocks with passwords **4622**, **0413** and **0926**, plus the **0110** rule that turns every soft block into an item (arena 1, the only stage with that rule). A minimap shows the hard blocks and where P1–P5 start; **B** goes back to the arena carousel, **A** starts the match as usual. In PT-BR with the translation mod. Disabled by default. [Details](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/blob/main/docs/BATTLE_VARIANTS.md)
 - **COM level 4** (v2.3.0) is now confirmed in game: with the mod on, the Battle rules reach level 4.

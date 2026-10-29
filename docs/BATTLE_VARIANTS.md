@@ -3,8 +3,8 @@
 ## Português
 
 Em **Mods → Gameplay → Battle — stage variants**, ative **Choose Battle stage
-variants**. Vem desligado por padrão. Com o mod ligado, apertar **A** numa
-arena do carrossel do Battle abre a tela **Escolha a variação** em vez de
+variants**. Vem desligado por padrão. Com o mod ligado, apertar **A** ou
+**Start** numa arena do carrossel do Battle abre a tela **Escolha a variação** em vez de
 começar a partida:
 
 - **Original**: o layout de sempre da arena;
@@ -16,7 +16,7 @@ começar a partida:
 
 À esquerda, uma miniatura da arena mostra os blocos fixos e onde cada jogador
 começa (P1 a P5). Abaixo dela aparece a senha correspondente. **↑/↓** escolhe,
-**A** confirma e segue a troca de cena e o início de partida normais do jogo,
+**A** ou **Start** confirma e segue a troca de cena e o início de partida normais do jogo,
 **B** volta para o carrossel. Qualquer jogador pode usar a tela. Com o mod
 **Português brasileiro — menus** ligado, a tela fica em PT-BR; sem ele, em
 inglês. O que cada variante muda depende da arena (spawns no centro, outro
@@ -64,13 +64,13 @@ partida de netplay real.
 ## English
 
 Enable **Choose Battle stage variants** under **Mods → Gameplay → Battle —
-stage variants**. Disabled by default. With the mod on, pressing **A** on an
-arena in the Battle carousel opens **Choose a variant** instead of starting
+stage variants**. Disabled by default. With the mod on, pressing **A** or
+**Start** on an arena in the Battle carousel opens **Choose a variant** instead of starting
 the match: **Original**, **Variant 1** (password 4622 layout), **Variant 2**
 (0413), **Variant 3** (0926) and **Variant 4** (the 0110 rule: every soft
 block is an item; arena 1 only, the one stage whose script has the rule).
 A minimap of the arena shows its hard blocks and each player's start (P1-P5),
-with the password under it. **Up/Down** chooses, **A** confirms and continues
+with the password under it. **Up/Down** chooses, **A** or **Start** confirms and continues
 with the game's own scene change and match start, **B** returns to the
 carousel. Any player can use it. The screen is in PT-BR when the PT-BR menus
 mod is on, English otherwise. What a variant changes depends on the arena;

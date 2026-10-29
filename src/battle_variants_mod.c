@@ -14,7 +14,9 @@
  * arena read from the cartridge (map stream $D0:A000 + (map-1)*3 through the
  * $C0:1CB0 decompressor, solid metatiles from attribute table
  * $D0:8000 + (tileset-1)*2, spawns from the stage's actor script "22 P x y").
- * B closes it (the carousel stays), A writes the bits for the choice, masks
+ * A or Start (the carousel starts the match with either; Start = $01 in
+ * the action arrays) opens it. B closes it (the carousel stays), A or Start
+ * writes the bits for the choice, masks
  * the saved bits until the stage has started, and hands the A back to the
  * cartridge on the next pad read, so the native transition runs unchanged.
  *
@@ -38,7 +40,7 @@ enum {
     SELECTOR_FIRST = 0xc6a1ac, SELECTOR_END = 0xc6a33d,
     MODE = 0x1031, ARENA = 0x625a, BITS = 0x6274, SAVED_BITS = 0x6273, FLAGS = 0x2900,
     VARIANT_MASK = 0x27, ITEM_BIT = 0x20, ITEM_FLAG = 0x08,
-    PAD_A = 0x80, PAD_B = 0x08, DIR_UP = 0x08, DIR_DOWN = 0x04,
+    PAD_A = 0x80, PAD_B = 0x08, PAD_START = 0x01, PAD_CONFIRM = PAD_A | PAD_START, DIR_UP = 0x08, DIR_DOWN = 0x04,
     CHOICES = 5, ARENAS = 13,
 };
 
@@ -209,7 +211,7 @@ static void pad_hook(CpuState *cpu, uint32_t pc) {
     if (!open_menu) {
         if (!in_selector()) return;
         for (unsigned seat = 0; seat < 5; ++seat)
-            if (g_ram[(fresh + seat) & 0xffff] & PAD_A) { open_menu = 1; cursor = 0; break; }
+            if (g_ram[(fresh + seat) & 0xffff] & PAD_CONFIRM) { open_menu = 1; cursor = 0; break; }
         if (!open_menu) return;
     } else if (!in_selector()) {
         open_menu = 0; /* the screen went away underneath (reset, netplay resync) */
@@ -218,7 +220,7 @@ static void pad_hook(CpuState *cpu, uint32_t pc) {
         for (unsigned seat = 0; seat < 5; ++seat) {
             uint8_t act = g_ram[(fresh + seat) & 0xffff], dir = g_ram[(fresh_dirs + seat) & 0xffff];
             if (act & PAD_B) { open_menu = 0; break; }
-            if (act & PAD_A) {
+            if (act & PAD_CONFIRM) {
                 apply_choice(cursor < choice_count() ? cursor : 0);
                 open_menu = 0; inject_seat = (uint8_t)(seat + 1); break;
             }

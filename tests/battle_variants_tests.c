@@ -114,6 +114,13 @@ int main(void) {
     frame(0, 0x80, 0); frame(0, 0, 0x08); CHECK(cursor == 4);
     frame(0, 0x80, 0); CHECK(g_ram[0x6274] == 0x60 && (g_ram[0x2900] & 0x08));
     frame(0, 0, 0);
+    /* Start opens the list and confirms too (the carousel accepts it). */
+    g_ram[0x1031] = 0x74; BattleVariantsAfterFrame();
+    selector(); g_ram[0x2900] = 0;
+    frame(1, 0x01, 0); CHECK(open_menu && cursor == 0 && g_ram[FRESH + 1] == 0);
+    frame(1, 0, 0x04); frame(1, 0x01, 0);
+    CHECK(!open_menu && inject_seat == 2 && g_ram[0x6274] == 0x41 && g_ram[FRESH + 1] == 0);
+    frame(1, 0, 0); CHECK(g_ram[FRESH + 1] == 0x80);
     /* Arena without the rule: four entries, the cursor wraps at 3. */
     g_ram[0x1031] = 0x74; BattleVariantsAfterFrame();
     selector(); g_ram[0x625a] = 2;
