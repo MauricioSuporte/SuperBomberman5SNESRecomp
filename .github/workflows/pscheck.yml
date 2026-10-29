@@ -5,7 +5,10 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - shell: cmd
-        run: call helper_check.cmd
-      - shell: cmd
-        run: call fc_check.cmd
+      - shell: pwsh
+        run: |
+          $out = cmd /c "call helper_check.cmd 2>&1"; $rc1 = $LASTEXITCODE
+          $out | ForEach-Object { if ($_ -match 'PASS|FAIL|note') { Write-Output "::notice::helper $_" } }
+          $out2 = cmd /c "call fc_check.cmd 2>&1"; $rc2 = $LASTEXITCODE
+          $out2 | Select-Object -First 40 | ForEach-Object { Write-Output "::notice::fc $_" }
+          if ($rc1 -ne 0 -or $rc2 -ne 0) { exit 1 }
