@@ -10,7 +10,7 @@ mkdir C:\aliasbase 2>NUL
 mklink /J C:\aliasbase\A "%~dp0fc" >NUL
 mklink /J C:\aliasbase\B "%~dp0fc" >NUL
 rem first build through alias A
-"%CMAKE%" -S C:\aliasbase\A -B C:\aliasbase\A\build -DDEP_ZIP=file:///%DEPZIP% >NUL || (echo FAIL first configure & exit /b 1)
+"%CMAKE%" -S C:\aliasbase\A -B C:\aliasbase\A\build -DDEP_ZIP=file:///%DEPZIP% > "%TEMP%\first.txt" 2>&1 || (echo FAIL first configure & type "%TEMP%\first.txt" & exit /b 1)
 set "BUILD_DIR=C:\aliasbase\B\build"
 rem the alias step drops the top-level cache configured through A
 del /q "%BUILD_DIR%\CMakeCache.txt" & rmdir /s /q "%BUILD_DIR%\CMakeFiles" 2>NUL
