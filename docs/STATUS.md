@@ -1,5 +1,26 @@
 # Super Bomberman 5: estado do protótipo
 
+## v2.3.0 — 2026-10-29: Battle COM level 4 mod
+
+- Request: a mod that offers Battle's COM level 4 (Super), which the cartridge unlocks only with password 1103,
+  whenever the mod is enabled.
+- Research (JPN disassembly): the password screen compares `$7E6241-$6244` with the ten 6-byte entries of
+  `$C5:6875` (4 digits + handler, `0A 0A 0A 0A` terminator) and calls the handler through `JSR ($6879,X)`. 1103's
+  handler `$C5:68E0` stores 4 in `$7E6247` and sets bit `$10` through `$C5:6909`, which ORs it into `$7E6274`
+  (session) and `$7E6273` (saved to SRAM `$3061E8` by `$C0:4858`). Boot `$C0:3190` stores `$6247` = 3 and clears
+  `$6274`; `$C0:486D` reloads `$6273` from SRAM and restores `$6247` = 4 only for bit `$10`. The only reader of
+  `$6247` is the Battle settings script `$C6:91F1` (`5D 5B 62 98 47 62 49 2A`: load the chosen level `$625B`,
+  compare with `$6247`, skip the increment when it is at the limit); `$C4:0067` turns `$625B` into `$1D26`
+  (level − 1). Full password table in [COM_LEVEL_4.md](COM_LEVEL_4.md).
+- Implementation: `src/com_level4_mod.c` (plugin `superbomberman5.battle.com-level-4`, package
+  `superbomberman5.com-level-4` 0.1.0, Cheats group) raises `$6247` to 4 before every frame while enabled. WRAM only:
+  no ROM patch, no interpreter hook, no SRAM write, no save-state extension (WRAM is already in states and netplay
+  snapshots). Values already at 4 (password saves) are left alone; disabled, the stock boot value stands.
+- Evidence: native `com_level4_tests` (Linux gcc: disabled, enabled, boot-cleared value, password save, neighbouring
+  `$6246/$6248/$625B` untouched, reset); `game_rtl.c` and the mod syntax-checked with gcc; publication audit and
+  Python tests pass. **Not exercised at runtime**: the local code generation/build was not run in this session, so
+  the Battle settings reaching level 4 and COM behaviour at that level still need a check in game (Windows/LLE).
+
 ## v2.2.10 — 2026-10-28: Generate & rebuild stops at "ninja: error: loading 'build.ninja'"
 
 - Report (v2.2.7, Linux AppImage, a player's screenshot): with the setup wizard now showing, **Generate & rebuild**

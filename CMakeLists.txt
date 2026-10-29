@@ -60,6 +60,7 @@ add_executable(SuperBomberman5SNESRecomp
     src/pause_menu_mod.c
     src/infinite_lives_mod.c
     src/infinite_time_mod.c
+    src/com_level4_mod.c
     src/normal_coop_mod.c
     src/coop_corner_spawns_mod.c
     src/selection_color_mod.c
@@ -160,6 +161,9 @@ if(BUILD_TESTING)
     add_executable(infinite_lives_tests tests/infinite_lives_tests.c)
     target_include_directories(infinite_lives_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src")
     add_test(NAME normal_infinite_lives COMMAND infinite_lives_tests)
+    add_executable(com_level4_tests tests/com_level4_tests.c)
+    target_include_directories(com_level4_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src")
+    add_test(NAME battle_com_level4 COMMAND com_level4_tests)
     add_executable(updater_tests tests/updater_tests.c ${SNESRECOMP_ROOT}/runner/src/sha256.c)
     target_include_directories(updater_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src")
     if(NOT WIN32)

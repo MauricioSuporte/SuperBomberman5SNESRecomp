@@ -1275,6 +1275,11 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '2.3.0': (
+'''- **New mod: Battle — COM level 4:** in **Mods → Cheats**, turn on **COM level 4 (Super) in Battle** and the Battle settings let you choose the Super COM level, the one the cartridge only unlocks with password **1103**. Your save file is not changed: turn the mod off and the stock three levels are back. Disabled by default. [Details](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/blob/main/docs/COM_LEVEL_4.md)
+- Online rooms adopt the host's mods as before; everyone in a room needs v2.3.0.''',
+'''- **Novo mod: Battle — COM level 4:** em **Mods → Cheats**, ligue **COM level 4 (Super) in Battle** e a configuração do Battle passa a oferecer o nível Super do COM, o mesmo que o cartucho só libera com a senha **1103**. O seu save não é alterado: desligando o mod, voltam os três níveis normais. Desligado por padrão. [Detalhes](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/blob/main/docs/COM_LEVEL_4.md)
+- As salas online continuam adotando os mods do anfitrião; todos na sala precisam da v2.3.0.'''),
     '2.2.10': (
 '''- **Fix: "ninja: error: loading 'build.ninja'" on Generate & rebuild:** if the first build setup was interrupted or failed, every later **Generate & rebuild** skipped that step and stopped with this error, hiding the real cause. The rebuild now notices the incomplete build folder, sets it up again and, if something is still missing, shows the actual error. Linux and Windows.
 - Same online netplay as v2.2.9; everyone in a room needs v2.2.10.''',

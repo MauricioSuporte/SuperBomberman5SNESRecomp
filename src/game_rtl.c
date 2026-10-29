@@ -41,6 +41,7 @@
 #include "normal_coop_mod.h"
 #include "infinite_time_mod.h"
 #include "infinite_lives_mod.h"
+#include "com_level4_mod.h"
 #include "pause_menu_mod.h"
 #include "portal_labels_mod.h"
 #include "selection_color_mod.h"
@@ -98,6 +99,7 @@ void GameRunOneFrame(void)
     GoldBattleBeforeFrame();
     LouieBeforeFrame();
     NormalHudBeforeFrame();
+    ComLevel4BeforeFrame(); /* WRAM limit only; no hook */
     NormalCharacterInstallHook(); /* Outermost hook: restore after co-op. */
     snes_beam_frame_driver_run_frame();
     LouieAfterFrame();

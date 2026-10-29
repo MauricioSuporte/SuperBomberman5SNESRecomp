@@ -1,0 +1,25 @@
+format_version = 1
+id = "superbomberman5.com-level-4"
+version = "0.1.0"
+name = "Battle — COM level 4"
+author = "MauricioSuporte"
+description = "Battle offers COM level 4 (Super) without the 1103 password while this mod is on; the save file is not changed. Requires a native host built with this mod (v2.3.0 or newer)."
+license = "PolyForm-Noncommercial-1.0.0"
+resolver = "declarative"
+save_compatibility = "shared"
+
+[[target]]
+game_id = "superbomberman5-jpn"
+rom_sha256 = "5251e6491872dc51879b630a34d76a92e29ea0c39026c4f8773c1fe006d047c4"
+
+[[feature]]
+id = "com_level4"
+name = "COM level 4 (Super) in Battle"
+description = "Battle offers COM level 4 (Super) without the 1103 password while this mod is on; the save file is not changed. Requires a native host built with this mod (v2.3.0 or newer)."
+group = "Cheats"
+default_enabled = false
+presentation_only = false
+
+[[plugin]]
+feature = "com_level4"
+id = "superbomberman5.battle.com-level-4"

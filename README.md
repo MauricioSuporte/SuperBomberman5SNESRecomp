@@ -2,7 +2,7 @@
 
 An unofficial, noncommercial **Super Bomberman 5** PC port built with [SNESRecomp](https://github.com/RetroPortingToolKit/snesrecomp) and [recomp-ui](https://github.com/RetroPortingToolKit/recomp-ui), following the game-repository architecture of [Mega Man X Recompiled](https://github.com/mstan/MegaManXSNESRecomp).
 
-[Download v2.2.10](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v2.2.10) · [English](#english) · [Português](#português) · [Technical status](docs/STATUS.md) · [Contributing](CONTRIBUTING.md)
+[Download v2.3.0](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v2.3.0) · [English](#english) · [Português](#português) · [Technical status](docs/STATUS.md) · [Contributing](CONTRIBUTING.md)
 
 > **Partial recompilation.** Most game logic still runs on the framework's interpreter. Supply your own legally obtained ROM; no ROM, generated game code or extracted assets are distributed. v1.0.1 is the first full release: the maintainer has played the campaign through to the end on Windows.
 
@@ -14,7 +14,8 @@ An unofficial, noncommercial **Super Bomberman 5** PC port built with [SNESRecom
 
 - Windows x64 setup and an experimental Linux x86_64 AppImage; the game is generated and compiled locally from your ROM.
 - Launcher with **PLAYER 1–5** input tabs (keyboard or gamepad per player, including several identical controllers such as two DualSense pads).
-- Fourteen optional mods, all disabled by default: five-player Normal Game (with an optional corner spawn layout), character and color selection in Normal, extra characters, Super Bomberman 4 Bomber Kings, Louie improvements, PT-BR menus, a **Cheats** group (infinite time and infinite lives) and more.
+- Fifteen optional mods, all disabled by default: five-player Normal Game (with an optional corner spawn layout), character and color selection in Normal, extra characters, Super Bomberman 4 Bomber Kings, Louie improvements, PT-BR menus, a **Cheats** group (infinite time, infinite lives and Battle COM level 4) and more.
+- **New in v2.3.0 — Battle COM level 4:** the **Battle — COM level 4** mod (**Mods → Cheats**) offers the Super COM level that the cartridge only unlocks with password 1103, without changing your save. [Details](docs/COM_LEVEL_4.md)
 - **New in v2.0.0 — netplay:** play online (lobby with Discord sign-in, rooms for all five players) or over LAN / Direct IP, like Mega Man X Recompiled. [Details](docs/NETPLAY.md)
 - **Discord:** the launcher links to the Super Bomberman 5 server to find matches and follow news: <https://discord.gg/kH54NCDQB4>. With the Discord app open, your profile shows what you are playing and friends can join your online room from an invite.
 - **Updater:** **Update game** in the launcher installs the newest release in place (checksum-verified, keeps your ROM, saves and settings). [Details](docs/UPDATER.md)
@@ -22,14 +23,14 @@ An unofficial, noncommercial **Super Bomberman 5** PC port built with [SNESRecom
 
 ### Install
 
-1. Download **superbomberman5-2.2.10-windows-x64.zip** (Windows 10+ x64) or **superbomberman5-2.2.10-linux-x86_64.AppImage** (glibc 2.35+, Ubuntu 22.04 baseline) from [v2.2.10](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v2.2.10) and check **SHA256SUMS**.
-2. Windows: extract the **entire** ZIP into a new writable folder and open `SuperBomberman5Recomp.exe`. Linux: `chmod +x` the AppImage and run it (without FUSE, add `--appimage-extract-and-run`); its setup lives in `~/.local/share/superbomberman5/2.2.10`.
+1. Download **superbomberman5-2.3.0-windows-x64.zip** (Windows 10+ x64) or **superbomberman5-2.3.0-linux-x86_64.AppImage** (glibc 2.35+, Ubuntu 22.04 baseline) from [v2.3.0](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v2.3.0) and check **SHA256SUMS**.
+2. Windows: extract the **entire** ZIP into a new writable folder and open `SuperBomberman5Recomp.exe`. Linux: `chmod +x` the AppImage and run it (without FUSE, add `--appimage-extract-and-run`); its setup lives in `~/.local/share/superbomberman5/2.3.0`.
 3. Let the launcher fetch the portable build tools (internet needed once; Rust is not required), select your own ROM and choose **Generate & rebuild**. A valid ROM placed in the game folder or its `roms/` subfolder is found automatically under any file name (the Super Bomberman 4 ROM for Bomber Kings too).
 4. Open **Mods** to enable features, configure controls and select **Play**.
 
 **Moving the folder:** ROM paths inside the game folder are saved relative to it, so a built game folder (with `build/`) can be moved or copied to another drive or PC and opens straight on **Play**, without asking for the ROM or for **Generate & rebuild**, as long as the ROMs are in the folder. Every player needs their own legally obtained ROMs.
 
-**Upgrading:** the launcher header shows your version and, when a newer release exists, the launcher says so (and holds online hosting until you update). From v2.0.0 on, use **Update game / Atualizar jogo** in the launcher (or `updater/SuperBomberman5Updater`), then run **Generate & rebuild** once; your ROM path, saves, settings and Mods selection are kept. From v1.x, install 2.2.10 into a new folder (or extract it over the old one) and run **Generate & rebuild** again; an older generated executable cannot load new native mod code. Leave several GB free.
+**Upgrading:** the launcher header shows your version and, when a newer release exists, the launcher says so (and holds online hosting until you update). From v2.0.0 on, use **Update game / Atualizar jogo** in the launcher (or `updater/SuperBomberman5Updater`), then run **Generate & rebuild** once; your ROM path, saves, settings and Mods selection are kept. From v1.x, install 2.3.0 into a new folder (or extract it over the old one) and run **Generate & rebuild** again; an older generated executable cannot load new native mod code. Leave several GB free.
 
 ### Supported ROM
 
@@ -59,6 +60,7 @@ Each setup package already includes these mods (no separate download). They can 
 | **Normal Game — portal destinations** | Shows each visible portal's destination (`Z1-2`, `Z1-S`, `Z1-A1`…). [Details](docs/PORTAL_LABELS.md) |
 | **Normal Game — infinite time** | Native `-:--` timer without timeout deaths. Listed under **Mods → Cheats**. [Details](docs/INFINITE_TIME.md) |
 | **Normal Game — infinite lives** | The shared counter stays at its maximum (9) in Normal Game: deaths and retries never lower it, so five-player Start rejoins are always possible and there is no Game Over. **Mods → Cheats**. [Details](docs/INFINITE_LIVES.md) |
+| **Battle — COM level 4** | Battle offers COM level 4 (Super), as with password 1103, while the mod is on; the save file is not changed. **Mods → Cheats**. [Details](docs/COM_LEVEL_4.md) |
 | **Pause — exit & draw** | Return to the map in Normal; force a draw or return to stage select in Battle. [Details](docs/PAUSE_MENU.md) |
 | **Gold Cartridge — Battle** | Arenas 11–13 and Hyper Revenge. [Details](docs/GOLD_BATTLE.md) |
 | **Português brasileiro — menus** | PT-BR menus, HUD and certificates using the cartridge fonts. [Details](docs/TRANSLATION_PTBR.md) |
@@ -117,7 +119,8 @@ Thanks to Matthew Stanley and the RetroPorting ToolKit contributors for SNESReco
 
 - Setup Windows x64 e AppImage Linux x86_64 experimental; o jogo é gerado e compilado localmente a partir da sua ROM.
 - Launcher com abas **PLAYER 1–5** (teclado ou controle por jogador, inclusive vários controles iguais, como dois DualSense).
-- Quatorze mods opcionais, desligados por padrão: Normal Game com cinco jogadores (com layout opcional de spawn nos cantos), seleção de personagem e cor no Normal, personagens extras, Reis Bomber do Super Bomberman 4, melhorias dos Louies, menus em PT-BR, o grupo **Cheats** (tempo infinito e vidas infinitas) e mais.
+- Quinze mods opcionais, desligados por padrão: Normal Game com cinco jogadores (com layout opcional de spawn nos cantos), seleção de personagem e cor no Normal, personagens extras, Reis Bomber do Super Bomberman 4, melhorias dos Louies, menus em PT-BR, o grupo **Cheats** (tempo infinito, vidas infinitas e nível 4 do COM no Battle) e mais.
+- **Novo na v2.3.0 — nível 4 do COM no Battle:** o mod **Battle — COM level 4** (**Mods → Cheats**) libera o nível Super do COM, que o cartucho só abre com a senha 1103, sem alterar o seu save. [Detalhes](docs/COM_LEVEL_4.md)
 - **Novo na v2.0.0 — netplay:** jogue online (lobby com login do Discord, salas para os cinco jogadores) ou por LAN / IP direto, como no Mega Man X Recompiled. [Detalhes](docs/NETPLAY.md)
 - **Discord:** o launcher leva ao servidor do Super Bomberman 5 para achar partidas e acompanhar novidades: <https://discord.gg/kH54NCDQB4>. Com o app do Discord aberto, o seu perfil mostra o que você está jogando e amigos entram na sua sala online por convite.
 - **Atualizador:** **Atualizar jogo** no launcher instala a release mais nova na mesma pasta (conferida por checksum, mantendo ROM, saves e configurações). [Detalhes](docs/UPDATER.md)
@@ -125,14 +128,14 @@ Thanks to Matthew Stanley and the RetroPorting ToolKit contributors for SNESReco
 
 ### Instalação
 
-1. Baixe **superbomberman5-2.2.10-windows-x64.zip** (Windows 10+ x64) ou **superbomberman5-2.2.10-linux-x86_64.AppImage** (glibc 2.35+, base Ubuntu 22.04) na [v2.2.10](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v2.2.10) e confira o **SHA256SUMS**.
-2. Windows: extraia o ZIP **inteiro** numa pasta nova e gravável e abra `SuperBomberman5Recomp.exe`. Linux: dê `chmod +x` no AppImage e execute (sem FUSE, use `--appimage-extract-and-run`); o setup fica em `~/.local/share/superbomberman5/2.2.10`.
+1. Baixe **superbomberman5-2.3.0-windows-x64.zip** (Windows 10+ x64) ou **superbomberman5-2.3.0-linux-x86_64.AppImage** (glibc 2.35+, base Ubuntu 22.04) na [v2.3.0](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v2.3.0) e confira o **SHA256SUMS**.
+2. Windows: extraia o ZIP **inteiro** numa pasta nova e gravável e abra `SuperBomberman5Recomp.exe`. Linux: dê `chmod +x` no AppImage e execute (sem FUSE, use `--appimage-extract-and-run`); o setup fica em `~/.local/share/superbomberman5/2.3.0`.
 3. Deixe o launcher baixar as ferramentas portáteis (internet só na primeira vez; Rust não é necessário), escolha sua própria ROM e clique em **Generate & rebuild**. Uma ROM válida colocada na pasta do jogo ou na subpasta `roms/` é encontrada sozinha, com qualquer nome de arquivo (a ROM do Super Bomberman 4 para o Bomber Kings também).
 4. Abra **Mods** para ativar funções, configure os controles e clique em **Play**.
 
 **Mudando a pasta de lugar:** os caminhos das ROMs dentro da pasta do jogo são salvos relativos a ela, então uma pasta com o jogo já gerado (com `build/`) pode ser movida ou copiada para outro disco ou PC e abre direto no **Play**, sem perguntar pela ROM nem pedir **Generate & rebuild**, desde que as ROMs estejam na pasta. Cada jogador precisa das suas próprias ROMs obtidas legalmente.
 
-**Atualizando:** o cabeçalho do launcher mostra a sua versão e, quando há versão mais nova, o launcher avisa (e segura a criação de salas online até você atualizar). A partir da v2.0.0, use **Update game / Atualizar jogo** no launcher (ou `updater/SuperBomberman5Updater`) e faça **Generate & rebuild** uma vez; o caminho da ROM, saves, configurações e mods escolhidos continuam. Vindo da v1.x, instale a 2.2.10 numa pasta nova (ou extraia por cima da antiga) e faça **Generate & rebuild** de novo; um executável gerado antigo não carrega o código nativo novo. Deixe alguns GB livres.
+**Atualizando:** o cabeçalho do launcher mostra a sua versão e, quando há versão mais nova, o launcher avisa (e segura a criação de salas online até você atualizar). A partir da v2.0.0, use **Update game / Atualizar jogo** no launcher (ou `updater/SuperBomberman5Updater`) e faça **Generate & rebuild** uma vez; o caminho da ROM, saves, configurações e mods escolhidos continuam. Vindo da v1.x, instale a 2.3.0 numa pasta nova (ou extraia por cima da antiga) e faça **Generate & rebuild** de novo; um executável gerado antigo não carrega o código nativo novo. Deixe alguns GB livres.
 
 ### ROM compatível
 
@@ -155,6 +158,7 @@ Todos já vêm no pacote de setup (sem download separado) e podem ser ativados j
 | **Normal Game — portal destinations** | Mostra o destino de cada portal visível (`Z1-2`, `Z1-S`, `Z1-A1`…). [Detalhes](docs/PORTAL_LABELS.md) |
 | **Normal Game — infinite time** | Cronômetro nativo `-:--` sem morte por tempo. Fica em **Mods → Cheats**. [Detalhes](docs/INFINITE_TIME.md) |
 | **Normal Game — infinite lives** | O contador compartilhado fica sempre no máximo (9) no Normal Game: mortes e reinícios não o diminuem, então a volta com Start no modo de cinco sempre funciona e não há Game Over. **Mods → Cheats**. [Detalhes](docs/INFINITE_LIVES.md) |
+| **Battle — COM level 4** | O Battle oferece o nível 4 (Super) do COM, como com a senha 1103, enquanto o mod estiver ligado; o save não é alterado. **Mods → Cheats**. [Detalhes](docs/COM_LEVEL_4.md) |
 | **Pause — exit & draw** | Voltar ao mapa no Normal; empatar a rodada ou voltar às arenas no Battle. [Detalhes](docs/PAUSE_MENU.md) |
 | **Gold Cartridge — Battle** | Arenas 11–13 e Revanche Hiper. [Detalhes](docs/GOLD_BATTLE.md) |
 | **Português brasileiro — menus** | Menus, HUD e certificados em PT-BR com as fontes do cartucho. [Detalhes](docs/TRANSLATION_PTBR.md) |

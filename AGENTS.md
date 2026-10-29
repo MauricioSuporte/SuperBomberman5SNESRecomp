@@ -93,6 +93,7 @@ before changing code, docs or releases. Humans: see README.md and CONTRIBUTING.m
 | `src/normal_coop_mod.c` | 1–5 player Normal Game: 65816 trampolines in unused ROM space, interpreter PC hook, safe-spawn search, shared lives, Start rejoin. Regular-stage spawns: P3/P5 beside P1, P4 beside P2. |
 | `src/coop_corner_spawns_mod.c` | Plugin of the **5 Players → corner spawns** mod (`superbomberman5.coop-corner-spawns`): switches coop regular-stage spawns to P3 lower left, P4 lower right, P5 centre. Flag only; logic stays in `spawn_tile()`. |
 | `src/infinite_lives_mod.c` | **Cheats → infinite lives**: captures `$1D23` before the retry/respawn charges (`$C5:3B1C`, `$C5:0659`, wrapping co-op's charge) and restores it before the Game Over test (`$C5:3B2D`/`$C5:065C`). Must be installed after co-op. |
+| `src/com_level4_mod.c` | **Cheats → Battle COM level 4**: keeps the Battle COM level limit `$6247` at 4 (as password 1103) while enabled; WRAM only. |
 | `src/sb5_launcher.c` | Launcher links (Discord `https://discord.gg/kH54NCDQB4`, releases), the **Update game** action and the netplay policy (forced delay-sync, Bomber Kings needs each player's SB4 ROM). |
 | `src/updater/sb5_updater.c` | ROM-free updater shipped in `updater/`: GitHub `releases/latest`, `SHA256SUMS` check, in-place install that keeps player files; defers to Git checkouts and Quiver installs. docs/UPDATER.md |
 | `src/host_contract.c`, `src/gen_stubs.c`, `src/variables.h` | Framework contract placeholders (trace hooks, stubs, WRAM names). |
@@ -255,6 +256,8 @@ File 1 (A = keyboard X) → Start on Zone 1 map.
 | `$1D1A` bit `$40`, `$C5:3D19` | Completion-record permission: native success exit records `$102F+3` only with this bit. Pause-menu Normal exit clears it, keeping WRAM/SRAM cleared-stage flags unchanged. Verified by disassembly and isolated before/after saves. |
 | `$C4:28CE`, `$15A2+i`, `$1BA3+i` bit 1, `$C5:0307` | End of campaign player reset / actor death / Revenge survivor flag / Battle survivor count. Pause-menu restores saved campaign fields at reset return; Force Draw removes all survivors. Verified by native tests and Normal/Battle runtime transitions. |
 | `$C0:0CED`, `ROM[$8086D0+id]` | Native SFX command group 2: menu move/accept/back ids 1/4/3 (commands `$21/$24/$23`). Verified against Battle setup scripts and Windows/LLE CPU-to-APU traces. |
+| `$C5:6875`, `$7E6241-$6244`, `$7E6274/$6273` | Password table (10 × [4 digits, handler], `0A`×4 end; checked by `$C5:6836`) / entered digits / password flag bits (session / saved to SRAM `$3061E8` by `$C0:4858`; boot reloads only bit `$10`). Handler `$C5:6909` ORs a bit. Verified by JPN disassembly; see docs/COM_LEVEL_4.md |
+| `$7E6247` / `$7E625B` | Battle COM level limit (boot 3, 4 with password 1103 / the COM level mod) / chosen COM level, limited by script `$C6:91F1`; `$C4:0067` stores `$625B - 1` in `$1D26`. Verified by JPN disassembly; runtime not yet checked |
 | SRAM `$30-$6A` | Checksum (16-bit sum of `$32-$6A`) and three 19-byte Normal records at `$32/$45/$58`: 16 flag bytes (stage N → byte N>>3 bit N&7), cleared count, Continue stage, `$6258` |
 
 Netplay name tags (2026-10-22, `src/name_tags.c`): a seat shows its room name when `$0AEE` = 1 (stage live; 0 in
