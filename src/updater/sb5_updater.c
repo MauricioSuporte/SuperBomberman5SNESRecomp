@@ -39,6 +39,8 @@
 #include <windows.h>
 #include <direct.h>
 #include <io.h>
+#define sb5_isatty(fd) _isatty(fd)
+#define sb5_fileno(f) _fileno(f)
 #define PATH_SEP '\\'
 #define mkdir_one(p) _mkdir(p)
 #else
@@ -48,6 +50,8 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#define sb5_isatty(fd) isatty(fd)
+#define sb5_fileno(f) fileno(f)
 #define PATH_SEP '/'
 #define mkdir_one(p) mkdir((p), 0755)
 #endif
@@ -175,6 +179,203 @@ SB5_UNUSED static int download(const char *url, const char *dest) {
     return run(cmd) == 0 && file_exists(dest);
 }
 
+/* ---- progress ------------------------------------------------------------ */
+
+/* "m:ss", or "h:mm:ss" past an hour; "--:--" when unknown. */
+void Sb5FormatDuration(double seconds, char *out, size_t cap) {
+    long s;
+    if (!(seconds >= 0) || seconds > 359999) { snprintf(out, cap, "--:--"); return; }
+    s = (long)(seconds + 0.5);
+    if (s >= 3600) snprintf(out, cap, "%ld:%02ld:%02ld", s / 3600, (s / 60) % 60, s % 60);
+    else snprintf(out, cap, "%ld:%02ld", s / 60, s % 60);
+}
+
+/* One progress line: label, a 24-cell bar, percentage, amount, speed and the
+ * estimated time left (from the average rate so far). ASCII only: the
+ * Windows console code page mangles block characters. `bytes` selects MB
+ * amounts with a speed; otherwise `unit` counts items (files). A zero
+ * `total` means unknown: no bar, no estimate. */
+void Sb5FormatProgress(char *out, size_t cap, const char *label, long long done, long long total,
+                       double elapsed, int bytes, const char *unit) {
+    char bar[32], amount[64], rate[32] = "", eta[40];
+    const int cells = 24;
+    double rate_per_s = elapsed > 0.25 && done > 0 ? (double)done / elapsed : 0;
+    int i, filled, pct;
+    if (done < 0) done = 0;
+    if (total > 0 && done > total) done = total;
+    if (bytes) {
+        if (total > 0) snprintf(amount, sizeof(amount), "%.1f/%.1f MB", done / 1048576.0, total / 1048576.0);
+        else snprintf(amount, sizeof(amount), "%.1f MB", done / 1048576.0);
+        if (rate_per_s > 0) snprintf(rate, sizeof(rate), "  %.1f MB/s", rate_per_s / 1048576.0);
+    } else {
+        if (total > 0) snprintf(amount, sizeof(amount), "%lld/%lld %s", done, total, unit ? unit : "");
+        else snprintf(amount, sizeof(amount), "%lld %s", done, unit ? unit : "");
+    }
+    if (total <= 0) {
+        char t[24];
+        Sb5FormatDuration(elapsed, t, sizeof(t));
+        if (!bytes && done == 0) snprintf(out, cap, "%-12s ...  %s", label, t); /* plain timer */
+        else snprintf(out, cap, "%-12s %s%s  %s", label, amount, rate, t);
+        return;
+    }
+    pct = (int)(done * 100 / total);
+    filled = (int)(done * cells / total);
+    for (i = 0; i < cells; ++i) bar[i] = i < filled ? '#' : '-';
+    bar[cells] = 0;
+    if (done >= total) {
+        char t[24];
+        Sb5FormatDuration(elapsed, t, sizeof(t));
+        snprintf(eta, sizeof(eta), "done in %s", t);
+    } else if (rate_per_s > 0) {
+        char t[24];
+        Sb5FormatDuration((double)(total - done) / rate_per_s, t, sizeof(t));
+        snprintf(eta, sizeof(eta), "ETA %s", t);
+    } else {
+        snprintf(eta, sizeof(eta), "ETA --:--");
+    }
+    snprintf(out, cap, "%-12s [%s] %3d%%  %s%s  %s", label, bar, pct, amount, rate, eta);
+}
+
+static double now_seconds(void) {
+#if defined(_WIN32)
+    return GetTickCount64() / 1000.0;
+#else
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return ts.tv_sec + ts.tv_nsec / 1e9;
+#endif
+}
+
+typedef struct {
+    const char *label;
+    long long total;
+    int bytes;
+    const char *unit;
+    double start, last_draw;
+    int interactive, drawn;
+} Progress;
+
+static void progress_begin(Progress *p, const char *label, long long total, int bytes, const char *unit) {
+    memset(p, 0, sizeof(*p));
+    p->label = label;
+    p->total = total;
+    p->bytes = bytes;
+    p->unit = unit;
+    p->start = now_seconds();
+    p->last_draw = -1;
+    p->interactive = sb5_isatty(sb5_fileno(stdout));
+}
+
+/* Redraws in place at most five times a second (always when `force`). */
+static void progress_update(Progress *p, long long done, int force) {
+    char line[160];
+    double t = now_seconds();
+    if (!p->interactive || (!force && p->last_draw >= 0 && t - p->last_draw < 0.2)) return;
+    p->last_draw = t;
+    Sb5FormatProgress(line, sizeof(line), p->label, done, p->total, t - p->start, p->bytes, p->unit);
+    printf("\r%-79s", line);
+    fflush(stdout);
+    p->drawn = 1;
+}
+
+/* Final state on its own line; the log gets it too (it never sees redraws). */
+static void progress_end(Progress *p, long long done) {
+    char line[160];
+    Sb5FormatProgress(line, sizeof(line), p->label, done, p->total, now_seconds() - p->start, p->bytes, p->unit);
+    if (p->interactive && p->drawn) {
+        printf("\r%-79s\n", line);
+        fflush(stdout);
+        if (g_log) { fprintf(g_log, "%s\n", line); fflush(g_log); }
+    } else {
+        say("%s", line);
+    }
+}
+
+static long long file_size(const char *p) {
+#if defined(_WIN32)
+    WIN32_FILE_ATTRIBUTE_DATA fa;
+    if (!GetFileAttributesExA(p, GetFileExInfoStandard, &fa)) return 0;
+    return ((long long)fa.nFileSizeHigh << 32) | fa.nFileSizeLow;
+#else
+    struct stat st;
+    return stat(p, &st) == 0 ? (long long)st.st_size : 0;
+#endif
+}
+
+/* run() that polls `tick(ctx)` about five times a second while the command
+ * works. Returns its exit code (-1 if it could not run). */
+SB5_UNUSED static int run_polling(const char *cmdline, void (*tick)(void *), void *ctx) {
+#if defined(_WIN32)
+    STARTUPINFOA si;
+    PROCESS_INFORMATION pi;
+    DWORD code = 1;
+    char *cmd = _strdup(cmdline);
+    memset(&si, 0, sizeof(si));
+    si.cb = sizeof(si);
+    memset(&pi, 0, sizeof(pi));
+    if (!cmd || !CreateProcessA(NULL, cmd, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
+        free(cmd);
+        return -1;
+    }
+    while (WaitForSingleObject(pi.hProcess, 200) == WAIT_TIMEOUT) tick(ctx);
+    GetExitCodeProcess(pi.hProcess, &code);
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
+    free(cmd);
+    return (int)code;
+#else
+    int status = 0;
+    pid_t pid;
+    fflush(NULL);
+    pid = fork();
+    if (pid < 0) return -1;
+    if (pid == 0) {
+        execl("/bin/sh", "sh", "-c", cmdline, (char *)NULL);
+        _exit(127);
+    }
+    for (;;) {
+        pid_t r = waitpid(pid, &status, WNOHANG);
+        if (r == pid) break;
+        if (r < 0 && errno != EINTR) return -1;
+        tick(ctx);
+        usleep(200000);
+    }
+    return WIFEXITED(status) ? WEXITSTATUS(status) : -1;
+#endif
+}
+
+typedef struct {
+    Progress progress;
+    const char *dest;
+} DownloadWatch;
+
+static void download_tick(void *ctx) {
+    DownloadWatch *w = (DownloadWatch *)ctx;
+    progress_update(&w->progress, file_size(w->dest), 0);
+}
+
+/* download() with a progress bar; `total` is the asset size from the
+ * release metadata (0 = unknown: amount and speed only). */
+SB5_UNUSED static int download_with_progress(const char *url, const char *dest, long long total) {
+    char cmd[PATH_CAP * 2];
+    DownloadWatch w;
+    int ok;
+    snprintf(cmd, sizeof(cmd),
+             "curl -fsSL --retry 3 --connect-timeout 20 -H \"User-Agent: SuperBomberman5Updater\" -o \"%s\" \"%s\"",
+             dest, url);
+    progress_begin(&w.progress, "Downloading", total, 1, NULL);
+    w.dest = dest;
+    progress_update(&w.progress, 0, 1);
+    ok = run_polling(cmd, download_tick, &w) == 0 && file_exists(dest);
+    if (ok) progress_end(&w.progress, file_size(dest));
+    else if (w.progress.drawn) printf("\n");
+    return ok;
+}
+
+SB5_UNUSED static void spinner_tick(void *ctx) {
+    progress_update((Progress *)ctx, 0, 0);
+}
+
 /* ---- release metadata ------------------------------------------------- */
 
 static int json_string_after(const char *text, const char *key, const char *from, char *out, size_t cap,
@@ -225,6 +426,7 @@ typedef struct {
     char package_url[1024];
     char package_name[1024];
     char sums_url[1024];
+    long long package_size; /* bytes, from the asset's "size"; 0 if unknown */
 } Release;
 
 static int asset_matches(const char *name) {
@@ -237,17 +439,35 @@ static int asset_matches(const char *name) {
     return n > m && strcmp(name + n - m, suffix) == 0;
 }
 
+/* The last "size": number in [from, to): GitHub lists an asset's size before
+ * its browser_download_url, and the previous asset ends before `from`. */
+static long long json_size_between(const char *from, const char *to) {
+    const char *p = from, *hit = NULL;
+    while ((p = strstr(p, "\"size\"")) != NULL && p < to) {
+        hit = p;
+        p += 6;
+    }
+    if (!hit) return 0;
+    hit = strchr(hit + 6, ':');
+    if (!hit || hit >= to) return 0;
+    while (*++hit == ' ' || *hit == '\t' || *hit == '\n' || *hit == '\r') {}
+    return isdigit((unsigned char)*hit) ? strtoll(hit, NULL, 10) : 0;
+}
+
 int Sb5ParseRelease(const char *json, Release *r) {
-    const char *p = json;
+    const char *p = json, *asset_start = json;
     char url[1024];
     memset(r, 0, sizeof(*r));
     if (!json_string_after(json, "tag_name", NULL, r->tag, sizeof(r->tag), NULL)) return 0;
     while (json_string_after(json, "browser_download_url", p, url, sizeof(url), &p)) {
         const char *base = strrchr(url, '/');
+        const char *before = asset_start;
+        asset_start = p;
         base = base ? base + 1 : url;
         if (asset_matches(base)) {
             snprintf(r->package_url, sizeof(r->package_url), "%s", url);
             snprintf(r->package_name, sizeof(r->package_name), "%s", base);
+            r->package_size = json_size_between(before, p);
         } else if (!strcmp(base, "SHA256SUMS")) {
             snprintf(r->sums_url, sizeof(r->sums_url), "%s", url);
         }
@@ -339,6 +559,40 @@ static int copy_file(const char *from, const char *to) {
 }
 
 static int g_copied, g_kept, g_failed;
+static Progress *g_copy_progress; /* set while installing */
+
+/* Files Sb5CopyTree will look at (for the install bar). */
+SB5_UNUSED static long long count_files(const char *src) {
+    long long n = 0;
+#if defined(_WIN32)
+    char pattern[PATH_CAP], child[PATH_CAP];
+    WIN32_FIND_DATAA fd;
+    HANDLE h;
+    join(pattern, sizeof(pattern), src, "*");
+    h = FindFirstFileA(pattern, &fd);
+    if (h == INVALID_HANDLE_VALUE) return 0;
+    do {
+        if (!strcmp(fd.cFileName, ".") || !strcmp(fd.cFileName, "..")) continue;
+        join(child, sizeof(child), src, fd.cFileName);
+        if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) n += count_files(child);
+        else ++n;
+    } while (FindNextFileA(h, &fd));
+    FindClose(h);
+#else
+    DIR *d = opendir(src);
+    struct dirent *e;
+    char child[PATH_CAP];
+    if (!d) return 0;
+    while ((e = readdir(d))) {
+        if (!strcmp(e->d_name, ".") || !strcmp(e->d_name, "..")) continue;
+        join(child, sizeof(child), src, e->d_name);
+        if (is_dir(child)) n += count_files(child);
+        else ++n;
+    }
+    closedir(d);
+#endif
+    return n;
+}
 
 void Sb5CopyTree(const char *src, const char *dst, const char *rel) {
 #if defined(_WIN32)
@@ -379,8 +633,11 @@ void Sb5CopyTree(const char *src, const char *dst, const char *rel) {
             ++g_copied;
         } else {
             ++g_failed;
+            if (g_copy_progress && g_copy_progress->drawn) printf("\n");
             say("  could not replace %s", r);
         }
+        if (g_copy_progress && !dir)
+            progress_update(g_copy_progress, g_copied + g_kept + g_failed, 0);
 #if defined(_WIN32)
     } while (FindNextFileA(h, &fd));
     FindClose(h);
@@ -728,7 +985,7 @@ int main(int argc, char **argv) {
     join(sums_path, sizeof(sums_path), g_tmp, "SHA256SUMS");
     join(pkg_path, sizeof(pkg_path), g_tmp, rel.package_name);
     say("Downloading %s...", rel.package_name);
-    if (!download(rel.sums_url, sums_path) || !download(rel.package_url, pkg_path) ||
+    if (!download(rel.sums_url, sums_path) || !download_with_progress(rel.package_url, pkg_path, rel.package_size) ||
         !(sums = read_file(sums_path, &len))) {
         say("The download failed. Nothing was changed.");
         pause_if_interactive(0);
@@ -751,7 +1008,17 @@ int main(int argc, char **argv) {
         join(stage, sizeof(stage), g_tmp, "package");
         mkdirs(stage);
         snprintf(cmd, sizeof(cmd), "tar -xf \"%s\" -C \"%s\"", pkg_path, stage);
-        if (run(cmd) != 0) {
+        {
+            Progress unpack;
+            int rc;
+            progress_begin(&unpack, "Unpacking", 0, 0, "");
+            progress_update(&unpack, 0, 1);
+            rc = run_polling(cmd, spinner_tick, &unpack);
+            if (rc == 0) progress_end(&unpack, 0);
+            else if (unpack.drawn) printf("\n");
+            if (rc != 0) cmd[0] = 0;
+        }
+        if (!cmd[0]) {
             say("Could not unpack the package (tar). Nothing was changed.");
             pause_if_interactive(0);
             return 1;
@@ -763,7 +1030,15 @@ int main(int argc, char **argv) {
         join(path, sizeof(path), stage, top);
         if (!is_dir(path)) snprintf(path, sizeof(path), "%s", stage);
         say("Installing into %s...", g_dir);
-        Sb5CopyTree(path, g_dir, "");
+        {
+            Progress install;
+            progress_begin(&install, "Installing", count_files(path), 0, "files");
+            progress_update(&install, 0, 1);
+            g_copy_progress = &install;
+            Sb5CopyTree(path, g_dir, "");
+            g_copy_progress = NULL;
+            progress_end(&install, g_copied + g_kept + g_failed);
+        }
         say("%d files updated, %d player files kept, %d failed.", g_copied, g_kept, g_failed);
         if (g_failed) {
             say("Some files are in use. Close every game window and run the updater again.");
