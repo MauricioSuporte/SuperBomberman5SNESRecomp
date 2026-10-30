@@ -1,5 +1,17 @@
 # Super Bomberman 5: estado do protótipo
 
+## v2.5.4 — 2026-10-30: Linux rebuild on dash systems
+
+- Report: a Linux player's **Generate & rebuild** failed with `CMAKE_CXX_COMPILER not set`. Reproduced by the
+  maintainer on WSL Ubuntu 24.04 with the v2.5.3 AppImage: the host's `shell_wrap_argv` sourced the pack's
+  `env.sh` with `/bin/sh` (dash); `env.sh` uses `BASH_SOURCE`/`[[ ]]`, so it set `CC` to `<cwd>/bin/clang`
+  ("Could not find compiler set in environment variable CC"). Installing build-essential does not help.
+  snesrecomp `00bb698` runs the wrapper with `/bin/bash` when present. Checked with a mock pack: dash gives
+  `CC=<cwd>/bin/clang`, bash gives `<pack>/bin/clang`.
+- Same report: a fresh Ubuntu has no `unzip` and GNU tar cannot read zip, so the toolchain download failed to
+  extract. The host now falls back to `bsdtar`, then `python3 -m zipfile` (restoring exec bits).
+- Not yet re-run end to end on WSL with the new AppImage; Windows code paths are unchanged (`#if !defined(_WIN32)`).
+
 ## v2.5.3 — 2026-10-30: Boss Rush ranking category with 5 Players
 
 - Report: a five-player rush (v2.5.1) was posted as a 2-player time (two names). Cause: the entry's roster came

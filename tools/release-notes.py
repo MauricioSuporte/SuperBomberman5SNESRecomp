@@ -1275,6 +1275,13 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '2.5.4': (
+'''- **Fix: Linux setup on Ubuntu, Debian, Mint and WSL:** **Generate & rebuild** stopped with "CMAKE_CXX_COMPILER not set". The portable toolchain's setup script needs bash, but the launcher ran it with `/bin/sh`, which on these systems is dash; the compiler path came out wrong. The launcher now uses bash.
+- **Fix: Linux toolchain download:** on a fresh Ubuntu (no `unzip`) the launcher showed "Failed to extract the toolchain zip". It now also extracts with `bsdtar` or `python3`.
+- Windows is unchanged. Everyone in an online room needs v2.5.4.''',
+'''- **Correção: setup no Linux (Ubuntu, Debian, Mint e WSL):** o **Generate & rebuild** parava com "CMAKE_CXX_COMPILER not set". O script do toolchain portátil precisa do bash, mas o launcher o rodava com `/bin/sh`, que nesses sistemas é o dash; o caminho do compilador saía errado. Agora o launcher usa o bash.
+- **Correção: download do toolchain no Linux:** num Ubuntu recém-instalado (sem `unzip`) o launcher mostrava "Failed to extract the toolchain zip". Agora ele também extrai com `bsdtar` ou `python3`.
+- O Windows não muda. Todos na sala online precisam da v2.5.4.'''),
     '2.5.3': (
 '''- **Fix: Boss Rush ranking with the 5 Players mod:** a rush with 3, 4 or 5 players was sent to the Discord ranking as a 2-player time (with only two names). It now goes to its own category with every player. The wrong 2-player time sent this way was removed from the ranking.
 - Everyone in an online room needs v2.5.3.''',
