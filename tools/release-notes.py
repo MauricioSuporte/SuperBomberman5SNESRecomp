@@ -1275,6 +1275,15 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '2.5.5': (
+'''- **Linux: no more missing-library errors at startup.** The AppImage now carries the PulseAudio sound libraries and uses them only when the system lacks them (WSL and minimal installs). If no sound device can be opened at all, the game starts without sound instead of closing.
+- **WSL: full speed:** WSL could draw the game without the graphics card (software rendering), so it ran slow. On WSL the AppImage now asks for the GPU (D3D12) when Windows exposes it. WSL's own sound output (RDP) may still crackle even when the game keeps its sound flowing; this is a WSLg limitation.
+- **Slow PCs keep full speed:** when a frame takes too long, the next one is not drawn (never two in a row) so the game and its sound keep their speed instead of slowing down and crackling. The sound buffer also grows on its own when the sound device asks for large chunks. The log now shows the renderer in use and, while the game runs slow, where each frame's time goes.
+- On Windows only the frame skip on slow PCs changes. Everyone in an online room needs v2.5.5.''',
+'''- **Linux: sem erros de biblioteca faltando ao abrir.** O AppImage agora traz as bibliotecas de som do PulseAudio e só as usa quando o sistema não tem (WSL e instalações mínimas). Se nenhum dispositivo de som abrir, o jogo inicia sem som em vez de fechar.
+- **WSL: velocidade normal:** o WSL podia desenhar o jogo sem a placa de vídeo (renderização por software), deixando-o lento. No WSL o AppImage agora pede a GPU (D3D12) quando o Windows a disponibiliza. A saída de som do próprio WSL (RDP) ainda pode chiar mesmo com o jogo entregando o som em dia; é uma limitação do WSLg.
+- **PCs lentos mantêm a velocidade:** quando um quadro demora demais, o seguinte não é desenhado (nunca dois seguidos), e o jogo e o som mantêm a velocidade em vez de ficarem lentos e chiados. A reserva de som também cresce sozinha quando o dispositivo de som pede blocos grandes. O log agora mostra o renderizador em uso e, quando o jogo fica lento, onde vai o tempo de cada quadro.
+- No Windows só muda o pulo de quadros em PCs lentos. Todos na sala online precisam da v2.5.5.'''),
     '2.5.4': (
 '''- **Fix: Linux setup on Ubuntu, Debian, Mint and WSL:** **Generate & rebuild** stopped with "CMAKE_CXX_COMPILER not set". The portable toolchain's setup script needs bash, but the launcher ran it with `/bin/sh`, which on these systems is dash; the compiler path came out wrong. The launcher now uses bash.
 - **Fix: Linux toolchain download:** on a fresh Ubuntu (no `unzip`) the launcher showed "Failed to extract the toolchain zip". It now also extracts with `bsdtar` or `python3`.

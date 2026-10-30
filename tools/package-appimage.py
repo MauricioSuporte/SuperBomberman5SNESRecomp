@@ -67,6 +67,64 @@ def complete_zip(path, analyzer, cargo_home, rust_sysroot, updater):
     if errors:
         raise ValueError('\n'.join(errors))
 
+# Audio client libraries a minimal Linux (WSL, server installs) may lack. SDL
+# loads them with dlopen, so their absence only shows up as a failed SDL_Init.
+# AppRun puts a copy on the library path only for the ones the system lacks.
+FALLBACK_SONAMES = ('libpulse.so.0',)
+# Never ship the C runtime or anything the dynamic loader owns.
+SYSTEM_LIBS = ('linux-vdso', 'ld-linux', 'libc.so', 'libm.so', 'libdl.so', 'libpthread.so',
+               'librt.so', 'libresolv.so', 'libutil.so', 'libgcc_s.so', 'libstdc++.so')
+
+def system_lib_path(soname):
+    out = subprocess.run(['/sbin/ldconfig', '-p'], capture_output=True, text=True, check=True).stdout
+    for line in out.splitlines():
+        parts = line.split()
+        if parts and parts[0] == soname and 'x86-64' in line:
+            return Path(line.rsplit('=>', 1)[1].strip())
+    raise ValueError(f'{soname} not installed on the build machine (apt-get install libpulse0)')
+
+def lib_closure(path):
+    found = {}
+    todo = [path]
+    while todo:
+        lib = todo.pop()
+        out = subprocess.run(['ldd', str(lib)], capture_output=True, text=True, check=True).stdout
+        for line in out.splitlines():
+            if '=>' not in line:
+                continue
+            name, target = line.split('=>', 1)
+            name = name.strip()
+            target = target.split('(')[0].strip()
+            if not target or name.startswith(SYSTEM_LIBS) or name in found:
+                continue
+            found[name] = Path(target)
+            todo.append(Path(target))
+    return found
+
+def bundle_fallback_libs(appdir):
+    dest = appdir / 'fallback-libs'
+    (dest / 'copyright').mkdir(parents=True)
+    libs = {}
+    for soname in FALLBACK_SONAMES:
+        top = system_lib_path(soname)
+        libs[soname] = top
+        libs.update(lib_closure(top))
+    for name, path in sorted(libs.items()):
+        shutil.copyfile(path.resolve(), dest / name)
+        (dest / name).chmod(0o644)
+        owner = subprocess.run(['dpkg', '-S', str(path.resolve())], capture_output=True, text=True)
+        if owner.returncode != 0:
+            owner = subprocess.run(['dpkg', '-S', str(path)], capture_output=True, text=True)
+        pkg = owner.stdout.split(':', 1)[0].strip() if owner.returncode == 0 else ''
+        notice = Path('/usr/share/doc') / pkg / 'copyright'
+        if not pkg or not notice.is_file():
+            raise ValueError(f'No copyright notice for {name} ({path})')
+        shutil.copyfile(notice, dest / 'copyright' / f'{pkg}.copyright')
+    (dest / 'README.txt').write_text(
+        'Unmodified Ubuntu 22.04 shared libraries, used only when the system lacks them\n'
+        '(see AppRun). Their licenses are in copyright/.\n')
+    print('fallback libs:', ', '.join(sorted(libs)))
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--zip', type=Path, required=True)
@@ -102,6 +160,7 @@ def main():
         shutil.move(str(source), str(appdir/'setup'))
         shutil.copyfile(ROOT/'scripts/AppRun', appdir/'AppRun')
         (appdir/'AppRun').chmod(0o755)
+        bundle_fallback_libs(appdir)
         (appdir/'superbomberman5.desktop').write_text('[Desktop Entry]\nType=Application\nName=Super Bomberman 5 Setup\nExec=AppRun\nIcon=superbomberman5\nCategories=Game;\nTerminal=false\n')
         # Authored geometric icon; no cartridge artwork.
         (appdir/'superbomberman5.svg').write_text('<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128"><rect width="128" height="128" rx="24" fill="#172b46"/><text x="64" y="85" text-anchor="middle" font-family="sans-serif" font-size="64" fill="white">5</text></svg>')

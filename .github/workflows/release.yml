@@ -6,7 +6,7 @@ on:
       version:
         description: 'Version matching VERSION (without v)'
         type: string
-        default: '2.5.4'
+        default: '2.5.5'
       publish_release:
         description: 'Publish audited Linux AppImage and Windows ZIP'
         type: boolean
@@ -142,6 +142,8 @@ jobs:
           cmake -S . -B build-ci -G Ninja -DCMAKE_BUILD_TYPE=Release -DSNESRECOMP_SETUP_HOST=ON -DSNESRECOMP_FRAME_IMPL=LLE -DCMAKE_BUILD_RPATH='$ORIGIN' -DSNESRECOMP_BUILD_VERSION="$RELEASE_VERSION"
           cmake --build build-ci --parallel 4
           ctest --test-dir build-ci --output-on-failure
+      - name: Install audio libraries bundled as AppImage fallbacks
+        run: sudo apt-get update && sudo apt-get install -y libpulse0
       - name: Package and audit AppImage
         env:
           # Boss Rush online ranking (Discord webhook), written into the package only.

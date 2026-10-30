@@ -59,6 +59,37 @@ if [[ -n "$APPIMAGE_FILE" ]]; then
   fi
 fi
 export LD_LIBRARY_PATH="$DEST${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+# Audio client libraries (PulseAudio) that minimal systems such as WSL lack:
+# without them SDL finds no sound backend and the game cannot start. Only the
+# ones the system does not have are copied next to the game and appended last,
+# so an installed library always wins.
+if [[ -d "$APPDIR/fallback-libs" ]]; then
+  LDCONFIG="$(command -v ldconfig || echo /sbin/ldconfig)"
+  SYSTEM_LIBS="$("$LDCONFIG" -p 2>/dev/null | awk '/x86-64/ {print $1}' || true)"
+  FALLBACK="$DEST/.fallback-libs"
+  rm -rf "$FALLBACK"
+  for lib in "$APPDIR"/fallback-libs/*.so*; do
+    name="$(basename "$lib")"
+    if ! grep -qxF "$name" <<<"$SYSTEM_LIBS"; then
+      mkdir -p "$FALLBACK"
+      cp "$lib" "$FALLBACK/$name"
+    fi
+  done
+  if [[ -d "$FALLBACK" ]]; then
+    export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$FALLBACK"
+    echo "AppRun: using bundled $(ls "$FALLBACK" | tr '\n' ' ')" >&2
+  fi
+fi
+# WSLg plays sound through PulseAudio over RDP; a longer buffer stops crackling.
+if [[ -n "${WSL_DISTRO_NAME:-}" ]] || grep -qi microsoft /proc/sys/kernel/osrelease 2>/dev/null; then
+  export PULSE_LATENCY_MSEC="${PULSE_LATENCY_MSEC:-60}"
+  # WSLg's Mesa can fall back to llvmpipe (software rendering) even when the
+  # GPU is exposed through /dev/dxg; the game then runs below 60 fps and the
+  # sound crackles. Ask for the D3D12 driver unless the player chose one.
+  if [[ -e /dev/dxg && -z "${GALLIUM_DRIVER:-}" ]]; then
+    export GALLIUM_DRIVER=d3d12
+  fi
+fi
 cd "$DEST"
 HOST="$DEST/SuperBomberman5SNESRecomp"
 if [[ -x "$DEST/build/SuperBomberman5SNESRecomp" ]]; then

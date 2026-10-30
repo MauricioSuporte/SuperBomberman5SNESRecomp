@@ -1,5 +1,39 @@
 # Super Bomberman 5: estado do protótipo
 
+## v2.5.5 — 2026-10-30: Linux audio without system packages
+
+- Same WSL Ubuntu 24.04 test as v2.5.4: after the build, the game closed with `SDL_Init FAILED: Failed loading
+  libasound.so.2`; with ALSA installed, `audio device open FAILED: ALSA ... Unknown PCM default` (WSLg has no
+  ALSA card; its sound is a PulseAudio server). With `libpulse0` and `SDL_AUDIO_DRIVER=pulseaudio` it played,
+  with crackling.
+- snesrecomp `eb938c5`: `SDL_Init` is retried without audio and a device that fails to open leaves the game
+  muted instead of quitting; on WSL the SDL3 device buffer is at least 2048 frames
+  (`SDL_HINT_AUDIO_DEVICE_SAMPLE_FRAMES`). AppRun also sets `PULSE_LATENCY_MSEC=60` there.
+- The AppImage ships libpulse0 and its dependency closure from the Ubuntu 22.04 runner (`fallback-libs/`, Debian
+  copyright files beside them). AppRun copies to `<setup>/.fallback-libs` only sonames missing from
+  `ldconfig -p` and appends that folder last to `LD_LIBRARY_PATH`. Checked here with a fake `ldconfig` lacking
+  libpulse/libsndfile: those (plus libpulsecommon) were copied and `libpulse.so.0` loaded from the copy.
+- The crackling remained with the larger buffers: the game was slow. `glxinfo -B` on the maintainer's WSL showed
+  `llvmpipe` (software rendering) although `/dev/dxg` existed; with `GALLIUM_DRIVER=d3d12` it reported
+  `D3D12 (NVIDIA GeForce GTX 1660)`. AppRun now sets `GALLIUM_DRIVER=d3d12` on WSL when `/dev/dxg` exists and the
+  variable is unset.
+- With D3D12 the game still ran at 49 fps (vsync on) / 58 fps (vsync off). `SNESRECOMP_HOST_PROFILE=1` on the
+  maintainer's WSL (vsync off, 1211 frames): guest 7.4 ms, raster 1.1 ms, upload-present 6.8 ms per frame; the
+  loop dropped its pacing debt every late frame, so the audio queue ran dry. snesrecomp `3bb7f44`: a frame that
+  ends past the next one's start is not drawn and its debt is kept (never two in a row, under 4 frames behind;
+  not in netplay; `SNESRECOMP_NO_FRAME_SKIP=1` disables it). A pacing model with the measured costs gives 60.1
+  simulated fps (56 drawn) against 56.5 without it.
+- snesrecomp `79a18c2`: every run logs the SDL renderer, vsync, refresh and `GALLIUM_DRIVER`, and every 5 s of
+  play below 58 fps, with audio underruns or skipped frames, a `perf:` line with fps, CPU use and ms per stage.
+- With the frame skip the maintainer's WSL held 59.9-60.1 fps, but the sound still crackled.
+  `SNESRECOMP_AUDIO_STATS` (15 s): 0 dropped, 35 underflows, 17358 silent frames; the RDP sink pulls ~1000
+  frames per request while the ring held 700-2000. snesrecomp `7c8e4de`: the prefill covers the largest device
+  request plus one guest frame and grows by one guest frame after each dry spell (max 4608), high water 2048 above.
+- With the adaptive cushion on WSLg (14 s): `underflows` stayed at the 20 of the start-up priming, 0 dropped, no
+  `perf:` line after the first 5 s, yet the sound still crackled. The game delivers continuous PCM; the remaining
+  crackle is WSLg's RDP audio sink, outside the game. Limitation recorded.
+- Not verified: v2.5.5 on a native Linux desktop.
+
 ## v2.5.4 — 2026-10-30: Linux rebuild on dash systems
 
 - Report: a Linux player's **Generate & rebuild** failed with `CMAKE_CXX_COMPILER not set`. Reproduced by the
