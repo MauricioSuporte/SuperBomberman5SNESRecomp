@@ -1,6 +1,6 @@
 # Super Bomberman 5: estado do protótipo
 
-## Unreleased — 2026-10-30: Boss Rush ranking category with 5 Players
+## v2.5.3 — 2026-10-30: Boss Rush ranking category with 5 Players
 
 - Report: a five-player rush (v2.5.1) was posted as a 2-player time (two names). Cause: the entry's roster came
   from the mask stored at the start op (`$1D25`), which the 5 Players menu leaves at the native 1P/2P values; the

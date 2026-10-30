@@ -16,6 +16,8 @@ read it, so rotate the webhook (and the secrets) if the channel is abused.
       python tools/boss-rush-ranking.py --check
   Remove one time (moderation; the workflow "Boss Rush ranking" runs it):
       python tools/boss-rush-ranking.py --remove 2:1 --expect-time 08:34.31
+  Post a category's current ranking to the channel (same workflow):
+      python tools/boss-rush-ranking.py --post 2
 
 Neither command prints the webhook URL.
 """
@@ -191,6 +193,51 @@ def board_payload(board: dict) -> dict:
             'embeds': [category_embed(board, c) for c in range(1, 6)]}
 
 
+def read_board() -> tuple[str, str, dict] | None:
+    url = webhook_from_env()
+    board_id = os.environ.get('BOSS_RUSH_BOARD', '').strip()
+    if not url or not re.fullmatch(r'\d{5,30}', board_id):
+        annotate('error', 'Need the BOSS_RUSH_WEBHOOK and BOSS_RUSH_BOARD secrets.')
+        return None
+    code, body = curl_get(f'{url}/messages/{board_id}')
+    if code != 200:
+        annotate('error', f'Board not readable: HTTP {code}')
+        return None
+    return url, board_id, parse_board(json.loads(body))
+
+
+def send(method: str, url: str, payload: dict) -> bool:
+    request = urllib.request.Request(url, data=json.dumps(payload).encode('utf-8'), method=method,
+                                     headers={'Content-Type': 'application/json', 'User-Agent': USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            response.read()
+        return True
+    except Exception as error:  # never print the URL
+        annotate('error', f'{method} failed: {type(error).__name__} {getattr(error, "code", "")}'.strip())
+        return False
+
+
+def post_category(category: int) -> int:
+    """A message with the category's current ranking (as the board shows it)."""
+    if not 1 <= category <= 5:
+        annotate('error', 'Category must be 1-5.')
+        return 2
+    found = read_board()
+    if not found:
+        return 1
+    url, _, board = found
+    embed = category_embed(board, category)
+    del embed['footer']  # the data line belongs to the board message only
+    noun = 'jogadores / players' if category > 1 else 'jogador / player'
+    payload = {'content': f'\U0001F3C6 **Ranking do Boss Rush atualizado / Boss Rush ranking updated** \u2014 {category} {noun}',
+               'allowed_mentions': {'parse': []}, 'embeds': [embed]}
+    if not send('POST', url + '?wait=true', payload):
+        return 1
+    annotate('notice', f'Posted the {category}P ranking ({len(board[category])} time(s)).')
+    return 0
+
+
 def remove(spec: str, expect_time: str) -> int:
     url = webhook_from_env()
     board_id = os.environ.get('BOSS_RUSH_BOARD', '').strip()
@@ -235,12 +282,15 @@ def main() -> int:
     group.add_argument('--add-to-zip', type=Path)
     group.add_argument('--check', action='store_true')
     group.add_argument('--remove', metavar='CATEGORY:RANK')
+    group.add_argument('--post', type=int, metavar='CATEGORY')
     parser.add_argument('--expect-time', default='', help='refuse unless that entry shows this time (MM:SS.CC)')
     args = parser.parse_args()
     if args.check:
         return check()
     if args.remove:
         return remove(args.remove, args.expect_time)
+    if args.post:
+        return post_category(args.post)
     return create_board() if args.create_board else add_to_zip(args.add_to_zip)
 
 

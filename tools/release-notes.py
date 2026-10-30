@@ -1275,6 +1275,11 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '2.5.3': (
+'''- **Fix: Boss Rush ranking with the 5 Players mod:** a rush with 3, 4 or 5 players was sent to the Discord ranking as a 2-player time (with only two names). It now goes to its own category with every player. The wrong 2-player time sent this way was removed from the ranking.
+- Everyone in an online room needs v2.5.3.''',
+'''- **Correção: ranking do Boss Rush com o mod de 5 jogadores:** um boss rush com 3, 4 ou 5 jogadores ia para o ranking do Discord como tempo de 2 jogadores (com só dois nomes). Agora vai para a categoria certa, com todos os jogadores. O tempo de 2 jogadores enviado errado dessa forma foi removido do ranking.
+- Todos na sala online precisam da v2.5.3.'''),
     '2.5.2': (
 '''- **Boss Rush:** save and load states (hotkeys, slot menu and rewind) are off from the start of a rush until the title screen, so ranked times are played straight; a notice shows when the rush starts.
 - **Fix: Boss Rush top 5 with the 5 Players mod:** on the player-count menu, entries 3, 4 and 5 showed the 2P ranking; each now shows its own.

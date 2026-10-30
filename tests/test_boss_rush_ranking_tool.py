@@ -116,5 +116,34 @@ class BossRushRankingRemoveTest(unittest.TestCase):
         self.assertEqual(code, 1)
 
 
+    def test_post_category(self):
+        sent = {}
+
+        class Response:
+            def __enter__(self): return self
+            def __exit__(self, *a): return False
+            def read(self): return b'{}'
+
+        def urlopen(request, timeout=0):
+            sent['body'] = json.loads(request.data.decode('utf-8'))
+            sent['method'] = request.get_method()
+            sent['wait'] = request.full_url.endswith('?wait=true')
+            return Response()
+
+        env = {'BOSS_RUSH_WEBHOOK': FAKE, 'BOSS_RUSH_BOARD': '987654321'}
+        with mock.patch.dict(os.environ, env), \
+                mock.patch.object(tool, 'curl_get', return_value=(200, json.dumps(self.board()))), \
+                mock.patch.object(tool.urllib.request, 'urlopen', urlopen), redirect_stdout(io.StringIO()) as out:
+            self.assertEqual(tool.post_category(2), 0)
+            self.assertEqual(tool.post_category(6), 2)
+        self.assertNotIn('abc-DEF_token', out.getvalue())
+        self.assertEqual(sent['method'], 'POST')
+        self.assertTrue(sent['wait'])
+        embed = sent['body']['embeds'][0]
+        self.assertNotIn('footer', embed)               # the data line stays on the board only
+        self.assertIn('08:34.85', embed['description'])
+        self.assertIn('2 jogadores', sent['body']['content'])
+
+
 if __name__ == '__main__':
     unittest.main()
