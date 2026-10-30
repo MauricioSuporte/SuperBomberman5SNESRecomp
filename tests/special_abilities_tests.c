@@ -365,6 +365,47 @@ int main(void) {
     arena();frame(3,0x08,0x02);
     g_ram[0x1031]=4;frame(0,0,0);
     for(unsigned b=STATE;b<STATE_END;++b) CHECK(!g_ram[b]);
+    /* The Clock spares mounts: co-op puts them at 19-23, Battle at 5-9;
+     * the stock campaign (offset 2) keeps them out of the frozen range. */
+    {
+        uint8_t ram[0x200]={0};
+        ram[0x1cbf]=5;ram[0x11e]=19;
+        CHECK(Sb5ClockIsMount(ram,19) && Sb5ClockIsMount(ram,23) && !Sb5ClockIsMount(ram,18) && !Sb5ClockIsMount(ram,5));
+        ram[0x11e]=0;
+        CHECK(Sb5ClockIsMount(ram,5) && Sb5ClockIsMount(ram,9) && !Sb5ClockIsMount(ram,10));
+        ram[0x1cbf]=2;
+        CHECK(!Sb5ClockIsMount(ram,2) && !Sb5ClockIsMount(ram,5));
+    }
+    /* Debuff: the seat's bombs reach one tile (both bomb sites); others
+     * keep their range. Terrorin's debuff lasts twice as long. */
+    {
+        arena();
+        choices[0]=17;choices[1]=0;                                 /* Bazooka: has a debuff */
+        set16(seat_state(0)+S_DEBUFF,100);
+        cpu.X=0;cpu.A=0x1205;bomb_range_hook(&cpu,BOMB_DROP);CHECK(cpu.A==0x1201);
+        cpu.X=0;cpu.A=0x1288;bomb_range_hook(&cpu,BOMB_CURSE);CHECK(cpu.A==0x1281);
+        cpu.X=1;cpu.A=0x1205;bomb_range_hook(&cpu,BOMB_DROP);CHECK(cpu.A==0x1205);
+        set16(seat_state(0)+S_DEBUFF,0);
+        cpu.X=0;cpu.A=0x1205;bomb_range_hook(&cpu,BOMB_DROP);CHECK(cpu.A==0x1205);
+        CHECK(kAbility[TERRORIN_CHOICE-HK_CHOICE_HONEY].debuff==2*DEBUFF_FRAMES);
+        CHECK(kAbility[17-HK_CHOICE_HONEY].debuff==DEBUFF_FRAMES);
+    }
+    /* Mace/laser outside Battle: no damage. A boss's rival bomber is
+     * stunned (the cartridge's own reaction); enemies are untouched. */
+    {
+        arena();
+        g_ram[0x1031]=0x67;g_ram[0x1d1a]=0x40;                       /* ZONE1 - A */
+        g_ram[0x101f+2]=1;g_ram[0x15a2+2]=0;                          /* rival bomber in slot 2 */
+        g_ram[0x17fa+6]=0x20;g_ram[0x1662+6]=3;                       /* an enemy */
+        memset(seat_state(0),0,SEAT_BYTES);
+        knock(0,2,1);CHECK((g_ram[0x15ba+2]&0x20) && !(g_ram[0x15a2+2]&0x40) && !fire_hits);
+        knock(0,6,1);CHECK(g_ram[0x1662+6]==3 && !(g_ram[0x15a2+6]&0x40) && !g_ram[0x85f+0x20]);
+        g_ram[0x101f+3]=0;g_ram[0x15ba+3]=0;
+        knock(0,3,1);CHECK(!(g_ram[0x15ba+3]&0x20));                /* an ally: nothing */
+        /* Battle keeps stunning players. */
+        arena();memset(seat_state(0),0,SEAT_BYTES);
+        knock(0,1,2);CHECK((g_ram[0x15ba+1]&0x20) && seat_state(1)[S_DROPS]==1 && !(g_ram[0x15a2+1]&0x40));
+    }
     puts("special_abilities_tests: ok");
     return 0;
 }

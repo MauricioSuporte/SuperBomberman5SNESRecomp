@@ -22,6 +22,9 @@ uint8_t *SnesRomPtr(uint32 v) { return image + (((v >> 16) & 0x3f) << 16 | (v & 
 static bool characters, snapshot_ok = true, open_ok = true;
 static int snapshots, opens;
 bool NormalCharacterEnabled(void) { return characters; }
+static bool coop_menu; static unsigned coop_count = 1;
+bool NormalCoopPlayerMenu(void) { return coop_menu; }
+unsigned NormalCoopPlayerCount(void) { return coop_count; }
 bool NormalCharacterSnapshotBossRush(void) { ++snapshots; return snapshot_ok; }
 bool NormalCharacterOpenBossRush(void) { ++opens; return open_ok; }
 #include "../src/boss_rush_mod.c"
@@ -118,13 +121,21 @@ int main(void) {
     /* Still mode 2 menu 0 for a few frames: kept; the player menu, then B. */
     BossRushAfterFrame(); CHECK(pending == 1);
     g_ram[0x1036] = 1; BossRushAfterFrame(); CHECK(pending == 2);
+    /* Player-count menu: the category under the cursor (native rows, then
+     * the 5 Players menu, whose native cursor stays on row 0/1). */
+    g_ram[0x1032] = 1; CHECK(BossRushPlayerMenuCategory() == 2);
+    coop_menu = true; coop_count = 4; CHECK(BossRushPlayerMenuCategory() == 4);
+    coop_count = 5; CHECK(BossRushPlayerMenuCategory() == 5);
+    coop_menu = false; g_ram[0x1032] = 0; CHECK(BossRushPlayerMenuCategory() == 1);
     g_ram[0x1036] = 0; BossRushAfterFrame(); CHECK(!pending);
 
+    CHECK(BossRushSnapshotsAllowed());
     /* Without the picker: the 1P start op runs the handler. */
     title_menu(2); op_at(TITLE_CONFIRM, 11); g_ram[0x1036] = 1; BossRushAfterFrame();
     g_ram[0x1d25] = 1; g_ram[0x1d24] = 1; g_ram[0x6274] = 0x10;
     CHECK(start_through(START_1P));
     CHECK(BossRushActive() && !pending && g_ram[0x1d25] == 1 && g_ram[0x6274] == 0x90);
+    CHECK(!BossRushSnapshotsAllowed());                         /* no states during the rush */
     /* Timer: counts on screen, not paused, not black. */
     g_ram[0x0300] = 0x0f; g_ram[0x1d1a] = 0; g_ram[0x1d1d] = 0;
     BossRushAfterFrame(); BossRushAfterFrame(); CHECK(frames == 2);
@@ -168,7 +179,7 @@ int main(void) {
     BossRushQuitToTitle();
     CHECK(g_ram[0x1031] == 2 && g_ram[0x1d1e] == 4 && !g_ram[0x1d1d] && !(g_ram[0x1d1a] & 0x40));
     g_ram[0x6274] = 0x90; BossRushAfterFrame();
-    CHECK(!BossRushActive() && g_ram[0x6274] == 0x10);
+    CHECK(!BossRushActive() && g_ram[0x6274] == 0x10 && BossRushSnapshotsAllowed());
 
     /* With the picker: park, snapshot, host the picker, come back, start. */
     characters = true; g_ram[0x1d1e] = 0;

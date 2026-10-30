@@ -26,6 +26,9 @@ Vem desligado por padrão e exige um host compilado com este mod.
   transições com a tela preta.
 - **Pausa:** Start abre o menu de pausa com **Continuar** e **Voltar ao título**
   (com confirmação, inicialmente em **Não**), mesmo sem o mod de pausa ligado.
+- **Save states:** salvar e carregar estados (atalhos, menu de slots, rewind)
+  ficam bloqueados do início do boss rush até a volta ao título; um aviso
+  aparece quando ele começa.
 - **Fim do boss rush:** vencer o Terrorin (ZONE5 - J) encerra o tempo, que fica
   parado durante o final do jogo, e mostra **BOSS RUSH CONCLUÍDO** com o tempo.
 
@@ -140,6 +143,9 @@ off by default and needs a host built with this mod.
   paused and during black transitions.
 - **Pause:** Start opens **Resume** / **Return to title** (with a confirmation
   that starts on **No**), even when the pause-menu mod is off.
+- **Save states:** saving and loading states (hotkeys, the slot menu, rewind)
+  are off from the start of the rush until the title screen; a notice says so
+  when it starts.
 - **End:** beating Terrorin (ZONE5 - J) stops the clock for good (it stays
   frozen through the ending) and shows **BOSS RUSH CLEAR** with the time.
 

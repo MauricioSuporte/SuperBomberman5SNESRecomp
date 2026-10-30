@@ -72,7 +72,9 @@ Os inimigos mantêm a numeração do jogo original (atores 5-18); os Louies dos
 jogadores ficam nos atores 19-23. Os scripts das fases chamam inimigos e
 gimmicks pelo número do ator; quando os inimigos começavam no 10, a torre da
 ZONE5-1 ficava sem o núcleo e os raios, travando ao ser destruída, e outros
-gimmicks agiam sobre o ator errado.
+gimmicks agiam sobre o ator errado. O item Clock congela os atores 5-23, o que
+pegava também os Louies em 19-23 (ficavam parados sob os jogadores); desde a
+v2.5.2 ele pula as montarias (`src/clock_mounts.c`, `$C5:42E9`).
 
 Com cinco jogadores as cinco páginas de animação ficam com eles. Objetos que
 ficam sem página (o Louie e efeitos da fase) são desenhados a partir da ROM
@@ -167,7 +169,10 @@ sprites, Start rejoin graphics and P3's palette work with all five seats.
 Enemies keep the cartridge's numbering (actors 5-18); the players' Louies
 live in actors 19-23. Stage scripts name enemies and gimmicks by actor number;
 when enemies started at 10, ZONE5-1's tower lost its core and beams and froze
-when destroyed, and other gimmicks acted on the wrong actor.
+when destroyed, and other gimmicks acted on the wrong actor. The Clock item
+freezes actors 5-23, which caught the Louies at 19-23 too (they stood still
+under their riders); since v2.5.2 it skips mounts (`src/clock_mounts.c`,
+`$C5:42E9`).
 
 OBJ palettes: slot 0 stage, 1/2 P1/P2, 3-5 enemies, 6-7 large stage objects
 (the tower and its beams need both). P3-P5 take 7, 6 and 5 when free. The

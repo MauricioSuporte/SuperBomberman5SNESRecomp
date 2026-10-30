@@ -34,14 +34,15 @@
  *   Honey (boss): shooting animation; the shot hits the first target in
  *     line before a block. Kotetsu (boss): sword cut on the tile in front.
  * Debuff (Super Bomberman 4: Bazooka, Jet, Great; also Honey and Kotetsu):
- * 640 frames (about 10.7 s) from the trigger at half walking speed with the
- * ability blocked. Sound effects are Super Bomberman 4's (sb4_sound.c).
+ * 640 frames (about 10.7 s; Terrorin 1280) from the trigger at half walking
+ * speed with the ability blocked, and the seat's bombs reach one tile. Sound effects are Super Bomberman 4's (sb4_sound.c).
  *
  * Damage uses the cartridge's own rules (point damage $C0:373F): a player
  * actor gets $15A2 bit 6 (hit) unless invulnerable ($15A2 bit 2), an enemy
  * loses one point of $1662 with 180 frames of invulnerability ($085F).
  * Normal Game hits enemies and bosses only, never a player (no friendly
- * fire). Battle hits every other player, or only the other team in Team
+ * fire). Hammer's mace and Lady's laser never damage: they stun (Battle
+ * players, and a boss's rival bomber outside Battle) and take items. Battle hits every other player, or only the other team in Team
  * Battle ($7E625D bit 0; teams in $15A2 bits 3-4, from $6269 bit 7).
  * Stun and item loss are the cartridge's own: $15BA bit 5 makes the player
  * dazed for 50 frames and drop an item ($C4:4618/$C4:4631, which calls the
@@ -53,6 +54,7 @@
  * capture), so save states and rewind carry it without an extension. */
 #include "special_abilities.h"
 #include "actor_layout.h"
+#include "clock_mounts.h"
 #include "extra_characters_mod.h"
 #include "sb4_rom.h"
 #include "sb4_sound.h"
@@ -68,6 +70,9 @@ enum {
     LOSE_ITEM = 0xc437cd, RTL_C4 = 0xc436d1, BURN_BLOCK = 0xc5441d,
     BARRIER_SET = 0x18, BARRIER_SOUND = 0x0288, THROW_ITEM = 0xc4398c, FREEZE_PLAYER = 0xc44503, ITEM_CLOCK = 0x08,
     DEBUFF_FRAMES = 640, B_WINDOW = 8, TRAILS = 3,
+    /* Bomb creation with the seat in X: $C4:3040 (A = fire range from
+     * $17CA) and $C4:2787 (A = range | $80, the random bomb of a curse). */
+    BOMB_DROP = 0xc43040, BOMB_CURSE = 0xc42787,
 };
 /* Per seat: +0/1 debuff, +2/3 cooldown, +4 kind, +5/6 timer, +7 direction
  * (0 right, 1 down, 2 left, 3 up), +8/9 distance (pixels), +10..12 actors
@@ -92,7 +97,7 @@ static const Ability kAbility[9]={
     {AB_LASER,  0,            30},
     {AB_BAZOOKA,DEBUFF_FRAMES, 0},
     {AB_GREAT,  DEBUFF_FRAMES, 0},
-    {AB_BARRIER,DEBUFF_FRAMES, 0},
+    {AB_BARRIER,2*DEBUFF_FRAMES, 0}, /* Terrorin: twice as long (maintainer, 2026-10-29) */
 };
 enum { SHOT_FRAMES = 55, SHOT_AT = 32, SHOT_SPEED = 4, SLASH_FRAMES = 61, SLASH_FROM = 13, BAZOOKA_FRAMES = 98, BEAM_FROM = 68, BEAM_TO = 82,
        JET_WINDUP = 48, JET_SPEED = 4, TRAIL_LIFE = 16, HAMMER_FRAMES = 125, MACE_FROM = 29, MACE_TO = 106,
@@ -168,14 +173,18 @@ static void damage(unsigned actor) {
     if(!--g_ram[0x1662+actor]) g_ram[0x15a2+actor]|=0x40;
     else g_ram[0x85f+object]=0xb4;
 }
-/* Mace and laser: a player is stunned and loses `items` items (Battle; a
- * rival bomber in Normal Game is damaged instead), once per ability. */
+/* Mace and laser stun and take items; they never damage (maintainer,
+ * 2026-10-29). Battle: a player is stunned and loses `items` items. Normal
+ * Game and the Boss Rush: a boss's rival bomber is stunned the same way
+ * (one item, the cartridge's own reaction); enemies and the other bosses
+ * are not affected. Once per ability and actor. */
 static void knock(unsigned seat,unsigned actor,unsigned items) {
     uint8_t *s=seat_state(seat);
     if((s[S_HIT+actor/8]>>(actor%8))&1) return;
     s[S_HIT+actor/8]|=(uint8_t)(1u<<(actor%8));
-    if(actor>=5 || !battle()) { damage(actor);return; }
+    if(actor>=5) return;
     if(g_ram[0x15a2+actor]&0x04) return;
+    if(!battle()) { if(rival(actor)) g_ram[0x15ba+actor]|=0x20;return; }
     /* $15BA bit 5: the cartridge's own "stunned, drops an item" reaction
      * ($C4:4618 -> $C4:4631: one item, 50 frames dazed); further items
      * are taken with the same routine from the pad hook. */
@@ -694,6 +703,13 @@ static bool shielded(unsigned seat) {
     uint8_t *s=seat_state(seat);
     return s[S_KIND]==AB_JET || s[S_KIND]==AB_BARRIER;
 }
+/* While a seat's ability recovers (debuff), its bombs reach one tile. */
+static void bomb_range_hook(CpuState *cpu,uint32_t pc) {
+    unsigned seat=cpu->X&0xff;
+    if(!ExtraCharactersInstalled() || seat>=5 || !SpecialAbilityDebuffed(seat)) return;
+    unsigned range=pc==BOMB_CURSE?(cpu->A&0x80u)|1u:1u;
+    cpu->A=(uint16_t)((cpu->A&0xff00u)|range);
+}
 static void kill_hook(CpuState *cpu,uint32_t pc) {
     unsigned op=g_rom[((pc>>16)&0x3f)<<16|(pc&0xffff)];
     unsigned actor=(op==0x99?cpu->Y:cpu->X)&0xff;
@@ -708,6 +724,11 @@ void SpecialAbilitiesInstall(void) {
     unsigned death=((DEATH_HOOK>>16)&0x3f)<<16|(DEATH_HOOK&0xffff),clock=((CLOCK_HOOK>>16)&0x3f)<<16|(CLOCK_HOOK&0xffff);
     if(g_rom[death]==0x29 && g_rom[death+1]==0x04) interp_bridge_add_pre_opcode_hook(DEATH_HOOK,death_hook);
     if(g_rom[clock]==0xda && g_rom[clock+1]==0xa5 && g_rom[clock+2]==0x8d) interp_bridge_add_pre_opcode_hook(CLOCK_HOOK,clock_hook);
+    Sb5ClockSparesMountsInstall(); /* Terrorin's Clock in Battle: mounts are actors 5-9 */
+    /* Only on the expected JSLs to the bomb creator ($C5:1A68 / $C5:1A6D). */
+    const uint8_t *drop=g_rom+(((BOMB_DROP>>16)&0x3f)<<16|(BOMB_DROP&0xffff)),*curse=g_rom+(((BOMB_CURSE>>16)&0x3f)<<16|(BOMB_CURSE&0xffff));
+    if(drop[0]==0x22 && drop[1]==0x68 && drop[2]==0x1a && drop[3]==0xc5) interp_bridge_add_pre_opcode_hook(BOMB_DROP,bomb_range_hook);
+    if(curse[0]==0x22 && curse[1]==0x6d && curse[2]==0x1a && curse[3]==0xc5) interp_bridge_add_pre_opcode_hook(BOMB_CURSE,bomb_range_hook);
     if(!g_rom) return;
     for(unsigned k=0;k<sizeof(kKillStores)/sizeof(*kKillStores);++k) {
         uint32_t pc=kKillStores[k];unsigned at=((pc>>16)&0x3f)<<16|(pc&0xffff);

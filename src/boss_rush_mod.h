@@ -20,6 +20,8 @@ void BossRushPickerDone(bool cancelled);
 uint32_t BossRushFrames(void);
 /* Terrorin beaten during the rush: BossRushFrames() is the final time. */
 bool BossRushFinished(void);
+/* False while a rush runs: no save/load states, rewind included. */
+bool BossRushSnapshotsAllowed(void);
 /* Participation mask of the rush ($1D25 bits). */
 uint8_t BossRushRoster(void);
 /* 1-5 while the cursor of the Boss Rush player-count menu is on that count. */

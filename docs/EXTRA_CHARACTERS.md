@@ -71,8 +71,9 @@ normal.
    pegar, o **Terrorin** fica paralisado (parado, de pé). No
    **Normal Game** o Clock tem o efeito normal do item (congela os inimigos).
 
-O **debuff** (como no Super Bomberman 4): cerca de 10,7 s contados do uso,
-com metade da velocidade e a habilidade bloqueada.
+O **debuff** (como no Super Bomberman 4): cerca de 10,7 s contados do uso (o do
+Terrorin dura o dobro, cerca de 21,3 s), com metade da velocidade, a habilidade
+bloqueada e as bombas com alcance 1. O Clock não congela as montarias (Louies).
 
 ### Limitações
 
@@ -119,8 +120,9 @@ cell; the barrier drops at frame 192.
 In **Battle**, Terrorin taking his Clock paralyzes every other player (only
 the other team in Team Battle) for 144 frames, and an opponent taking it
 paralyzes Terrorin (frozen standing). In **Normal Game** the Clock keeps its stock
-effect (it freezes enemies). Afterwards Honey, Kotetsu and Terrorin move at
-half speed for about 10.7 s.
+effect (it freezes enemies). The Clock never freezes mounts (Louies).
+Afterwards Honey and Kotetsu move at half speed for about 10.7 s (Terrorin
+twice as long, about 21.3 s), with their bombs reaching one tile.
 
 Limits: the barrier sound is missing from the Battle sound set, so it is
 rendered in a private APU and played through the executable's mod mixer;

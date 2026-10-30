@@ -191,6 +191,11 @@ static void GameHardwareReset(void)
     SelectionColorReset();
 }
 
+/* Every save and load path of the framework (hotkeys, the slot menu,
+ * rewind, netplay's state menu) asks here first. A Boss Rush is timed and
+ * ranked: no states while one is running. */
+static bool GameSnapshotAllowed(void) { return BossRushSnapshotsAllowed(); }
+
 static void GameSaveExtra(struct SaveLoadInfo *sli) {
     NormalCharacterSave(sli);SelectionColorSave(sli);NormalCoopSave(sli);PauseMenuSave(sli);GoldBattleSave(sli);LouieSave(sli);BattleVariantsSave(sli);BossRushSave(sli);
 }
@@ -209,6 +214,7 @@ const RtlGameInfo kGameInfo = {
     .state_save_extra = &GameSaveExtra,
     .state_load_extra = &GameLoadExtra,
     .on_state_loaded = &NormalCharacterLoaded,
+    .snapshot_allowed = &GameSnapshotAllowed,
     /* Netplay rollback: the beam driver's resume PC and WAI latch are host
      * state the guest blob does not carry. */
     .exec_state_bound = &snes_beam_frame_driver_exec_state_bound,

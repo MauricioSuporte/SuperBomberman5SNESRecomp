@@ -42,6 +42,7 @@
 #include "mod_runtime.h"
 #include "menu_font.h"
 #include "normal_character_mod.h"
+#include "normal_coop_mod.h"
 #include "snes/interp_bridge.h"
 #include "snes/ppu.h"
 #include <stdbool.h>
@@ -85,12 +86,17 @@ bool BossRushActive(void) { return enabled && active; }
 bool BossRushKeepChoices(void) { return enabled && pending && picker == PICK_DONE; }
 uint32_t BossRushFrames(void) { return frames; }
 bool BossRushFinished(void) { return enabled && active && finished; }
+/* Save states (files, memory, rewind) are refused while a rush runs; the
+ * picker's own snapshots happen before it starts. */
+bool BossRushSnapshotsAllowed(void) { return !(enabled && active); }
 uint8_t BossRushRoster(void) { return mask; }
 /* The Boss Rush player-count menu on the title: the category (1-5) under
  * the cursor, 0 elsewhere. */
 unsigned BossRushPlayerMenuCategory(void) {
     if (!enabled || !installed || !pending || g_ram[MODE] != 2 || g_ram[MENU] != 1) return 0;
-    unsigned c = g_ram[CURSOR] + 1u;
+    /* The 5 Players menu keeps the native cursor on its two rows ($1032 is
+     * 0 or 1); its own count is the entry under the cursor. */
+    unsigned c = NormalCoopPlayerMenu() ? NormalCoopPlayerCount() : g_ram[CURSOR] + 1u;
     return c >= 1 && c <= 5 ? c : 0;
 }
 

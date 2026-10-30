@@ -4,6 +4,7 @@
  * cartridge. The cartridge file and the original SRAM layout are preserved. */
 #include "normal_coop_mod.h"
 #include "coop_corner_spawns_mod.h"
+#include "clock_mounts.h"
 #include "common_rtl.h"
 #include "common_cpu_infra.h"
 #include "mod_runtime.h"
@@ -832,6 +833,7 @@ void NormalCoopBeforeFrame(void) {
                           interp_bridge_add_pre_opcode_hook(0xc57140,page_service_entry) &&
                           interp_bridge_add_pre_opcode_hook(0xc56b77,page_upload) &&
                           interp_bridge_add_pre_opcode_hook(0xc3ff70,enemy_distances_native);
+        Sb5ClockSparesMountsInstall(); /* mounts at 19-23 are inside the Clock's range */
         build_spawn();build_rejoin();
     }
     raw_pad=RtlGetPadState(0);

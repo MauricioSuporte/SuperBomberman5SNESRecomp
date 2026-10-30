@@ -70,8 +70,10 @@ personagens extras do Super Bomberman 5, que também traz a barreira do Terrorin
 | Bomberman (SB4) | nenhuma (B normal) | — |
 
 - **Debuff** (como no Super Bomberman 4: Bazooka, Jet e Great; também Honey e
-  Kotetsu): cerca de **10,7 s** contados a partir do uso, com **metade da
-  velocidade** e a habilidade bloqueada. Hammer e Lady não têm debuff.
+  Kotetsu): cerca de **10,7 s** contados a partir do uso (o Terrorin, o dobro),
+  com **metade da velocidade**, a habilidade bloqueada e **as bombas com
+  alcance 1** (só um tile em volta de onde explodem). Hammer e Lady não têm
+  debuff.
 - **Sons:** os efeitos sonoros das habilidades são os do Super Bomberman 4
   (raio do Bazooka e rastro do Jet, maça do Hammer, laser da Lady, Great),
   tocados pelo próprio driver de som do SB4, que roda separado do SB5 a partir
@@ -86,7 +88,9 @@ personagens extras do Super Bomberman 5, que também traz a barreira do Terrorin
 - **Dano:** o raio do Bazooka, o rastro e o corpo do Jet, o tiro da Honey e o corte do
   Kotetsu são letais como uma explosão (nos inimigos e chefes, um ponto de vida
   com a invencibilidade temporária do próprio cartucho). A maça e o laser
-  atordoam e fazem perder itens com a reação do próprio SB5 (o item sai voando).
+  **nunca causam dano**: atordoam e fazem perder itens com a reação do próprio
+  SB5 (o item sai voando). Fora do Battle (Normal Game, Boss Rush) não fazem nada
+  aos inimigos e chefes e só atordoam os bombers rivais das lutas de chefe.
   No **Normal Game** atingem só inimigos e chefes, **nunca** outros jogadores.
   Os chefes bombers (o pirata do ZONE3 - D e os outros) só se machucam com fogo:
   o golpe passa pelo teste de fogo do próprio cartucho, então primeiro derruba o
@@ -177,8 +181,9 @@ attacks in their Normal Game boss fight:
 - Super Bomberman 4's Bomberman has none.
 
 - **Debuff** (Super Bomberman 4: Bazooka, Jet and Great; also Honey and
-  Kotetsu): about **10.7 s** counted from the trigger, at **half speed** with
-  the ability blocked. Hammer and Lady have none.
+  Kotetsu): about **10.7 s** counted from the trigger (Terrorin, twice that), at
+  **half speed** with the ability blocked and **bombs reaching one tile**.
+  Hammer and Lady have none.
 - **Sounds:** the abilities' sound effects are Super Bomberman 4's (Bazooka's
   beam and Jet's trail, Hammer's mace, Lady's laser, Great), played by SB4's
   own sound driver running separately from SB5's, from your SB4 ROM.
@@ -190,8 +195,10 @@ attacks in their Normal Game boss fight:
   skill stays on Y).
 - **Damage:** Bazooka's beam, Jet's trail and body, Honey's shot and Kotetsu's cut are
   lethal like an explosion (enemies and bosses lose one hit point with the
-  cartridge's temporary invulnerability). The mace and the laser stun and take
-  items with Super Bomberman 5's own reaction (the item flies off). **Normal
+  cartridge's temporary invulnerability). The mace and the laser **never
+  damage**: they stun and take items with Super Bomberman 5's own reaction (the
+  item flies off). Outside Battle (Normal Game, Boss Rush) they do nothing to
+  enemies and bosses and only stun the rival bombers of boss fights. **Normal
   Game** hits enemies and bosses only, **never** other players; the bomber
   bosses (ZONE3 - D's Pirate Bomber and the others) are hurt only by fire, so a
   hit goes through the cartridge's own fire test: their Louie first, then a hit

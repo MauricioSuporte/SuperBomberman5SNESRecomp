@@ -19,6 +19,7 @@
 #include "boss_rush_ranking.h"
 #include "common_rtl.h"
 #include "ptbr_mod.h"
+#include "snes_osd.h"
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -36,7 +37,7 @@ enum { RES_NONE, RES_WAIT, RES_NAME, RES_ASK, RES_SENDING, RES_DONE };
 enum { NAME_MAX = 12, GRID_COLS = 10, GRID_ROWS = 5, WAIT_FRAMES = 60 * 20, SHOW_FRAMES = 60 * 12 };
 static const char kGrid[4][GRID_COLS + 1] = {"ABCDEFGHIJ", "KLMNOPQRST", "UVWXYZ0123", "456789-.!?"};
 
-static bool was_finished;
+static bool was_finished, was_active;
 static int state = RES_NONE;
 static BrEntry entry;
 static bool online, host;
@@ -114,6 +115,10 @@ static void begin(void) {
 static bool capturing(void) { return !online && (state == RES_NAME || state == RES_ASK); }
 
 void BossRushResultsBeforeFrame(void) {
+    bool active = BossRushActive();
+    if (active && !was_active)
+        snes_osd_push(pt() ? "Boss Rush: save states desativados ate o fim" : "Boss Rush: save states are off until it ends", 4000);
+    was_active = active;
     bool finished = BossRushFinished();
     if (finished && !was_finished) begin();
     was_finished = finished;
@@ -301,5 +306,5 @@ void BossRushResultsDraw(void) {
 }
 
 void BossRushResultsReset(void) {
-    state = RES_NONE; was_finished = false; masked = false; prev_pads = 0;
+    state = RES_NONE; was_finished = was_active = false; masked = false; prev_pads = 0;
 }

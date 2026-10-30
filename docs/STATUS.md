@@ -1,5 +1,27 @@
 # Super Bomberman 5: estado do protótipo
 
+## Unreleased — 2026-10-29: Boss Rush fixes and ability rules
+
+- Boss Rush top-5 preview: with the 5 Players mod the native cursor `$1032` stays on rows 0/1, so entries 3-5
+  showed 2P; the category now comes from `NormalCoopPlayerCount()` in that menu. Linux LLE route with co-op and
+  PT-BR: 1P..5P shown as the cursor moves.
+- Save states off during a rush: `RtlGameInfo.snapshot_allowed` (every file/memory save and load path, rewind
+  and netplay's state menu included) answers `BossRushSnapshotsAllowed()`; a toast at the start. Lab probe
+  (`RtlSaveSnapshotToMemory` sizing at chosen frames): title 717895 bytes, stage `$67` during the rush 0, title
+  after Pause -> Return to title 717895. Netplay's initial state sync happens before any rush.
+- Clock and mounts: `$C5:42D3` freezes actors 5-23 (`CPX #$18` at `$C5:42F5`); the stock campaign's mounts are
+  actors 2-3, co-op's 19-23 and Battle's 5-9. `src/clock_mounts.c` hooks `$C5:42E9` (STX `$8D`) and skips a mount
+  (`Sb5MountOffset`), installed by co-op and by the special abilities (Terrorin's Battle Clock). Lab route: 3P
+  co-op, P1 on a Louie (egg poked on the next cell), Clock poked: actor `$13` reached `$C5:42E9` and was not passed
+  to the freeze helper `$C4:22CC`.
+- Debuff: bombs of a debuffed seat reach one tile. Player bombs are created at `$C4:3040` (A = `$17CA` fire range)
+  and `$C4:2787` (A = range | `$80`, the curse's random bomb), X = seat; pre-opcode hooks set the range to 1. Lab:
+  Honey in the rush, fire 4: bomb A = 4 before, 1 with the debuff set. Terrorin's debuff doubled (1280 frames).
+- Hammer and Lady never damage: outside Battle they ignore enemies and bosses and stun a boss's rival bomber with
+  the cartridge's reaction (`$15BA` bit 5). Lab: bit set on ZONE1 - A's rival (slot 2): stun animation `$21` for
+  about 50 frames, then it walks on; no hang. Native tests cover range, duration and knock.
+- Not validated: the abilities triggered by play with the real SB4 ROM (Hammer/Lady are Bomber Kings), Windows.
+
 ## v2.5.1 — 2026-10-29: Boss Rush online ranking (Discord)
 
 - Request: at the end of the rush, a ranking per player count (1-5, top 5) posted to a Discord channel through a

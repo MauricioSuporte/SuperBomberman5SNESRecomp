@@ -66,6 +66,7 @@ add_executable(SuperBomberman5SNESRecomp
     src/boss_rush_ranking.c
     src/boss_rush_net.c
     src/boss_rush_results.c
+    src/clock_mounts.c
     src/normal_coop_mod.c
     src/coop_corner_spawns_mod.c
     src/selection_color_mod.c
@@ -183,7 +184,7 @@ if(BUILD_TESTING)
         target_compile_definitions(updater_tests PRIVATE _DEFAULT_SOURCE)
     endif()
     add_test(NAME updater COMMAND updater_tests)
-    add_executable(normal_coop_tests tests/normal_coop_tests.c)
+    add_executable(normal_coop_tests tests/normal_coop_tests.c src/clock_mounts.c)
     target_include_directories(normal_coop_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src")
     add_test(NAME normal_five_player_coop COMMAND normal_coop_tests)
     add_executable(selection_color_tests tests/selection_color_tests.c)
@@ -198,7 +199,7 @@ if(BUILD_TESTING)
     target_include_directories(extra_characters_tests PRIVATE
         "${SNESRECOMP_ROOT}/runner/src")
     add_test(NAME extra_characters COMMAND extra_characters_tests)
-    add_executable(special_abilities_tests tests/special_abilities_tests.c)
+    add_executable(special_abilities_tests tests/special_abilities_tests.c src/clock_mounts.c)
     target_include_directories(special_abilities_tests PRIVATE
         "${SNESRECOMP_ROOT}/runner/src")
     add_test(NAME special_abilities COMMAND special_abilities_tests)
