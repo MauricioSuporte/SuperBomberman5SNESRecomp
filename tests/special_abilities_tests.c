@@ -368,7 +368,7 @@ int main(void) {
     /* The Clock spares mounts: co-op puts them at 19-23, Battle at 5-9;
      * the stock campaign (offset 2) keeps them out of the frozen range. */
     {
-        uint8_t ram[0x200]={0};
+        static uint8_t ram[0x2000];memset(ram,0,sizeof(ram));
         ram[0x1cbf]=5;ram[0x11e]=19;
         CHECK(Sb5ClockIsMount(ram,19) && Sb5ClockIsMount(ram,23) && !Sb5ClockIsMount(ram,18) && !Sb5ClockIsMount(ram,5));
         ram[0x11e]=0;

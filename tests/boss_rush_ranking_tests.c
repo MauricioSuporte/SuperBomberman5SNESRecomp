@@ -10,7 +10,7 @@ static BrEntry make(uint32_t frames, unsigned players, const char *first, unsign
     memset(&e, 0, sizeof(e));
     e.frames = frames; e.players = (uint8_t)players; e.online = players > 1;
     strcpy(e.date, "2026-10-29");
-    for (unsigned k = 0; k < players; ++k) {
+    for (unsigned k = 0; k < players && k < BR_SEATS; ++k) {  /* a bad count still has five seats */
         char n[32];
         snprintf(n, sizeof(n), "%s%u", first, k + 1);
         BrSetName(e.player[k].name, k ? n : first);

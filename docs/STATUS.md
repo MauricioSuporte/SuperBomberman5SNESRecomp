@@ -21,6 +21,10 @@
   the cartridge's reaction (`$15BA` bit 5). Lab: bit set on ZONE1 - A's rival (slot 2): stun animation `$21` for
   about 50 frames, then it walks on; no hang. Native tests cover range, duration and knock.
 - Not validated: the abilities triggered by play with the real SB4 ROM (Hammer/Lady are Bomber Kings), Windows.
+- The first v2.5.2 Windows run crashed (exit 139) in the native tests: two new test helpers wrote past their
+  buffers (a 0x200-byte WRAM stand-in, a sixth seat). Fixed and checked with AddressSanitizer/UBSan on every
+  standalone native test, which also found an old 2-byte over-read in `gold_battle_mod.c` (`emit_rule` copied 6
+  bytes of a 4-byte array; the generated program is byte-identical).
 
 ## v2.5.1 — 2026-10-29: Boss Rush online ranking (Discord)
 

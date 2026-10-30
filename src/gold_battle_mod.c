@@ -67,7 +67,7 @@ static unsigned emit_rule(uint8_t *out,bool right) {
         unsigned target=right?(i<3?i+1:3):(i?i-1:0);
         unsigned at=n;
         cases[i]=at;out[jumps[i]+1]=(uint8_t)(at-(jumps[i]+2));
-        const uint8_t clear[]={0xff,0x60,0x58,0};memcpy(out+n,clear,6);n+=4;
+        const uint8_t clear[]={0xff,0x60,0x58,0};memcpy(out+n,clear,sizeof(clear));n+=sizeof(clear);
         if(modes[target]) { out[n++]=0xff;out[n++]=0x60;out[n++]=modes[target];out[n++]=1; }
         const uint8_t draw[]={0xff,0x8e,layouts[target],6,1,22,18,0x42,1,2,0};
         memcpy(out+n,draw,sizeof(draw));n+=sizeof(draw);
