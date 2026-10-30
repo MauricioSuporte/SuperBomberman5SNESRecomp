@@ -8,9 +8,10 @@
 /* Picker choices: 1-10 the cartridge's characters (10 = Subordinate Bomber
  * with its mod), 11-19 the extra characters (extra_characters_mod.h). */
 static const char *const kNames[20] = {
-    NULL, "Bomberman", "Bomber 2", "Bomber 3", "Bomber 4", "Bomber 5",
-    "Bomber 6", "Bomber 7", "Bomber 8", "Bomber 9", "Subordinate Bomber",
-    "Honey", "Kotetsu", "Bomberman (SB4)", "Hammer", "Jet", "Lady", "Bazooka", "Great Bomber", "Terrorin",
+    NULL, "Bomberman", "Bomber Woof", "Dave Bomber", "Gary Bomber", "Pirate Bomber",
+    "Muscle Bomber", "Iron Mask Bomber", "Baron Bombano", "Plunder Bomber", "Subordinate Bomber",
+    "Honey", "Kotetsu", "Bomberman (SB4)", "Hammer Bomber", "Jet Bomber", "Lady Bomber", "Bazooka Bomber",
+    "Bomber Great", "Terrorin",
 };
 const char *BrCharacterName(unsigned choice) {
     return choice < 20 && kNames[choice] ? kNames[choice] : "?";

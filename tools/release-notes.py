@@ -1275,6 +1275,13 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '2.5.1': (
+'''- **Boss Rush online ranking (Discord):** the five best times for each player count (1-5) are kept in a message of the project's Discord channel, and every new top-5 time posts a notice there. When connected, the Boss Rush player-count menu shows the top 5 of the count under the cursor. At the end of an online rush (beating Terrorin) the room host sends the time with every player's name and character; offline, when the time makes the top 5, each player types a name and chooses whether to send it. Without internet only the time is shown, and the game never waits.
+- The Boss Rush timer stops for good when Terrorin is beaten (it used to keep counting through the ending).
+- Everyone in an online room needs v2.5.1.''',
+'''- **Ranking online do Boss Rush (Discord):** os cinco melhores tempos de cada quantidade de jogadores (1 a 5) ficam numa mensagem do canal do Discord do projeto, e cada novo tempo no top 5 gera um aviso lá. Conectado, o menu de jogadores do Boss Rush mostra o top 5 da quantidade sob o cursor. No fim de um boss rush online (ao vencer o Terrorin) o anfitrião da sala envia o tempo com o nome e o personagem de cada jogador; offline, quando o tempo entra no top 5, cada jogador digita o nome e escolhe se quer enviar. Sem internet aparece só o tempo, e o jogo nunca espera.
+- O cronômetro do Boss Rush para de vez ao vencer o Terrorin (antes continuava contando durante o final).
+- Todos na sala online precisam da v2.5.1.'''),
     '2.5.0': (
 '''- **New mod: Boss Rush** (Mods → Gameplay): **BOSS RUSH** on the title menu, between BATTLE GAME and OPTIONS. It is the cartridge's own boss rush (password **3879**): the player-count menu first (up to five players with the 5 Players mod), then, with **Normal Game — character selection** on, the character picker (with colors when that mod is on; **B** returns to the title). The characters and colors chosen stay for the whole rush. A run timer (`MM:SS.CC`) sits at the top right, and the pause menu offers **Return to title**. In PT-BR: **CORRIDA DE CHEFES**, and the title menu reads JOGO NORMAL / MODO BATALHA / OPÇÕES. Disabled by default. [Details](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/blob/main/docs/BOSS_RUSH.md)
 - **Launcher on Direct3D 11 (Windows):** the launcher now renders with Direct3D 11 instead of OpenGL, falling back to SDL's other renderers when D3D11 is unavailable. The game window is unchanged.

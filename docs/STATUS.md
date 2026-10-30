@@ -1,6 +1,6 @@
 # Super Bomberman 5: estado do protótipo
 
-## Unreleased — 2026-10-29: Boss Rush online ranking (Discord)
+## v2.5.1 — 2026-10-29: Boss Rush online ranking (Discord)
 
 - Request: at the end of the rush, a ranking per player count (1-5, top 5) posted to a Discord channel through a
   webhook bot; online the room host sends the time with every player's name and character, offline the player types a
@@ -22,8 +22,15 @@
   syntax check of the Windows branch. Linux LLE route against a local stand-in for the webhook API: preview empty and
   filled (cursor 1P/2P), forced end, name MAU typed, Yes → GET, PATCH board, POST notice (rank 1, 00:17.70); a closed
   port shows only the time and nothing waits.
-- Not validated: real Discord (no webhook yet), a netplay host's automatic send, Windows, a played (not forced) end.
-  Stock picker characters 2-9 have placeholder names in the posts until their names are confirmed.
+- Character names in the posts (choices 1-19) as given by the maintainer: Bomberman, Bomber Woof, Dave Bomber, Gary
+  Bomber, Pirate Bomber, Muscle Bomber, Iron Mask Bomber, Baron Bombano, Plunder Bomber, Subordinate Bomber, Honey,
+  Kotetsu, Bomberman (SB4), Hammer Bomber, Jet Bomber, Lady Bomber, Bazooka Bomber, Bomber Great, Terrorin.
+- The release workflow reads the board through the webhook before publishing (`--check`) when the secrets exist.
+- Not validated: a game client against real Discord (this environment cannot reach it), a netplay host's automatic
+  send, Windows, a played (not forced) end. Not in v2.5.1: Jet (Bomber Kings) shown only after a Game Over in the
+  rush (needs the SB4 ROM to reproduce) and the netplay "files" refusal (needs the room's screen); the lobby plan
+  holds 16 packages (`RNET_LOBBY_MAX_MODS`), so with all 17 on the 17th (L/R colors) is not in the published plan
+  (the launch check compares the full sets, so a match still requires the same mods).
 
 ## v2.5.0 — 2026-10-29: Boss Rush mod (title screen); Direct3D 11 launcher
 

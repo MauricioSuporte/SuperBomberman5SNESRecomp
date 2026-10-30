@@ -12,6 +12,8 @@ read it, so rotate the webhook (and the secrets) if the channel is abused.
       BOSS_RUSH_WEBHOOK=<webhook url> python tools/boss-rush-ranking.py --create-board
   Add the configuration to a release ZIP (CI; skipped without the secrets):
       python tools/boss-rush-ranking.py --add-to-zip dist/<package>.zip
+  Check that the webhook can read the board (CI, before publishing):
+      python tools/boss-rush-ranking.py --check
 
 Neither command prints the webhook URL.
 """
@@ -79,12 +81,36 @@ def add_to_zip(path: Path) -> int:
     return 0
 
 
+def check() -> int:
+    url = webhook_from_env()
+    board = os.environ.get('BOSS_RUSH_BOARD', '').strip()
+    if not url or not re.fullmatch(r'\d{5,30}', board):
+        print('Boss Rush ranking secrets not set: nothing to check.')
+        return 0
+    request = urllib.request.Request(f'{url}/messages/{board}', headers={'User-Agent': 'SuperBomberman5Recomp'})
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            message = json.loads(response.read().decode('utf-8'))
+    except Exception as error:  # the URL must never be printed
+        print(f'Boss Rush ranking board not readable: {type(error).__name__} {getattr(error, "code", "")}'.strip())
+        return 1
+    found = sorted(int(m) for m in re.findall(r'sb5br1 c=([1-5])', json.dumps(message)))
+    if found != [1, 2, 3, 4, 5]:
+        print(f'Boss Rush ranking board has categories {found}, expected 1-5.')
+        return 1
+    print('Boss Rush ranking board readable: 5 categories.')
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--create-board', action='store_true')
     group.add_argument('--add-to-zip', type=Path)
+    group.add_argument('--check', action='store_true')
     args = parser.parse_args()
+    if args.check:
+        return check()
     return create_board() if args.create_board else add_to_zip(args.add_to_zip)
 
 
