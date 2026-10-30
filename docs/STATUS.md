@@ -1,6 +1,6 @@
 # Super Bomberman 5: estado do protótipo
 
-## Unreleased — 2026-10-29: Boss Rush fixes and ability rules
+## v2.5.2 — 2026-10-29: Boss Rush fixes and ability rules
 
 - Boss Rush top-5 preview: with the 5 Players mod the native cursor `$1032` stays on rows 0/1, so entries 3-5
   showed 2P; the category now comes from `NormalCoopPlayerCount()` in that menu. Linux LLE route with co-op and

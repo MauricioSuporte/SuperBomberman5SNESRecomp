@@ -1275,6 +1275,19 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '2.5.2': (
+'''- **Boss Rush:** save and load states (hotkeys, slot menu and rewind) are off from the start of a rush until the title screen, so ranked times are played straight; a notice shows when the rush starts.
+- **Fix: Boss Rush top 5 with the 5 Players mod:** on the player-count menu, entries 3, 4 and 5 showed the 2P ranking; each now shows its own.
+- **Fix: Clock and Louies:** picking up a Clock froze the players' Louies (mostly with the 5 Players mod, and with Terrorin's Clock in Battle); it now freezes only enemies.
+- **Abilities:** while a B + direction ability recovers (debuff), that player's bombs reach one tile. Terrorin's debuff lasts twice as long (about 21 s).
+- **Hammer and Lady:** the mace and the laser never deal damage. In Battle they stun and take items as before; in Normal Game and the Boss Rush they leave enemies and bosses alone and only stun the rival bombers of boss fights (they used to damage bosses).
+- Everyone in an online room needs v2.5.2.''',
+'''- **Boss Rush:** salvar e carregar estados (atalhos, menu de slots e rewind) ficam bloqueados do início do boss rush até a tela de título, para os tempos do ranking serem jogados de verdade; um aviso aparece quando ele começa.
+- **Correção: top 5 do Boss Rush com o mod de 5 jogadores:** no menu de jogadores, as opções 3, 4 e 5 mostravam o ranking de 2P; agora cada uma mostra o seu.
+- **Correção: Clock e Louies:** pegar um Clock congelava os Louies dos jogadores (principalmente com o mod de 5 jogadores, e com o Clock do Terrorin no Battle); agora ele congela só os inimigos.
+- **Habilidades:** enquanto uma habilidade B + direção se recupera (debuff), as bombas desse jogador alcançam só 1 tile. O debuff do Terrorin dura o dobro (cerca de 21 s).
+- **Hammer e Lady:** a maça e o laser nunca causam dano. No Battle continuam atordoando e tirando itens; no Normal Game e no Boss Rush não afetam inimigos nem chefes e só atordoam os bombers rivais das lutas de chefe (antes causavam dano nos chefes).
+- Todos na sala online precisam da v2.5.2.'''),
     '2.5.1': (
 '''- **Boss Rush online ranking (Discord):** the five best times for each player count (1-5) are kept in a message of the project's Discord channel, and every new top-5 time posts a notice there. When connected, the Boss Rush player-count menu shows the top 5 of the count under the cursor. At the end of an online rush (beating Terrorin) the room host sends the time with every player's name and character; offline, when the time makes the top 5, each player types a name and chooses whether to send it. Without internet only the time is shown, and the game never waits.
 - The Boss Rush timer stops for good when Terrorin is beaten (it used to keep counting through the ending).
