@@ -118,7 +118,7 @@ static int http(const char *method, const char *url, const char *body, char *out
     f = fopen(cfg_path, "wb");
     if (!f) { if (body) remove(body_path); return 0; }
     fprintf(f, "url = \"%s\"\nrequest = \"%s\"\nsilent\nshow-error\nmax-time = 12\nconnect-timeout = 6\n"
-               "header = \"User-Agent: SuperBomberman5Recomp\"\nwrite-out = \"\\n%%{http_code}\"\n",
+               "header = \"User-Agent: DiscordBot (https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp, 1)\"\nwrite-out = \"\\n%%{http_code}\"\n",
             url, method);
     if (body) {
         fprintf(f, "header = \"Content-Type: application/json\"\ndata-binary = \"@");

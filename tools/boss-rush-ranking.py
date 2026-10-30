@@ -26,6 +26,8 @@ import urllib.request
 import zipfile
 from pathlib import Path
 
+# Discord asks API clients for this User-Agent form; the game sends the same.
+USER_AGENT = 'DiscordBot (https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp, 1)'
 WEBHOOK_RE = re.compile(r'^https://(?:(?:ptb|canary)\.)?discord(?:app)?\.com/api/' r'webhooks/\d+/[A-Za-z0-9_\-]+$')
 CONFIG_NAME = 'boss_rush_ranking.cfg'
 EMPTY_BOARD = {
@@ -50,7 +52,7 @@ def create_board() -> int:
         print('Set BOSS_RUSH_WEBHOOK to the channel webhook URL (Discord: channel settings > Integrations > Webhooks).')
         return 2
     request = urllib.request.Request(url + '?wait=true', data=json.dumps(EMPTY_BOARD).encode('utf-8'),
-                                     headers={'Content-Type': 'application/json', 'User-Agent': 'SuperBomberman5Recomp'},
+                                     headers={'Content-Type': 'application/json', 'User-Agent': USER_AGENT},
                                      method='POST')
     with urllib.request.urlopen(request, timeout=20) as response:
         message = json.loads(response.read().decode('utf-8'))
@@ -81,24 +83,41 @@ def add_to_zip(path: Path) -> int:
     return 0
 
 
+def annotate(level: str, text: str) -> None:
+    """A GitHub Actions annotation (readable through the API, unlike logs)."""
+    print(f'::{level}::{text}' if os.environ.get('GITHUB_ACTIONS') else text)
+
+
+def curl_get(url: str) -> tuple[int, str]:
+    """The game's request: curl with a config file (never the URL on the command line)."""
+    import shutil, subprocess, tempfile
+    if not shutil.which('curl'):
+        return -1, 'curl not found'
+    with tempfile.TemporaryDirectory() as tmp:
+        cfg = Path(tmp) / 'req.txt'
+        cfg.write_text(f'url = "{url}"\nrequest = "GET"\nsilent\nshow-error\nmax-time = 12\nconnect-timeout = 6\n'
+                       f'header = "User-Agent: {USER_AGENT}"\nwrite-out = "\\n%{{http_code}}"\n')
+        out = subprocess.run(['curl', '-K', str(cfg)], capture_output=True, text=True)
+    body, _, code = out.stdout.rpartition('\n')
+    return (int(code) if code.isdigit() else 0), body if code.isdigit() else out.stderr.strip()
+
+
 def check() -> int:
     url = webhook_from_env()
     board = os.environ.get('BOSS_RUSH_BOARD', '').strip()
     if not url or not re.fullmatch(r'\d{5,30}', board):
-        print('Boss Rush ranking secrets not set: nothing to check.')
+        annotate('warning', 'Boss Rush ranking secrets not set (or malformed): packages ship without the online ranking.')
         return 0
-    request = urllib.request.Request(f'{url}/messages/{board}', headers={'User-Agent': 'SuperBomberman5Recomp'})
-    try:
-        with urllib.request.urlopen(request, timeout=20) as response:
-            message = json.loads(response.read().decode('utf-8'))
-    except Exception as error:  # the URL must never be printed
-        print(f'Boss Rush ranking board not readable: {type(error).__name__} {getattr(error, "code", "")}'.strip())
+    code, body = curl_get(f'{url}/messages/{board}')
+    if code != 200:
+        snippet = re.sub(r'https?://\S+', '<url>', body)[:300].replace('\n', ' ')
+        annotate('error', f'Boss Rush ranking board not readable with curl: HTTP {code}: {snippet}')
         return 1
-    found = sorted(int(m) for m in re.findall(r'sb5br1 c=([1-5])', json.dumps(message)))
+    found = sorted(int(m) for m in re.findall(r'sb5br1 c=([1-5])', body))
     if found != [1, 2, 3, 4, 5]:
-        print(f'Boss Rush ranking board has categories {found}, expected 1-5.')
+        annotate('error', f'Boss Rush ranking board has categories {found}, expected 1-5.')
         return 1
-    print('Boss Rush ranking board readable: 5 categories.')
+    annotate('notice', 'Boss Rush ranking board readable through the webhook (5 categories).')
     return 0
 
 
