@@ -1,0 +1,33 @@
+name: Boss Rush ranking
+
+# Moderation of the Boss Rush ranking message on Discord: removes one time
+# (category = player count, rank = 1-5). The expected time guards against
+# removing the wrong line if the board changed meanwhile. The webhook comes
+# from the repository secrets and is never printed.
+on:
+  workflow_dispatch:
+    inputs:
+      remove:
+        description: 'Entry to remove, CATEGORY:RANK (for example 2:1 = 2 players, first place)'
+        required: true
+        type: string
+      expect_time:
+        description: 'Time shown on that line (MM:SS.CC); nothing is removed if it differs'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  remove:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove the time from the board
+        env:
+          BOSS_RUSH_WEBHOOK: ${{ secrets.BOSS_RUSH_WEBHOOK }}
+          BOSS_RUSH_BOARD: ${{ secrets.BOSS_RUSH_BOARD }}
+          REMOVE: ${{ inputs.remove }}
+          EXPECT_TIME: ${{ inputs.expect_time }}
+        run: python3 tools/boss-rush-ranking.py --remove "$REMOVE" --expect-time "$EXPECT_TIME"

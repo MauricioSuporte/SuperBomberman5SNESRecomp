@@ -193,8 +193,17 @@ int main(void) {
     /* The Normal character mod restores the title and reports. */
     g_ram[0x1031] = 2; g_ram[0x1036] = 1;
     BossRushPickerDone(false); CHECK(picker == PICK_DONE && BossRushKeepChoices() && g_ram[0x0300] == 0x80);
+    coop_menu = true; coop_count = 5;                       /* 5 Players: native 2P path, five seats */
     CHECK(start_through(START_2P));
+    coop_menu = false; coop_count = 1;
     CHECK(BossRushActive() && g_ram[0x1d25] == 3 && g_ram[0x1d24] == 3 && !BossRushKeepChoices());
+    CHECK(BossRushRoster() == 0x1f);                         /* the ranking category is 5 players */
+    {   /* the roster survives a save state */
+        Stream rs = {{transfer}, {0}, 0, 0, false};
+        BossRushSave(&rs.base);
+        rs.at = 0; rs.reading = true; BossRushLoad(&rs.base, 1);
+        CHECK(!failed && BossRushRoster() == 0x1f && g_ram[0x1d24] == 3);
+    }
     g_ram[0x1031] = 2; BossRushAfterFrame(); CHECK(!BossRushActive());
     /* Cancel: back to the title scene. */
     g_ram[0x1d1e] = 0; title_menu(2); op_at(TITLE_CONFIRM, 11); g_ram[0x1036] = 1; BossRushAfterFrame();

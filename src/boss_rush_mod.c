@@ -80,6 +80,9 @@ static unsigned step;
 static CpuState saved_cpu;
 static uint32_t start_op;
 static uint8_t mask, flag;
+/* Seats chosen for the rush (the ranking category). $1D25 only knows P1/P2:
+ * the 5 Players menu keeps its own count. */
+static uint8_t roster;
 
 bool BossRushEnabled(void) { return enabled; }
 bool BossRushActive(void) { return enabled && active; }
@@ -89,7 +92,7 @@ bool BossRushFinished(void) { return enabled && active && finished; }
 /* Save states (files, memory, rewind) are refused while a rush runs; the
  * picker's own snapshots happen before it starts. */
 bool BossRushSnapshotsAllowed(void) { return !(enabled && active); }
-uint8_t BossRushRoster(void) { return mask; }
+uint8_t BossRushRoster(void) { return roster ? roster : mask; }
 /* The Boss Rush player-count menu on the title: the category (1-5) under
  * the cursor, 0 elsewhere. */
 unsigned BossRushPlayerMenuCategory(void) {
@@ -238,6 +241,8 @@ static void vm_hook(CpuState *cpu, uint32_t pc) {
     }
     /* Start (picker done or not used). */
     mask = g_ram[0x1d25]; flag = g_ram[0x1d24];
+    roster = NormalCoopPlayerMenu() && NormalCoopPlayerCount() >= 1 && NormalCoopPlayerCount() <= 5
+           ? (uint8_t)((1u << NormalCoopPlayerCount()) - 1) : 0;
     if (!mask) { mask = 1; flag = 1; }
     set_script_pc(op);
     saved_cpu = *cpu;
@@ -413,12 +418,12 @@ void BossRushDraw(void) {
 
 void BossRushReset(void) {
     injecting = false; step = 0; start_op = 0;
-    pending = picker = active = finished = 0; frames = 0; saved_bit = 0; last_mode = 0;
+    pending = picker = active = finished = roster = 0; frames = 0; saved_bit = 0; last_mode = 0;
 }
 #define BR_MAGIC 0x48535242u /* "BRSH" */
 void BossRushSave(struct SaveLoadInfo *sli) {
     uint32_t magic = BR_MAGIC;
-    uint8_t state[8] = {pending, picker, active, saved_bit, finished, mask, flag, last_mode};
+    uint8_t state[8] = {pending, picker, active, saved_bit, finished, mask, (uint8_t)(flag | roster << 3), last_mode};
     sli->func(sli, &magic, 4); sli->func(sli, state, sizeof(state)); sli->func(sli, &frames, 4);
 }
 void BossRushLoad(struct SaveLoadInfo *sli, unsigned version) {
@@ -429,12 +434,12 @@ void BossRushLoad(struct SaveLoadInfo *sli, unsigned version) {
     uint8_t state[8] = {0};
     sli->func(sli, &magic, 4); sli->func(sli, state, sizeof(state)); sli->func(sli, &f, 4);
     if (magic != BR_MAGIC || state[0] > 2 || state[1] > PICK_HOSTING || state[2] > 1 || (state[3] & ~RUSH_BIT) || state[4] > 1 ||
-        state[5] > 0x1f || state[6] > 3) {
+        state[5] > 0x1f || (state[6] & 4)) {
         RtlStateStreamFail(sli);
         return;
     }
     pending = state[0]; picker = state[1]; active = state[2]; saved_bit = state[3];
-    mask = state[5]; flag = state[6]; frames = f; finished = state[4]; last_mode = state[7];
+    mask = state[5]; flag = state[6] & 3; roster = state[6] >> 3; frames = f; finished = state[4]; last_mode = state[7];
 }
 
 static void reset_plugin(void) { BossRushReset(); uninstall(); enabled = false; }

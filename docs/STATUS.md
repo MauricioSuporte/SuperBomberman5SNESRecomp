@@ -1,5 +1,16 @@
 # Super Bomberman 5: estado do protótipo
 
+## Unreleased — 2026-10-30: Boss Rush ranking category with 5 Players
+
+- Report: a five-player rush (v2.5.1) was posted as a 2-player time (two names). Cause: the entry's roster came
+  from the mask stored at the start op (`$1D25`), which the 5 Players menu leaves at the native 1P/2P values; the
+  chosen count lives in the co-op mod. The rush now records `NormalCoopPlayerCount()` when that menu was in use
+  (save-state byte 6 bits 3-7). Linux LLE routes against the local webhook stand-in: 5P posted as 5 players with
+  five names, 2P and 3P unchanged; native test and save-state round trip.
+- Moderation: `tools/boss-rush-ranking.py --remove CATEGORY:RANK --expect-time` and the workflow
+  `.github/workflows/boss-rush-ranking.yml`; the Python board writer was checked byte-for-byte (as JSON) against
+  the C writer with UTF-8, markdown and reserved characters in names.
+
 ## v2.5.2 — 2026-10-29: Boss Rush fixes and ability rules
 
 - Boss Rush top-5 preview: with the 5 Players mod the native cursor `$1032` stays on rows 0/1, so entries 3-5

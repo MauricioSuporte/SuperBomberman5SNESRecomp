@@ -120,3 +120,9 @@ Setup, once: in Discord, channel settings → Integrations → Webhooks → New 
 message id; pin it); then `gh secret set BOSS_RUSH_WEBHOOK` and `gh secret set BOSS_RUSH_BOARD` (values from stdin).
 The URL can be read by anyone who unpacks a release: if the channel is abused, delete the webhook, create a new one,
 create a new board, update both secrets and publish a release.
+
+Moderation: the board message belongs to the webhook, so it cannot be edited by hand. The **Boss Rush ranking**
+workflow (Actions → Run workflow, or `gh api .../actions/workflows/boss-rush-ranking.yml/dispatches`) removes one
+time: `remove` = `CATEGORY:RANK` (`2:1` = 2 players, first place) and `expect_time` = the time shown on that line;
+it refuses when they do not match. It rewrites the board exactly as the game does (`tools/boss-rush-ranking.py
+--remove`, cross-checked against `src/boss_rush_ranking.c`). Notices posted by the game can be deleted by hand.

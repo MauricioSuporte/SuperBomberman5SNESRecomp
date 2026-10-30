@@ -14,6 +14,8 @@ read it, so rotate the webhook (and the secrets) if the channel is abused.
       python tools/boss-rush-ranking.py --add-to-zip dist/<package>.zip
   Check that the webhook can read the board (CI, before publishing):
       python tools/boss-rush-ranking.py --check
+  Remove one time (moderation; the workflow "Boss Rush ranking" runs it):
+      python tools/boss-rush-ranking.py --remove 2:1 --expect-time 08:34.31
 
 Neither command prints the webhook URL.
 """
@@ -120,6 +122,111 @@ def check() -> int:
     annotate('notice', 'Boss Rush ranking board readable through the webhook (5 categories).')
     return 0
 
+# ---- the board, as the game writes it (src/boss_rush_ranking.c) ----------
+CHARACTERS = [None, 'Bomberman', 'Bomber Woof', 'Dave Bomber', 'Gary Bomber', 'Pirate Bomber',
+              'Muscle Bomber', 'Iron Mask Bomber', 'Baron Bombano', 'Plunder Bomber', 'Subordinate Bomber',
+              'Honey', 'Kotetsu', 'Bomberman (SB4)', 'Hammer Bomber', 'Jet Bomber', 'Lady Bomber', 'Bazooka Bomber',
+              'Bomber Great', 'Terrorin']
+COLORS = [0xf5c542, 0x42a5f5, 0x66bb6a, 0xab47bc, 0xef5350]
+
+
+def format_time(frames: int) -> str:
+    cs = frames * 100 // 60
+    return f'{min(cs // 6000, 99):02d}:{cs // 100 % 60:02d}.{cs % 100:02d}'
+
+
+def parse_board(message: dict) -> dict[int, list[dict]]:
+    """Categories 1-5 -> entries, from each embed footer's "sb5br1 c=N ..." data."""
+    board = {c: [] for c in range(1, 6)}
+    for embed in message.get('embeds', []):
+        text = (embed.get('footer') or {}).get('text', '')
+        m = re.fullmatch(r'sb5br1 c=([1-5])((?: \S+)*)', text)
+        if not m:
+            continue
+        category = int(m.group(1))
+        for token in m.group(2).split():
+            frames, date, online, players = token.split(',', 3)
+            entry = {'frames': int(frames), 'date': '' if date == '-' else date, 'online': online == '1', 'players': []}
+            for p in players.split(';'):
+                name, _, choice = p.rpartition('~')
+                raw = re.sub(rb'%([0-9A-Fa-f]{2})', lambda h: bytes([int(h.group(1), 16)]), name.encode('utf-8'))
+                entry['players'].append({'name': raw.decode('utf-8', 'replace'), 'choice': int(choice)})
+            board[category].append(entry)
+    return board
+
+
+def _md(name: str) -> str:
+    return ''.join('\\' + ch if ch in '\\*_~`|>[]()#@:' else ch for ch in name)
+
+
+def _data_name(name: str) -> str:
+    out = bytearray()
+    for b in name.encode('utf-8'):
+        if b <= 0x20 or b == 0x7f or b in b'%,;~|"\\':
+            out += b'%%%02X' % b
+        else:
+            out.append(b)
+    return out.decode('utf-8')
+
+
+def category_embed(board: dict, category: int) -> dict:
+    n = category
+    entries = board[n]
+    lines = []
+    for rank, e in enumerate(entries, 1):
+        who = ', '.join(_md(p['name']) + (f' ({CHARACTERS[p["choice"]] or "?"})' if p['choice'] else '')
+                        for p in e['players'])
+        lines.append(f'**{rank}.** `{format_time(e["frames"])}` {who} \u00b7 {"online" if e["online"] else "offline"}'
+                     f' \u00b7 {e["date"] or "?"}\n')
+    data = ''.join(f' {e["frames"]},{e["date"] or "-"},{1 if e["online"] else 0},'
+                   + ';'.join(f'{_data_name(p["name"])}~{p["choice"]}' for p in e['players']) for e in entries)
+    return {'color': COLORS[n - 1],
+            'title': f'Boss Rush \u2014 {n} {"jogadores" if n > 1 else "jogador"} / {n} {"players" if n > 1 else "player"}',
+            'description': ''.join(lines) or 'Sem tempos ainda / No times yet',
+            'footer': {'text': f'sb5br1 c={n}{data}'}}
+
+
+def board_payload(board: dict) -> dict:
+    return {'content': '\U0001F3C6 **Boss Rush \u2014 ranking**', 'allowed_mentions': {'parse': []},
+            'embeds': [category_embed(board, c) for c in range(1, 6)]}
+
+
+def remove(spec: str, expect_time: str) -> int:
+    url = webhook_from_env()
+    board_id = os.environ.get('BOSS_RUSH_BOARD', '').strip()
+    m = re.fullmatch(r'([1-5]):([1-5])', spec or '')
+    if not url or not re.fullmatch(r'\d{5,30}', board_id) or not m:
+        annotate('error', 'Need the BOSS_RUSH_WEBHOOK/BOSS_RUSH_BOARD secrets and --remove CATEGORY:RANK (1-5:1-5).')
+        return 2
+    category, rank = int(m.group(1)), int(m.group(2))
+    code, body = curl_get(f'{url}/messages/{board_id}')
+    if code != 200:
+        annotate('error', f'Board not readable: HTTP {code}')
+        return 1
+    board = parse_board(json.loads(body))
+    entries = board[category]
+    if rank > len(entries):
+        annotate('error', f'Category {category}P has {len(entries)} time(s); nothing at #{rank}.')
+        return 1
+    entry = entries[rank - 1]
+    shown = format_time(entry['frames'])
+    if expect_time and expect_time != shown:
+        annotate('error', f'{category}P #{rank} is {shown}, not {expect_time}: nothing removed.')
+        return 1
+    del entries[rank - 1]
+    data = json.dumps(board_payload(board)).encode('utf-8')
+    request = urllib.request.Request(f'{url}/messages/{board_id}', data=data, method='PATCH',
+                                     headers={'Content-Type': 'application/json', 'User-Agent': USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            response.read()
+    except Exception as error:  # never print the URL
+        annotate('error', f'Board update failed: {type(error).__name__} {getattr(error, "code", "")}'.strip())
+        return 1
+    names = ', '.join(p['name'] for p in entry['players'])
+    annotate('notice', f'Removed {category}P #{rank}: {shown} ({names}, {entry["date"]}).')
+    return 0
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -127,9 +234,13 @@ def main() -> int:
     group.add_argument('--create-board', action='store_true')
     group.add_argument('--add-to-zip', type=Path)
     group.add_argument('--check', action='store_true')
+    group.add_argument('--remove', metavar='CATEGORY:RANK')
+    parser.add_argument('--expect-time', default='', help='refuse unless that entry shows this time (MM:SS.CC)')
     args = parser.parse_args()
     if args.check:
         return check()
+    if args.remove:
+        return remove(args.remove, args.expect_time)
     return create_board() if args.create_board else add_to_zip(args.add_to_zip)
 
 

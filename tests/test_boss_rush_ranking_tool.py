@@ -1,6 +1,7 @@
 """tools/boss-rush-ranking.py: the release ZIP gets the ranking configuration
 only from the secrets, and the source tree never tracks it."""
 import importlib.util
+import json
 import io
 import os
 import pathlib
@@ -58,6 +59,61 @@ class BossRushRankingToolTest(unittest.TestCase):
         self.assertIsNotNone(audit.forbidden('boss_rush_ranking.cfg'))
         self.assertIsNone(audit.forbidden('superbomberman5-9.9.9/boss_rush_ranking.cfg', release=True))
         self.assertIn('boss_rush_ranking.cfg', (ROOT / '.gitignore').read_text())
+
+
+
+class BossRushRankingRemoveTest(unittest.TestCase):
+    def board(self):
+        entries = {c: [] for c in range(1, 6)}
+        entries[2] = [
+            {'frames': 30891, 'date': '2026-10-30', 'online': False,
+             'players': [{'name': 'JK', 'choice': 1}, {'name': 'JK2 ;,~', 'choice': 1}]},
+            {'frames': 46396, 'date': '2026-10-30', 'online': False,
+             'players': [{'name': 'JK', 'choice': 1}, {'name': 'João', 'choice': 15}]},
+        ]
+        return tool.board_payload(entries)
+
+    def test_payload_round_trip(self):
+        message = self.board()
+        self.assertEqual(tool.board_payload(tool.parse_board(message)), message)
+        self.assertIn('Jet Bomber', message['embeds'][1]['description'])
+        self.assertEqual(tool.format_time(30891), '08:34.85')
+
+    def run_remove(self, spec, expect):
+        sent = {}
+
+        class Response:
+            def __enter__(self): return self
+            def __exit__(self, *a): return False
+            def read(self): return b'{}'
+
+        def urlopen(request, timeout=0):
+            sent['body'] = json.loads(request.data.decode('utf-8'))
+            sent['method'] = request.get_method()
+            return Response()
+
+        env = {'BOSS_RUSH_WEBHOOK': FAKE, 'BOSS_RUSH_BOARD': '987654321'}
+        with mock.patch.dict(os.environ, env), \
+                mock.patch.object(tool, 'curl_get', return_value=(200, json.dumps(self.board()))), \
+                mock.patch.object(tool.urllib.request, 'urlopen', urlopen), redirect_stdout(io.StringIO()) as out:
+            code = tool.remove(spec, expect)
+        self.assertNotIn('abc-DEF_token', out.getvalue())
+        return code, sent
+
+    def test_remove_entry(self):
+        code, sent = self.run_remove('2:1', '08:34.85')
+        self.assertEqual(code, 0)
+        self.assertEqual(sent['method'], 'PATCH')
+        left = tool.parse_board(sent['body'])[2]
+        self.assertEqual([e['frames'] for e in left], [46396])
+        self.assertEqual(left[0]['players'][1]['name'], 'João')
+
+    def test_remove_refuses_a_different_time(self):
+        code, sent = self.run_remove('2:1', '12:53.16')
+        self.assertEqual(code, 1)
+        self.assertEqual(sent, {})
+        code, sent = self.run_remove('2:3', '')
+        self.assertEqual(code, 1)
 
 
 if __name__ == '__main__':
