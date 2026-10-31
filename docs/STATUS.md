@@ -18,7 +18,7 @@
     Not yet exercised against the real Discord webhook from a phone.
   - **Slowdown:** profiled (callgrind, x86_64, interpreter-only, all 16 mods, title screen): interpreter ~45%,
     bus/ROM access ~20%, PPU ~10%, mods ~5% (no network on the game thread: the ranking already ran on a worker
-    and was not even configured on Android). Title speed 152 fps with all mods vs ~170 without, uncapped. Change:
+    and was not even configured on Android). Title speed, uncapped: accurate PPU 117 fps with all mods vs 137 without; NewRenderer (the Android default) 152 fps with all mods. Change:
     `libmain.so` with hidden visibility and no semantic interposition; effect on phones not measured.
 - **Crossplay:** the APK uses the PC build's lobby version (no `-android`). An AOT PC peer and an interpreter-only
   peer desynced from frame 330 in `tests/netplay_pair_runtime.py` (all mods, random pads) while AOT+AOT and

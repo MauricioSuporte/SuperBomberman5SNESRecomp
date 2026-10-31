@@ -31,8 +31,9 @@ generated code it links empty dispatch tables (`src/interp_only/interp_only_disp
 the framework's 65816 interpreter. On PC only about 9 routine variants are AOT, so this is the same path the mods
 are written against (the interpreter PC hooks fire for every instruction).
 
-Speed: on the x86_64 CI container the title screen runs at about 150 frames/s with every mod on (about 15% slower
-than without mods; the mods themselves are about 5% of the time, the rest is the interpreter and the PPU). Phones
+Speed: on the x86_64 CI container the title screen runs at about 150 frames/s with every mod on (NewRenderer, the
+Android default); with the accurate PPU, all mods cost about 15% (117 vs 137 frames/s), and the mods themselves are
+about 5% of the time, the rest being the interpreter and the PPU. Phones
 are slower, so busy scenes can drop below 60 on a slow phone. `libmain.so` exports only `SDL_main` (hidden
 visibility, `-fno-semantic-interposition`) so the runner's internal calls can be inlined.
 
@@ -128,8 +129,9 @@ O celular não consegue rodar o "Generate & rebuild" (sem compilador nem analisa
 tabelas de dispatch vazias e todas as rotinas rodam no interpretador 65816. No PC só ~9 variantes de rotina são
 AOT, então é o mesmo caminho para o qual os mods foram escritos.
 
-Velocidade: no contêiner x86_64 do CI a tela de título roda a uns 150 quadros/s com todos os mods (cerca de 15% mais
-lento que sem mods; os mods em si são ~5% do tempo, o resto é o interpretador e o PPU). Celulares são mais lentos,
+Velocidade: no contêiner x86_64 do CI a tela de título roda a uns 150 quadros/s com todos os mods (NewRenderer, o
+padrão do Android); com o PPU preciso, todos os mods custam ~15% (117 contra 137 quadros/s), e os mods em si são ~5%
+do tempo, o resto é o interpretador e o PPU. Celulares são mais lentos,
 então em cenas cheias um celular fraco pode ficar abaixo de 60. A `libmain.so` exporta só o `SDL_main` (visibilidade
 oculta) para o compilador poder otimizar as chamadas internas.
 
