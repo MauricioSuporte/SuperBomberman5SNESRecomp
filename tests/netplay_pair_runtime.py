@@ -49,6 +49,9 @@ def seat_scripts(route: str, peers: int) -> list[str]:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--exe', type=Path, required=True)
+    parser.add_argument('--peer-exe', action='append', default=[], metavar='SEAT=PATH',
+                        help='a different executable for one seat (crossplay: an interpreter-only '
+                             'Android-equivalent build against the AOT PC build)')
     parser.add_argument('--rom', type=Path, required=True)
     parser.add_argument('--sb4', type=Path, help='Super Bomberman 4 ROM for the Bomber Kings mod')
     parser.add_argument('--peers', type=int, default=2, choices=[2, 3, 4, 5])
@@ -63,6 +66,10 @@ def main() -> None:
     parser.add_argument('--out', type=Path, default=ROOT / '.bootstrap/netplay-pair')
     args = parser.parse_args()
     exe, rom = args.exe.resolve(strict=True), args.rom.resolve(strict=True)
+    peer_exes = {}
+    for item in args.peer_exe:
+        seat_text, _, path = item.partition('=')
+        peer_exes[int(seat_text)] = Path(path).resolve(strict=True)
     args.out.mkdir(parents=True, exist_ok=True)
     root = Path(tempfile.mkdtemp(prefix=f'pair{args.peers}-{args.mods}-', dir=args.out.resolve()))
     from sb5_mod_sets import ALL_MODS
@@ -75,7 +82,7 @@ def main() -> None:
         for seat in range(args.peers):
             peer = root / f'peer{seat}'
             peer.mkdir()
-            shutil.copy2(exe, peer / exe.name)
+            shutil.copy2(peer_exes.get(seat, exe), peer / exe.name)
             shutil.copytree(ROOT / 'mods', peer / 'mods')
             state = 'format_version = 1\n'
             for package, feature in (ALL_MODS if args.mods == 'all' else []):

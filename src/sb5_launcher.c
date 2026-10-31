@@ -9,6 +9,7 @@
 #include "mod_runtime.h"
 #include "sb4_rom.h"
 #include "discord_presence.h"
+#include "cpu_state.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -72,9 +73,28 @@ int Sb5NetplayReady(char *reason, size_t cap) {
     return 1;
 }
 
+/* Crossplay: the Android build has no recompiled code and runs every routine
+ * on the interpreter. The few AOT routines of the PC build do not leave the
+ * machine in exactly the same state (an AOT PC peer and an interpreter-only
+ * peer desynced from frame 330 of a loopback match, while same-build pairs
+ * stayed identical), so every netplay session selects an empty program: no
+ * AOT dispatch, the same interpreter path on every platform. The guard table
+ * keeps the single sentinel row the emitter writes for "no ram routines". */
+static const DispatchEntry kNoAotDispatch[] = {
+    { 0xFFFFFFFFu, { NULL, NULL, NULL, NULL }, 0 },
+};
+static const RamRoutineGuard kNoAotGuards[] = {
+    { 0xFFFFFFFFu, 0u, 0u },
+};
+void Sb5NetplayInterpreterOnly(void) {
+    cpu_select_program(kNoAotDispatch, 0, kNoAotGuards, 1);
+    fprintf(stderr, "netplay: AOT dispatch off (interpreter only, same path as Android)\n");
+}
+
 int Sb5PrepareNetplay(int from_lobby, char *reason, size_t cap) {
     (void)from_lobby;
     Sb5ForceDelaySync();
+    Sb5NetplayInterpreterOnly();
     return Sb5NetplayReady(reason, cap);
 }
 
