@@ -1,5 +1,13 @@
 # Super Bomberman 5: estado do protótipo
 
+## v2.5.9 — 2026-10-30: Cheats mods off during a Boss Rush
+
+- Maintainer confirmed v2.5.8 fixed the 17-mod online room (match started).
+- `infinite_lives_mod.c`, `infinite_time_mod.c` and `com_level4_mod.c` treat `BossRushActive()` (rush running, from
+  its start until the title) as "not active": lives are charged and the timer counts down natively, and the COM
+  limit is no longer raised. Native tests extended (`infinite_lives_tests`, `infinite_time_tests`,
+  `com_level4_tests`); built and run on Linux/gcc. No runtime Boss Rush route was run for this change.
+
 ## v2.5.8 — 2026-10-30: 17 mods in an online room; mod refusal logs
 
 - Maintainer log on v2.5.7: compact publication worked with 15/16 packages, but with Selection colors and Infinite

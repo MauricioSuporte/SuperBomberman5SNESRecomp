@@ -1,5 +1,6 @@
 /* Reuse the cartridge's unlimited timer and native HUD, without ROM patches. */
 #include "infinite_time_mod.h"
+#include "boss_rush_mod.h"
 #include "common_rtl.h"
 #include "mod_runtime.h"
 #include "snes/interp_bridge.h"
@@ -7,8 +8,10 @@
 
 static bool enabled, installed;
 static void (*previous_hook)(uint32_t, int, int);
+/* Cheats stay off for a whole Boss Rush, so ranked times are played straight. */
 static bool campaign(void) {
     unsigned mode = g_ram[0x1031];
+    if (BossRushActive()) return false;
     return (mode == 8 || (mode >= 0x0d && mode < 0x74)) &&
            !(g_ram[0x1d1a] & 1);
 }

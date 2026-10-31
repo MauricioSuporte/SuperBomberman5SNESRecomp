@@ -3,6 +3,9 @@
 static SNESModActivationCallback activation, reset_callback;
 int snes_mod_register_reset_callback(SNESModActivationCallback fn) { reset_callback=fn; return 1; }
 int snes_mod_register_activation_plugin(const char *id, SNESModActivationCallback fn) { (void)id; activation=fn; return 1; }
+#include <stdbool.h>
+static bool rush;
+bool BossRushActive(void) { return rush; }
 #include "../src/infinite_lives_mod.c"
 uint8 g_ram[0x20000];
 void (*g_interp_bridge_pc_hook)(uint32_t,int,int);
@@ -35,6 +38,9 @@ int main(void) {
     g_ram[0x1d23]=8; InfiniteLivesAfterFrame(); CHECK(g_ram[0x1d23]==9); /* rejoin spent one */
     g_ram[0x1d23]=12; InfiniteLivesAfterFrame(); CHECK(g_ram[0x1d23]==12); /* never lowered */
     g_ram[0x1d23]=3; respawn(); CHECK(g_ram[0x1d23]==9);
+    rush=true; g_ram[0x1d23]=5; retry(1); CHECK(g_ram[0x1d23]==2); /* Boss Rush: stock charges (co-op stub takes 2) */
+    g_ram[0x1d23]=2; InfiniteLivesAfterFrame(); CHECK(g_ram[0x1d23]==2);
+    rush=false;
     for (unsigned mode=0; mode<256; ++mode) {
         g_ram[0x1031]=(uint8_t)mode; g_ram[0x1d1a]=0; g_ram[0x1d23]=4; respawn();
         CHECK((g_ram[0x1d23]==9)==(mode==8 || (mode>=13 && mode<116)));

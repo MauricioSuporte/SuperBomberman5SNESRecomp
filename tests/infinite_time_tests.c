@@ -3,6 +3,9 @@
 static SNESModActivationCallback activation, reset_callback;
 int snes_mod_register_reset_callback(SNESModActivationCallback fn) { reset_callback=fn; return 1; }
 int snes_mod_register_activation_plugin(const char *id, SNESModActivationCallback fn) { (void)id; activation=fn; return 1; }
+#include <stdbool.h>
+static bool rush;
+bool BossRushActive(void) { return rush; }
 #include "../src/infinite_time_mod.c"
 uint8 g_ram[0x20000];
 void (*g_interp_bridge_pc_hook)(uint32_t,int,int);
@@ -22,6 +25,8 @@ int main(void) {
     timer_hook(0xc50bef,1,1); CHECK(g_ram[0xe1d]==1);
     g_ram[0x1d1a]=0; timer_hook(0xc50000,1,1); CHECK(g_ram[0xe1d]==1);
     timer_hook(0xc50400,1,1); CHECK(g_ram[0xe1d]==99 && g_ram[0xe1e]==9);
+    rush=true; g_ram[0xe1d]=1; timer_hook(0xc50400,1,1); CHECK(g_ram[0xe1d]==1); /* Boss Rush: off */
+    rush=false; calls-=1;
     CHECK(calls==259);
     InfiniteTimeReset(); CHECK(g_interp_bridge_pc_hook==other);
     InfiniteTimeBeforeFrame(); CHECK(g_interp_bridge_pc_hook==timer_hook);

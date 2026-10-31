@@ -8,6 +8,7 @@
  * changed, so turning the mod off restores the stock 3 levels on the next
  * boot (a password-unlocked save keeps its own 4). */
 #include "com_level4_mod.h"
+#include "boss_rush_mod.h"
 #include "common_rtl.h"
 #include "mod_runtime.h"
 #include <stdbool.h>
@@ -20,7 +21,8 @@ bool ComLevel4Enabled(void) { return enabled; }
 
 void ComLevel4BeforeFrame(void) {
     /* WRAM only: save states and netplay snapshots already carry it. */
-    if (enabled && g_ram[kComLevelLimit] < kSuperLevel)
+    /* Cheats stay off for a whole Boss Rush. */
+    if (enabled && !BossRushActive() && g_ram[kComLevelLimit] < kSuperLevel)
         g_ram[kComLevelLimit] = kSuperLevel;
 }
 

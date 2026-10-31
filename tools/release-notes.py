@@ -1275,6 +1275,11 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '2.5.9': (
+'''- **Boss Rush without cheats:** the Cheats mods (infinite time, infinite lives and Battle COM level 4) stay off from the start of a Boss Rush until the title screen, so ranked times are played with the cartridge's normal lives and timer. They work as before everywhere else.
+- Everyone in an online room needs v2.5.9.''',
+'''- **Boss Rush sem cheats:** os mods de Cheats (tempo infinito, vidas infinitas e nível 4 do COM no Battle) ficam desligados do início do Boss Rush até a volta ao título, e os tempos do ranking são jogados com as vidas e o cronômetro normais do cartucho. No resto do jogo eles continuam funcionando.
+- Todos na sala online precisam da v2.5.9.'''),
     '2.5.8': (
 '''- **Fix: online rooms with 17 mods:** the lobby's mod list holds 16 packages, so with every mod on (17) one was left out and the host stopped sending its mod configuration, failing Play with `mod_set_mismatch`. Packages past the limit now travel inside the configuration itself.
 - **More detail in the log:** when a room refuses to start because of mods, the log shows the configuration the room sent, what it means and the one this PC runs, to find any remaining difference.

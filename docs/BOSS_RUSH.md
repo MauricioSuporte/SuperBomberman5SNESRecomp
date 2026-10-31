@@ -29,6 +29,9 @@ Vem desligado por padrão e exige um host compilado com este mod.
 - **Save states:** salvar e carregar estados (atalhos, menu de slots, rewind)
   ficam bloqueados do início do boss rush até a volta ao título; um aviso
   aparece quando ele começa.
+- **Cheats:** os mods do grupo Cheats (tempo infinito, vidas infinitas e nível 4
+  do COM) ficam desligados do início do boss rush até a volta ao título; as
+  vidas e o tempo seguem as regras normais do cartucho.
 - **Fim do boss rush:** vencer o Terrorin (ZONE5 - J) encerra o tempo, que fica
   parado durante o final do jogo, e mostra **BOSS RUSH CONCLUÍDO** com o tempo.
 
@@ -146,6 +149,9 @@ off by default and needs a host built with this mod.
 - **Save states:** saving and loading states (hotkeys, the slot menu, rewind)
   are off from the start of the rush until the title screen; a notice says so
   when it starts.
+- **Cheats:** the Cheats group mods (infinite time, infinite lives and COM
+  level 4) are off from the start of the rush until the title screen; lives and
+  time follow the cartridge's normal rules.
 - **End:** beating Terrorin (ZONE5 - J) stops the clock for good (it stays
   frozen through the ending) and shows **BOSS RUSH CLEAR** with the time.
 
