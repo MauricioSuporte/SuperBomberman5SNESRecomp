@@ -26,6 +26,8 @@ endforeach()
 file(COPY "${ROM_IDENTITY}" DESTINATION "${_out}")
 
 file(GLOB_RECURSE _files LIST_DIRECTORIES false RELATIVE "${_out}" "${_out}/*")
+# aapt drops dotfiles (.gitkeep) from APK assets; do not list them.
+list(FILTER _files EXCLUDE REGEX "(^|/)\\.")
 list(SORT _files)
 set(_list "version ${VERSION}\n")
 foreach(_f IN LISTS _files)

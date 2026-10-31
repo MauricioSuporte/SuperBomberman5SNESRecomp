@@ -12,7 +12,25 @@ OUT="$2"
 PKG=io.github.mauriciosuporte.sb5recomp
 mkdir -p "$OUT"
 summary() { echo "$*" | tee -a "$OUT/summary.txt"; }
+unzip -l "$APK" > "$OUT/apk-contents.txt" 2>&1
 shot() { adb exec-out screencap -p > "$OUT/$1.png"; }
+
+tap_text() {
+    adb shell uiautomator dump /sdcard/ui.xml > /dev/null 2>&1
+    adb pull /sdcard/ui.xml "$OUT/ui-$1.xml" > /dev/null 2>&1
+    python3 - "$OUT/ui-$1.xml" "$2" <<'PY'
+import re, sys
+xml = open(sys.argv[1], encoding="utf-8", errors="replace").read()
+for m in re.finditer(r'<node [^>]*>', xml):
+    node = m.group(0)
+    if f'text="{sys.argv[2]}"' in node:
+        b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', node)
+        if b:
+            x1, y1, x2, y2 = map(int, b.groups())
+            print((x1 + x2) // 2, (y1 + y2) // 2)
+            break
+PY
+}
 
 adb wait-for-device
 adb shell settings put global window_animation_scale 0
@@ -25,7 +43,11 @@ adb install -r "$APK" > "$OUT/install.txt" 2>&1
 summary "install: $(tail -1 "$OUT/install.txt")"
 adb logcat -c
 adb shell am start -W -n "$PKG/.SB5Activity" > "$OUT/start.txt" 2>&1
-sleep 25
+sleep 20
+# First run of an immersive app shows Android's "Viewing full screen" hint.
+GOT=$(tap_text hint "Got it")
+[ -n "$GOT" ] && adb shell input tap $GOT && sleep 2
+sleep 3
 shot 01-launcher
 PID=$(adb shell pidof "$PKG" | tr -d '\r')
 summary "running after start: ${PID:-no}"
@@ -48,22 +70,6 @@ summary "focus after browse: $FOCUS"
 
 # Pick the placeholder in the system picker, if it is listed (open Downloads
 # first through the drawer when the picker starts elsewhere).
-tap_text() {
-    adb shell uiautomator dump /sdcard/ui.xml > /dev/null 2>&1
-    adb pull /sdcard/ui.xml "$OUT/ui-$1.xml" > /dev/null 2>&1
-    python3 - "$OUT/ui-$1.xml" "$2" <<'PY'
-import re, sys
-xml = open(sys.argv[1], encoding="utf-8", errors="replace").read()
-for m in re.finditer(r'<node [^>]*>', xml):
-    node = m.group(0)
-    if f'text="{sys.argv[2]}"' in node:
-        b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', node)
-        if b:
-            x1, y1, x2, y2 = map(int, b.groups())
-            print((x1 + x2) // 2, (y1 + y2) // 2)
-            break
-PY
-}
 XY=$(tap_text pick picker-test.sfc)
 if [ -z "$XY" ]; then
     # Chooser or another folder: try "Files"/"Downloads" once.
