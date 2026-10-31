@@ -29,6 +29,9 @@
 #include "game_rtl.h"
 #include "sb5_launcher.h"
 #include "snesrecomp_rom_identity.h"  /* generated from rom_identity.txt */
+#ifdef __ANDROID__
+#include "android_assets.h"
+#endif
 
 #ifndef __ANDROID__
 #define SDL_MAIN_HANDLED 1
@@ -69,6 +72,9 @@ static const SnesDesktopHostGame kGameHost = {
 #endif
 int main(int argc, char **argv)
 {
+#ifdef __ANDROID__
+    Sb5AndroidPrepare();
+#endif
     Sb5ForceDelaySync();
     return snesrecomp_desktop_main(&kGameHost, argc, argv);
 }

@@ -1,0 +1,55 @@
+name: Android APK
+# Experimental interpreter-only Android build (docs/ANDROID.md). The APK holds
+# no ROM and no generated code; players add their own ROM on the phone.
+on:
+  push:
+    branches: [android]
+    paths-ignore: ['docs/**', '**.md']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Publication guard
+        run: python tools/audit-publication.py
+      - name: Install NDK and SDK platform
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;27.2.12479018" "platforms;android-34" "build-tools;34.0.0"
+      - name: Fetch SDL2 and make icons
+        run: |
+          bash android/fetch_sdl.sh
+          python -m pip install pillow
+          python android/make_icons.py
+      - name: Build APK
+        working-directory: android
+        run: |
+          # Use the runner's CMake (3.31) instead of the SDK's 3.22.
+          echo "cmake.dir=$(dirname "$(dirname "$(command -v cmake)")")" > local.properties
+          cmake --version | head -1
+          ./gradlew --no-daemon assembleRelease
+      - name: Check the APK carries no ROM-derived code
+        run: |
+          apk=$(ls android/app/build/outputs/apk/release/*.apk)
+          unzip -l "$apk" | tee apk-contents.txt
+          ! grep -E '\.(sfc|smc|srm)$|src/gen|bank[0-9]+_v2' apk-contents.txt
+          grep -q 'lib/arm64-v8a/libmain.so' apk-contents.txt
+          grep -q 'assets/sb5/files.txt' apk-contents.txt
+          mkdir -p dist && cp "$apk" "dist/superbomberman5-$(cat VERSION)-android-arm64-experimental.apk"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: superbomberman5-android-arm64
+          path: dist/*.apk
+          if-no-files-found: error

@@ -20,7 +20,7 @@ if(SNESRECOMP_BUILD_VERSION STREQUAL "")
     endif()
 endif()
 
-set(SNESRECOMP_ROOT "${CMAKE_SOURCE_DIR}/snesrecomp" CACHE PATH
+set(SNESRECOMP_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/snesrecomp" CACHE PATH
     "Path to the snesrecomp checkout used by this game")
 if(NOT EXISTS "${SNESRECOMP_ROOT}/runner/runner.cmake")
     message(FATAL_ERROR
@@ -43,7 +43,30 @@ set(SNESRECOMP_FRAME_IMPL "LLE" CACHE STRING
     "Frame compositor validated for this game (LLE; HLE is experimental)")
 include(${SNESRECOMP_ROOT}/runner/runner.cmake)
 
-add_executable(SuperBomberman5SNESRecomp
+# Interpreter-only build: no recompiled code is linked, so the binary carries
+# nothing derived from the ROM and boots the player's cartridge entirely on the
+# framework's 65816 interpreter (src/interp_only/interp_only_dispatch.c). This
+# is the Android build: a phone has no compiler for Generate & rebuild, and an
+# APK must never ship src/gen. Desktop builds keep the normal AOT/setup paths.
+if(ANDROID)
+    set(_sb5_interp_default ON)
+else()
+    set(_sb5_interp_default OFF)
+endif()
+option(SB5_INTERPRETER_ONLY
+    "Run the whole game on the interpreter, with no generated code (Android)"
+    ${_sb5_interp_default})
+
+# SDLActivity loads libmain.so and calls its SDL_main, so on Android the game
+# is a shared library named "main" instead of an executable.
+if(ANDROID)
+    set(_sb5_game_kind SHARED)
+    set(_sb5_add_game add_library)
+else()
+    set(_sb5_game_kind "")
+    set(_sb5_add_game add_executable)
+endif()
+cmake_language(CALL ${_sb5_add_game} SuperBomberman5SNESRecomp ${_sb5_game_kind}
     ${SNESRECOMP_RUNNER_SOURCES}
     src/main.c
     src/host_contract.c
@@ -82,13 +105,22 @@ add_executable(SuperBomberman5SNESRecomp
     src/gen_stubs.c
 )
 
+if(ANDROID)
+    set_target_properties(SuperBomberman5SNESRecomp PROPERTIES OUTPUT_NAME main)
+    target_sources(SuperBomberman5SNESRecomp PRIVATE src/android_assets.c)
+    target_link_libraries(SuperBomberman5SNESRecomp PRIVATE android log)
+endif()
+
 # ROM-independent updater shipped beside the setup host (src/updater/).
+# Android updates through a new APK instead.
+if(NOT ANDROID)
 add_executable(SuperBomberman5Updater src/updater/sb5_updater.c ${SNESRECOMP_ROOT}/runner/src/sha256.c)
 target_include_directories(SuperBomberman5Updater PRIVATE ${SNESRECOMP_ROOT}/runner/src)
 if(NOT WIN32)
     target_compile_definitions(SuperBomberman5Updater PRIVATE _DEFAULT_SOURCE)
 endif()
 add_dependencies(SuperBomberman5SNESRecomp SuperBomberman5Updater)
+endif()
 
 if(WIN32)
     enable_language(RC)
@@ -106,7 +138,7 @@ endif()
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 set(PTBR_HEADER "${CMAKE_CURRENT_BINARY_DIR}/translation/ptbr_labels.h")
 add_custom_command(OUTPUT "${PTBR_HEADER}"
-    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/generate-ptbr.py" --header "${PTBR_HEADER}"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate-ptbr.py" --header "${PTBR_HEADER}"
     DEPENDS tools/generate-ptbr.py translations/ptbr/labels.json
     VERBATIM)
 target_sources(SuperBomberman5SNESRecomp PRIVATE "${PTBR_HEADER}")
@@ -135,17 +167,17 @@ if(BUILD_TESTING)
         add_executable(discord_presence_tests tests/discord_presence_tests.c)
         target_include_directories(discord_presence_tests PRIVATE
             "${SNESRECOMP_ROOT}/runner/src" "${SNESRECOMP_ROOT}/runner/src/netplay"
-            "${SNESRECOMP_ROOT}/lib/recomp-net/include" "${CMAKE_SOURCE_DIR}/recomp-ui/src")
+            "${SNESRECOMP_ROOT}/lib/recomp-net/include" "${CMAKE_CURRENT_SOURCE_DIR}/recomp-ui/src")
         add_test(NAME discord_presence COMMAND discord_presence_tests)
     endif()
     add_executable(ingame_chat_tests tests/ingame_chat_tests.c)
     target_include_directories(ingame_chat_tests PRIVATE
-        "${SNESRECOMP_ROOT}/runner/src" "${CMAKE_SOURCE_DIR}/recomp-ui/src")
+        "${SNESRECOMP_ROOT}/runner/src" "${CMAKE_CURRENT_SOURCE_DIR}/recomp-ui/src")
     if(UNIX)
         target_link_libraries(ingame_chat_tests PRIVATE m)
     endif()
     add_test(NAME ingame_chat COMMAND ingame_chat_tests
-        "${CMAKE_SOURCE_DIR}/recomp-ui/assets/common/fonts/LatoLatin-Bold.ttf")
+        "${CMAKE_CURRENT_SOURCE_DIR}/recomp-ui/assets/common/fonts/LatoLatin-Bold.ttf")
     add_executable(portal_labels_tests tests/portal_labels_tests.c)
     target_include_directories(portal_labels_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src")
     add_test(NAME normal_portal_labels COMMAND portal_labels_tests)
@@ -171,10 +203,10 @@ if(BUILD_TESTING)
     target_include_directories(com_level4_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src")
     add_test(NAME battle_com_level4 COMMAND com_level4_tests)
     add_executable(battle_variants_tests tests/battle_variants_tests.c)
-    target_include_directories(battle_variants_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src" "${CMAKE_SOURCE_DIR}/src")
+    target_include_directories(battle_variants_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src" "${CMAKE_CURRENT_SOURCE_DIR}/src")
     add_test(NAME battle_variants COMMAND battle_variants_tests)
     add_executable(boss_rush_tests tests/boss_rush_tests.c)
-    target_include_directories(boss_rush_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src" "${CMAKE_SOURCE_DIR}/src")
+    target_include_directories(boss_rush_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src" "${CMAKE_CURRENT_SOURCE_DIR}/src")
     add_test(NAME boss_rush COMMAND boss_rush_tests)
     add_executable(boss_rush_ranking_tests tests/boss_rush_ranking_tests.c)
     add_test(NAME boss_rush_ranking COMMAND boss_rush_ranking_tests)
@@ -226,7 +258,7 @@ endif()
 # turns it into snesrecomp_rom_identity.h (SNESRECOMP_ROM_EXPECTED_SHA256 and
 # friends) for src/main.c, and tools/regen.sh, scripts/package_release.sh and
 # the release workflow read the same file. A revision bump is one edit there.
-snesrecomp_rom_identity(SuperBomberman5SNESRecomp ${CMAKE_SOURCE_DIR}/rom_identity.txt)
+snesrecomp_rom_identity(SuperBomberman5SNESRecomp ${CMAKE_CURRENT_SOURCE_DIR}/rom_identity.txt)
 
 # Generated recompiler output. Not committed: it is derived from a copyrighted
 # ROM, so every developer regenerates it locally from their own copy -- and a
@@ -236,7 +268,19 @@ snesrecomp_rom_identity(SuperBomberman5SNESRecomp ${CMAKE_SOURCE_DIR}/rom_identi
 # That is what release zips contain; the player's machine produces the
 # playable binary from their own ROM. Without the option an empty src/gen/ is
 # still a hard error (the framework owns the message).
-snesrecomp_target_generated_code(SuperBomberman5SNESRecomp ${CMAKE_SOURCE_DIR}/src/gen)
+if(SB5_INTERPRETER_ONLY)
+    file(GLOB _sb5_gen CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/gen/*.c")
+    if(_sb5_gen OR SNESRECOMP_SETUP_HOST)
+        message(FATAL_ERROR
+            "SB5_INTERPRETER_ONLY builds link no generated code: remove src/gen/*.c "
+            "and do not combine it with SNESRECOMP_SETUP_HOST.")
+    endif()
+    target_sources(SuperBomberman5SNESRecomp PRIVATE src/interp_only/interp_only_dispatch.c)
+    target_compile_definitions(SuperBomberman5SNESRecomp PRIVATE SB5_INTERPRETER_ONLY=1)
+    message(STATUS "SuperBomberman5SNESRecomp: INTERPRETER ONLY -- no recompiled code")
+else()
+    snesrecomp_target_generated_code(SuperBomberman5SNESRecomp ${CMAKE_CURRENT_SOURCE_DIR}/src/gen)
+endif()
 
 # The mod catalog. This names WHERE the packages are; the framework owns the
 # layout they are staged into beside the executable, and stages them on every
@@ -246,18 +290,18 @@ snesrecomp_target_generated_code(SuperBomberman5SNESRecomp ${CMAKE_SOURCE_DIR}/s
 # packages; players install .snesmod archives through the launcher.
 # snesrecomp/docs/MOD_PACKAGES.md.
 #
-# It used to be `snesrecomp_target_stage_dir(... ${CMAKE_SOURCE_DIR}/mods mods)`
+# It used to be `snesrecomp_target_stage_dir(... ${CMAKE_CURRENT_SOURCE_DIR}/mods mods)`
 # -- the destination spelled per title, which is how three ports in the same
 # workspace ended up shipping an empty Mods page and nothing said so. Declaring
 # it is now also enforced: a project with packages that never calls this fails
 # to configure.
-snesrecomp_target_mod_catalog(SuperBomberman5SNESRecomp ${CMAKE_SOURCE_DIR}/mods/preloaded)
+snesrecomp_target_mod_catalog(SuperBomberman5SNESRecomp ${CMAKE_CURRENT_SOURCE_DIR}/mods/preloaded)
 # Staging only copies, so a reused build directory still listed packages that
 # v0.13.0 merged into Extra Characters (Honey/Kotetsu, Subordinate Bomber).
 add_custom_command(TARGET SuperBomberman5SNESRecomp POST_BUILD
     COMMAND ${CMAKE_COMMAND}
         "-DSNES_MOD_DIR=$<TARGET_FILE_DIR:SuperBomberman5SNESRecomp>/${SNESRECOMP_MOD_CATALOG_DEST}/.."
-        -P "${CMAKE_SOURCE_DIR}/tools/prune-retired-mods.cmake"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/tools/prune-retired-mods.cmake"
     COMMENT "SuperBomberman5SNESRecomp: removing retired mod packages"
     VERBATIM)
 # Any other directory the game reads exe-relative (a translations/ table, ...)
@@ -268,8 +312,8 @@ target_include_directories(SuperBomberman5SNESRecomp PRIVATE
     # common_rtl.c includes "config.h": the desktop key-map / Config contract
     # the framework host supplies (snesrecomp_target_desktop_host below).
     ${SNESRECOMP_ROOT}/runner/src/desktop
-    ${CMAKE_SOURCE_DIR}/src
-    ${CMAKE_SOURCE_DIR}/recomp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/recomp
 )
 target_link_libraries(SuperBomberman5SNESRecomp PRIVATE ${SNESRECOMP_RUNNER_LIBRARIES})
 target_compile_definitions(SuperBomberman5SNESRecomp PRIVATE
@@ -296,7 +340,7 @@ snesrecomp_target_rom_cache(SuperBomberman5SNESRecomp)
 # Shared Dear ImGui pre-boot launcher (ROM picker, verification, display /
 # audio / input settings). Self-contained: it brings its own ImGui, GL link and
 # staged assets, and defines RECOMP_LAUNCHER so src/main.c compiles its GUI path.
-set(RECOMP_UI_ROOT "${CMAKE_SOURCE_DIR}/recomp-ui" CACHE PATH
+set(RECOMP_UI_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/recomp-ui" CACHE PATH
     "Root directory of the recomp-ui launcher repo" FORCE)
 if(NOT EXISTS "${RECOMP_UI_ROOT}/recomp_ui.cmake")
     message(FATAL_ERROR
@@ -313,7 +357,7 @@ include(${RECOMP_UI_ROOT}/recomp_ui.cmake)
 # shows assets/img/boxart.tga by default. EXISTS-guarded in recomp_ui.cmake,
 # so this configures cleanly before any art is fetched.
 recomp_target_launcher_ui(SuperBomberman5SNESRecomp CONSOLE snes
-    BOXART "${CMAKE_SOURCE_DIR}/launcher_assets/img/boxart.tga")
+    BOXART "${CMAKE_CURRENT_SOURCE_DIR}/launcher_assets/img/boxart.tga")
 # Netplay (rollback, up to five seats on the multitap) after the launcher:
 # the host lobby adapter uses recomp-ui's shared netplay backend.
 snesrecomp_enable_recomp_net(SuperBomberman5SNESRecomp)
@@ -332,3 +376,21 @@ target_include_directories(SuperBomberman5SNESRecomp PRIVATE
 # Netplay is not built into this target.
 # Seats: 5. Call RtlSetMultitap() at startup, or launch with
 # SNES_MULTITAP=port2. See snesrecomp/docs/MULTITAP.md.
+
+# Android: copy everything staged beside libmain.so (mod catalog, launcher
+# assets) into the Gradle asset folder; src/android_assets.c extracts it on
+# first launch. Must stay the last POST_BUILD step of the game target.
+if(ANDROID)
+    set(SB5_ANDROID_ASSET_DIR "" CACHE PATH "Gradle asset folder for the bundled game data")
+    if(SB5_ANDROID_ASSET_DIR)
+        add_custom_command(TARGET SuperBomberman5SNESRecomp POST_BUILD
+            COMMAND ${CMAKE_COMMAND}
+                "-DSRC=$<TARGET_FILE_DIR:SuperBomberman5SNESRecomp>"
+                "-DDST=${SB5_ANDROID_ASSET_DIR}"
+                "-DROM_IDENTITY=${CMAKE_CURRENT_SOURCE_DIR}/rom_identity.txt"
+                "-DVERSION=${SNESRECOMP_BUILD_VERSION}"
+                -P "${CMAKE_CURRENT_SOURCE_DIR}/tools/android-stage-assets.cmake"
+            COMMENT "SuperBomberman5SNESRecomp: bundling data for the APK"
+            VERBATIM)
+    endif()
+endif()
