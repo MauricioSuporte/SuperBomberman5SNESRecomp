@@ -679,7 +679,11 @@ static void observe_line(const Ppu *view, unsigned line, void *unused) {
     (void)unused;
     Ppu *ppu=(Ppu *)view;
     if(line==1) {
-        coop_renderer_changed=NormalCoopPlayerMenu() || BossRushTitleMenu();
+        /* Only the co-op player menu needs the accurate compositor. The Boss
+         * Rush title layout renders identically on both (100 frames compared
+         * pixel by pixel, title fade-in to the player-count menu), and forcing
+         * it cost 2.5 ms per frame on a PC and 9.5 ms on a phone. */
+        coop_renderer_changed=NormalCoopPlayerMenu();
         if(coop_renderer_changed) {
             coop_render_flags=ppu->renderFlags;
             ppu->renderFlags&=~kPpuRenderFlags_NewRenderer;
@@ -700,9 +704,10 @@ void PtbrDrawPpuFrame(void) {
     PtbrDrawPpuFrameObserved(NULL,NULL);
 }
 void PtbrDrawPpuFrameObserved(SnesBeamRasterObserver *observer,void *context) {
-    /* The optimized compositor does not reproduce the title's temporary
-     * BG3 replacement correctly. Use the accurate compositor for this
-     * menu only, keeping the user's renderer setting for every other screen. */
+    /* The optimized compositor does not reproduce the co-op player menu's
+     * temporary BG3 replacement correctly; observe_line switches to the
+     * accurate compositor for that menu only, keeping the user's renderer
+     * setting for every other screen. */
     extra_observer=observer;extra_context=context;
     if(s_enabled || GoldBattleHyper() || observer || NormalCoopPlayerMenu() || BossRushTitleMenu()) snes_beam_frame_driver_draw_ppu_frame_observed(observe_line,NULL);
     else snes_beam_frame_driver_draw_ppu_frame();
