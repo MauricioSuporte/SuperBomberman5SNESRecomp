@@ -173,47 +173,6 @@ static void start_selftest(const char *root) {
     if (pthread_create(&t, NULL, selftest_thread, NULL) == 0) pthread_detach(t);
 }
 
-/* Phone defaults, applied once (marker .sb5-perf-1): a 512-sample audio
- * buffer stuttered whenever a slow phone (Redmi 13C, Helio G85) ran a frame
- * late, and rewind copies a ~700 KB snapshot periodically. 2048 samples and
- * rewind off; both stay changeable in the launcher afterwards. */
-static void tune_config(const char *root) {
-    char path[1024], marker[1024], line[512];
-    snprintf(marker, sizeof marker, "%s/.sb5-perf-1", root);
-    FILE *m = fopen(marker, "rb");
-    if (m) { fclose(m); return; }
-    snprintf(path, sizeof path, "%s/config.ini", root);
-    static char out[1 << 16];
-    size_t used = 0;
-    int in_rewind = 0, saw_samples = 0, saw_rewind = 0;
-    FILE *f = fopen(path, "rb");
-    if (f) {
-        while (fgets(line, sizeof line, f) && used + sizeof line < sizeof out) {
-            const char *t = line + strspn(line, " \t");
-            if (*t == '[') in_rewind = !strncmp(t, "[Rewind]", 8), saw_rewind |= in_rewind;
-            if (!strncmp(t, "AudioSamples", 12)) {
-                used += (size_t)snprintf(out + used, sizeof out - used, "AudioSamples = 2048\n");
-                saw_samples = 1;
-            } else if (in_rewind && !strncmp(t, "Enabled", 7)) {
-                used += (size_t)snprintf(out + used, sizeof out - used, "Enabled = 0\n");
-            } else {
-                used += (size_t)snprintf(out + used, sizeof out - used, "%s", line);
-            }
-        }
-        fclose(f);
-    }
-    if (!saw_samples) used += (size_t)snprintf(out + used, sizeof out - used, "\n[Sound]\nAudioSamples = 2048\n");
-    if (!saw_rewind) used += (size_t)snprintf(out + used, sizeof out - used, "\n[Rewind]\nEnabled = 0\n");
-    f = fopen(path, "wb");
-    if (f) {
-        fwrite(out, 1, used, f);
-        fclose(f);
-        m = fopen(marker, "wb");
-        if (m) fclose(m);
-        LOG("phone defaults applied (audio 2048 samples, rewind off)");
-    }
-}
-
 void Sb5AndroidPrepare(void) {
     /* Before anything initialises SDL's joystick layer (the launcher does it
      * first): the accelerometer must not appear as a controller. */
@@ -260,7 +219,6 @@ void Sb5AndroidPrepare(void) {
     char anchor[1024];
     snprintf(anchor, sizeof anchor, "%s/SuperBomberman5Recomp", root);
     setenv("APPIMAGE", anchor, 1);
-    tune_config(root);
     if (chdir(root) != 0) LOG("chdir(%s) failed", root);
     start_selftest(root);
 }
