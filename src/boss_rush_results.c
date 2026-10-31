@@ -34,7 +34,7 @@ enum { PAD_B = 0x0001, PAD_START = 0x0008, PAD_UP = 0x0010, PAD_DOWN = 0x0020,
        PAD_LEFT = 0x0040, PAD_RIGHT = 0x0080, PAD_A = 0x0100 };
 enum { SEAT_CHOICE = 0x1f828 };
 enum { RES_NONE, RES_WAIT, RES_NAME, RES_ASK, RES_SENDING, RES_DONE };
-enum { NAME_MAX = 12, GRID_COLS = 10, GRID_ROWS = 5, WAIT_FRAMES = 60 * 20, SHOW_FRAMES = 60 * 12 };
+enum { BR_NAME_MAX = 12, GRID_COLS = 10, GRID_ROWS = 5, WAIT_FRAMES = 60 * 20, SHOW_FRAMES = 60 * 12 };
 static const char kGrid[4][GRID_COLS + 1] = {"ABCDEFGHIJ", "KLMNOPQRST", "UVWXYZ0123", "456789-.!?"};
 
 static bool was_finished, was_active;
@@ -42,7 +42,7 @@ static int state = RES_NONE;
 static BrEntry entry;
 static bool online, host;
 static unsigned seat_index;          /* name being typed */
-static char name[NAME_MAX + 1];
+static char name[BR_NAME_MAX + 1];
 static int gx, gy;                   /* grid cursor */
 static bool ask_yes = true;
 static unsigned timer, rank;
@@ -156,8 +156,8 @@ void BossRushResultsBeforeFrame(void) {
         if (pressed & PAD_RIGHT) gx = (gx + 1) % GRID_COLS;
         bool done = false;
         if (pressed & PAD_A) {
-            if (gy < 4) { if (len < NAME_MAX) { name[len] = kGrid[gy][gx]; name[len + 1] = 0; } }
-            else if (gx < 3) { if (len && len < NAME_MAX) { name[len] = ' '; name[len + 1] = 0; } }  /* space */
+            if (gy < 4) { if (len < BR_NAME_MAX) { name[len] = kGrid[gy][gx]; name[len + 1] = 0; } }
+            else if (gx < 3) { if (len && len < BR_NAME_MAX) { name[len] = ' '; name[len + 1] = 0; } }  /* space */
             else if (gx < 7) { if (len) name[len - 1] = 0; }                                        /* delete */
             else done = true;                                                                     /* OK */
         }
