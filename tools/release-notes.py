@@ -1275,6 +1275,13 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '2.5.8': (
+'''- **Fix: online rooms with 17 mods:** the lobby's mod list holds 16 packages, so with every mod on (17) one was left out and the host stopped sending its mod configuration, failing Play with `mod_set_mismatch`. Packages past the limit now travel inside the configuration itself.
+- **More detail in the log:** when a room refuses to start because of mods, the log shows the configuration the room sent, what it means and the one this PC runs, to find any remaining difference.
+- Everyone in an online room needs v2.5.8.''',
+'''- **Correção: salas online com 17 mods:** a lista de mods do lobby comporta 16 pacotes, então com todos os mods ligados (17) um ficava de fora e o anfitrião deixava de enviar a configuração de mods, e o Play falhava com `mod_set_mismatch`. Agora os pacotes além do limite vão dentro da própria configuração.
+- **Mais detalhes no log:** quando a sala recusa começar por causa dos mods, o log mostra a configuração enviada pela sala, como ela foi lida e a deste PC, para achar qualquer diferença que ainda reste.
+- Todos na sala online precisam da v2.5.8.'''),
     '2.5.7': (
 '''- **Fix: online rooms with every mod on (second part):** v2.5.6 sent the mod configuration, but peers still rebuilt part of it from the mod list, which also names mods that only change menus and text and are not compared; the result never matched, not even on the host, and Play kept failing with `mod_set_mismatch`. The host now sends the exact configuration in a compact form and every peer reads it back unchanged.
 - Everyone in an online room needs v2.5.7.''',

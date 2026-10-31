@@ -1,5 +1,17 @@
 # Super Bomberman 5: estado do protótipo
 
+## v2.5.8 — 2026-10-30: 17 mods in an online room; mod refusal logs
+
+- Maintainer log on v2.5.7: compact publication worked with 15/16 packages, but with Selection colors and Infinite
+  time also on (17 mods) the plan (`RNET_LOBBY_MAX_MODS` = 16 rows) lost one package, the compact encoder could not
+  name it and the host fell back to `mod set too long to publish`. The host still showed `mod_set_mismatch` and the
+  guest "Not ready"; no guest log yet.
+- recomp-ui `7a65629`: a package beyond the plan keeps its full `id@ver/feature` line inside the `~` form;
+  `netplay_host_test` round-trips 17 packages. Logs: compact field on publish, the full set when still too long,
+  a full plan, and for every `mod_set_mismatch` refusal the room's raw field, the expanded set and the peer's own set.
+- Not yet verified in a real online match; the guest-side "Not ready" (no copy selected) is unexplained without
+  the guest's log.
+
 ## v2.5.7 — 2026-10-30: exact compact mod set for large rooms
 
 - Maintainer report on v2.5.6 (same 16 mods, one guest): host log shows `mod set published as plan + options`, but
