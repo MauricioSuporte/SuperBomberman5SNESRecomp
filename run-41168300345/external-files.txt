@@ -1,0 +1,10 @@
+ls: /sdcard/Android/data/io.github.mauriciosuporte.sb5recomp/files/roms: No such file or directory
+total 64
+drwxrws--- 4 u0_a192 ext_data_rw 4096 2026-10-31 04:27 .
+drwxrws--- 3 u0_a192 ext_data_rw 4096 2026-10-31 04:27 ..
+-rw-rw---- 1 u0_a192 ext_data_rw   22 2026-10-31 04:27 .sb5-bundle
+drwxrws--- 4 u0_a192 ext_data_rw 4096 2026-10-31 04:27 assets
+-rw-rw---- 1 u0_a192 ext_data_rw 1983 2026-10-31 04:27 config.ini
+-rw-rw---- 1 u0_a192 ext_data_rw 1108 2026-10-31 04:27 keybinds.ini
+drwxrws--- 3 u0_a192 ext_data_rw 4096 2026-10-31 04:27 mods
+-rw-rw---- 1 u0_a192 ext_data_rw 1417 2026-10-31 04:27 rom_identity.txt
