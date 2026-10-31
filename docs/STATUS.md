@@ -21,6 +21,10 @@
   into `files/roms/`, `SB5Activity`). CI emulator test (API 34, x86_64, 2400x1080 @420 dpi, no ROM): full launcher
   layout with fonts/images, system picker opened, placeholder imported and rejected by verification, no crash
   (run 41166666818, results on branch `android-ci-shots`). Game on a phone still untested.
+- Touch controls (snesrecomp `superbomberman5-android`, `touch_pad.c`): checked on Linux x86_64, SDL3 renderer,
+  2400x1080 window, interpreter-only, with the maintainer's ROM: pad drawn over Zone 1-1; test fingers on the
+  d-pad's right side and both shoulders gave held directions `$31` = `$01` and held actions `$2C` = `$30` (L+R)
+  after reaching the stage (both `$00` before). Not yet tried with real fingers on a phone.
 
 ## v2.5.9 — 2026-10-30: Cheats mods off during a Boss Rush
 

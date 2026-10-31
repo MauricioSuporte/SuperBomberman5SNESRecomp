@@ -32,6 +32,12 @@ Copy your own ROM (and, for Bomber Kings, your Super Bomberman 4 ROM) into that 
 The runner anchors its game folder to `$APPIMAGE` when set; `Sb5AndroidPrepare` points it inside the files folder,
 so the framework needs no Android-specific path code.
 
+### Touch controls
+
+In the game an on-screen SNES pad is drawn over the picture (framework `touch_pad.c`): 8-way d-pad bottom left,
+A/B/X/Y bottom right, L/R in the top corners, Select/Start at the bottom; multitouch, fingers can slide between
+buttons. It hides when a controller or keyboard is used and returns on the next touch. It drives player 1.
+
 ### Build
 
 CI: `.github/workflows/android.yml` builds `superbomberman5-<version>-android-arm64-experimental.apk` on every push to
@@ -52,8 +58,7 @@ adb install -r app/build/outputs/apk/release/app-release.apk
 ### Not done yet / limits
 
 - Runs on the interpreter alone on Linux x86_64 (title to Zone 1-1, see docs/STATUS.md); not yet run on a phone.
-- Touch controls (Bluetooth/USB controllers work through SDL), ROM picker through Android's file chooser, the
-  Update button (should open the releases page), Discord presence.
+- The Update button (should open the releases page), Discord presence.
 - Netplay: the code is in the APK (LAN, Direct IP, ICE). Cross-play with PC needs the same version, mods and ROM
   hashes, and must be checked with `tests/netplay_pair_runtime.py`-style hash comparison between an interpreter-only
   peer and an AOT PC peer; a slow phone as guest hits the same catch-up limits as a slow PC (docs/NETPLAY.md).
@@ -92,10 +97,16 @@ CI: `.github/workflows/android.yml` gera `superbomberman5-<versão>-android-arm6
 branch `android` (artefato, não release) e confere que o APK não lista ROM, save nem código gerado. Build local:
 comandos na seção em inglês.
 
+### Controles de toque
+
+No jogo aparece um controle de SNES translúcido sobre a imagem: direcional de 8 direções embaixo à esquerda,
+A/B/X/Y embaixo à direita, L/R nos cantos de cima, Select/Start embaixo; multitoque, dá para deslizar o dedo entre
+botões. Some quando um controle ou teclado é usado e volta no próximo toque. Controla o jogador 1.
+
 ### Falta / limites
 
 - Roda só no interpretador no Linux x86_64 (título até a Zona 1-1, ver docs/STATUS.md); ainda não testado num celular.
-- Controles de toque (controles Bluetooth/USB funcionam pelo SDL), seletor de ROM do Android, botão Atualizar
+- Botão Atualizar
   (deve abrir a página de releases), Discord.
 - Netplay: o código está no APK (LAN, IP direto, ICE). Crossplay com PC exige mesma versão, mods e hashes de ROM e
   precisa ser conferido comparando hashes entre um peer só-interpretador e um peer de PC com AOT; celular lento como
