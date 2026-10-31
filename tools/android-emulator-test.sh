@@ -23,7 +23,7 @@ import re, sys
 xml = open(sys.argv[1], encoding="utf-8", errors="replace").read()
 for m in re.finditer(r'<node [^>]*>', xml):
     node = m.group(0)
-    if f'text="{sys.argv[2]}"' in node:
+    if f'text="{sys.argv[2]}"' in node or f'content-desc="{sys.argv[2]}"' in node:
         b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', node)
         if b:
             x1, y1, x2, y2 = map(int, b.groups())
@@ -72,8 +72,9 @@ summary "focus after browse: $FOCUS"
 # first through the drawer when the picker starts elsewhere).
 XY=$(tap_text pick picker-test.sfc)
 if [ -z "$XY" ]; then
-    # Chooser or another folder: try "Files"/"Downloads" once.
-    for label in Files Downloads Download; do
+    # Picker opened on "Recent" (empty until media is indexed): open the
+    # roots drawer, then Downloads.
+    for label in "Show roots" Files Downloads Download; do
         XY2=$(tap_text "nav-$label" "$label")
         if [ -n "$XY2" ]; then adb shell input tap $XY2; sleep 3; fi
     done
