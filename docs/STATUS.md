@@ -1,5 +1,14 @@
 # Super Bomberman 5: estado do protótipo
 
+## Android branch — 2026-10-30: interpreter-only build (experimental, not released)
+
+- Branch `android` (docs/ANDROID.md): `SB5_INTERPRETER_ONLY` links empty dispatch tables instead of `src/gen`, so
+  the whole game runs on the 65816 interpreter and the binary holds nothing derived from the ROM. Default on for
+  Android: `android/` Gradle/NDK project (SDL2, arm64), `libmain.so`, bundled mod catalog/launcher assets extracted
+  to the app's files folder (`src/android_assets.c`), CI workflow `android.yml`.
+- Built: Linux x86_64 interpreter-only binary (portable toolchain 1.0.14, Release). Not yet run with the ROM, so
+  booting entirely on the interpreter is unverified at runtime; no phone test; no cross-play test.
+
 ## v2.5.9 — 2026-10-30: Cheats mods off during a Boss Rush
 
 - Maintainer confirmed v2.5.8 fixed the 17-mod online room (match started).
