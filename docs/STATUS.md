@@ -9,8 +9,12 @@
 - Built: Linux x86_64 interpreter-only binary (portable toolchain 1.0.14, Release) and the arm64 APK in CI (run
   41164493123: NDK 27.2, SDL 2.32.8; CI checks list `libmain.so` and `assets/sb5/files.txt`, no ROM/save/generated
   file). Framework fixes on fork branch `snesrecomp@superbomberman5-android` (overlay type declared on Android,
-  rollback statics probe off in a `.so`). Not yet run with the ROM, so booting entirely on the interpreter is
-  unverified at runtime; no phone test; no cross-play test.
+  rollback statics probe off in a `.so`).
+- Runtime (Linux x86_64, interpreter-only, LLE, headless, maintainer's verified JPN ROM, isolated folder, no mods):
+  `validation/first-stage.input` reached Zone 1-1 (`$1031` = `$0D` at frame 3628), then 181 more frames with the
+  timer counting, enemies moving and blocks animating; no `interp_cap`, `unresolved-abandon`, `BRK` or `fatal`.
+  Speed with turbo: ~211-226 frames/s on this x86 container (about 3.5x real time). No phone test (no Android
+  SDK/emulator reachable here), no mods enabled, no cross-play test.
 
 ## v2.5.9 — 2026-10-30: Cheats mods off during a Boss Rush
 

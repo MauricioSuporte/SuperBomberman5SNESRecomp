@@ -51,7 +51,7 @@ adb install -r app/build/outputs/apk/release/app-release.apk
 
 ### Not done yet / limits
 
-- No runtime evidence on a phone yet: build only.
+- Runs on the interpreter alone on Linux x86_64 (title to Zone 1-1, see docs/STATUS.md); not yet run on a phone.
 - Touch controls (Bluetooth/USB controllers work through SDL), ROM picker through Android's file chooser, the
   Update button (should open the releases page), Discord presence.
 - Netplay: the code is in the APK (LAN, Direct IP, ICE). Cross-play with PC needs the same version, mods and ROM
@@ -94,7 +94,7 @@ comandos na seção em inglês.
 
 ### Falta / limites
 
-- Ainda sem teste rodando num celular: só compilação.
+- Roda só no interpretador no Linux x86_64 (título até a Zona 1-1, ver docs/STATUS.md); ainda não testado num celular.
 - Controles de toque (controles Bluetooth/USB funcionam pelo SDL), seletor de ROM do Android, botão Atualizar
   (deve abrir a página de releases), Discord.
 - Netplay: o código está no APK (LAN, IP direto, ICE). Crossplay com PC exige mesma versão, mods e hashes de ROM e
