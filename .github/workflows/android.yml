@@ -134,11 +134,22 @@ jobs:
           dest="run-${GITHUB_RUN_ID}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch --depth 1 origin android-ci-shots && git worktree add shots FETCH_HEAD \
+          git fetch --depth 1 origin android-ci-shots && git worktree add --detach shots FETCH_HEAD \
             || { git worktree add --detach shots && (cd shots && git checkout --orphan android-ci-shots && git rm -rfq .); }
-          mkdir -p "shots/$dest" && cp -r emulator-out/. "shots/$dest/"
+          # Text only (summary, logcat excerpts, UI dumps, server log): the
+          # screenshots and the served APK go to the emulator-screenshots
+          # artifact, so this branch never holds images or binaries.
+          mkdir -p "shots/$dest"
+          (cd emulator-out && find . -maxdepth 1 -type f \( -name '*.txt' -o -name '*.xml' -o -name '*.jsonl' -o -name '*.log' \) \
+             -exec cp {} "../shots/$dest/" \;)
           cd shots && git add "$dest" && git commit -qm "Emulator results for run ${GITHUB_RUN_ID} ($(git -C .. rev-parse --short HEAD))" \
             && git push origin HEAD:refs/heads/android-ci-shots
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: emulator-screenshots
+          path: emulator-out/*.png
+          if-no-files-found: ignore
       - uses: actions/upload-artifact@v4
         with:
           name: superbomberman5-android
