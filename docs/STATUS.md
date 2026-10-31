@@ -1,5 +1,20 @@
 # Super Bomberman 5: estado do protótipo
 
+## Android renderer repair — 2026-10-31: v3.0.1 reverted
+
+- Report: with every mod on, a Galaxy S20 FE ran slower after v3.0.1, not faster. v3.0.1 (`a367a20`: 2048-sample
+  audio buffer, rewind off, applied once to `config.ini`) is reverted. Its migration ran before the host wrote the
+  default `config.ini`, so on a fresh install the file held only `[Sound]`/`[Rewind]`: `NewRenderer` and
+  `NoSpriteLimits` read as off and every screen used the accurate compositor. A one-time repair
+  (`src/android_config_fix.c`, `tests/android_config_fix_tests.c`) adds both keys to `[Graphics]` when missing.
+- Measured on a Galaxy A32 (Helio G80, Android 13), title screen, no mods, simulated frames/s from the host's
+  `perf:` line (a local build that forwards it to logcat; not part of the change): v3.0.0 32; v3.0.1 fresh install
+  25.5 (raster 12.5 ms/frame instead of 2.6); v3.0.1 with the two keys restored 32, the same as v3.0.0, so the
+  audio buffer and rewind settings did not change the frame rate. With this change: fresh install 32 (default
+  config written), broken v3.0.1 config repaired to 32 (only the two lines added), a v3.0.0 config unchanged
+  (same SHA-256). With every mod on, the title stays at about 24 frames/s on this phone (Boss Rush's title layout
+  forces the accurate compositor; separate change). Not yet confirmed on the S20 FE.
+
 ## v3.0.0 — 2026-10-31: Android APK, crossplay
 
 - Android APK (interpreter-only, docs/ANDROID.md) joins the release: the maintainer played it on his phone with

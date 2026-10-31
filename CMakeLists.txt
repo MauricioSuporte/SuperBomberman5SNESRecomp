@@ -114,7 +114,7 @@ if(ANDROID)
         OUTPUT_NAME main C_VISIBILITY_PRESET hidden CXX_VISIBILITY_PRESET hidden
         VISIBILITY_INLINES_HIDDEN ON)
     target_compile_options(SuperBomberman5SNESRecomp PRIVATE -fno-semantic-interposition)
-    target_sources(SuperBomberman5SNESRecomp PRIVATE src/android_assets.c src/android_java.c)
+    target_sources(SuperBomberman5SNESRecomp PRIVATE src/android_assets.c src/android_config_fix.c src/android_java.c)
     target_link_libraries(SuperBomberman5SNESRecomp PRIVATE android log)
 endif()
 
@@ -165,6 +165,8 @@ if(BUILD_TESTING)
     target_include_directories(normal_character_tests PRIVATE
         "${SNESRECOMP_ROOT}/runner/src")
     add_test(NAME normal_character_selection COMMAND normal_character_tests)
+    add_executable(android_config_fix_tests tests/android_config_fix_tests.c)
+    add_test(NAME android_config_fix COMMAND android_config_fix_tests)
     add_executable(name_tags_tests tests/name_tags_tests.c)
     target_include_directories(name_tags_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src")
     add_test(NAME netplay_name_tags COMMAND name_tags_tests)

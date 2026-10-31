@@ -17,6 +17,7 @@
 #ifdef __ANDROID__
 
 #include "android_assets.h"
+#include "android_config_fix.h"
 #include "android_java.h"
 
 #include <pthread.h>
@@ -173,6 +174,39 @@ static void start_selftest(const char *root) {
     if (pthread_create(&t, NULL, selftest_thread, NULL) == 0) pthread_detach(t);
 }
 
+/* v3.0.1 wrote config.ini before the host's default on a fresh install, so
+ * "NewRenderer = 1" and "NoSpriteLimits = 1" were never written and every
+ * screen ran on the slower accurate compositor. Add them once when missing
+ * (marker .sb5-renderer-1); a config that has the keys is left unchanged.
+ * With no config.ini yet, the host writes its full default afterwards. */
+static void restore_renderer_config(const char *root) {
+    char path[1024], marker[1024];
+    snprintf(marker, sizeof marker, "%s/.sb5-renderer-1", root);
+    FILE *m = fopen(marker, "rb");
+    if (m) { fclose(m); return; }
+    snprintf(path, sizeof path, "%s/config.ini", root);
+    static char in[1 << 16], out[(1 << 16) + 64];
+    size_t len = 0;
+    FILE *f = fopen(path, "rb");
+    if (f) {
+        len = fread(in, 1, sizeof in, f);
+        const int complete = feof(f) && !ferror(f);
+        fclose(f);
+        if (!complete) return; /* unreadable or too large: try next launch */
+        long n = Sb5ConfigAddRendererKeys(in, len, out, sizeof out);
+        if (n < 0) return;
+        if (n > 0) {
+            f = fopen(path, "wb");
+            if (!f) return;
+            const int ok = fwrite(out, 1, (size_t)n, f) == (size_t)n;
+            if (fclose(f) != 0 || !ok) return;
+            LOG("config.ini: restored NewRenderer/NoSpriteLimits");
+        }
+    }
+    m = fopen(marker, "wb");
+    if (m) fclose(m);
+}
+
 void Sb5AndroidPrepare(void) {
     /* Before anything initialises SDL's joystick layer (the launcher does it
      * first): the accelerometer must not appear as a controller. */
@@ -216,6 +250,7 @@ void Sb5AndroidPrepare(void) {
      * files folder (launcher_imgui.cpp asset()), so the bundle goes there too. */
     const char *internal = SDL_AndroidGetInternalStoragePath();
     if (internal) extract_bundle(internal);
+    restore_renderer_config(root);
     char anchor[1024];
     snprintf(anchor, sizeof anchor, "%s/SuperBomberman5Recomp", root);
     setenv("APPIMAGE", anchor, 1);

@@ -62,6 +62,11 @@ images, `rom_identity.txt` and the ranking configuration there; `config.ini`, `r
 are never overwritten. A ROM copied into that folder or `roms/` by USB is found by SHA-256 too.
 `joysticks.txt` there lists the input devices SDL saw at start-up.
 
+The one exception is a one-time repair (marker `.sb5-renderer-1`, `src/android_config_fix.c`): v3.0.1 wrote
+`config.ini` before the game's default on a fresh install, so `NewRenderer = 1` and `NoSpriteLimits = 1` were
+missing and every screen ran on the slower accurate compositor (no launcher setting turns it back on). On the next
+launch the two keys are added to `[Graphics]` when absent; a config that has them, with any value, is not changed.
+
 The runner anchors its game folder to `$APPIMAGE` when set; `Sb5AndroidPrepare` points it inside the files folder,
 so the framework needs no Android-specific path code.
 
@@ -154,6 +159,12 @@ atualização do APK) o `src/android_assets.c` copia para lá o catálogo de mod
 `rom_identity.txt` e a configuração do ranking; `config.ini`, `rom.cfg`, saves, estado dos mods e ROMs nunca são
 sobrescritos. Uma ROM copiada pelo USB para essa pasta ou para `roms/` também é encontrada pelo SHA-256. O
 `joysticks.txt` dessa pasta lista os dispositivos de entrada que o SDL viu ao abrir.
+
+A única exceção é um reparo feito uma vez (marcador `.sb5-renderer-1`, `src/android_config_fix.c`): numa instalação
+nova, a v3.0.1 criava o `config.ini` antes do padrão do jogo, então `NewRenderer = 1` e `NoSpriteLimits = 1` ficavam
+de fora e todas as telas usavam o compositor preciso, mais lento (nenhuma opção do launcher o desliga). Na abertura
+seguinte as duas chaves são acrescentadas em `[Graphics]` quando faltam; um config que já as tem, com qualquer
+valor, não muda.
 
 ### Controles de toque
 
