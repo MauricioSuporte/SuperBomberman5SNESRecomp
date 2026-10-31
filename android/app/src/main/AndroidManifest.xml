@@ -21,7 +21,7 @@
         android:hardwareAccelerated="true">
 
         <activity
-            android:name="org.libsdl.app.SDLActivity"
+            android:name="io.github.mauriciosuporte.sb5recomp.SB5Activity"
             android:label="Super Bomberman 5 Recomp"
             android:configChanges="layoutDirection|locale|orientation|uiMode|screenLayout|screenSize|smallestScreenSize|keyboard|keyboardHidden|navigation"
             android:preferMinimalPostProcessing="true"

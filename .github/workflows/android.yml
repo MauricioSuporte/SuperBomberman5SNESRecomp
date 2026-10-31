@@ -7,7 +7,8 @@ on:
     paths-ignore: ['docs/**', '**.md']
   workflow_dispatch:
 permissions:
-  contents: read
+  # contents: write only to push emulator screenshots to android-ci-shots.
+  contents: write
 jobs:
   apk:
     runs-on: ubuntu-latest
@@ -40,7 +41,7 @@ jobs:
           echo "cmake.dir=$(dirname "$(dirname "$(command -v cmake)")")" > local.properties
           cmake --version | head -1
           set -o pipefail
-          ./gradlew --no-daemon assembleRelease 2>&1 | tee ../build.log
+          ./gradlew --no-daemon assembleRelease -Psb5Abis=arm64-v8a,x86_64 2>&1 | tee ../build.log
       - name: Report build errors as annotations
         if: failure()
         run: |
@@ -56,10 +57,42 @@ jobs:
           unzip -l "$apk" | tee apk-contents.txt
           ! grep -E '\.(sfc|smc|srm)$|src/gen|bank[0-9]+_v2' apk-contents.txt
           grep -q 'lib/arm64-v8a/libmain.so' apk-contents.txt
+          grep -q 'lib/x86_64/libmain.so' apk-contents.txt
           grep -q 'assets/sb5/files.txt' apk-contents.txt
-          mkdir -p dist && cp "$apk" "dist/superbomberman5-$(cat VERSION)-android-arm64-experimental.apk"
+          mkdir -p dist && cp "$apk" "dist/superbomberman5-$(cat VERSION)-android-experimental.apk"
+      - name: Enable KVM for the emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Emulator smoke test (no ROM)
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: bash tools/android-emulator-test.sh dist/superbomberman5-*-android-experimental.apk emulator-out
+      - name: Report emulator summary
+        if: always()
+        run: |
+          test -f emulator-out/summary.txt && sed 's/^/::notice::/' emulator-out/summary.txt || echo "::warning::no emulator summary"
+      - name: Publish emulator results to android-ci-shots
+        if: always()
+        run: |
+          test -d emulator-out || exit 0
+          dest="run-${GITHUB_RUN_ID}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch --depth 1 origin android-ci-shots && git worktree add shots FETCH_HEAD \
+            || { git worktree add --detach shots && (cd shots && git checkout --orphan android-ci-shots && git rm -rfq .); }
+          mkdir -p "shots/$dest" && cp -r emulator-out/. "shots/$dest/"
+          cd shots && git add "$dest" && git commit -qm "Emulator results for run ${GITHUB_RUN_ID} ($(git -C .. rev-parse --short HEAD))" \
+            && git push origin HEAD:refs/heads/android-ci-shots
       - uses: actions/upload-artifact@v4
         with:
-          name: superbomberman5-android-arm64
+          name: superbomberman5-android
           path: dist/*.apk
           if-no-files-found: error

@@ -1,5 +1,9 @@
 name: Source checks
-on: [push, pull_request]
+on:
+  push:
+    # Emulator screenshots from android.yml, not project source.
+    branches-ignore: [android-ci-shots]
+  pull_request:
 permissions:
   contents: read
 jobs:
