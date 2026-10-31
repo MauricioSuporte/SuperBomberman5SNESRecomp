@@ -1,5 +1,32 @@
 # Super Bomberman 5: estado do protótipo
 
+## v3.0.0 — 2026-10-31: Android APK, crossplay
+
+- Android APK (interpreter-only, docs/ANDROID.md) joins the release: the maintainer played it on his phone with
+  every mod working (touch layout landscape/portrait accepted). Fixes after that report:
+  - **Tilt input:** SDL2 exposed the accelerometer as a joystick; the hint is now set before the launcher
+    initialises SDL and the host refuses sensor joysticks (no buttons/hats or sensor names). CI emulator lists 0
+    joysticks; not reproducible without a phone sensor, so the maintainer's phone is the remaining check.
+  - **Update game** on Android: GitHub release check + PackageInstaller install over the app. CI emulator (API 34,
+    no ROM, run 41208107224): release check HTTP 200 (`latest=2.5.9 newer=0`), test APK downloaded from a local
+    server, system confirmation tapped, package `lastUpdateTime` changed. APKs signed with the release key
+    (certificate SHA-256 `3ffbdae9...d321d2b4`, checked by the workflow).
+  - **Discord sign-in:** recomp-net opens the URL with `SDL_OpenURL`; in the emulator it opened Chrome. A full
+    sign-in needs a person and was not run in CI.
+  - **Boss Rush ranking:** requests through the Activity; CI emulator GET/PATCH/POST against a local server with
+    JSON bodies and the Discord User-Agent all returned 200; the ranking configuration is bundled from secrets.
+    Not yet exercised against the real Discord webhook from a phone.
+  - **Slowdown:** profiled (callgrind, x86_64, interpreter-only, all 16 mods, title screen): interpreter ~45%,
+    bus/ROM access ~20%, PPU ~10%, mods ~5% (no network on the game thread: the ranking already ran on a worker
+    and was not even configured on Android). Title speed 152 fps with all mods vs ~170 without, uncapped. Change:
+    `libmain.so` with hidden visibility and no semantic interposition; effect on phones not measured.
+- **Crossplay:** the APK uses the PC build's lobby version (no `-android`). An AOT PC peer and an interpreter-only
+  peer desynced from frame 330 in `tests/netplay_pair_runtime.py` (all mods, random pads) while AOT+AOT and
+  interp+interp pairs stayed identical; every netplay session now selects an empty AOT program
+  (`Sb5NetplayInterpreterOnly`). After it: AOT + interpreter-only pair in sync for 2400 boot frames (80/80 WRAM
+  samples) and 3600 Battle frames (119/119), Linux x86_64. Not yet played between a real phone and PC over the
+  internet.
+
 ## Android branch — 2026-10-30: interpreter-only build (experimental, not released)
 
 - Branch `android` (docs/ANDROID.md): `SB5_INTERPRETER_ONLY` links empty dispatch tables instead of `src/gen`, so
