@@ -1,5 +1,17 @@
 # Super Bomberman 5: estado do protótipo
 
+## v2.5.6 — 2026-10-30: online rooms with every mod enabled
+
+- Maintainer report (v2.5.5, 16 mods, online room with one guest): host log `mod set too long to publish`, lobby
+  `mod_set_mismatch`, guest stuck on "Not ready". The effective set ran past the 512-byte `mod_set` field, so the
+  host published it empty and guests rebuilt it from the plan rows, which carry no option values (Battle stage
+  variants has options): the rebuilt set never equalled the host's.
+- recomp-ui `4139209` (branch `superbomberman5-discord`): when the full set does not fit, the host publishes only the
+  lines with options behind `~`; guests rebuild every feature line from the plan and attach those options. Local set
+  buffers 1024 → 4096 bytes. New case in `netplay_host_test` (16 packages, one with options: full text does not fit,
+  `~` form fits, guest rebuilds it byte for byte) passes on Linux/gcc with all existing cases.
+- Not yet verified in a real online match with 16 mods; older guests (≤ v2.5.5) cannot read the `~` form.
+
 ## v2.5.5 — 2026-10-30: Linux audio without system packages
 
 - Same WSL Ubuntu 24.04 test as v2.5.4: after the build, the game closed with `SDL_Init FAILED: Failed loading

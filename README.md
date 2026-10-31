@@ -2,7 +2,7 @@
 
 An unofficial, noncommercial **Super Bomberman 5** PC port built with [SNESRecomp](https://github.com/RetroPortingToolKit/snesrecomp) and [recomp-ui](https://github.com/RetroPortingToolKit/recomp-ui), following the game-repository architecture of [Mega Man X Recompiled](https://github.com/mstan/MegaManXSNESRecomp).
 
-[Download v2.5.5](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v2.5.5) · [English](#english) · [Português](#português) · [Technical status](docs/STATUS.md) · [Contributing](CONTRIBUTING.md)
+[Download v2.5.6](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v2.5.6) · [English](#english) · [Português](#português) · [Technical status](docs/STATUS.md) · [Contributing](CONTRIBUTING.md)
 
 > **Partial recompilation.** Most game logic still runs on the framework's interpreter. Supply your own legally obtained ROM; no ROM, generated game code or extracted assets are distributed. v1.0.1 is the first full release: the maintainer has played the campaign through to the end on Windows.
 
@@ -28,14 +28,14 @@ An unofficial, noncommercial **Super Bomberman 5** PC port built with [SNESRecom
 
 ### Install
 
-1. Download **superbomberman5-2.5.5-windows-x64.zip** (Windows 10+ x64) or **superbomberman5-2.5.5-linux-x86_64.AppImage** (glibc 2.35+, Ubuntu 22.04 baseline) from [v2.5.5](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v2.5.5) and check **SHA256SUMS**.
-2. Windows: extract the **entire** ZIP into a new writable folder and open `SuperBomberman5Recomp.exe`. Linux: `chmod +x` the AppImage and run it (without FUSE, add `--appimage-extract-and-run`); its setup lives in `~/.local/share/superbomberman5/2.5.5`.
+1. Download **superbomberman5-2.5.6-windows-x64.zip** (Windows 10+ x64) or **superbomberman5-2.5.6-linux-x86_64.AppImage** (glibc 2.35+, Ubuntu 22.04 baseline) from [v2.5.6](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v2.5.6) and check **SHA256SUMS**.
+2. Windows: extract the **entire** ZIP into a new writable folder and open `SuperBomberman5Recomp.exe`. Linux: `chmod +x` the AppImage and run it (without FUSE, add `--appimage-extract-and-run`); its setup lives in `~/.local/share/superbomberman5/2.5.6`.
 3. Let the launcher fetch the portable build tools (internet needed once; Rust is not required), select your own ROM and choose **Generate & rebuild**. A valid ROM placed in the game folder or its `roms/` subfolder is found automatically under any file name (the Super Bomberman 4 ROM for Bomber Kings too).
 4. Open **Mods** to enable features, configure controls and select **Play**.
 
 **Moving the folder:** ROM paths inside the game folder are saved relative to it, so a built game folder (with `build/`) can be moved or copied to another drive or PC and opens straight on **Play**, without asking for the ROM or for **Generate & rebuild**, as long as the ROMs are in the folder. Every player needs their own legally obtained ROMs.
 
-**Upgrading:** the launcher header shows your version and, when a newer release exists, the launcher says so (and holds online hosting until you update). From v2.0.0 on, use **Update game / Atualizar jogo** in the launcher (or `updater/SuperBomberman5Updater`); it shows progress bars with the time left and, since v2.3.1, the launcher then runs **Generate & rebuild** by itself when the game was already built and the ROM is known (before that, press it once); your ROM path, saves, settings and Mods selection are kept. From v1.x, install 2.5.5 into a new folder (or extract it over the old one) and run **Generate & rebuild** again; an older generated executable cannot load new native mod code. Leave several GB free.
+**Upgrading:** the launcher header shows your version and, when a newer release exists, the launcher says so (and holds online hosting until you update). From v2.0.0 on, use **Update game / Atualizar jogo** in the launcher (or `updater/SuperBomberman5Updater`); it shows progress bars with the time left and, since v2.3.1, the launcher then runs **Generate & rebuild** by itself when the game was already built and the ROM is known (before that, press it once); your ROM path, saves, settings and Mods selection are kept. From v1.x, install 2.5.6 into a new folder (or extract it over the old one) and run **Generate & rebuild** again; an older generated executable cannot load new native mod code. Leave several GB free.
 
 ### Supported ROM
 
@@ -140,14 +140,14 @@ Thanks to Matthew Stanley and the RetroPorting ToolKit contributors for SNESReco
 
 ### Instalação
 
-1. Baixe **superbomberman5-2.5.5-windows-x64.zip** (Windows 10+ x64) ou **superbomberman5-2.5.5-linux-x86_64.AppImage** (glibc 2.35+, base Ubuntu 22.04) na [v2.5.5](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v2.5.5) e confira o **SHA256SUMS**.
-2. Windows: extraia o ZIP **inteiro** numa pasta nova e gravável e abra `SuperBomberman5Recomp.exe`. Linux: dê `chmod +x` no AppImage e execute (sem FUSE, use `--appimage-extract-and-run`); o setup fica em `~/.local/share/superbomberman5/2.5.5`.
+1. Baixe **superbomberman5-2.5.6-windows-x64.zip** (Windows 10+ x64) ou **superbomberman5-2.5.6-linux-x86_64.AppImage** (glibc 2.35+, base Ubuntu 22.04) na [v2.5.6](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v2.5.6) e confira o **SHA256SUMS**.
+2. Windows: extraia o ZIP **inteiro** numa pasta nova e gravável e abra `SuperBomberman5Recomp.exe`. Linux: dê `chmod +x` no AppImage e execute (sem FUSE, use `--appimage-extract-and-run`); o setup fica em `~/.local/share/superbomberman5/2.5.6`.
 3. Deixe o launcher baixar as ferramentas portáteis (internet só na primeira vez; Rust não é necessário), escolha sua própria ROM e clique em **Generate & rebuild**. Uma ROM válida colocada na pasta do jogo ou na subpasta `roms/` é encontrada sozinha, com qualquer nome de arquivo (a ROM do Super Bomberman 4 para o Bomber Kings também).
 4. Abra **Mods** para ativar funções, configure os controles e clique em **Play**.
 
 **Mudando a pasta de lugar:** os caminhos das ROMs dentro da pasta do jogo são salvos relativos a ela, então uma pasta com o jogo já gerado (com `build/`) pode ser movida ou copiada para outro disco ou PC e abre direto no **Play**, sem perguntar pela ROM nem pedir **Generate & rebuild**, desde que as ROMs estejam na pasta. Cada jogador precisa das suas próprias ROMs obtidas legalmente.
 
-**Atualizando:** o cabeçalho do launcher mostra a sua versão e, quando há versão mais nova, o launcher avisa (e segura a criação de salas online até você atualizar). A partir da v2.0.0, use **Update game / Atualizar jogo** no launcher (ou `updater/SuperBomberman5Updater`); ele mostra barras de progresso com o tempo restante e, desde a v2.3.1, o launcher roda o **Generate & rebuild** sozinho quando o jogo já estava compilado e a ROM é conhecida (antes disso, clique nele uma vez); o caminho da ROM, saves, configurações e mods escolhidos continuam. Vindo da v1.x, instale a 2.5.5 numa pasta nova (ou extraia por cima da antiga) e faça **Generate & rebuild** de novo; um executável gerado antigo não carrega o código nativo novo. Deixe alguns GB livres.
+**Atualizando:** o cabeçalho do launcher mostra a sua versão e, quando há versão mais nova, o launcher avisa (e segura a criação de salas online até você atualizar). A partir da v2.0.0, use **Update game / Atualizar jogo** no launcher (ou `updater/SuperBomberman5Updater`); ele mostra barras de progresso com o tempo restante e, desde a v2.3.1, o launcher roda o **Generate & rebuild** sozinho quando o jogo já estava compilado e a ROM é conhecida (antes disso, clique nele uma vez); o caminho da ROM, saves, configurações e mods escolhidos continuam. Vindo da v1.x, instale a 2.5.6 numa pasta nova (ou extraia por cima da antiga) e faça **Generate & rebuild** de novo; um executável gerado antigo não carrega o código nativo novo. Deixe alguns GB livres.
 
 ### ROM compatível
 

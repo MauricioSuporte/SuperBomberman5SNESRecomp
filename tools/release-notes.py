@@ -1275,6 +1275,11 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '2.5.6': (
+'''- **Fix: online rooms with every mod on:** with 16 mods enabled the host's mod configuration did not fit the lobby, so guests rebuilt it without the mods' options and the match never started (`mod_set_mismatch`, guest stuck on "Not ready"). The host now sends the mod list plus only the options, and guests match it exactly.
+- Everyone in an online room needs v2.5.6.''',
+'''- **Correção: salas online com todos os mods ligados:** com 16 mods ativos a configuração de mods do anfitrião não cabia no lobby, os convidados a montavam sem as opções dos mods e a partida nunca começava (`mod_set_mismatch`, convidado preso em "Not ready"). Agora o anfitrião envia a lista de mods e só as opções, e os convidados ficam exatamente iguais.
+- Todos na sala online precisam da v2.5.6.'''),
     '2.5.5': (
 '''- **Linux: no more missing-library errors at startup.** The AppImage now carries the PulseAudio sound libraries and uses them only when the system lacks them (WSL and minimal installs). If no sound device can be opened at all, the game starts without sound instead of closing.
 - **WSL: full speed:** WSL could draw the game without the graphics card (software rendering), so it ran slow. On WSL the AppImage now asks for the GPU (D3D12) when Windows exposes it. WSL's own sound output (RDP) may still crackle even when the game keeps its sound flowing; this is a WSLg limitation.
