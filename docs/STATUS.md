@@ -25,6 +25,11 @@
   2400x1080 window, interpreter-only, with the maintainer's ROM: pad drawn over Zone 1-1; test fingers on the
   d-pad's right side and both shoulders gave held directions `$31` = `$01` and held actions `$2C` = `$30` (L+R)
   after reaching the stage (both `$00` before). Not yet tried with real fingers on a phone.
+- Maintainer's phone report: portrait buttons huge and overlapping; menu cursor drifting by itself. Fixes: pad
+  sized from the short side with a portrait layout (picture on top, L/R and Select/Start above the clusters),
+  single-shape pills; `SDL_HINT_ACCELEROMETER_AS_JOYSTICK=0` (SDL2 exposed the accelerometer as a joystick and the
+  host opened it as a controller). Layouts checked at 2400x1080 and 1080x2400 in Zone 1-1 (Linux, test fingers on
+  R/L); the drift fix is not reproducible without a phone sensor.
 
 ## v2.5.9 — 2026-10-30: Cheats mods off during a Boss Rush
 
