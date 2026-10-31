@@ -39,7 +39,17 @@ jobs:
           # Use the runner's CMake (3.31) instead of the SDK's 3.22.
           echo "cmake.dir=$(dirname "$(dirname "$(command -v cmake)")")" > local.properties
           cmake --version | head -1
-          ./gradlew --no-daemon assembleRelease
+          set -o pipefail
+          ./gradlew --no-daemon assembleRelease 2>&1 | tee ../build.log
+      - name: Report build errors as annotations
+        if: failure()
+        run: |
+          grep -nE 'error:|Error|FAILED|What went wrong|undefined reference|CMake Error' build.log \
+            | grep -v 'warning' | head -40 \
+            | sed -e 's/%/%25/g' -e 's/^/::error::/' || true
+          for f in $(find android/app/.cxx -name 'CMakeOutput.log' -o -name 'CMakeError.log' 2>/dev/null | head -2); do
+            grep -nE 'error' "$f" | head -10 | sed 's/^/::error::/' || true
+          done
       - name: Check the APK carries no ROM-derived code
         run: |
           apk=$(ls android/app/build/outputs/apk/release/*.apk)
