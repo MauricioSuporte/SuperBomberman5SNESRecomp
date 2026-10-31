@@ -1275,6 +1275,19 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '3.0.0': (
+'''- **Android:** a new **superbomberman5-3.0.0-android.apk** (Android 9+, arm64) with the same game, all mods and the Boss Rush ranking. It needs no build step: the phone runs the whole game on the interpreter, so a slow phone can slow down in busy scenes.
+- **Phone controls:** a translucent on-screen SNES pad (8-way d-pad, A/B/X/Y, L/R, Select/Start) in landscape and portrait, multitouch, hidden while a Bluetooth/USB controller is used. Tilting the phone no longer moves the cursor or the player.
+- **On the phone:** **Browse For ROM** opens the system file picker and copies the ROM into the app; **Update game / Atualizar jogo** downloads the newest APK and installs it over the app, keeping saves, ROMs and settings; **Sign in with Discord** opens the browser.
+- **Crossplay:** Android, Windows and Linux players join the same online rooms. Every netplay session now runs on the interpreter on every platform, which keeps PC and Android matches identical.
+- Test APKs from before v3.0.0 are signed differently: uninstall that one once (copy `Android/data/io.github.mauriciosuporte.sb5recomp/files/saves` first) and install v3.0.0.
+- Everyone in an online room needs v3.0.0.''',
+'''- **Android:** um novo **superbomberman5-3.0.0-android.apk** (Android 9+, arm64) com o mesmo jogo, todos os mods e o ranking do Boss Rush. Não precisa compilar nada: o celular roda o jogo inteiro no interpretador, então um celular lento pode ficar lento em cenas cheias.
+- **Controles no celular:** um controle de SNES translúcido na tela (direcional de 8 direções, A/B/X/Y, L/R, Select/Start) na horizontal e na vertical, multitoque, que some enquanto um controle Bluetooth/USB é usado. Inclinar o celular não mexe mais o cursor nem o personagem.
+- **No celular:** **Browse For ROM** abre o seletor de arquivos do sistema e copia a ROM para o app; **Update game / Atualizar jogo** baixa o APK mais novo e instala por cima, mantendo saves, ROMs e configurações; **Sign in with Discord** abre o navegador.
+- **Crossplay:** jogadores de Android, Windows e Linux entram nas mesmas salas online. Toda sessão de netplay agora roda no interpretador em todas as plataformas, o que mantém as partidas entre PC e Android idênticas.
+- APKs de teste anteriores à v3.0.0 têm outra assinatura: desinstale esse uma vez (copie antes `Android/data/io.github.mauriciosuporte.sb5recomp/files/saves`) e instale a v3.0.0.
+- Todos na sala online precisam da v3.0.0.'''),
     '2.5.9': (
 '''- **Boss Rush without cheats:** the Cheats mods (infinite time, infinite lives and Battle COM level 4) stay off from the start of a Boss Rush until the title screen, so ranked times are played with the cartridge's normal lives and timer. They work as before everywhere else.
 - Everyone in an online room needs v2.5.9.''',
@@ -1528,13 +1541,13 @@ if version in WHATS_NEW:
 
 {en}
 
-Update with **Update game / Atualizar jogo** in the launcher (or download the Windows x64 ZIP / Linux x86_64 AppImage and verify SHA256SUMS), then run **Generate & rebuild** once with your own Super Bomberman 5 (USA) ROM. Every online player needs this version. Partial recompilation; see docs/STATUS.md for validation limits. Downloads contain no ROM, generated game code, extracted assets or saves.
+Update with **Update game / Atualizar jogo** in the launcher (or download the Windows x64 ZIP / Linux x86_64 AppImage / Android APK and verify SHA256SUMS); on Windows and Linux run **Generate & rebuild** once with your own Super Bomberman 5 (USA) ROM, on Android just select the ROM. Every online player needs this version. Partial recompilation; see docs/STATUS.md for validation limits. Downloads contain no ROM, generated game code, extracted assets or saves.
 
 ## Português
 
 {pt}
 
-Atualize com **Update game / Atualizar jogo** no launcher (ou baixe o ZIP Windows x64 / AppImage Linux x86_64 e confira o SHA256SUMS) e faça **Generate & rebuild** uma vez com sua ROM do Super Bomberman 5 (USA). Todos os jogadores online precisam desta versão. Recompilação parcial; limites de validação em docs/STATUS.md. Os downloads não trazem ROM, código gerado do jogo, assets extraídos nem saves.
+Atualize com **Update game / Atualizar jogo** no launcher (ou baixe o ZIP Windows x64 / AppImage Linux x86_64 / APK Android e confira o SHA256SUMS); no Windows e no Linux faça **Generate & rebuild** uma vez com sua ROM do Super Bomberman 5 (USA), no Android basta escolher a ROM. Todos os jogadores online precisam desta versão. Recompilação parcial; limites de validação em docs/STATUS.md. Os downloads não trazem ROM, código gerado do jogo, assets extraídos nem saves.
 '''
 
 if args.output:
