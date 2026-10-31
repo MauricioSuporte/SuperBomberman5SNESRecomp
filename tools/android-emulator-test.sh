@@ -90,6 +90,7 @@ shot 03-after-pick
 adb logcat -d > "$OUT/logcat-full.txt" 2>&1
 grep -E " SB5 | SDL | libc |DEBUG|FATAL|AndroidRuntime|recomp|launcher" "$OUT/logcat-full.txt" | tail -300 > "$OUT/logcat.txt"
 rm -f "$OUT/logcat-full.txt"
+grep -E " SB5 .*joystick" "$OUT/logcat.txt" | sed 's/^.* SB5 *: /joystick log: /' | while read -r l; do summary "$l"; done
 summary "imported: $(grep -c 'imported .*picker-test.sfc' "$OUT/logcat.txt")"
 summary "crash lines: $(grep -cE 'FATAL|AndroidRuntime: FATAL|signal 11|SIGSEGV|SIGABRT' "$OUT/logcat.txt")"
 PID=$(adb shell pidof "$PKG" | tr -d '\r')

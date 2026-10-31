@@ -125,6 +125,21 @@ void Sb5AndroidPrepare(void) {
     /* Before anything initialises SDL's joystick layer (the launcher does it
      * first): the accelerometer must not appear as a controller. */
     SDL_SetHintWithPriority(SDL_HINT_ACCELEROMETER_AS_JOYSTICK, "0", SDL_HINT_OVERRIDE);
+    /* Log what SDL lists as joysticks (logcat tag SB5): a phone's sensors
+     * have shown up here and been taken for controllers. */
+    if (SDL_InitSubSystem(SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER) == 0) {
+        const int n = SDL_NumJoysticks();
+        LOG("joysticks: %d", n);
+        for (int i = 0; i < n; ++i) {
+            SDL_Joystick *js = SDL_JoystickOpen(i);
+            LOG("joystick #%d '%s' controller=%d buttons=%d axes=%d hats=%d", i,
+                SDL_JoystickNameForIndex(i) ? SDL_JoystickNameForIndex(i) : "?",
+                SDL_IsGameController(i), js ? SDL_JoystickNumButtons(js) : -1,
+                js ? SDL_JoystickNumAxes(js) : -1, js ? SDL_JoystickNumHats(js) : -1);
+            if (js) SDL_JoystickClose(js);
+        }
+        SDL_QuitSubSystem(SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER);
+    }
     const char *root = SDL_AndroidGetExternalStoragePath();
     if (!root) {
         LOG("no external storage path: %s", SDL_GetError());
