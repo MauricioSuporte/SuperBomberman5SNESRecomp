@@ -1,5 +1,17 @@
 # Super Bomberman 5: estado do protótipo
 
+## v2.5.7 — 2026-10-30: exact compact mod set for large rooms
+
+- Maintainer report on v2.5.6 (same 16 mods, one guest): host log shows `mod set published as plan + options`, but
+  the host still shows `Lobby error: mod_set_mismatch` and the guest stays "Not ready". The host runs
+  `room_mods_ready` on Play against the lobby's echo of its caps, and the v2.5.6 form still rebuilt feature lines
+  from plan rows, which list exempt (presentation) features `effective_set` omits and follow plan order.
+- recomp-ui `cc936f7` (`superbomberman5-discord`): when the full text does not fit 512 bytes, the host publishes the
+  exact effective set with each `package@version` replaced by its plan row (`~3/feature k=v;...`); peers expand it
+  byte for byte; an unknown row index is unreadable, never adopted. `netplay_host_test` covers reversed order, an
+  exempt plan feature, options and a bad index; all cases pass on Linux/gcc.
+- Exempt-feature cause inferred from code, not from a guest log. Not yet verified in a real online match.
+
 ## v2.5.6 — 2026-10-30: online rooms with every mod enabled
 
 - Maintainer report (v2.5.5, 16 mods, online room with one guest): host log `mod set too long to publish`, lobby
