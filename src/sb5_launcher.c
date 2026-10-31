@@ -29,6 +29,11 @@
 #if defined(RECOMP_LAUNCHER)
 #include "recomp_launcher.h"
 #endif
+#if defined(__ANDROID__)
+#include "android_java.h"
+#include <android/log.h>
+#include <time.h>
+#endif
 
 const char kSb5DiscordInvite[] = "https://discord.gg/kH54NCDQB4";
 const char kSb5ReleasesUrl[] = "https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases";
@@ -345,6 +350,103 @@ static void start_update_check(void) {
 #endif
 }
 
+/* ---- Android: update through the system installer --------------------- */
+#if defined(__ANDROID__) && defined(RECOMP_LAUNCHER) && defined(RECOMP_LAUNCHER_HAS_GAME_LINKS)
+#define SB5_RELEASES_API "https://api.github.com/repos/MauricioSuporte/SuperBomberman5SNESRecomp/releases/latest"
+static char g_android_apk_url[512];
+static char g_android_latest[64];
+static volatile int g_android_check = -1;   /* -1 running/failed, 0 up to date, 10 newer */
+
+/* Numeric compare of dotted versions ("3.0.10" > "3.0.9"). */
+static int version_cmp(const char *a, const char *b) {
+    while (*a || *b) {
+        long x = strtol(a, (char **)&a, 10), y = strtol(b, (char **)&b, 10);
+        if (x != y) return x < y ? -1 : 1;
+        if (*a == '.') ++a;
+        if (*b == '.') ++b;
+        if (!(*a >= '0' && *a <= '9') && !(*b >= '0' && *b <= '9')) break;
+    }
+    return 0;
+}
+
+/* Finds "key":"value" in the GitHub release JSON. */
+static const char *json_value(const char *json, const char *key, char *out, size_t cap) {
+    char pat[64];
+    snprintf(pat, sizeof(pat), "\"%s\":\"", key);
+    const char *p = strstr(json, pat);
+    if (!p) return NULL;
+    p += strlen(pat);
+    size_t n = strcspn(p, "\"");
+    snprintf(out, cap, "%.*s", (int)(n < cap ? n : cap - 1), p);
+    return p + n;
+}
+
+/* Background: newest release tag and its Android APK asset. */
+static void *android_update_check(void *arg) {
+    static char json[1 << 17];
+    char tag[64], url[512];
+    (void)arg;
+    const int status = Sb5AndroidHttp("GET", SB5_RELEASES_API, NULL, json, sizeof(json));
+    if (status != 200 || !json_value(json, "tag_name", tag, sizeof(tag))) {
+        __android_log_print(ANDROID_LOG_INFO, "SB5", "update check failed (HTTP %d)", status);
+        apply_check_result(-1, "");
+        return NULL;
+    }
+    const char *v = (tag[0] == 'v' || tag[0] == 'V') ? tag + 1 : tag;
+    snprintf(g_android_latest, sizeof(g_android_latest), "%s", v);
+    g_android_apk_url[0] = 0;
+    for (const char *p = json; (p = json_value(p, "browser_download_url", url, sizeof(url))) != NULL;) {
+        const size_t n = strlen(url);
+        if (n > 4 && !strcmp(url + n - 4, ".apk") && strstr(url, "-android")) {
+            snprintf(g_android_apk_url, sizeof(g_android_apk_url), "%s", url);
+            break;
+        }
+    }
+    g_android_check = version_cmp(v, g_local_version) > 0 ? 10 : 0;
+    __android_log_print(ANDROID_LOG_INFO, "SB5", "update check: local=%s latest=%s newer=%d apk=%s",
+                        g_local_version, v, g_android_check == 10, g_android_apk_url[0] ? g_android_apk_url : "none");
+    apply_check_result(g_android_check, v);
+    return NULL;
+}
+
+/* Mirrors the Activity's progress line into the launcher note. */
+static void *android_update_progress(void *arg) {
+    char line[320];
+    (void)arg;
+    for (int i = 0; i < 1200; ++i) {   /* up to 10 minutes */
+        if (Sb5AndroidUpdateStatus(line, sizeof(line)) && line[0])
+            snprintf(g_action_note, sizeof(g_action_note), "%s", line);
+        struct timespec ts = {0, 500 * 1000000L};
+        nanosleep(&ts, NULL);
+    }
+    return NULL;
+}
+
+static int android_update_action(char *msg, size_t cap) {
+    if (g_android_check < 0) {
+        snprintf(msg, cap, "Could not reach GitHub to find the newest version yet; check the connection and "
+                           "open the game again. / Não foi possível consultar a versão nova.");
+        return 0;
+    }
+    if (g_android_check == 0) {
+        snprintf(msg, cap, "Already up to date (v%s). / Já está na versão mais nova.", g_local_version);
+        return 0;
+    }
+    if (!g_android_apk_url[0]) {
+        snprintf(msg, cap, "v%s has no Android download yet. / A v%s ainda não tem download para Android.",
+                 g_android_latest, g_android_latest);
+        return 0;
+    }
+    if (!Sb5AndroidInstallApk(g_android_apk_url, msg, cap)) {
+        snprintf(msg, cap, "Could not start the update. Download it from %s", kSb5ReleasesUrl);
+        return 0;
+    }
+    pthread_t t;
+    if (pthread_create(&t, NULL, android_update_progress, NULL) == 0) pthread_detach(t);
+    return 1;
+}
+#endif
+
 void Sb5ConfigureLauncher(struct RecompLauncherCGameInfo *gi) {
     Sb5DiscordConfigureLauncher(gi); /* Rich Presence + Discord invites */
 #if defined(RECOMP_LAUNCHER) && defined(RECOMP_LAUNCHER_HAS_GAME_LINKS)
@@ -381,6 +483,19 @@ void Sb5ConfigureLauncher(struct RecompLauncherCGameInfo *gi) {
         snprintf(g_check_root, sizeof(g_check_root), "%s", root);
         start_update_check();
     }
+#if defined(__ANDROID__)
+    /* No updater executable on Android: the button downloads the release APK
+     * and hands it to the system installer (SB5Activity.sb5InstallApk). */
+    gi->game_action_label = "Update game / Atualizar jogo";
+    gi->game_action = android_update_action;
+    snprintf(g_action_note, sizeof(g_action_note), "Installed: v%s. Checking for updates...",
+             g_local_version[0] ? g_local_version : "?");
+    gi->game_action_note = g_action_note;
+    if (!getenv("SB5_NO_UPDATE_CHECK")) {
+        pthread_t t;
+        if (pthread_create(&t, NULL, android_update_check, NULL) == 0) pthread_detach(t);
+    }
+#endif
 #else
     (void)gi;
 #endif

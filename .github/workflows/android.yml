@@ -34,8 +34,24 @@ jobs:
           bash android/fetch_sdl.sh
           python -m pip install pillow
           python android/make_icons.py
+      - name: Signing key and Boss Rush ranking from secrets
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          BOSS_RUSH_WEBHOOK: ${{ secrets.BOSS_RUSH_WEBHOOK }}
+          BOSS_RUSH_BOARD: ${{ secrets.BOSS_RUSH_BOARD }}
+        run: |
+          if [ -n "$KS_B64" ]; then
+            echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/sb5-release.jks"
+            echo "SB5_KEYSTORE_FILE=$RUNNER_TEMP/sb5-release.jks" >> "$GITHUB_ENV"
+          else
+            echo "::warning::ANDROID_KEYSTORE_BASE64 not set: APK signed with a throwaway debug key"
+          fi
+          # Never tracked (.gitignore); bundled into the APK assets.
+          python tools/boss-rush-ranking.py --write-file boss_rush_ranking.cfg
       - name: Build APK
         working-directory: android
+        env:
+          SB5_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
           # Use the runner's CMake (3.31) instead of the SDK's 3.22.
           echo "cmake.dir=$(dirname "$(dirname "$(command -v cmake)")")" > local.properties
@@ -59,6 +75,22 @@ jobs:
           grep -q 'lib/arm64-v8a/libmain.so' apk-contents.txt
           grep -q 'lib/x86_64/libmain.so' apk-contents.txt
           grep -q 'assets/sb5/files.txt' apk-contents.txt
+          # libmain.so exports SDL_main (hidden visibility for everything else).
+          unzip -o -q "$apk" lib/arm64-v8a/libmain.so -d apk-lib
+          llvm=$(ls -d "$ANDROID_HOME"/ndk/27.2.12479018/toolchains/llvm/prebuilt/*/bin)
+          "$llvm/llvm-nm" -D --defined-only apk-lib/lib/arm64-v8a/libmain.so | tee exports.txt | grep -w SDL_main
+          echo "exported symbols: $(wc -l < exports.txt)"
+          bt=$(ls -d "$ANDROID_HOME"/build-tools/34.0.0)
+          cert=$("$bt/apksigner" verify --print-certs "$apk" | grep -m1 'SHA-256 digest' | awk '{print $NF}')
+          echo "::notice::APK signing certificate SHA-256: $cert"
+          if [ -n "${SB5_KEYSTORE_FILE:-}" ] && [ "$cert" != "3ffbdae9c243108076bdb2f8c6133b1a22aba27744d5633f63b3035ed321d2b4" ]; then
+            echo "::error::APK not signed with the release key"; exit 1
+          fi
+          if unzip -l "$apk" | grep -q 'assets/sb5/boss_rush_ranking.cfg'; then
+            echo "::notice::Boss Rush online ranking bundled"
+          else
+            echo "::warning::Boss Rush online ranking not bundled"
+          fi
           mkdir -p dist && cp "$apk" "dist/superbomberman5-$(cat VERSION)-android-experimental.apk"
       - name: Enable KVM for the emulator
         run: |

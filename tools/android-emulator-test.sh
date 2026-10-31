@@ -95,6 +95,51 @@ summary "imported: $(grep -c 'imported .*picker-test.sfc' "$OUT/logcat.txt")"
 summary "crash lines: $(grep -cE 'FATAL|AndroidRuntime: FATAL|signal 11|SIGSEGV|SIGABRT' "$OUT/logcat.txt")"
 PID=$(adb shell pidof "$PKG" | tr -d '\r')
 summary "running at end: ${PID:-no}"
+
+# ---- network and update self-test -------------------------------------------
+# HTTPS/HTTP through the Activity (Boss Rush GET/PATCH/POST, GitHub release
+# check), the sign-in browser handoff and the in-place update, driven by
+# selftest.txt (see src/android_assets.c) against tools/android-test-server.py.
+SERVE="$OUT/serve"; mkdir -p "$SERVE"; cp "$APK" "$SERVE/app.apk"
+python3 tools/android-test-server.py 8765 "$SERVE" "$OUT/server-requests.jsonl" > "$OUT/server.log" 2>&1 &
+SERVER=$!
+sleep 1
+cat > "$OUT/selftest.txt" <<'EOT'
+http GET http://10.0.2.2:8765/echo/get
+http PATCH http://10.0.2.2:8765/echo/patch {"content":"board"}
+http POST http://10.0.2.2:8765/echo/post {"content":"notice"}
+http GET https://api.github.com/repos/MauricioSuporte/SuperBomberman5SNESRecomp/releases/latest
+openurl https://example.com/sb5-signin-test
+install http://10.0.2.2:8765/app.apk
+EOT
+adb shell am force-stop "$PKG"
+adb push "$OUT/selftest.txt" "/sdcard/Android/data/$PKG/files/selftest.txt" > /dev/null
+adb shell appops set "$PKG" REQUEST_INSTALL_PACKAGES allow
+BEFORE=$(adb shell dumpsys package "$PKG" | grep -m1 lastUpdateTime | tr -d '\r ')
+adb logcat -c
+adb shell am start -n "$PKG/.SB5Activity" > /dev/null 2>&1
+sleep 22
+FOCUS=$(adb shell dumpsys window | grep -m1 mCurrentFocus | tr -d '\r')
+summary "focus after openurl: $FOCUS"
+adb shell input keyevent KEYCODE_BACK; sleep 2
+adb shell am start -n "$PKG/.SB5Activity" > /dev/null 2>&1
+sleep 15
+shot 04-install-prompt
+XY=$(tap_text install-update Update)
+[ -z "$XY" ] && XY=$(tap_text install-update2 Install)
+summary "installer confirm button: ${XY:-not found}"
+[ -n "$XY" ] && adb shell input tap $XY
+sleep 20
+shot 05-after-install
+AFTER=$(adb shell dumpsys package "$PKG" | grep -m1 lastUpdateTime | tr -d '\r ')
+adb logcat -d > "$OUT/logcat2-full.txt" 2>&1
+grep -E " SB5 |PackageInstaller|AndroidRuntime" "$OUT/logcat2-full.txt" | tail -200 > "$OUT/logcat2.txt"
+rm -f "$OUT/logcat2-full.txt"
+grep -E "selftest|update check" "$OUT/logcat2.txt" | sed 's/^.* SB5 *: /app: /' | while read -r l; do summary "$l"; done
+summary "server saw: $(python3 -c "import json,sys; print(', '.join(f\"{r['method']} {r['path']} {r['bytes']}B ct={r['content_type'] or '-'} ua={'DiscordBot' in r['user_agent']}\" for r in map(json.loads, open(sys.argv[1]))))" "$OUT/server-requests.jsonl" 2>/dev/null)"
+summary "apk downloads: $(grep -c 'GET /app.apk' "$OUT/server.log")"
+summary "package updated: $([ "$BEFORE" != "$AFTER" ] && echo yes || echo no) ($BEFORE -> $AFTER)"
+kill $SERVER 2>/dev/null
 adb shell run-as "$PKG" ls -la files 2>/dev/null | head -20 > "$OUT/internal-files.txt"
 adb shell ls -la "/sdcard/Android/data/$PKG/files" "/sdcard/Android/data/$PKG/files/roms" > "$OUT/external-files.txt" 2>&1
 exit 0

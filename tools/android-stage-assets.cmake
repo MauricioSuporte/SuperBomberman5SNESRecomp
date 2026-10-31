@@ -24,6 +24,12 @@ foreach(_dir mods assets)
     endif()
 endforeach()
 file(COPY "${ROM_IDENTITY}" DESTINATION "${_out}")
+# Boss Rush online ranking credential, when the workflow wrote one
+# (tools/boss-rush-ranking.py --write-file). Never tracked.
+if(DEFINED RANKING_CFG AND EXISTS "${RANKING_CFG}")
+    file(COPY "${RANKING_CFG}" DESTINATION "${_out}")
+    message(STATUS "android-stage-assets: Boss Rush ranking configured")
+endif()
 
 file(GLOB_RECURSE _files LIST_DIRECTORIES false RELATIVE "${_out}" "${_out}/*")
 # aapt drops dotfiles (.gitkeep) from APK assets; do not list them.

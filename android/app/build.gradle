@@ -31,9 +31,28 @@ android {
                           "-DSNESRECOMP_FRAME_IMPL=LLE",
                           "-DSB5_INTERPRETER_ONLY=ON",
                           "-DBUILD_TESTING=OFF",
-                          "-DSNESRECOMP_BUILD_VERSION=${gameVersion}-android",
+                          // Same lobby pin as the PC build of this version: crossplay.
+                          "-DSNESRECOMP_BUILD_VERSION=${gameVersion}",
                           "-DSB5_ANDROID_ASSET_DIR=${sb5AssetDir.absolutePath}"
                 abiFilters(*sb5Abis)
+            }
+        }
+    }
+    // Release signing: the same key for every release, or Android refuses to
+    // install an update over the previous version. CI writes the keystore from
+    // the ANDROID_KEYSTORE_BASE64 secret; without it the debug key is used
+    // (test builds only: they cannot update a released install).
+    def ksFile = System.getenv('SB5_KEYSTORE_FILE')
+    def ksPass = System.getenv('SB5_KEYSTORE_PASSWORD')
+    def haveReleaseKey = ksFile && ksPass && new File(ksFile).isFile()
+    signingConfigs {
+        if (haveReleaseKey) {
+            sb5release {
+                storeFile new File(ksFile)
+                storePassword ksPass
+                keyAlias 'sb5'
+                keyPassword ksPass
+                storeType 'pkcs12'
             }
         }
     }
@@ -41,8 +60,7 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            // Signed with the debug key until a release key exists (CI secret).
-            signingConfig signingConfigs.debug
+            signingConfig haveReleaseKey ? signingConfigs.sb5release : signingConfigs.debug
         }
     }
     externalNativeBuild {

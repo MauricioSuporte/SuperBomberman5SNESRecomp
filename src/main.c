@@ -69,8 +69,12 @@ static const SnesDesktopHostGame kGameHost = {
 
 #ifndef __ANDROID__
 #undef main   /* desktop: keep plain main() even if SDL_main.h remapped it */
+#define SB5_MAIN_EXPORT
+#else
+/* libmain.so is built with hidden visibility; SDLActivity dlsyms this. */
+#define SB5_MAIN_EXPORT __attribute__((visibility("default")))
 #endif
-int main(int argc, char **argv)
+SB5_MAIN_EXPORT int main(int argc, char **argv)
 {
 #ifdef __ANDROID__
     Sb5AndroidPrepare();

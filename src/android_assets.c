@@ -17,6 +17,10 @@
 #ifdef __ANDROID__
 
 #include "android_assets.h"
+#include "android_java.h"
+
+#include <pthread.h>
+#include <time.h>
 
 #include <errno.h>
 #include <stdio.h>
@@ -121,6 +125,54 @@ static int extract_bundle(const char *root) {
     return ok;
 }
 
+/* recomp-net's browser handoff (rnet_open_url.c), linked into libmain.so. */
+int rnet_open_url(const char *url);
+
+/* Self-test (CI emulator only, tools/android-emulator-test.sh): runs the
+ * lines of selftest.txt in the game folder and logs each result.
+ *   http METHOD URL [BODY]   HTTPS through SB5Activity (Boss Rush, updates)
+ *   openurl URL              Discord sign-in browser handoff (recomp-net)
+ *   install URL              in-place update through the system installer
+ * Never present in normal use. */
+static char s_selftest[4096];
+static void *selftest_thread(void *arg) {
+    (void)arg;
+    struct timespec ts = {6, 0};   /* let the launcher come up first */
+    nanosleep(&ts, NULL);
+    for (char *line = strtok(s_selftest, "\n"); line; line = strtok(NULL, "\n")) {
+        char method[16] = "", url[1024] = "";
+        static char out[1 << 16];
+        int used = 0;
+        if (sscanf(line, "http %15s %1023s %n", method, url, &used) >= 2) {
+            const char *body = used > 0 && line[used] ? line + used : NULL;
+            const int st = Sb5AndroidHttp(method, url, body, out, sizeof(out));
+            LOG("selftest http %s status=%d bytes=%zu body=%.80s", method, st, strlen(out), out);
+        } else if (sscanf(line, "openurl %1023s", url) == 1) {
+            LOG("selftest openurl ok=%d", rnet_open_url(url));
+        } else if (sscanf(line, "install %1023s", url) == 1) {
+            char msg[320] = "";
+            const bool ok = Sb5AndroidInstallApk(url, msg, sizeof(msg));
+            LOG("selftest install started=%d msg=%s", ok, msg);
+        }
+        ts.tv_sec = 3;
+        nanosleep(&ts, NULL);
+    }
+    return NULL;
+}
+
+static void start_selftest(const char *root) {
+    char path[1024];
+    snprintf(path, sizeof path, "%s/selftest.txt", root);
+    FILE *f = fopen(path, "rb");
+    if (!f) return;
+    const size_t n = fread(s_selftest, 1, sizeof(s_selftest) - 1, f);
+    fclose(f);
+    s_selftest[n] = 0;
+    LOG("selftest: %zu bytes of commands", n);
+    pthread_t t;
+    if (pthread_create(&t, NULL, selftest_thread, NULL) == 0) pthread_detach(t);
+}
+
 void Sb5AndroidPrepare(void) {
     /* Before anything initialises SDL's joystick layer (the launcher does it
      * first): the accelerometer must not appear as a controller. */
@@ -168,6 +220,7 @@ void Sb5AndroidPrepare(void) {
     snprintf(anchor, sizeof anchor, "%s/SuperBomberman5Recomp", root);
     setenv("APPIMAGE", anchor, 1);
     if (chdir(root) != 0) LOG("chdir(%s) failed", root);
+    start_selftest(root);
 }
 
 #endif /* __ANDROID__ */

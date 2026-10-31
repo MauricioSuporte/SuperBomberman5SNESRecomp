@@ -4,6 +4,9 @@
 #endif
 #include "boss_rush_net.h"
 #include "host_paths.h"
+#if defined(__ANDROID__)
+#include "android_java.h"
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -83,6 +86,7 @@ static void unlock(void) { pthread_mutex_unlock(&lock_mx); }
 #endif
 
 /* ---- curl ------------------------------------------------------------- */
+#if !defined(__ANDROID__)
 static void temp_path(char *out, size_t cap, const char *tag) {
     static unsigned counter;
 #if defined(_WIN32)
@@ -99,7 +103,15 @@ static void temp_path(char *out, size_t cap, const char *tag) {
     snprintf(out, cap, "%s/sb5br_%ld_%u_%s", dir && dir[0] ? dir : "/tmp", (long)getpid(), ++counter, tag);
 #endif
 }
+#endif
 /* Runs one request; returns the HTTP status (0 on failure) and the body. */
+#if defined(__ANDROID__)
+/* No curl on Android: the app's Activity makes the request (HttpURLConnection,
+ * same User-Agent and JSON body), on this worker thread. */
+static int http(const char *method, const char *url, const char *body, char *out, size_t cap) {
+    return Sb5AndroidHttp(method, url, body, out, cap);
+}
+#else
 static int http(const char *method, const char *url, const char *body, char *out, size_t cap) {
     char cfg_path[1024], body_path[1024];
     out[0] = 0;
@@ -188,6 +200,7 @@ static int http(const char *method, const char *url, const char *body, char *out
     *nl = 0;
     return code;
 }
+#endif /* __ANDROID__ */
 
 /* ---- jobs ------------------------------------------------------------- */
 static BrBoard board;

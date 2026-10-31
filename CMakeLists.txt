@@ -106,8 +106,15 @@ cmake_language(CALL ${_sb5_add_game} SuperBomberman5SNESRecomp ${_sb5_game_kind}
 )
 
 if(ANDROID)
-    set_target_properties(SuperBomberman5SNESRecomp PROPERTIES OUTPUT_NAME main)
-    target_sources(SuperBomberman5SNESRecomp PRIVATE src/android_assets.c)
+    # Only SDL_main is called from outside libmain.so. Default visibility made
+    # every runner function interposable, so each call between them (bus
+    # reads, interpreter helpers: the hot path of an interpreter-only build)
+    # went through the PLT and could not be inlined.
+    set_target_properties(SuperBomberman5SNESRecomp PROPERTIES
+        OUTPUT_NAME main C_VISIBILITY_PRESET hidden CXX_VISIBILITY_PRESET hidden
+        VISIBILITY_INLINES_HIDDEN ON)
+    target_compile_options(SuperBomberman5SNESRecomp PRIVATE -fno-semantic-interposition)
+    target_sources(SuperBomberman5SNESRecomp PRIVATE src/android_assets.c src/android_java.c)
     target_link_libraries(SuperBomberman5SNESRecomp PRIVATE android log)
 endif()
 
@@ -389,6 +396,7 @@ if(ANDROID)
                 "-DDST=${SB5_ANDROID_ASSET_DIR}"
                 "-DROM_IDENTITY=${CMAKE_CURRENT_SOURCE_DIR}/rom_identity.txt"
                 "-DVERSION=${SNESRECOMP_BUILD_VERSION}"
+                "-DRANKING_CFG=${CMAKE_CURRENT_SOURCE_DIR}/boss_rush_ranking.cfg"
                 -P "${CMAKE_CURRENT_SOURCE_DIR}/tools/android-stage-assets.cmake"
             COMMENT "SuperBomberman5SNESRecomp: bundling data for the APK"
             VERBATIM)
