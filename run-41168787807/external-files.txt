@@ -1,0 +1,17 @@
+/sdcard/Android/data/io.github.mauriciosuporte.sb5recomp/files:
+total 72
+drwxrws--- 5 u0_a192 ext_data_rw 4096 2026-10-31 04:35 .
+drwxrws--- 3 u0_a192 ext_data_rw 4096 2026-10-31 04:34 ..
+-rw-rw---- 1 u0_a192 ext_data_rw   22 2026-10-31 04:34 .sb5-bundle
+drwxrws--- 4 u0_a192 ext_data_rw 4096 2026-10-31 04:34 assets
+-rw-rw---- 1 u0_a192 ext_data_rw 1983 2026-10-31 04:34 config.ini
+-rw-rw---- 1 u0_a192 ext_data_rw 1108 2026-10-31 04:34 keybinds.ini
+drwxrws--- 3 u0_a192 ext_data_rw 4096 2026-10-31 04:34 mods
+-rw-rw---- 1 u0_a192 ext_data_rw 1417 2026-10-31 04:34 rom_identity.txt
+drwxrws--- 2 u0_a192 ext_data_rw 4096 2026-10-31 04:35 roms
+
+/sdcard/Android/data/io.github.mauriciosuporte.sb5recomp/files/roms:
+total 24
+drwxrws--- 2 u0_a192 ext_data_rw 4096 2026-10-31 04:35 .
+drwxrws--- 5 u0_a192 ext_data_rw 4096 2026-10-31 04:35 ..
+-rw-rw---- 1 u0_a192 ext_data_rw   16 2026-10-31 04:35 picker-test.sfc
