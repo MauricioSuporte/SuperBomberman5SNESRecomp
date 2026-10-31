@@ -1275,6 +1275,11 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '3.0.2': (
+'''- **Android: fixes the slowdown from v3.0.1.** On a fresh v3.0.1 install the game lost its optimized renderer setting, and every screen ran on the slower accurate one (on a Galaxy A32, 25.5 instead of 32 frames per second on the title screen without mods). v3.0.2 restores that setting once on phones that lost it. The v3.0.1 audio buffer and rewind changes are undone: they did not change the frame rate.
+- Everyone in an online room needs v3.0.2.''',
+'''- **Android: corrige a lentidão da v3.0.1.** Numa instalação nova da v3.0.1 o jogo perdia o ajuste do renderizador otimizado, e todas as telas usavam o preciso, mais lento (num Galaxy A32, 25,5 em vez de 32 quadros por segundo na tela de título sem mods). A v3.0.2 devolve esse ajuste uma vez nos celulares que o perderam. As mudanças de buffer de áudio e de rewind da v3.0.1 foram desfeitas: elas não mudavam a velocidade.
+- Todos na sala online precisam da v3.0.2.'''),
     '3.0.0': (
 '''- **Android:** a new **superbomberman5-3.0.0-android.apk** (Android 9+, arm64) with the same game, all mods and the Boss Rush ranking. It needs no build step: the phone runs the whole game on the interpreter, so a slow phone can slow down in busy scenes.
 - **Phone controls:** a translucent on-screen SNES pad (8-way d-pad, A/B/X/Y, L/R, Select/Start) in landscape and portrait, multitouch, hidden while a Bluetooth/USB controller is used. Tilting the phone no longer moves the cursor or the player.

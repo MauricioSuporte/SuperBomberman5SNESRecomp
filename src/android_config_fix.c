@@ -64,22 +64,25 @@ long Sb5ConfigAddRendererKeys(const char *in, size_t len, char *out, size_t cap)
     }
     if (has_new && has_limits) return 0;
 
-    static const char new_line[] = "NewRenderer = 1\n";
-    static const char limits_line[] = "NoSpriteLimits = 1\n";
+    /* Keep the file's own line ending: a config edited on Windows uses CRLF. */
+    bool crlf = false;
+    for (size_t i = 0; i + 1 < len && !crlf; ++i) crlf = in[i] == '\r' && in[i + 1] == '\n';
+    const char *eol = crlf ? "\r\n" : "\n";
+    const size_t eol_n = crlf ? 2 : 1;
     Writer w = { out, cap, 0, false };
     if (has_section) {
         put(&w, in, header_end);
         /* A header on the file's last line has no newline to end it. */
-        if (header_end && in[header_end - 1] != '\n') put(&w, "\n", 1);
-        if (!has_new) put(&w, new_line, sizeof new_line - 1);
-        if (!has_limits) put(&w, limits_line, sizeof limits_line - 1);
-        put(&w, in + header_end, len - header_end);
+        if (header_end && in[header_end - 1] != '\n') put(&w, eol, eol_n);
     } else {
         put(&w, in, len);
-        if (len && in[len - 1] != '\n') put(&w, "\n", 1);
-        put(&w, "\n[Graphics]\n", 12);
-        put(&w, new_line, sizeof new_line - 1);
-        put(&w, limits_line, sizeof limits_line - 1);
+        if (len && in[len - 1] != '\n') put(&w, eol, eol_n);
+        put(&w, eol, eol_n);
+        put(&w, "[Graphics]", 10);
+        put(&w, eol, eol_n);
     }
+    if (!has_new) { put(&w, "NewRenderer = 1", 15); put(&w, eol, eol_n); }
+    if (!has_limits) { put(&w, "NoSpriteLimits = 1", 18); put(&w, eol, eol_n); }
+    if (has_section) put(&w, in + header_end, len - header_end);
     return w.overflow ? -1 : (long)w.used;
 }

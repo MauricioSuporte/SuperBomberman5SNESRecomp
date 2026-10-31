@@ -1,12 +1,14 @@
 # Super Bomberman 5: estado do protótipo
 
-## Android renderer repair — 2026-10-31: v3.0.1 reverted
+## v3.0.2 — 2026-10-31: Android renderer repair, v3.0.1 reverted
 
 - Report: with every mod on, a Galaxy S20 FE ran slower after v3.0.1, not faster. v3.0.1 (`a367a20`: 2048-sample
   audio buffer, rewind off, applied once to `config.ini`) is reverted. Its migration ran before the host wrote the
   default `config.ini`, so on a fresh install the file held only `[Sound]`/`[Rewind]`: `NewRenderer` and
   `NoSpriteLimits` read as off and every screen used the accurate compositor. A one-time repair
-  (`src/android_config_fix.c`, `tests/android_config_fix_tests.c`) adds both keys to `[Graphics]` when missing.
+  (`src/android_config_fix.c`, `tests/android_config_fix_tests.c`) adds both keys to `[Graphics]` when missing,
+  keeping the file's line endings (CRLF too) and replacing it atomically (temporary file + rename). `VERSION` is
+  3.0.2 so the APK installs over 3.0.1 (versionCode 30002 > 30001).
 - Measured on a Galaxy A32 (Helio G80, Android 13), title screen, no mods, simulated frames/s from the host's
   `perf:` line (a local build that forwards it to logcat; not part of the change): v3.0.0 32; v3.0.1 fresh install
   25.5 (raster 12.5 ms/frame instead of 2.6); v3.0.1 with the two keys restored 32, the same as v3.0.0, so the

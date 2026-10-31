@@ -196,10 +196,19 @@ static void restore_renderer_config(const char *root) {
         long n = Sb5ConfigAddRendererKeys(in, len, out, sizeof out);
         if (n < 0) return;
         if (n > 0) {
-            f = fopen(path, "wb");
+            /* Write a temporary file and rename it over config.ini, so an
+             * interrupted write never leaves the player's settings truncated. */
+            char tmp[1040];
+            snprintf(tmp, sizeof tmp, "%s.tmp", path);
+            f = fopen(tmp, "wb");
             if (!f) return;
-            const int ok = fwrite(out, 1, (size_t)n, f) == (size_t)n;
-            if (fclose(f) != 0 || !ok) return;
+            int ok = fwrite(out, 1, (size_t)n, f) == (size_t)n && fflush(f) == 0 &&
+                     fsync(fileno(f)) == 0;
+            ok = fclose(f) == 0 && ok;
+            if (!ok || rename(tmp, path) != 0) {
+                remove(tmp);
+                return;
+            }
             LOG("config.ini: restored NewRenderer/NoSpriteLimits");
         }
     }

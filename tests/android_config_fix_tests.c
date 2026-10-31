@@ -89,6 +89,19 @@ int main(void) {
     /* Header on the last line without newline. */
     n = fix("[Sound]\nVolume = 50\n[Graphics]");
     CHECK(n > 0 && graphics_value(n, "NewRenderer") == 1 && graphics_value(n, "NoSpriteLimits") == 1);
+    /* CRLF files (edited on Windows) keep CRLF on the added lines. */
+    n = fix("[Sound]\r\nVolume = 50\r\n[Graphics]\r\nWindowScale = 2\r\n");
+    CHECK(n > 0 && !strcmp(out, "[Sound]\r\nVolume = 50\r\n[Graphics]\r\nNewRenderer = 1\r\n"
+                                "NoSpriteLimits = 1\r\nWindowScale = 2\r\n"));
+    CHECK(graphics_value(n, "NewRenderer") == 1 && graphics_value(n, "NoSpriteLimits") == 1);
+    n = fix("[Sound]\r\nVolume = 50");
+    CHECK(n > 0 && !strcmp(out, "[Sound]\r\nVolume = 50\r\n\r\n[Graphics]\r\nNewRenderer = 1\r\n"
+                                "NoSpriteLimits = 1\r\n"));
+    n = fix("[Graphics]\r\nNewRenderer = 0\r\n");
+    CHECK(n > 0 && !strcmp(out, "[Graphics]\r\nNoSpriteLimits = 1\r\nNewRenderer = 0\r\n"));
+    /* LF files never gain a CR. */
+    n = fix(kBroken301);
+    CHECK(n > 0 && !strchr(out, '\r'));
     /* Too small an output buffer is reported, not truncated silently. */
     CHECK(Sb5ConfigAddRendererKeys(kBroken301, strlen(kBroken301), out, 16) == -1);
     puts("android_config_fix_tests: ok");
