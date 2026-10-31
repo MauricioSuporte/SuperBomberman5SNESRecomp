@@ -1,5 +1,12 @@
 # Super Bomberman 5: estado do protótipo
 
+## v3.0.1 — 2026-10-31: phone stutter
+
+- Report: video from a Redmi 13C (Helio G85) with the game stuttering. Change (`src/android_assets.c`
+  `tune_config`, once per install): `AudioSamples` 512 -> 2048 and `[Rewind] Enabled = 0`. Builds and passes the CI
+  emulator test; the effect on that phone is not yet confirmed. If it still stutters, the phone cannot run the
+  interpreter at 60 frames/s and needs further speed work.
+
 ## v3.0.0 — 2026-10-31: Android APK, crossplay
 
 - Android APK (interpreter-only, docs/ANDROID.md) joins the release: the maintainer played it on his phone with

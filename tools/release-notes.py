@@ -1275,6 +1275,11 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '3.0.1': (
+'''- **Android: less stutter on slower phones** (reported on a Redmi 13C): the audio buffer grows from 512 to 2048 samples, so a frame that runs late no longer breaks up the sound and the picture, and rewind starts off on phones (it copied the whole machine state periodically). Applied once to existing installs; both stay changeable in the launcher.
+- Everyone in an online room needs v3.0.1.''',
+'''- **Android: menos travadas em celulares mais fracos** (relatado num Redmi 13C): o buffer de áudio passa de 512 para 2048 amostras, então um quadro atrasado não quebra mais o som e a imagem, e o rewind começa desligado no celular (ele copiava o estado inteiro da máquina de tempos em tempos). Aplicado uma vez também em quem já tem o app; os dois continuam ajustáveis no launcher.
+- Todos na sala online precisam da v3.0.1.'''),
     '3.0.0': (
 '''- **Android:** a new **superbomberman5-3.0.0-android.apk** (Android 9+, arm64) with the same game, all mods and the Boss Rush ranking. It needs no build step: the phone runs the whole game on the interpreter, so a slow phone can slow down in busy scenes.
 - **Phone controls:** a translucent on-screen SNES pad (8-way d-pad, A/B/X/Y, L/R, Select/Start) in landscape and portrait, multitouch, hidden while a Bluetooth/USB controller is used. Tilting the phone no longer moves the cursor or the player.
