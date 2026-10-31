@@ -122,6 +122,9 @@ static int extract_bundle(const char *root) {
 }
 
 void Sb5AndroidPrepare(void) {
+    /* Before anything initialises SDL's joystick layer (the launcher does it
+     * first): the accelerometer must not appear as a controller. */
+    SDL_SetHintWithPriority(SDL_HINT_ACCELEROMETER_AS_JOYSTICK, "0", SDL_HINT_OVERRIDE);
     const char *root = SDL_AndroidGetExternalStoragePath();
     if (!root) {
         LOG("no external storage path: %s", SDL_GetError());
