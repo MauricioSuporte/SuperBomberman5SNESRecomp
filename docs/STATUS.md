@@ -6,8 +6,11 @@
   the whole game runs on the 65816 interpreter and the binary holds nothing derived from the ROM. Default on for
   Android: `android/` Gradle/NDK project (SDL2, arm64), `libmain.so`, bundled mod catalog/launcher assets extracted
   to the app's files folder (`src/android_assets.c`), CI workflow `android.yml`.
-- Built: Linux x86_64 interpreter-only binary (portable toolchain 1.0.14, Release). Not yet run with the ROM, so
-  booting entirely on the interpreter is unverified at runtime; no phone test; no cross-play test.
+- Built: Linux x86_64 interpreter-only binary (portable toolchain 1.0.14, Release) and the arm64 APK in CI (run
+  41164493123: NDK 27.2, SDL 2.32.8; CI checks list `libmain.so` and `assets/sb5/files.txt`, no ROM/save/generated
+  file). Framework fixes on fork branch `snesrecomp@superbomberman5-android` (overlay type declared on Android,
+  rollback statics probe off in a `.so`). Not yet run with the ROM, so booting entirely on the interpreter is
+  unverified at runtime; no phone test; no cross-play test.
 
 ## v2.5.9 — 2026-10-30: Cheats mods off during a Boss Rush
 

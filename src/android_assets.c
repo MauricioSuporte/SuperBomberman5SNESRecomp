@@ -128,6 +128,10 @@ void Sb5AndroidPrepare(void) {
         return;
     }
     extract_bundle(root);
+    /* recomp-ui's launcher resolves its fonts/images against the internal
+     * files folder (launcher_imgui.cpp asset()), so the bundle goes there too. */
+    const char *internal = SDL_AndroidGetInternalStoragePath();
+    if (internal) extract_bundle(internal);
     char anchor[1024];
     snprintf(anchor, sizeof anchor, "%s/SuperBomberman5Recomp", root);
     setenv("APPIMAGE", anchor, 1);
