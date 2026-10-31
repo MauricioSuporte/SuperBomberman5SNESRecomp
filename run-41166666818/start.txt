@@ -1,0 +1,7 @@
+Starting: Intent { cmp=io.github.mauriciosuporte.sb5recomp/.SB5Activity }
+Status: ok
+LaunchState: COLD
+Activity: io.github.mauriciosuporte.sb5recomp/.SB5Activity
+TotalTime: 3892
+WaitTime: 3919
+Complete
