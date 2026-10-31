@@ -15,6 +15,12 @@
   timer counting, enemies moving and blocks animating; no `interp_cap`, `unresolved-abandon`, `BRK` or `fatal`.
   Speed with turbo: ~211-226 frames/s on this x86 container (about 3.5x real time). No phone test (no Android
   SDK/emulator reachable here), no mods enabled, no cross-play test.
+- Maintainer's phone (first APK): launcher clipped (scale ~4 from the panel density) and Browse For ROM could not
+  reach shared storage. Fixed: recomp-ui `superbomberman5-android` caps the Android launcher scale (canvas >= 980x600
+  points), stages launcher fonts/images on Android, and asks the Activity for a file (`recompPickFile`, SAF import
+  into `files/roms/`, `SB5Activity`). CI emulator test (API 34, x86_64, 2400x1080 @420 dpi, no ROM): full launcher
+  layout with fonts/images, system picker opened, placeholder imported and rejected by verification, no crash
+  (run 41166666818, results on branch `android-ci-shots`). Game on a phone still untested.
 
 ## v2.5.9 — 2026-10-30: Cheats mods off during a Boss Rush
 
