@@ -1,0 +1,49 @@
+Archive:  dist/superbomberman5-2.5.9-android-experimental.apk
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+       56  1981-01-01 01:01   META-INF/com/android/build/gradle/app-metadata.properties
+    89744  1981-01-01 01:01   classes.dex
+  1486712  1981-01-01 01:01   lib/arm64-v8a/libSDL2.so
+  5432280  1981-01-01 01:01   lib/arm64-v8a/libmain.so
+  1597128  1981-01-01 01:01   lib/x86_64/libSDL2.so
+  5740992  1981-01-01 01:01   lib/x86_64/libmain.so
+   146156  1981-01-01 01:01   assets/sb5/assets/fonts/LatoLatin-Bold.ttf
+   148540  1981-01-01 01:01   assets/sb5/assets/fonts/LatoLatin-Regular.ttf
+   671568  1981-01-01 01:01   assets/sb5/assets/fonts/NotoSansSymbols2-Regular.ttf
+  1434276  1981-01-01 01:01   assets/sb5/assets/fonts/OpenMoji-black-glyf.ttf
+   240452  1981-01-01 01:01   assets/sb5/assets/img/boxart.tga
+   704364  1981-01-01 01:01   assets/sb5/assets/img/brand_mark.tga
+   220794  1981-01-01 01:01   assets/sb5/assets/img/flags.png
+    64793  1981-01-01 01:01   assets/sb5/assets/img/pad.tga
+    40018  1981-01-01 01:01   assets/sb5/assets/img/verdict_bad.tga
+    40018  1981-01-01 01:01   assets/sb5/assets/img/verdict_none.tga
+    40018  1981-01-01 01:01   assets/sb5/assets/img/verdict_ok.tga
+    40018  1981-01-01 01:01   assets/sb5/assets/img/verdict_warn.tga
+     1636  1981-01-01 01:01   assets/sb5/files.txt
+     1272  1981-01-01 01:01   assets/sb5/mods/preloaded/packages/superbomberman5.battle-variants/0.1.0/manifest.toml
+     1723  1981-01-01 01:01   assets/sb5/mods/preloaded/packages/superbomberman5.bomber-kings/0.1.0/manifest.toml
+     1445  1981-01-01 01:01   assets/sb5/mods/preloaded/packages/superbomberman5.boss-rush/0.1.0/manifest.toml
+      945  1981-01-01 01:01   assets/sb5/mods/preloaded/packages/superbomberman5.com-level-4/0.1.0/manifest.toml
+     1157  1981-01-01 01:01   assets/sb5/mods/preloaded/packages/superbomberman5.coop-corner-spawns/0.1.0/manifest.toml
+     1400  1981-01-01 01:01   assets/sb5/mods/preloaded/packages/superbomberman5.extra-characters/0.1.0/manifest.toml
+     1036  1981-01-01 01:01   assets/sb5/mods/preloaded/packages/superbomberman5.gold-battle/0.1.0/manifest.toml
+      821  1981-01-01 01:01   assets/sb5/mods/preloaded/packages/superbomberman5.hud-faces/0.1.0/manifest.toml
+      986  1981-01-01 01:01   assets/sb5/mods/preloaded/packages/superbomberman5.infinite-lives/0.1.0/manifest.toml
+      846  1981-01-01 01:01   assets/sb5/mods/preloaded/packages/superbomberman5.infinite-time/0.1.0/manifest.toml
+     1031  1981-01-01 01:01   assets/sb5/mods/preloaded/packages/superbomberman5.louie-improvements/0.1.0/manifest.toml
+      919  1981-01-01 01:01   assets/sb5/mods/preloaded/packages/superbomberman5.normal-characters/0.1.0/manifest.toml
+      957  1981-01-01 01:01   assets/sb5/mods/preloaded/packages/superbomberman5.normal-coop/0.1.0/manifest.toml
+     1021  1981-01-01 01:01   assets/sb5/mods/preloaded/packages/superbomberman5.pause-menu/0.1.0/manifest.toml
+      856  1981-01-01 01:01   assets/sb5/mods/preloaded/packages/superbomberman5.portal-labels/0.1.0/manifest.toml
+      882  1981-01-01 01:01   assets/sb5/mods/preloaded/packages/superbomberman5.ptbr/0.1.0/manifest.toml
+     1029  1981-01-01 01:01   assets/sb5/mods/preloaded/packages/superbomberman5.selection-colors/0.1.0/manifest.toml
+     1417  1981-01-01 01:01   assets/sb5/rom_identity.txt
+     3832  1981-01-01 01:01   AndroidManifest.xml
+     5464  1981-01-01 01:01   res/9w.png
+    15753  1981-01-01 01:01   res/FS.png
+    29865  1981-01-01 01:01   res/RJ.png
+    47520  1981-01-01 01:01   res/o-.png
+    10017  1981-01-01 01:01   res/yn.png
+     1624  1981-01-01 01:01   resources.arsc
+---------                     -------
+ 18273381                     44 files

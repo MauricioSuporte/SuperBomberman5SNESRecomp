@@ -1,0 +1,10 @@
+device: sdk_gphone64_x86_64 api 34 abi x86_64
+screen: Physical size: 1080x2400 Physical density: 420
+install: Success
+running after start: 3455
+focus after browse:   mCurrentFocus=Window{b7989f u0 com.google.android.documentsui/com.android.documentsui.picker.PickActivity}
+placeholder in picker: 322 605
+joystick log: joysticks: 0
+imported: 1
+crash lines: 0
+running at end: 3455
