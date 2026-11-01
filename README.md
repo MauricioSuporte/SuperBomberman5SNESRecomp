@@ -114,6 +114,10 @@ cd SuperBomberman5SNESRecomp
 
 Then open `SuperBomberman5Recomp.exe` at the repository root. Tools go to the ignored `.tools/` folder. See [BUILD_WINDOWS.md](docs/BUILD_WINDOWS.md). Never hand-edit or commit `src/gen/`.
 
+### Other ROM versions
+
+Dumps other than the supported one can run when built from source: the game recognizes them by their contents, and each mod turns itself off where the ROM differs. This is unqualified; see [ROM_COMPATIBILITY.md](docs/ROM_COMPATIBILITY.md). In a source build, generate from your ROM with `bash tools/regen.sh --rom <file>`. For **Generate & rebuild**, put the ROM in the game folder first: the launcher's file picker still accepts only the supported dump.
+
 ### Status and limits
 
 SNESRecomp translates analyzable 65816 routines into C and runs the rest through an interpreter, with PPU, APU, DMA and cartridge hardware modeled. AOT coverage is small and reset/NMI remain interpreted. Gameplay is verified with scripted routes on Linux LLE and maintainer play on Windows, including a full campaign playthrough; all mod combinations, physical five-player play and broad Linux compatibility are not qualified. Netplay is new in v2.0.0; it was tested successfully in a real two-player online match, and three or more peers are not qualified. The Android APK runs everything on the interpreter (no recompiled code on the phone); its speed depends on the phone and has been checked on the maintainer's phone and in CI emulator tests, not across devices. No widescreen or macOS. Details: [STATUS.md](docs/STATUS.md).
@@ -201,6 +205,11 @@ Todos já vêm no pacote de setup (sem download separado) e podem ser ativados j
 ### Compilar
 
 Instale Git for Windows e Python 3.11+ e execute os comandos de [Build from source](#build-from-source); depois abra `SuperBomberman5Recomp.exe` na raiz do repositório. Veja [BUILD_WINDOWS.md](docs/BUILD_WINDOWS.md) e [CONTRIBUTING.md](CONTRIBUTING.md).
+
+
+### Outras versões da ROM
+
+Outras ROMs além da suportada podem rodar quando compiladas a partir do código: o jogo as reconhece pelo conteúdo, e cada mod se desliga onde a ROM for diferente. Isso não é qualificado; veja [ROM_COMPATIBILITY.md](docs/ROM_COMPATIBILITY.md). Numa compilação a partir do código, gere a partir da sua ROM com `bash tools/regen.sh --rom <arquivo>`. Para o **Generate & rebuild**, coloque a ROM na pasta do jogo antes: o seletor de arquivos do launcher ainda só aceita a ROM suportada.
 
 ### Estado e limites
 

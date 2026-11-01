@@ -28,6 +28,7 @@
 #include "battle_variants_mod.h"
 #include "common_rtl.h"
 #include "mod_runtime.h"
+#include "rom_probe.h"
 #include "menu_font.h"
 #include "snes/interp_bridge.h"
 #include "common_cpu_infra.h"
@@ -184,7 +185,8 @@ static uint32_t scratch_pic[PIC_W * PIC_H];
 static uint8_t scratch_prio[PIC_W * PIC_H];
 static void load_archive(unsigned set, unsigned id, int vram_override) {
     if (!id) return;
-    uint32_t entry = 0xe30000 | (rw(0xc01c96 + 2 * set) + (id - 1) * 8u);
+    /* The table's bank differs per ROM: the operand of the loader's LDA #bank. */
+    uint32_t entry = (uint32_t)rb(0xc01b0f) << 16 | (rw(0xc01c96 + 2 * set) + (id - 1) * 8u);
     unsigned vram = vram_override >= 0 ? (unsigned)vram_override : rw(entry), size = rw(entry + 2);
     uint32_t src = rl(entry + 4);
     if (!size || 2u * (vram & 0x7fff) + size > sizeof(scratch_vram)) return;
@@ -652,5 +654,5 @@ static void reset_plugin(void) { BattleVariantsReset(); enabled = false; }
 static void activate(void) { enabled = true; }
 SNES_MOD_CONSTRUCTOR(register_battle_variants) {
     snes_mod_register_reset_callback(reset_plugin);
-    snes_mod_register_activation_plugin("superbomberman5.battle.variants", activate);
+    snes_mod_register_activation_plugin("superbomberman5.battle.variants", SB5_ROM_GATED("superbomberman5.battle.variants", activate));
 }

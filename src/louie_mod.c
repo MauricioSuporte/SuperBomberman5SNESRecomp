@@ -4,6 +4,7 @@
 #include "common_rtl.h"
 #include "common_cpu_infra.h"
 #include "mod_runtime.h"
+#include "rom_probe.h"
 #include "snes/interp_bridge.h"
 #include "snes/saveload.h"
 #include <string.h>
@@ -291,7 +292,7 @@ static void reset_plugin(void) {
 static void activate(void) { enabled=true; }
 SNES_MOD_CONSTRUCTOR(register_louies) {
     snes_mod_register_reset_callback(reset_plugin);
-    snes_mod_register_activation_plugin("superbomberman5.louie.improvements",activate);
+    snes_mod_register_activation_plugin("superbomberman5.louie.improvements",SB5_ROM_GATED("superbomberman5.louie.improvements", activate));
 }
 void LouieSave(struct SaveLoadInfo *sli) {
     uint32_t magic=0x3149554c;sli->func(sli,&magic,4);sli->func(sli,&state,sizeof(state));

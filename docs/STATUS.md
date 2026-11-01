@@ -1,5 +1,25 @@
 # Super Bomberman 5: estado do protótipo
 
+## Unreleased — 2026-10-31: ROMs recognized by content
+
+- **Change:** see docs/ROM_COMPATIBILITY.md. No identity file per ROM, no fixed digest as the gate. `rom_identity.txt`
+  still names the supported dump, and it is unchanged.
+- **Supported ROM unchanged:** 50 of 50 dumps (framebuffer, WRAM, VRAM, OAM, CGRAM) of 10 captures on `5251e649...` are
+  byte-identical between a build of the previous commit and this one: no mods, 16 mods on (all but Bomber Kings), the title and
+  five-player menu, and the Battle variants list.
+- **Passes (Linux, LLE, headless), with no hash or manifest edited:** results by ROM are in docs/ROM_COMPATIBILITY.md. `ctest`,
+  Python tests and the publication audit pass. A binary given another ROM exits with the mod-plan error; the setup host finds a
+  ROM in the game folder, prefers the supported one when nothing is cached, and refuses another game.
+- **Five-player menu:** three seats spawned on `b8ea7591...` (`$17FA` = 08 0a 0c, `$1D25` = 7). Attract mode did not trigger
+  it on 4 samples each on `b8ea7591...` and `9be18be1...`.
+- **Battle variants:** list and minimaps correct with table banks `$E3`, `$E2`, `$85`, read from `$C0:1B0F`. On `b8ea7591...` a
+  match with variant Original also started.
+- **Netplay:** refused on an unsupported ROM (`Sb5NetplayReady`). recomp-net has a room fingerprint (`rnet_lobby_set_disc_fp`), but this
+  game does not set it, and direct connections have no check. By code; not run.
+- **Not exercised:** Generate & rebuild through the launcher UI (the wizard passes no expected digest, by code reading), a real
+  window, Windows or Android builds, Bomber Kings, Boss Rush, saves, and each remaining mod's own feature. A mod passing its probe
+  is not proof its feature works on that ROM.
+
 ## v3.0.1 — 2026-10-31: phone stutter
 
 - Report: video from a Redmi 13C (Helio G85) with the game stuttering. Change (`src/android_assets.c`

@@ -2,6 +2,7 @@
 #include "selection_color_mod.h"
 #include "common_rtl.h"
 #include "mod_runtime.h"
+#include "rom_probe.h"
 #include "ptbr_mod.h"
 #include "subordinate_mod.h"
 #include "extra_characters_mod.h"
@@ -29,7 +30,7 @@ static void reset_plugin(void) { SelectionColorReset();enabled=false; }
 static void activate(void) { enabled=true; }
 SNES_MOD_CONSTRUCTOR(register_selection_colors) {
     snes_mod_register_reset_callback(reset_plugin);
-    snes_mod_register_activation_plugin("superbomberman5.selection.colors",activate);
+    snes_mod_register_activation_plugin("superbomberman5.selection.colors",SB5_ROM_GATED("superbomberman5.selection.colors", activate));
 }
 static unsigned word(unsigned offset) { return g_rom[offset]|g_rom[offset+1]<<8; }
 /* Palettes $48-$4F belong to Subordinate Bomber (character 10). */

@@ -3,6 +3,7 @@
 #include "common_rtl.h"
 #include "common_cpu_infra.h"
 #include "mod_runtime.h"
+#include "rom_probe.h"
 #include "snes/interp_bridge.h"
 #include "snes/saveload.h"
 #include <string.h>
@@ -89,7 +90,7 @@ static void reset_plugin(void) { GoldBattleReset();enabled=false; }
 static void activate(void) { enabled=true; }
 SNES_MOD_CONSTRUCTOR(register_gold_battle) {
     snes_mod_register_reset_callback(reset_plugin);
-    snes_mod_register_activation_plugin("superbomberman5.gold.battle",activate);
+    snes_mod_register_activation_plugin("superbomberman5.gold.battle",SB5_ROM_GATED("superbomberman5.gold.battle", activate));
 }
 static void install(void) {
     const uint8_t left[]={0x5d,0x5d,0x62,0x6d,0x10,0x8a},right[]={0x5d,0x5d,0x62,0x6d,0x18,0x86},drop[]={0x20,0xcd,0x37};

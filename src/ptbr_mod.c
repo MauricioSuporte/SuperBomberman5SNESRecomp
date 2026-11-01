@@ -6,7 +6,10 @@
 #include "boss_rush_mod.h"
 #include "beam_frame_driver.h"
 #include "mod_runtime.h"
+#include "rom_probe.h"
 #include "snes/ppu.h"
+#include "snes/snes.h"
+#include "common_cpu_infra.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -49,7 +52,7 @@ static void enable_ptbr(void) { s_enabled = true; }
 bool PtbrEnabled(void) { return s_enabled; }
 SNES_MOD_CONSTRUCTOR(register_ptbr) {
     snes_mod_register_reset_callback(reset_ptbr);
-    snes_mod_register_presentation_plugin("superbomberman5.ptbr.menus", enable_ptbr);
+    snes_mod_register_presentation_plugin("superbomberman5.ptbr.menus", SB5_ROM_GATED("superbomberman5.ptbr.menus", enable_ptbr));
 }
 
 static unsigned next_character(const unsigned char **at) {

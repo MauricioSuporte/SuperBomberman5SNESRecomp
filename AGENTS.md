@@ -26,7 +26,14 @@ before changing code, docs or releases. Humans: see README.md and CONTRIBUTING.m
 - Reference ROM: file `Super Bomberman 5 (USA).sfc` but the header says
   **JPN** (`Hu SUPER BOMBERMAN 5`), Fast HiROM, 4 MiB, 8 KiB SRAM.
   `rom_identity.txt` is the single source of truth (hashes, `game_id =
-  superbomberman5-jpn`). Hashes decide compatibility, never filenames.
+  superbomberman5-jpn`), and names the one supported dump. Other ROMs run by
+  content: internal title `Hu SUPER BOMBERMAN 5`, HiROM, valid checksum pair
+  (`src/rom_signature.c`, `tools/check-rom.py`). A generated binary stays locked
+  to the ROM it came from (`g_program_module.rom_sha256`,
+  `src/rom_identity_resolve.c`). Each mod runs only if a CRC over the cartridge
+  sites it names matches (`src/rom_probe.c`, `src/rom_probes.h`). After adding a
+  hook address to a mod, rerun `tools/gen-rom-probes.py <supported rom>`. Filenames
+  never decide. See docs/ROM_COMPATIBILITY.md.
 - Owner/public remote: `MauricioSuporte/SuperBomberman5SNESRecomp`. Windows x64
   is the qualified platform; releases since v0.4.4 also offer an experimental Linux x86_64
   setup AppImage (Ubuntu CI and limited WSL evidence in docs/STATUS.md). Current version lives in `VERSION`.

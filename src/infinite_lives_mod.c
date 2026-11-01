@@ -16,6 +16,7 @@
 #include "boss_rush_mod.h"
 #include "common_rtl.h"
 #include "mod_runtime.h"
+#include "rom_probe.h"
 #include "snes/interp_bridge.h"
 #include <stdbool.h>
 
@@ -66,5 +67,5 @@ static void reset_plugin(void) { InfiniteLivesReset(); enabled = false; }
 static void activate(void) { enabled = true; }
 SNES_MOD_CONSTRUCTOR(register_infinite_lives) {
     snes_mod_register_reset_callback(reset_plugin);
-    snes_mod_register_activation_plugin("superbomberman5.normal.infinite-lives", activate);
+    snes_mod_register_activation_plugin("superbomberman5.normal.infinite-lives", SB5_ROM_GATED("superbomberman5.normal.infinite-lives", activate));
 }

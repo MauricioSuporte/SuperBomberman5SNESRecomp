@@ -11,6 +11,7 @@
 #include "boss_rush_mod.h"
 #include "common_rtl.h"
 #include "mod_runtime.h"
+#include "rom_probe.h"
 #include <stdbool.h>
 
 enum { kComLevelLimit = 0x6247, kSuperLevel = 4 };
@@ -30,5 +31,5 @@ static void reset_plugin(void) { enabled = false; }
 static void activate(void) { enabled = true; }
 SNES_MOD_CONSTRUCTOR(register_com_level4) {
     snes_mod_register_reset_callback(reset_plugin);
-    snes_mod_register_activation_plugin("superbomberman5.battle.com-level-4", activate);
+    snes_mod_register_activation_plugin("superbomberman5.battle.com-level-4", SB5_ROM_GATED("superbomberman5.battle.com-level-4", activate));
 }

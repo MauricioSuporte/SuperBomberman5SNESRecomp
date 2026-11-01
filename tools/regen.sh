@@ -2,9 +2,8 @@
 # Regenerate src/gen/*.c for Super Bomberman 5 from a verified ROM.
 #
 # Generated C is derived from copyrighted ROM data and is never committed;
-# every developer regenerates from their own copy. The ROM digests come from
-# rom_identity.txt, which the build and the release workflow read too, so
-# there is one place to change when a revision changes.
+# every developer regenerates from their own copy. Any ROM that reads as this
+# game (tools/check-rom.py) is accepted, and the generated code is locked to it.
 #
 # Flags:
 #   --rom <path>  ROM to generate from. Defaults to SNESRECOMP_ROM, a known
@@ -12,8 +11,7 @@
 #                 the setup wizard writes). The ROM does not have to live in
 #                 the repo — keeping it on your own drive is the better
 #                 habit, and SNESRECOMP_ROM sets it once for a shell.
-#   --no-verify   skip the ROM digest check (for a revision this project has
-#                 not been pinned to yet — expect the generated C to differ)
+#   --no-verify   skip the ROM content check
 #   --cfg-roots   seed analysis from every func declaration in recomp/*.cfg
 #   -h|--help     this message
 set -euo pipefail
@@ -69,6 +67,16 @@ ROM=${ROM%$'\r'}  # Windows Python ends lines with CRLF
 
 VERIFY_ARGS=()
 if [ "$VERIFY" -eq 1 ]; then
+  # The generator hashes the file as given, so it gets the image without any
+  # copier header: the digest the host computes and the module records.
+  BARE_DIR=$(mktemp -d)
+  trap 'rm -rf "$BARE_DIR"' EXIT
+  BARE_ROM="$BARE_DIR/rom.sfc"
+  if ! DIGESTS=$("$PYTHON" tools/check-rom.py "$ROM" "$BARE_ROM"); then exit 1; fi
+  ROM=$BARE_ROM
+  DIGESTS=${DIGESTS%$'\r'}
+  [ -n "${SNESRECOMP_EXPECTED_CRC32:-}" ] || EXPECTED_CRC32=${DIGESTS%% *}
+  [ -n "${SNESRECOMP_EXPECTED_SHA256:-}" ] || EXPECTED_SHA256=${DIGESTS##* }
   VERIFY_ARGS=(--expected-crc32 "$EXPECTED_CRC32" --expected-sha256 "$EXPECTED_SHA256")
   echo "== Verifying $ROM =="
   "$PYTHON" "$CLI" verify-rom --rom "$ROM" "${VERIFY_ARGS[@]}"

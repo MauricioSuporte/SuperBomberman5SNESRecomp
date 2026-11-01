@@ -1,0 +1,19 @@
+== Verifying /tmp/tmp.RoQjr05LZt/rom.sfc ==
+ROM verification succeeded
+ok crc32=c25ab56a sha256=5251e6491872dc51879b630a34d76a92e29ea0c39026c4f8773c1fe006d047c4 size=4194304 path=/tmp/tmp.RoQjr05LZt/rom.sfc
+== Generating src/gen ==
+Verifying ROM rom.sfc
+Analyzing ROM and generating C into /tmp/claude-1000/-home-supergamebuilder-git-SuperBomberman5SNESRecomp/12079cde-d4b3-4ff4-8e7b-3e5eb72af5fb/scratchpad/prb/src/gen
+Syncing function declarations to /tmp/claude-1000/-home-supergamebuilder-git-SuperBomberman5SNESRecomp/12079cde-d4b3-4ff4-8e7b-3e5eb72af5fb/scratchpad/prb/recomp/funcs.h
+Generate complete
+symbols: synchronized 2 function labels (0 AOT requests) from /tmp/claude-1000/-home-supergamebuilder-git-SuperBomberman5SNESRecomp/12079cde-d4b3-4ff4-8e7b-3e5eb72af5fb/scratchpad/prb/recomp/symbols.toml
+analysis: 4 roots -> 9 exact variants, 9 edges
+analysis: 5 AOT-eligible, 4 LLE-only
+analysis: wrote /tmp/snesrecomp-native-analysis-9pt_7o5u.json in 0.003s
+v2_emit: 4 roots, 5 exact AOT variants, 4 LLE variants
+v2_emit: 2 bank(s) emitted, 0 reused in 0.06s
+v2_emit: atomically published /tmp/claude-1000/-home-supergamebuilder-git-SuperBomberman5SNESRecomp/12079cde-d4b3-4ff4-8e7b-3e5eb72af5fb/scratchpad/prb/src/gen
+v2_sync_funcs_h: wrote 0 declarations to /tmp/claude-1000/-home-supergamebuilder-git-SuperBomberman5SNESRecomp/12079cde-d4b3-4ff4-8e7b-3e5eb72af5fb/scratchpad/prb/recomp/funcs.h
+
+Done. Build with:
+  cmake -S . -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j

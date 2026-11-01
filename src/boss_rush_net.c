@@ -3,6 +3,7 @@
 #define _DEFAULT_SOURCE 1
 #endif
 #include "boss_rush_net.h"
+#include "rom_probe.h"
 #include "host_paths.h"
 #if defined(__ANDROID__)
 #include "android_java.h"
@@ -70,7 +71,14 @@ static void read_config(void) {
     if (!valid_webhook(cfg_webhook) || !valid_id(cfg_board)) cfg_webhook[0] = cfg_board[0] = 0;
     fprintf(stderr, "[boss-rush] online ranking %s\n", cfg_webhook[0] ? "configured" : "not configured");
 }
-bool BrNetConfigured(void) { read_config(); return cfg_webhook[0] != 0; }
+bool BrNetConfigured(void) {
+    read_config();
+#ifdef SB5_ROM_PROBES
+    /* Scores are compared across players: only the supported ROM submits. */
+    if (!Sb5RomIsSupported()) return false;
+#endif
+    return cfg_webhook[0] != 0;
+}
 
 /* ---- lock ------------------------------------------------------------- */
 #if defined(_WIN32)

@@ -1,5 +1,6 @@
 #include "mod_runtime.h"
 #include "snes/ppu.h"
+#include "snes/snes.h"
 #include <stdio.h>
 static SNESModActivationCallback activation, reset;
 int snes_mod_register_reset_callback(SNESModActivationCallback fn) { reset=fn; return 1; }
@@ -7,6 +8,7 @@ int snes_mod_register_presentation_plugin(const char *id, SNESModActivationCallb
 static bool gold_fixture;
 bool GoldBattleHyper(void) { return gold_fixture; }
 const uint8_t *g_rom;
+Snes *g_snes;
 uint8 g_ram[0x20000];
 #include "../src/ptbr_mod.c"
 static bool coop_fixture;
@@ -91,6 +93,30 @@ static void font_pixel(uint32_t tile,unsigned x,unsigned y,unsigned color) {
         unsigned at=tile+(y&7)*2+(plane/2)*16+plane%2;
         font_cartridge[at]=(uint8_t)((font_cartridge[at]&~(1u<<(7-x)))|((color>>plane&1u)<<(7-x)));
     }
+}
+/* A dump smaller than the font locations must never be read through them. */
+static int small_rom_font_test(void) {
+    static uint8_t small_cartridge[0x200000];
+    static Cart cart;
+    static Snes snes;
+    cart.romSize=sizeof(small_cartridge);snes.cart=&cart;g_snes=&snes;
+    const uint8_t *saved_rom=g_rom;g_rom=small_cartridge;
+    PtbrLabel label={.width=20,.height=16,.style=1,.ink=3,.text="PUSH START"};
+    uint8_t pixels[32][224];memset(pixels,0,sizeof(pixels));
+    render_text(pixels,&label);
+    unsigned ink=0;
+    for(unsigned y=0;y<32;++y) for(unsigned x=0;x<224;++x) ink+=pixels[y][x]!=0;
+    if(!ink) return 80;
+    /* The reference image keeps the cartridge's own lettering. */
+    cart.romSize=0x400000;
+    static uint8_t blank_cartridge[0x400000];
+    memset(blank_cartridge,0xff,sizeof(blank_cartridge));
+    g_rom=blank_cartridge;
+    if(native_font_in_rom()) return 82;
+    blank_cartridge[0x23dc90]=0;
+    if(!native_font_in_rom()) return 81;
+    g_snes=NULL;g_rom=saved_rom;
+    return 0;
 }
 static int native_font_tests(void) {
     /* Synthetic cartridge pixels deliberately differ from the authored face.
@@ -222,6 +248,7 @@ static int cartridge_font_tests(const char *path) {
     puts("Cartridge E/F/H crossbars and upper outlines passed.");return 0;
 }
 int main(int argc,char **argv) {
+    int small_rom=small_rom_font_test();if(small_rom) return small_rom;
     int fonts=native_font_tests();if(fonts) return fonts;
     fixture.bgmode=9; fixture.bgXsc[0]=0x31;
     fixture.vram[0x314C]=0x313A; fixture.vram[0x314D]=0x313B;

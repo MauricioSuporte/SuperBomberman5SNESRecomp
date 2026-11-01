@@ -3,6 +3,7 @@
 #include "common_rtl.h"
 #include "common_cpu_infra.h"
 #include "mod_runtime.h"
+#include "rom_probe.h"
 #include "snes/ppu.h"
 #include "snes/interp_bridge.h"
 #include <string.h>
@@ -234,7 +235,7 @@ static void activate(void) { enabled=true; }
 static void reset_plugin(void) { NormalHudReset();enabled=false;suspended_stage=0; }
 SNES_MOD_CONSTRUCTOR(register_normal_hud) {
     snes_mod_register_reset_callback(reset_plugin);
-    snes_mod_register_activation_plugin("superbomberman5.normal.hud-faces",activate);
+    snes_mod_register_activation_plugin("superbomberman5.normal.hud-faces",SB5_ROM_GATED("superbomberman5.normal.hud-faces", activate));
 }
 /* Hide fixed heads and fit the existing blinking rejoin text beside a dead
  * face. Read the already translated BG3 pixels, so no text/art is embedded. */

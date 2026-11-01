@@ -4,6 +4,7 @@
 #if !defined(_WIN32) && !defined(_DEFAULT_SOURCE)
 #define _DEFAULT_SOURCE 1
 #endif
+#include "rom_probe.h"
 #include "sb5_launcher.h"
 #include "host_paths.h"
 #include "mod_runtime.h"
@@ -64,6 +65,14 @@ void Sb5ForceDelaySync(void) {
 }
 
 int Sb5NetplayReady(char *reason, size_t cap) {
+#ifdef SB5_ROM_PROBES
+    if (!Sb5RomIsSupported()) {
+        /* This game sets no ROM fingerprint for rooms (rnet_lobby_set_disc_fp), so
+         * nothing here would stop two different images desyncing. */
+        snprintf(reason, cap, "Netplay needs the supported ROM: this version of the game can only be played locally.");
+        return 0;
+    }
+#endif
     if (snes_mod_runtime_feature_enabled_c("superbomberman5.bomber-kings", "bomber_kings") && !Sb4Rom()) {
         snprintf(reason, cap,
                  "Bomber Kings needs your own Super Bomberman 4 ROM: select it on the Mods page "

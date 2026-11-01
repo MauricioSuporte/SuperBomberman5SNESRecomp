@@ -2,6 +2,7 @@
 #include "portal_labels_mod.h"
 #include "common_rtl.h"
 #include "mod_runtime.h"
+#include "rom_probe.h"
 #include "menu_font.h"
 #include "snes/ppu.h"
 #include <stdio.h>
@@ -19,7 +20,7 @@ static void activate(void) { enabled = true; }
 static void reset_plugin(void) { enabled = false; }
 SNES_MOD_CONSTRUCTOR(register_portal_labels) {
     snes_mod_register_reset_callback(reset_plugin);
-    snes_mod_register_presentation_plugin("superbomberman5.normal.portal-labels", activate);
+    snes_mod_register_presentation_plugin("superbomberman5.normal.portal-labels", SB5_ROM_GATED("superbomberman5.normal.portal-labels", activate));
 }
 bool PortalLabelsEnabled(void) { return enabled; }
 

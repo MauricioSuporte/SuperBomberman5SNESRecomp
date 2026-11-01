@@ -101,6 +101,9 @@ cmake_language(CALL ${_sb5_add_game} SuperBomberman5SNESRecomp ${_sb5_game_kind}
     src/sb5_sound.c
     src/special_abilities.c
     src/sb5_launcher.c
+    src/rom_signature.c
+    src/rom_probe.c
+    src/rom_identity_resolve.c
     src/discord_presence.c
     src/gen_stubs.c
 )
@@ -165,6 +168,8 @@ if(BUILD_TESTING)
     target_include_directories(normal_character_tests PRIVATE
         "${SNESRECOMP_ROOT}/runner/src")
     add_test(NAME normal_character_selection COMMAND normal_character_tests)
+    add_executable(rom_signature_tests tests/rom_signature_tests.c src/rom_signature.c)
+    add_test(NAME rom_signature COMMAND rom_signature_tests)
     add_executable(name_tags_tests tests/name_tags_tests.c)
     target_include_directories(name_tags_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src")
     add_test(NAME netplay_name_tags COMMAND name_tags_tests)
@@ -303,6 +308,15 @@ endif()
 # it is now also enforced: a project with packages that never calls this fails
 # to configure.
 snesrecomp_target_mod_catalog(SuperBomberman5SNESRecomp ${CMAKE_CURRENT_SOURCE_DIR}/mods/preloaded)
+# A build generated from another ROM offers the catalog on that ROM too; what each
+# mod then does is decided from the ROM's contents (src/rom_probe.c).
+add_custom_command(TARGET SuperBomberman5SNESRecomp POST_BUILD
+    COMMAND ${CMAKE_COMMAND}
+        "-DMODULE=${CMAKE_CURRENT_SOURCE_DIR}/src/gen/module_v2.c"
+        "-DIDENTITY=${CMAKE_CURRENT_SOURCE_DIR}/rom_identity.txt"
+        "-DCATALOG=$<TARGET_FILE_DIR:SuperBomberman5SNESRecomp>/${SNESRECOMP_MOD_CATALOG_DEST}"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/tools/stage-mod-targets.cmake"
+    VERBATIM)
 # Staging only copies, so a reused build directory still listed packages that
 # v0.13.0 merged into Extra Characters (Honey/Kotetsu, Subordinate Bomber).
 add_custom_command(TARGET SuperBomberman5SNESRecomp POST_BUILD
@@ -326,6 +340,7 @@ target_link_libraries(SuperBomberman5SNESRecomp PRIVATE ${SNESRECOMP_RUNNER_LIBR
 target_compile_definitions(SuperBomberman5SNESRecomp PRIVATE
     SNES_GAME_VERSION="${SNESRECOMP_BUILD_VERSION}"
     SNES_GAME_TITLE="Super Bomberman 5"
+    SB5_ROM_PROBES=1
     # Release ZIPs ship this setup host as SuperBomberman5Recomp.exe; rebuilds
     # still target and relaunch the game under the target's own name.
     SNESRECOMP_GAME_TARGET="SuperBomberman5SNESRecomp"

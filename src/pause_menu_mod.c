@@ -3,6 +3,7 @@
 #include "common_rtl.h"
 #include "common_cpu_infra.h"
 #include "mod_runtime.h"
+#include "rom_probe.h"
 #include "normal_coop_mod.h"
 #include "ptbr_mod.h"
 #include "boss_rush_mod.h"
@@ -76,7 +77,7 @@ static void reset_plugin(void) { PauseMenuReset();enabled=false; }
 static void activate(void) { enabled=true; }
 SNES_MOD_CONSTRUCTOR(register_pause_menu) {
     snes_mod_register_reset_callback(reset_plugin);
-    snes_mod_register_activation_plugin("superbomberman5.pause.menu",activate);
+    snes_mod_register_activation_plugin("superbomberman5.pause.menu",SB5_ROM_GATED("superbomberman5.pause.menu", activate));
 }
 static void install(void) {
     const uint8_t test_signature[]={0x64,0xb1,0xa0,0x04};

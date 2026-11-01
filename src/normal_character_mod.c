@@ -7,6 +7,7 @@
 #include "common_rtl.h"
 #include "common_cpu_infra.h"
 #include "mod_runtime.h"
+#include "rom_probe.h"
 #include "snes/snes.h"
 #include "snes/interp_bridge.h"
 #include "snes/saveload.h"
@@ -84,7 +85,7 @@ static void activate(void) { enabled=true; }
 bool NormalCharacterEnabled(void) { return enabled; }
 SNES_MOD_CONSTRUCTOR(register_normal_characters) {
     snes_mod_register_reset_callback(reset_plugin);
-    snes_mod_register_activation_plugin("superbomberman5.normal.characters",activate);
+    snes_mod_register_activation_plugin("superbomberman5.normal.characters",SB5_ROM_GATED("superbomberman5.normal.characters", activate));
 }
 
 static void open_picker(void) {

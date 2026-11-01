@@ -7,6 +7,7 @@
  * pass are shared and unchanged. Without the five-player mod it does nothing. */
 #include "coop_corner_spawns_mod.h"
 #include "mod_runtime.h"
+#include "rom_probe.h"
 
 static bool enabled;
 bool CoopCornerSpawnsEnabled(void) { return enabled; }
@@ -14,5 +15,5 @@ static void reset_plugin(void) { enabled=false; }
 static void activate(void) { enabled=true; }
 SNES_MOD_CONSTRUCTOR(register_coop_corner_spawns) {
     snes_mod_register_reset_callback(reset_plugin);
-    snes_mod_register_activation_plugin("superbomberman5.normal.coop.corner-spawns",activate);
+    snes_mod_register_activation_plugin("superbomberman5.normal.coop.corner-spawns",SB5_ROM_GATED("superbomberman5.normal.coop.corner-spawns", activate));
 }

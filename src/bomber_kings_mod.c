@@ -11,6 +11,7 @@
 #include "bomber_kings_mod.h"
 #include "sb4_rom.h"
 #include "mod_runtime.h"
+#include "rom_probe.h"
 #include <stdio.h>
 
 static bool wanted,reported;
@@ -35,5 +36,5 @@ static void reset_plugin(void) { wanted=false; }
 static void activate(void) { wanted=true; }
 SNES_MOD_CONSTRUCTOR(register_bomber_kings) {
     snes_mod_register_reset_callback(reset_plugin);
-    snes_mod_register_activation_plugin("superbomberman5.bomber-kings.characters",activate);
+    snes_mod_register_activation_plugin("superbomberman5.bomber-kings.characters",SB5_ROM_GATED("superbomberman5.bomber-kings.characters", activate));
 }

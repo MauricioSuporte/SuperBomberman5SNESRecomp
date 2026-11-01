@@ -3,6 +3,18 @@
  * missing banner letters (J/Q/V) are authored; all other shapes stay native. */
 #include "ptbr_font_locations.h"
 
+/* The locations reach file offset $23xxxx of the 4 MiB reference image, and
+ * g_rom is unchecked: a smaller dump draws the authored font instead. */
+enum { NATIVE_FONT_ROM_END = 0x240000 };
+static bool native_font_in_rom(void) {
+    if (!g_rom) return false;
+    if (g_snes && g_snes->cart && g_snes->cart->romSize < NATIVE_FONT_ROM_END) return false;
+    /* A large image can still hold padding there instead of the font. */
+    for (unsigned i = 0; i < 16; ++i)
+        if (g_rom[0x23dc90 + i] != 0xff) return true;
+    return false;
+}
+
 static unsigned native_pixel(uint32_t tile,unsigned x,unsigned y) {
     const uint8_t *p=g_rom+tile+(y&7)*2;
     unsigned color=0;
@@ -167,7 +179,7 @@ static unsigned native_blue(unsigned character,uint8_t p[16][24]) {
     memcpy(p,native_blue_cache[character],16*24);return native_blue_width[character];
 }
 static void render_text(uint8_t pixels[32][224],const PtbrLabel *label) {
-    if(!g_rom) {render_authored(pixels,label);return;}
+    if(!g_rom || !native_font_in_rom()) {render_authored(pixels,label);return;}
     memset(pixels,0,32*224);unsigned width=label->width*8;
     bool blue=label->style==2||label->style==4||label->style==3;
     uint8_t line[16][1024]={{0}};unsigned advance=0;

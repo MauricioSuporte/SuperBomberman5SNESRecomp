@@ -63,6 +63,7 @@
 #include "common_rtl.h"
 #include "common_cpu_infra.h"
 #include "mod_runtime.h"
+#include "rom_probe.h"
 #include "snes/ppu.h"
 #include "snes/snes.h"
 #include <string.h>
@@ -374,7 +375,7 @@ static void reset_plugin(void) { uninstall();enabled=sb5_extras=false; }
 static void activate(void) { sb5_extras=enabled=true;SubordinateActivate(); }
 SNES_MOD_CONSTRUCTOR(register_extra_characters) {
     snes_mod_register_reset_callback(reset_plugin);
-    snes_mod_register_activation_plugin("superbomberman5.extra-characters.characters",activate);
+    snes_mod_register_activation_plugin("superbomberman5.extra-characters.characters",SB5_ROM_GATED("superbomberman5.extra-characters.characters", activate));
 }
 
 static void bomber_anchor(void);

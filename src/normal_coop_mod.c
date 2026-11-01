@@ -8,6 +8,7 @@
 #include "common_rtl.h"
 #include "common_cpu_infra.h"
 #include "mod_runtime.h"
+#include "rom_probe.h"
 #include "snes/interp_bridge.h"
 #include "snes/snes.h"
 #include "snes/ppu.h"
@@ -64,12 +65,12 @@ bool NormalCoopPlayerMenu(void) {
  * player menu before the render-only overlays replace these tile words. */
 static bool native_player_menu(void) {
     const Ppu *ppu=g_snes ? g_snes->ppu : NULL;
-    return ppu && (g_ram[0x1031]==2 || g_ram[0x1031]==3) && (ppu->bgmode&7)==1 &&
-        PPU_bgTilemapAdr(ppu,2)==0x4000 &&
-        (ppu->vram[0x424b]&0x3ff)==302 &&
-        (ppu->vram[0x424c]&0x3ff)==261 &&
-        (ppu->vram[0x428b]&0x3ff)==278 &&
-        (ppu->vram[0x428c]&0x3ff)==261;
+    if(!ppu || (g_ram[0x1031]!=2 && g_ram[0x1031]!=3) || (ppu->bgmode&7)!=1 || PPU_bgTilemapAdr(ppu,2)!=0x4000)
+        return false;
+    /* Tile numbers differ per ROM; the title script's players menu is $1036 = 1. */
+    return ((ppu->vram[0x424b]&0x3ff)==302 && (ppu->vram[0x424c]&0x3ff)==261 &&
+            (ppu->vram[0x428b]&0x3ff)==278 && (ppu->vram[0x428c]&0x3ff)==261) ||
+           (g_ram[0x1031]==2 && g_ram[0x1036]==1);
 }
 /* Collision maps are sixteen columns wide. $1052 holds static collision;
  * $1152 holds dynamic collision flags. Require an exit as well as an empty tile. */
@@ -800,7 +801,7 @@ static void reset_plugin(void) {
 static void activate(void) { enabled=true; }
 SNES_MOD_CONSTRUCTOR(register_normal_coop) {
     snes_mod_register_reset_callback(reset_plugin);
-    snes_mod_register_activation_plugin("superbomberman5.normal.coop",activate);
+    snes_mod_register_activation_plugin("superbomberman5.normal.coop",SB5_ROM_GATED("superbomberman5.normal.coop", activate));
 }
 void NormalCoopBeforeFrame(void) {
     if(!enabled) return;

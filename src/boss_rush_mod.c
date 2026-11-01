@@ -40,6 +40,7 @@
 #include "common_rtl.h"
 #include "common_cpu_infra.h"
 #include "mod_runtime.h"
+#include "rom_probe.h"
 #include "menu_font.h"
 #include "normal_character_mod.h"
 #include "normal_coop_mod.h"
@@ -446,5 +447,5 @@ static void reset_plugin(void) { BossRushReset(); uninstall(); enabled = false; 
 static void activate(void) { enabled = true; }
 SNES_MOD_CONSTRUCTOR(register_boss_rush) {
     snes_mod_register_reset_callback(reset_plugin);
-    snes_mod_register_activation_plugin("superbomberman5.boss.rush", activate);
+    snes_mod_register_activation_plugin("superbomberman5.boss.rush", SB5_ROM_GATED("superbomberman5.boss.rush", activate));
 }

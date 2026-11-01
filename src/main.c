@@ -17,7 +17,8 @@
  * Nothing here ever ships a ROM. The player supplies one; the host makes
  * that easy (launcher, then positional argument, then a copy beside the
  * executable, then the rom.cfg cache, then a file picker) and checks what it
- * is handed against the digests in rom_identity.txt.
+ * is handed against the digests in rom_identity.txt, or those of the ROM
+ * src/rom_identity_resolve.c recognised by its contents.
  *
  * Grow this file only with what is specific to THIS title: a custom
  * presenter (prepare_frame / draw_frame), an SPC player, a pacing rule
@@ -28,6 +29,7 @@
 #include "host_main.h"
 #include "game_rtl.h"
 #include "sb5_launcher.h"
+#include "rom_identity_resolve.h"
 #include "snesrecomp_rom_identity.h"  /* generated from rom_identity.txt */
 #ifdef __ANDROID__
 #include "android_assets.h"
@@ -80,5 +82,12 @@ SB5_MAIN_EXPORT int main(int argc, char **argv)
     Sb5AndroidPrepare();
 #endif
     Sb5ForceDelaySync();
+#if defined(__ANDROID__) || defined(SB5_INTERPRETER_ONLY)
     return snesrecomp_desktop_main(&kGameHost, argc, argv);
+#else
+    static SnesDesktopHostGame game;
+    game = kGameHost;
+    Sb5ResolveRomIdentity(&game, argc, argv);
+    return snesrecomp_desktop_main(&game, argc, argv);
+#endif
 }
