@@ -430,15 +430,19 @@ static void *android_update_check(void *arg) {
 }
 
 /* Mirrors the Activity's progress line into the launcher note. */
+static volatile int progress_running;
 static void *android_update_progress(void *arg) {
     char line[320];
     (void)arg;
+    snprintf(g_action_note, sizeof(g_action_note), "%s",
+             "Downloading the update... / Baixando a atualização...");
     for (int i = 0; i < 1200; ++i) {   /* up to 10 minutes */
         if (Sb5AndroidUpdateStatus(line, sizeof(line)) && line[0])
             snprintf(g_action_note, sizeof(g_action_note), "%s", line);
         struct timespec ts = {0, 500 * 1000000L};
         nanosleep(&ts, NULL);
     }
+    progress_running = 0;
     return NULL;
 }
 
@@ -461,9 +465,19 @@ static int android_update_action(char *msg, size_t cap) {
         snprintf(msg, cap, "Could not start the update. Download it from %s", kSb5ReleasesUrl);
         return 0;
     }
-    pthread_t t;
-    if (pthread_create(&t, NULL, android_update_progress, NULL) == 0) pthread_detach(t);
-    return 1;
+    /* Keep the launcher open. Returning 1 makes it quit (that is how the
+     * desktop updater takes over), and on Android quitting ends the process:
+     * the download thread in SB5Activity died with it and the system
+     * installer never got the APK. The progress line shows in the note
+     * instead, and the system's "Update this app?" screen replaces the app
+     * once the download finishes. */
+    if (!progress_running) {
+        pthread_t t;
+        progress_running = 1;
+        if (pthread_create(&t, NULL, android_update_progress, NULL) == 0) pthread_detach(t);
+        else progress_running = 0;
+    }
+    return 0;
 }
 #endif
 

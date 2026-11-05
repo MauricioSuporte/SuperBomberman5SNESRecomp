@@ -216,6 +216,7 @@ public class SB5Activity extends SDLActivity {
     private static final String ACTION_INSTALL_STATUS =
             "io.github.mauriciosuporte.sb5recomp.INSTALL_STATUS";
     private volatile String updateStatus = "";
+    private boolean updating;
 
     /** Last update progress line, for the launcher note. */
     public String sb5UpdateStatus() { return updateStatus; }
@@ -242,10 +243,21 @@ public class SB5Activity extends SDLActivity {
             return "Allow \"Install unknown apps\" for Super Bomberman 5, come back and press Update again. "
                     + "/ Permita \"Instalar apps desconhecidos\", volte e toque em Atualizar de novo.";
         }
+        synchronized (this) {
+            // A second tap while downloading must not start a second session.
+            if (updating) return updateStatus;
+            updating = true;
+        }
         updateStatus = "Downloading the update... / Baixando a atualização...";
         new Thread(new Runnable() {
             @Override
-            public void run() { downloadAndInstall(url); }
+            public void run() {
+                try {
+                    downloadAndInstall(url);
+                } finally {
+                    synchronized (SB5Activity.this) { updating = false; }
+                }
+            }
         }, "sb5-update").start();
         return updateStatus;
     }
