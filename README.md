@@ -22,7 +22,7 @@ An unofficial, noncommercial **Super Bomberman 5** port for PC and Android built
 
 ### Highlights
 
-- Windows x64 setup and an experimental Linux x86_64 AppImage, where the game is generated and compiled locally from your ROM, and an **Android APK** (arm64) that runs it on the interpreter.
+- Windows x64 setup and a Linux x86_64 AppImage, where the game is generated and compiled locally from your ROM, and an **Android APK** (arm64) that runs it on the interpreter.
 - Launcher with **PLAYER 1–5** input tabs (keyboard or gamepad per player, including several identical controllers such as two DualSense pads).
 - Seventeen optional mods, all disabled by default: a title-screen Boss Rush, five-player Normal Game (with an optional corner spawn layout), character and color selection in Normal, extra characters, Super Bomberman 4 Bomber Kings, Louie improvements, PT-BR menus, a **Cheats** group (infinite time, infinite lives and Battle COM level 4) and more.
 - **New in v3.0.0 — Android:** the same game, mods, Boss Rush ranking and online netplay on Android 9+ phones (arm64): pick your ROM with the system file picker, play with the on-screen SNES controls or a Bluetooth/USB controller, sign in with Discord and play online **with Windows and Linux players** (crossplay). Every netplay session now runs on the interpreter on every platform, so PC and Android matches stay in sync. [Details](docs/ANDROID.md)
@@ -138,7 +138,7 @@ Thanks to Matthew Stanley and the RetroPorting ToolKit contributors for SNESReco
 
 ### Destaques
 
-- Setup Windows x64 e AppImage Linux x86_64 experimental, onde o jogo é gerado e compilado localmente a partir da sua ROM, e um **APK Android** (arm64) que roda o jogo no interpretador.
+- Setup Windows x64 e AppImage Linux x86_64, onde o jogo é gerado e compilado localmente a partir da sua ROM, e um **APK Android** (arm64) que roda o jogo no interpretador.
 - Launcher com abas **PLAYER 1–5** (teclado ou controle por jogador, inclusive vários controles iguais, como dois DualSense).
 - Dezessete mods opcionais, desligados por padrão: Boss Rush na tela de título, Normal Game com cinco jogadores (com layout opcional de spawn nos cantos), seleção de personagem e cor no Normal, personagens extras, Reis Bomber do Super Bomberman 4, melhorias dos Louies, menus em PT-BR, o grupo **Cheats** (tempo infinito, vidas infinitas e nível 4 do COM no Battle) e mais.
 - **Novo na v3.0.0 — Android:** o mesmo jogo, mods, ranking do Boss Rush e netplay online em celulares Android 9+ (arm64): escolha a ROM pelo seletor de arquivos do sistema, jogue com os controles de SNES na tela ou com um controle Bluetooth/USB, entre com o Discord e jogue online **com jogadores de Windows e Linux** (crossplay). Toda sessão de netplay agora roda no interpretador em todas as plataformas, para as partidas entre PC e Android ficarem sincronizadas. [Detalhes](docs/ANDROID.md)
