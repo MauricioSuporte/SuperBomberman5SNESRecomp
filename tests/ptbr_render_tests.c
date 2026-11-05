@@ -13,6 +13,8 @@ static bool coop_fixture;
 bool NormalCoopPlayerMenu(void) { return coop_fixture; }
 static bool rush_title_fixture;
 bool BossRushTitleMenu(void) { return rush_title_fixture; }
+bool BattleRulesPageOpen(void) { return false; }
+void BattleRulesApplyText(struct Ppu *ppu) { (void)ppu; }
 static unsigned coop_count_fixture=5;
 unsigned NormalCoopPlayerCount(void) { return coop_count_fixture; }
 

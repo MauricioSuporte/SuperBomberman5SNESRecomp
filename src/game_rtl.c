@@ -43,6 +43,7 @@
 #include "infinite_lives_mod.h"
 #include "com_level4_mod.h"
 #include "battle_variants_mod.h"
+#include "battle_rules_mod.h"
 #include "boss_rush_mod.h"
 #include "boss_rush_results.h"
 #include "pause_menu_mod.h"
@@ -105,6 +106,7 @@ void GameRunOneFrame(void)
     NormalHudBeforeFrame();
     ComLevel4BeforeFrame(); /* WRAM limit only; no hook */
     BattleVariantsBeforeFrame();
+    BattleRulesBeforeFrame();
     BossRushBeforeFrame();
     NormalCharacterInstallHook(); /* Outermost hook: restore after co-op. */
     snes_beam_frame_driver_run_frame();
@@ -112,6 +114,7 @@ void GameRunOneFrame(void)
     PauseMenuAfterFrame();
     NormalCoopAfterFrame();
     InfiniteLivesAfterFrame(); /* keep the shared counter at its maximum for Start rejoins */
+    BattleRulesAfterFrame(); /* put the Battle timer back while the countdown runs */
     BattleVariantsAfterFrame(); /* restore password bits once the stage has read them */
     SelectionColorAfterFrame();
     BossRushAfterFrame(); /* may open the character picker: right before its owner */
@@ -147,7 +150,10 @@ void GameDrawPpuFrame(void)
 {
     bool overlays = NormalHudEnabled() || SelectionColorEnabled() || SubordinateEnabled() || ExtraCharactersEnabled() ||
                     ExtraCharactersPagelessMounts() || PauseMenuEnabled() || PortalLabelsEnabled();
+    BattleRulesPrepareDraw();
     PtbrDrawPpuFrameObserved(overlays ? ObserveOverlays : NULL, NULL);
+    BattleRulesFinishDraw();
+    BattleRulesDraw();
     BattleVariantsDraw(); /* over the finished frame; presentation only */
     BossRushDraw();       /* run timer, presentation only */
     BossRushResultsDraw(); /* ranking screens, presentation only */
@@ -166,6 +172,7 @@ void GameSessionReset(void)
     GoldBattleReset();
     PauseMenuReset();
     BattleVariantsReset();
+    BattleRulesReset();
     BossRushReset();
     BossRushResultsReset();
     InfiniteLivesReset();
@@ -183,6 +190,7 @@ static void GameHardwareReset(void)
     GoldBattleReset();
     PauseMenuReset();
     BattleVariantsReset();
+    BattleRulesReset();
     BossRushReset();
     BossRushResultsReset();
     InfiniteLivesReset();
@@ -197,10 +205,10 @@ static void GameHardwareReset(void)
 static bool GameSnapshotAllowed(void) { return BossRushSnapshotsAllowed(); }
 
 static void GameSaveExtra(struct SaveLoadInfo *sli) {
-    NormalCharacterSave(sli);SelectionColorSave(sli);NormalCoopSave(sli);PauseMenuSave(sli);GoldBattleSave(sli);LouieSave(sli);BattleVariantsSave(sli);BossRushSave(sli);
+    NormalCharacterSave(sli);SelectionColorSave(sli);NormalCoopSave(sli);PauseMenuSave(sli);GoldBattleSave(sli);LouieSave(sli);BattleVariantsSave(sli);BossRushSave(sli);BattleRulesSave(sli);
 }
 static void GameLoadExtra(struct SaveLoadInfo *sli,uint32_t version) {
-    NormalCharacterLoad(sli,version);SelectionColorLoad(sli,version);NormalCoopLoad(sli,version);PauseMenuLoad(sli,version);GoldBattleLoad(sli,version);LouieLoad(sli,version);BattleVariantsLoad(sli,version);BossRushLoad(sli,version);
+    NormalCharacterLoad(sli,version);SelectionColorLoad(sli,version);NormalCoopLoad(sli,version);PauseMenuLoad(sli,version);GoldBattleLoad(sli,version);LouieLoad(sli,version);BattleVariantsLoad(sli,version);BossRushLoad(sli,version);BattleRulesLoad(sli,version);
 }
 
 const RtlGameInfo kGameInfo = {

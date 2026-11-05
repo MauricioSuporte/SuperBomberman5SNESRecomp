@@ -97,6 +97,7 @@ cmake_language(CALL ${_sb5_add_game} SuperBomberman5SNESRecomp ${_sb5_game_kind}
     src/infinite_time_mod.c
     src/com_level4_mod.c
     src/battle_variants_mod.c
+    src/battle_rules_mod.c
     src/boss_rush_mod.c
     src/boss_rush_ranking.c
     src/boss_rush_net.c
@@ -226,6 +227,9 @@ if(BUILD_TESTING)
     add_executable(battle_variants_tests tests/battle_variants_tests.c)
     target_include_directories(battle_variants_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src" "${CMAKE_CURRENT_SOURCE_DIR}/src")
     add_test(NAME battle_variants COMMAND battle_variants_tests)
+    add_executable(battle_rules_tests tests/battle_rules_tests.c)
+    target_include_directories(battle_rules_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src" "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    add_test(NAME battle_rules COMMAND battle_rules_tests)
     add_executable(boss_rush_tests tests/boss_rush_tests.c)
     target_include_directories(boss_rush_tests PRIVATE "${SNESRECOMP_ROOT}/runner/src" "${CMAKE_CURRENT_SOURCE_DIR}/src")
     add_test(NAME boss_rush COMMAND boss_rush_tests)

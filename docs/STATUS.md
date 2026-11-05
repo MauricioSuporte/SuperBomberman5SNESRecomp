@@ -1,5 +1,21 @@
 # Super Bomberman 5: estado do protótipo
 
+## Unreleased — 2026-11-05: Battle extra rules mod and launcher "Enable all"
+
+- New mod `superbomberman5.battle-rules` (src/battle_rules_mod.c, docs/BATTLE_RULES.md): rules page 2 with Round Timer and
+  Shuffle Spawn. Native test `battle_rules_tests` (page navigation, hand-back of Down/Up, countdown freeze/input block/
+  timer, spawn permutation on a synthetic script, save-state round trip) passes; all other native tests, the
+  publication audit and the unit tests pass (Linux, this session).
+- Runtime evidence (Linux x86_64, LLE, `NewRenderer=1`, scripted route title -> Normal-style picker -> Battle rules ->
+  arena -> match, two humans + three COM): page 2 opened by Down on row 5 and Up on row 0, toggles, return rows;
+  screenshots with PT-BR on and off use the same native font; countdown froze every actor and the timer for 180
+  frames (WRAM dumps every 6 frames: positions and `$0E1C-$0E1E` constant), digits 3-2-1 and blinking player numbers
+  shown, round started afterwards; shuffle moved P1 from (16,16) to (208,176). Not run: netplay with the mod, three or
+  more humans, every arena, Windows.
+- Launcher Mods tab "Enable all" button (recomp-ui `launcher_imgui.cpp`, submodule change): compiles in the Linux
+  build; not clicked in a running launcher here. The submodule commit still has to be pushed to the fork and the
+  gitlink updated.
+
 ## v3.0.4 — 2026-11-05: faster interpreter on Android (PR #7, snesrecomp PR #1)
 
 - Framework pin `6f0fe27` on the fork's `superbomberman5-android`: snesrecomp PR #1 (pre-opcode hook bitmap,

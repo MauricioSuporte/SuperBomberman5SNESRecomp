@@ -1,5 +1,6 @@
 /* Runtime cartridge fonts and authored translations. No ROM assets embedded. */
 #include "ptbr_mod.h"
+#include "battle_rules_mod.h"
 #include "common_rtl.h"
 #include "gold_battle_mod.h"
 #include "normal_coop_mod.h"
@@ -509,6 +510,37 @@ static void apply_labels(Ppu *ppu) {
     if(s_saved_count) ++ppu->vramWriteCount;
 }
 
+/* Body-style text drawn with the same native-derived font as the translated
+ * rules labels (used by the Battle rules page 2, in English as well). Tiles
+ * and map cells are saved and put back with the other label edits. */
+void PtbrDrawBodyText(struct Ppu *ppu,unsigned row,unsigned column,unsigned width,unsigned tile,unsigned attributes,const char *text) {
+    PtbrLabel label={0,row,column,width,16,0,0,4,tile,0,0,0,0,text};
+    uint8_t pixels[32][224];render_text(pixels,&label);
+    unsigned map=PPU_bgTilemapAdr(ppu,0),base=PPU_bgTileAdr(ppu,0),rows=2;
+    if(rows*width*9>sizeof(s_saved)/sizeof(s_saved[0])-s_saved_count) return;
+    for(unsigned ty=0;ty<rows;++ty) for(unsigned tx=0;tx<width;++tx) {
+        unsigned t=tile+ty*width+tx;
+        save_write(ppu,map+(row+ty)*32+column+tx,(uint16_t)(attributes|t));
+        for(unsigned y=0;y<8;++y) {
+            uint16_t planes[2]={0,0};
+            for(unsigned x=0;x<8;++x) {
+                unsigned color=pixels[ty*8+y][tx*8+x],bit=7-x;
+                for(unsigned plane=0;plane<4;++plane)
+                    if(color&(1u<<plane)) planes[plane/2]|=(uint16_t)(1u<<(bit+(plane%2)*8));
+            }
+            save_write(ppu,base+t*16+y,planes[0]);save_write(ppu,base+t*16+y+8,planes[1]);
+        }
+    }
+    ++ppu->vramWriteCount;
+}
+
+void PtbrBlankMap(struct Ppu *ppu,unsigned row,unsigned column,unsigned rows,unsigned columns,unsigned word) {
+    unsigned map=PPU_bgTilemapAdr(ppu,0);
+    if(rows*columns>sizeof(s_saved)/sizeof(s_saved[0])-s_saved_count) return;
+    for(unsigned y=0;y<rows;++y) for(unsigned x=0;x<columns;++x) save_write(ppu,(map+(row+y)*32+column+x)&0x7fff,(uint16_t)word);
+    ++ppu->vramWriteCount;
+}
+
 static void restore_labels(Ppu *ppu) {
     if(!s_saved_count && !arena_drawn) return;
     if(arena_drawn) {
@@ -690,6 +722,7 @@ static void observe_line(const Ppu *view, unsigned line, void *unused) {
         }
         apply_boss_rush_title(ppu);
         if(s_enabled || GoldBattleHyper()) apply_labels(ppu);apply_coop_menu(ppu);
+        BattleRulesApplyText(ppu);
     }
     if(extra_observer) extra_observer(view,line,extra_context);
     /* Restore before the driver replays pending guest writes at RenderEnd. */
@@ -709,7 +742,7 @@ void PtbrDrawPpuFrameObserved(SnesBeamRasterObserver *observer,void *context) {
      * accurate compositor for that menu only, keeping the user's renderer
      * setting for every other screen. */
     extra_observer=observer;extra_context=context;
-    if(s_enabled || GoldBattleHyper() || observer || NormalCoopPlayerMenu() || BossRushTitleMenu()) snes_beam_frame_driver_draw_ppu_frame_observed(observe_line,NULL);
+    if(s_enabled || GoldBattleHyper() || BattleRulesPageOpen() || observer || NormalCoopPlayerMenu() || BossRushTitleMenu()) snes_beam_frame_driver_draw_ppu_frame_observed(observe_line,NULL);
     else snes_beam_frame_driver_draw_ppu_frame();
     extra_observer=NULL;extra_context=NULL;
 }
