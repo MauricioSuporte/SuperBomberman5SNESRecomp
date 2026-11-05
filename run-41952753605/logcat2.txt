@@ -1,0 +1,29 @@
+11-05 02:10:52.033  5178  5205 I SB5     : joysticks: 0
+11-05 02:10:52.038  5178  5205 I SB5     : selftest: 341 bytes of commands
+11-05 02:10:52.582  5178  5210 I SB5     : update check: local=3.0.3 latest=3.0.2 newer=0 apk=https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/download/v3.0.2/superbomberman5-3.0.2-android.apk
+11-05 02:10:58.076  5178  5209 I SB5     : selftest http GET status=200 bytes=29 body={"ok": true, "method": "GET"}
+11-05 02:11:01.112  5178  5209 I SB5     : selftest http PATCH status=200 bytes=31 body={"ok": true, "method": "PATCH"}
+11-05 02:11:04.184  5178  5209 I SB5     : selftest http POST status=200 bytes=30 body={"ok": true, "method": "POST"}
+11-05 02:11:07.208  5178  5209 I SB5     : selftest http GET status=200 bytes=12518 body={"url":"https://api.github.com/repos/MauricioSuporte/SuperBomberman5SNESRecomp/r
+11-05 02:11:10.306  5178  5209 I SB5     : selftest openurl ok=1
+11-05 02:11:13.316  5178  5209 I SB5     : selftest install started=1 msg=Downloading the update... / Baixando a atualização...
+11-05 02:11:21.865   521   596 E PackageInstallerSession: io.github.mauriciosuporte.sb5recomp drops manifest attribute android:installLocation in base.apk for io.github.mauriciosuporte.sb5recomp
+11-05 02:11:21.866   521  1822 W system_server: Long monitor contention with owner PackageInstaller (596) at com.android.server.pm.InstallSource com.android.server.pm.PackageInstallerSession.getInstallSource()(PackageInstallerSession.java:3829) waiters=0 in void com.android.server.pm.PackageInstallerSession.closeInternal(boolean) for 1.222s
+11-05 02:11:21.884  5178  5383 I SB5     : update downloaded (14286419 bytes), install session committed
+11-05 02:11:22.267   521  1816 I ActivityTaskManager: START u0 {act=android.content.pm.action.CONFIRM_INSTALL flg=0x2000001 pkg=com.google.android.packageinstaller cmp=com.google.android.packageinstaller/com.android.packageinstaller.PackageInstallerActivity (has extras)} with LAUNCH_MULTIPLE from uid 10094 (BAL_ALLOW_VISIBLE_WINDOW) result code=0
+11-05 02:11:22.447   521  2396 D CoreBackPreview: Window{7b5ddde u0 com.google.android.packageinstaller/com.android.packageinstaller.PackageInstallerActivity}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@4e12190, mPriority=0, mIsAnimationCallback=false}
+11-05 02:11:23.581   843   876 V WindowManagerShell: onTransitionReady android.os.BinderProxy@3dc9f94: {id=16 t=OPEN f=0x0 trk=0 r=[0@Point(0, 0)] c=[{null m=OPEN f=TRANSLUCENT|FILLS_TASK leash=Surface(name=ActivityRecord{fbda771 u0 com.google.android.packageinstaller/com.android.packageinstaller.PackageInstallerActivity)/@0x275ab83 sb=Rect(0, 0 - 0, 0) eb=Rect(0, 0 - 2400, 1080) d=-1->0 r=-1->1:-1}]}
+11-05 02:11:23.582   843   876 V WindowManagerShell: Transition doesn't have explicit remote, search filters for match for {id=16 t=OPEN f=0x0 trk=0 r=[0@Point(0, 0)] c=[{null m=OPEN f=TRANSLUCENT|FILLS_TASK leash=Surface(name=ActivityRecord{fbda771 u0 com.google.android.packageinstaller/com.android.packageinstaller.PackageInstallerActivity)/@0x275ab83 sb=Rect(0, 0 - 0, 0) eb=Rect(0, 0 - 2400, 1080) d=-1->0 r=-1->1:-1}]}
+11-05 02:11:23.582   843   876 V WindowManagerShell: start default transition animation, info = {id=16 t=OPEN f=0x0 trk=0 r=[0@Point(0, 0)] c=[{null m=OPEN f=TRANSLUCENT|FILLS_TASK leash=Surface(name=ActivityRecord{fbda771 u0 com.google.android.packageinstaller/com.android.packageinstaller.PackageInstallerActivity)/@0x275ab83 sb=Rect(0, 0 - 0, 0) eb=Rect(0, 0 - 2400, 1080) d=-1->0 r=-1->1:-1}]}
+11-05 02:11:23.913   521   540 I ActivityTaskManager: Displayed com.google.android.packageinstaller/com.android.packageinstaller.PackageInstallerActivity for user 0: +1s474ms
+11-05 02:11:23.913   521   540 V WindowManager:     info={id=16 t=OPEN f=0x0 trk=0 r=[0@Point(0, 0)] c=[{null m=OPEN f=TRANSLUCENT|FILLS_TASK leash=Surface(name=ActivityRecord{fbda771 u0 com.google.android.packageinstaller/com.android.packageinstaller.PackageInstallerActivity)/@0xd70235b sb=Rect(0, 0 - 0, 0) eb=Rect(0, 0 - 2400, 1080) d=-1->0 r=-1->1:-1}]}
+11-05 02:11:33.789  5641  5641 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+11-05 02:11:33.845  5641  5641 I AndroidRuntime: Using default boot image
+11-05 02:11:33.845  5641  5641 I AndroidRuntime: Leaving lock profiling enabled
+11-05 02:11:34.690  5641  5641 D AndroidRuntime: Calling main entry com.android.commands.uiautomator.Launcher
+11-05 02:11:35.788  5641  5641 D AndroidRuntime: Shutting down VM
+11-05 02:11:37.253  5659  5659 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+11-05 02:11:37.266  5659  5659 I AndroidRuntime: Using default boot image
+11-05 02:11:37.266  5659  5659 I AndroidRuntime: Leaving lock profiling enabled
+11-05 02:11:37.767  5659  5659 D AndroidRuntime: Calling main entry com.android.commands.uiautomator.Launcher
+11-05 02:11:38.890  5659  5659 D AndroidRuntime: Shutting down VM
