@@ -377,7 +377,8 @@ int main(int argc,char **argv) {
             s_enabled=language!=0;fixture.windowsel=hidden?0x800:0;
             fixture.renderFlags=kPpuRenderFlags_NewRenderer;
             observe_line(&fixture,1,NULL);
-            if(fixture.renderFlags&kPpuRenderFlags_NewRenderer) return 90;
+            /* The layout renders the same on both compositors: keep the player's. */
+            if(!(fixture.renderFlags&kPpuRenderFlags_NewRenderer)) return 90;
             if(fixture.screenWindowed[0]&4 || fixture.oam[0]!=(uint16_t)(159u<<8|64u)) return 91;
             const uint16_t *v=fixture.vram+0x4000;
             if(!language) {

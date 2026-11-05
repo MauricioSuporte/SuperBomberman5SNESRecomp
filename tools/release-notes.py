@@ -1275,6 +1275,11 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '3.0.3': (
+'''- **Faster title screen with Boss Rush on.** With the Boss Rush mod enabled, the title screen no longer switches the whole frame to the slower accurate renderer; the picture is the same, checked pixel by pixel. With every mod on, a Galaxy A32 goes from about 24 to 30 frames per second there, and a Linux PC from 132 to 187.
+- Everyone in an online room needs v3.0.3.''',
+'''- **Tela de título mais rápida com o Boss Rush ligado.** Com o mod Boss Rush ativo, a tela de título não troca mais o quadro inteiro para o renderizador preciso, mais lento; a imagem é a mesma, conferida pixel a pixel. Com todos os mods ligados, um Galaxy A32 vai de cerca de 24 para 30 quadros por segundo ali, e um PC Linux de 132 para 187.
+- Todos na sala online precisam da v3.0.3.'''),
     '3.0.2': (
 '''- **Android: fixes the slowdown from v3.0.1.** On a fresh v3.0.1 install the game lost its optimized renderer setting, and every screen ran on the slower accurate one (on a Galaxy A32, 25.5 instead of 32 frames per second on the title screen without mods). v3.0.2 restores that setting once on phones that lost it. New installs are back to the defaults (512-sample audio buffer, rewind on); a phone that already ran v3.0.1 keeps the 2048-sample buffer and rewind off that it wrote. Neither has a launcher setting: to return to the defaults, delete `config.ini` in `Android/data/io.github.mauriciosuporte.sb5recomp/files` by USB (it is recreated on the next launch; saves and ROMs stay, settings reset), or remove its `AudioSamples = 2048` line and `[Rewind]` section. Neither value changed the frame rate in our tests.
 - **Android: Update game works.** Tapping Update game / Atualizar jogo closed the launcher and the update never happened. The launcher now stays open, shows the download progress and then the system's install screen; saves, ROMs and settings stay. This takes effect from v3.0.2 on: to get v3.0.2 itself on Android, download the APK from this release once.

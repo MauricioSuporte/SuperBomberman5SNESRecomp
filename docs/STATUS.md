@@ -1,5 +1,16 @@
 # Super Bomberman 5: estado do protótipo
 
+## v3.0.3 — 2026-11-04: Boss Rush title on the optimized renderer (PR #4, measured 2026-10-31)
+
+- With Boss Rush on, the title forced the accurate compositor (the switch the co-op player menu needs, in
+  `ptbr_mod.c` `observe_line`). It now keeps the player's renderer. Evidence (Linux x86_64, interpreter-only build,
+  LLE, every mod on): 48 title frames with PT-BR and 48 in English, cursor moved to BOSS RUSH, plus 100 frames from
+  the title fade-in to the player-count menu, are identical pixel by pixel between `NewRenderer=1` and the accurate
+  compositor. The co-op player menu keeps its accurate switch.
+- Title speed, every mod on: Linux x86_64 uncapped 132 -> 187 frames/s (raster 2.95 -> 0.65 ms/frame); Galaxy A32
+  (Helio G80) 23.7 -> 29.9 simulated frames/s (raster 12.1 -> 2.7 ms), layout checked on the phone's screen. The
+  phone is still below 60: its interpreter alone takes about 22 ms per frame.
+
 ## v3.0.2 — 2026-11-04: Android Update game no longer quits before installing
 
 - Update game returned 1 from `android_update_action`; recomp-ui then sets `LNG_ACTION_QUIT`, and on Android quitting
