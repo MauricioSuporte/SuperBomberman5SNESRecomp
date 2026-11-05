@@ -2,7 +2,17 @@
 
 An unofficial, noncommercial **Super Bomberman 5** port for PC and Android built with [SNESRecomp](https://github.com/RetroPortingToolKit/snesrecomp) and [recomp-ui](https://github.com/RetroPortingToolKit/recomp-ui), following the game-repository architecture of [Mega Man X Recompiled](https://github.com/mstan/MegaManXSNESRecomp).
 
-[Download v3.0.3](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/tag/v3.0.3) · [English](#english) · [Português](#português) · [Technical status](docs/STATUS.md) · [Contributing](CONTRIBUTING.md)
+<p align="center">
+  <a href="https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/download/v3.0.3/superbomberman5-3.0.3-windows-x64.zip"><img alt="Download for Windows" height="44" src="https://img.shields.io/badge/Download-Windows%20x64-0078D6?style=for-the-badge&logo=windows&logoColor=white"></a>
+  &nbsp;
+  <a href="https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/download/v3.0.3/superbomberman5-3.0.3-linux-x86_64.AppImage"><img alt="Download for Linux (experimental)" height="44" src="https://img.shields.io/badge/Download-Linux%20(experimental)-FCC624?style=for-the-badge&logo=linux&logoColor=black"></a>
+  &nbsp;
+  <a href="https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/download/v3.0.3/superbomberman5-3.0.3-android.apk"><img alt="Download for Android" height="44" src="https://img.shields.io/badge/Download-Android%20APK-3DDC84?style=for-the-badge&logo=android&logoColor=white"></a>
+  <br>
+  <a href="https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/MauricioSuporte/SuperBomberman5SNESRecomp?style=flat-square&label=latest"></a>
+</p>
+
+[All releases](https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases) · [English](#english) · [Português](#português) · [Technical status](docs/STATUS.md) · [Contributing](CONTRIBUTING.md)
 
 > **Partial recompilation.** Most game logic still runs on the framework's interpreter. Supply your own legally obtained ROM; no ROM, generated game code or extracted assets are distributed. v1.0.1 is the first full release: the maintainer has played the campaign through to the end on Windows.
 
