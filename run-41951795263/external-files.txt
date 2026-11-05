@@ -1,0 +1,21 @@
+/sdcard/Android/data/io.github.mauriciosuporte.sb5recomp/files:
+total 100
+drwxrws--- 5 u0_a192 ext_data_rw 4096 2026-11-05 02:02 .
+drwxrws--- 3 u0_a192 ext_data_rw 4096 2026-11-05 02:01 ..
+-rw-rw---- 1 u0_a192 ext_data_rw   14 2026-11-05 02:01 .sb5-bundle
+-rw-rw---- 1 u0_a192 ext_data_rw    0 2026-11-05 02:01 .sb5-renderer-1
+drwxrws--- 4 u0_a192 ext_data_rw 4096 2026-11-05 02:01 assets
+-rw-rw---- 1 u0_a192 ext_data_rw  237 2026-11-05 02:01 boss_rush_ranking.cfg
+-rw-rw---- 1 u0_a192 ext_data_rw 1983 2026-11-05 02:01 config.ini
+-rw-rw---- 1 u0_a192 ext_data_rw   13 2026-11-05 02:02 joysticks.txt
+-rw-rw---- 1 u0_a192 ext_data_rw 1108 2026-11-05 02:01 keybinds.ini
+drwxrws--- 3 u0_a192 ext_data_rw 4096 2026-11-05 02:01 mods
+-rw-rw---- 1 u0_a192 ext_data_rw 1417 2026-11-05 02:01 rom_identity.txt
+drwxrws--- 2 u0_a192 ext_data_rw 4096 2026-11-05 02:02 roms
+-rw-r--r-- 1 shell   ext_data_rw  341 2026-11-05 02:02 selftest.txt
+
+/sdcard/Android/data/io.github.mauriciosuporte.sb5recomp/files/roms:
+total 24
+drwxrws--- 2 u0_a192 ext_data_rw 4096 2026-11-05 02:02 .
+drwxrws--- 5 u0_a192 ext_data_rw 4096 2026-11-05 02:02 ..
+-rw-rw---- 1 u0_a192 ext_data_rw   16 2026-11-05 02:02 picker-test.sfc
