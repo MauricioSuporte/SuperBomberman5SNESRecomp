@@ -5,7 +5,7 @@ An unofficial, noncommercial **Super Bomberman 5** port for PC and Android built
 <p align="center">
   <a href="https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/download/v3.0.3/superbomberman5-3.0.3-windows-x64.zip"><img alt="Download for Windows" height="44" src="https://img.shields.io/badge/Download-Windows%20x64-0078D6?style=for-the-badge&logo=windows&logoColor=white"></a>
   &nbsp;
-  <a href="https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/download/v3.0.3/superbomberman5-3.0.3-linux-x86_64.AppImage"><img alt="Download for Linux (experimental)" height="44" src="https://img.shields.io/badge/Download-Linux%20(experimental)-FCC624?style=for-the-badge&logo=linux&logoColor=black"></a>
+  <a href="https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/download/v3.0.3/superbomberman5-3.0.3-linux-x86_64.AppImage"><img alt="Download for Linux" height="44" src="https://img.shields.io/badge/Download-Linux%20x86__64-FCC624?style=for-the-badge&logo=linux&logoColor=black"></a>
   &nbsp;
   <a href="https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/download/v3.0.3/superbomberman5-3.0.3-android.apk"><img alt="Download for Android" height="44" src="https://img.shields.io/badge/Download-Android%20APK-3DDC84?style=for-the-badge&logo=android&logoColor=white"></a>
   <br>
