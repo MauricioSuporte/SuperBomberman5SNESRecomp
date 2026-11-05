@@ -1,5 +1,18 @@
 # Super Bomberman 5: estado do protótipo
 
+## v3.0.4 — 2026-11-05: faster interpreter on Android (PR #7, snesrecomp PR #1)
+
+- Framework pin `6f0fe27` on the fork's `superbomberman5-android`: snesrecomp PR #1 (pre-opcode hook bitmap,
+  plain-cart one-pass reads, direct-page wait-loop shortcut, bridge_test WRAM mirrors) plus upstream `c010ae17`
+  (bucketed quiescent detector), ported onto the shared `interp_quiescent_step` of the wait-loop shortcut.
+  interp816 89/89 and interp_bridge 423/423 (S19 pins the detector's firing step against the full scan), also
+  with `SNESRECOMP_INTERP_PLAIN_FAST_READ=0` and `SNESRECOMP_WAIT_FASTPATH=0` (Linux gcc, this session).
+- Android builds without reverse-debug hooks (`SB5_REVERSE_DEBUG=OFF` by default).
+- Device evidence is the PR authors' (Galaxy A32, Android 13, every mod on, ABAB pairs at thermal 0): title
+  ~27.8 → ~17.3 ms of work per frame, Zone 1-1 ~41 → ~47 frames shown per s; PC interpreter-only route title →
+  Zone 1-1, 768/768 dumps identical with every mod, 576/576 without. The ported `c010ae17` combination in this pin
+  was tested only by the unit suite here, not rebuilt on a device.
+
 ## v3.0.3 — 2026-11-04: Boss Rush title on the optimized renderer (PR #4, measured 2026-10-31)
 
 - With Boss Rush on, the title forced the accurate compositor (the switch the co-op player menu needs, in

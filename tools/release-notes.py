@@ -1275,6 +1275,11 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '3.0.4': (
+'''- **Faster on Android.** The game's interpreter does less work per frame: hooks are looked up through a bitmap, plain cartridge reads take one pass, the game's wait loops run in a tight loop and the idle-wait detector only compares likely matches; the Android build also leaves out debugging hooks it never used. On a Galaxy A32 with every mod on, the title screen goes from about 28 to about 17 ms of work per frame, and Zone 1-1 shows about 47 instead of 41 frames per second. The game behaves the same: memory, video and audio were compared frame by frame on a scripted route.
+- Windows and Linux use the same interpreter changes. Everyone in an online room needs v3.0.4.''',
+'''- **Mais rápido no Android.** O interpretador do jogo trabalha menos por quadro: os hooks são achados por um mapa de bits, as leituras simples do cartucho saem numa passada, os laços de espera do jogo rodam num laço curto e o detector de espera só compara candidatos prováveis; o build Android também deixa de fora hooks de depuração que não usava. Num Galaxy A32 com todos os mods, a tela de título vai de cerca de 28 para cerca de 17 ms de trabalho por quadro, e a Zone 1-1 mostra cerca de 47 quadros por segundo em vez de 41. O jogo se comporta igual: memória, vídeo e áudio foram comparados quadro a quadro numa rota roteirizada.
+- Windows e Linux usam as mesmas mudanças no interpretador. Todos na sala online precisam da v3.0.4.'''),
     '3.0.3': (
 '''- **Faster title screen with Boss Rush on.** With the Boss Rush mod enabled, the title screen no longer switches the whole frame to the slower accurate renderer; the picture is the same, checked pixel by pixel. With every mod on, a Galaxy A32 goes from about 24 to 30 frames per second there, and a Linux PC from 132 to 187.
 - Everyone in an online room needs v3.0.3.''',
