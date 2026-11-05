@@ -1,5 +1,13 @@
 # Super Bomberman 5: estado do protótipo
 
+## v3.0.2 — 2026-11-04: Android Update game no longer quits before installing
+
+- Update game returned 1 from `android_update_action`; recomp-ui then sets `LNG_ACTION_QUIT`, and on Android quitting
+  ends the process, killing the APK download thread in `SB5Activity` before the system installer got the file. The
+  action now returns 0, the launcher stays open with the download progress in its note, and a second tap during a
+  download is ignored. Desktop unchanged. Source change only: not built or run on a device in this session; the
+  fix applies to updates made from v3.0.2 onward (v3.0.0 still carries the old action).
+
 ## v3.0.2 — 2026-10-31: Android renderer repair, v3.0.1 reverted
 
 - Report: with every mod on, a Galaxy S20 FE ran slower after v3.0.1, not faster. v3.0.1 (`a367a20`: 2048-sample
