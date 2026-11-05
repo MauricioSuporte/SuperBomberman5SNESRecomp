@@ -57,6 +57,18 @@ option(SB5_INTERPRETER_ONLY
     "Run the whole game on the interpreter, with no generated code (Android)"
     ${_sb5_interp_default})
 
+# Reverse-debugger hooks. The framework defaults SNESRECOMP_REVERSE_DEBUG to 1,
+# but a build without the trace server links the empty debug_on_* stubs of
+# src/host_contract.c, so on the phone the hooks only cost two register copies
+# per interpreted instruction and a call per WRAM write. Off by default on
+# Android; -DSB5_REVERSE_DEBUG=ON restores the framework default.
+if(ANDROID)
+    option(SB5_REVERSE_DEBUG "Keep the framework's reverse-debug hooks (Android)" OFF)
+    if(NOT SB5_REVERSE_DEBUG)
+        add_compile_definitions(SNESRECOMP_REVERSE_DEBUG=0)
+    endif()
+endif()
+
 # SDLActivity loads libmain.so and calls its SDL_main, so on Android the game
 # is a shared library named "main" instead of an executable.
 if(ANDROID)
