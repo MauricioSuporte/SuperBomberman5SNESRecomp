@@ -16,9 +16,8 @@
   frames (WRAM dumps every 6 frames: positions and `$0E1C-$0E1E` constant), digits 3-2-1 and blinking player numbers
   shown, round started afterwards; shuffle moved P1 from (16,16) to (208,176). Not run: netplay with the mod, three or
   more humans, every arena, Windows.
-- Launcher Mods tab "Enable all" button (recomp-ui `launcher_imgui.cpp`, submodule change): compiles in the Linux
-  build; not clicked in a running launcher here. The submodule commit still has to be pushed to the fork and the
-  gitlink updated.
+- Launcher Mods tab "Enable all" button (recomp-ui `launcher_imgui.cpp`, fork branch `enable-all-mods`, pin updated):
+  compiles in the Linux build; not clicked in a running launcher here. Not yet merged into the fork's `superbomberman5`.
 
 ## v3.0.4 — 2026-11-05: faster interpreter on Android (PR #7, snesrecomp PR #1)
 
