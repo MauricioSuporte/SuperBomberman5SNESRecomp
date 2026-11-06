@@ -65,7 +65,7 @@ int main(void) {
     /* Disabled: nothing happens. */
     rules_screen(5); pad(0, 0, DIR_DOWN); CHECK(!BattleRulesPageOpen() && g_ram[REP] == DIR_DOWN);
     activation(); rules_screen(5); BattleRulesBeforeFrame();
-    CHECK(hook_count == 6);
+    CHECK(hook_count == 7);
     /* Down on the last native row opens page 2 and the cartridge sees no key. */
     redirect_pc = 0; pad(0, 0, DIR_DOWN);
     CHECK(redirect_pc == SFX_CODE && at(SFX_ID)[0] == SFX_MOVE);
@@ -88,7 +88,8 @@ int main(void) {
     /* Countdown: only with the rule on, in Battle. */
     g_ram[0x1031] = 0x74; g_ram[0x1d1a] = 1; g_ram[0x0aee] = 0; g_ram[0x0e1c] = 7; g_ram[0x0e1d] = 5; g_ram[0x0e1e] = 2;
     opt[0] = 1; fire(ROUND_HOOK, &cpu); CHECK(countdown == 0);
-    opt[0] = 0; fire(ROUND_HOOK, &cpu); CHECK(countdown == COUNT_FRAMES);
+    opt[0] = 0; fire(ROUND_HOOK, &cpu); CHECK(countdown == 0); /* no stage init: Hurry Up re-raises READY, no countdown */
+    fire(INIT_HOOK, &cpu); fire(ROUND_HOOK, &cpu); CHECK(countdown == COUNT_FRAMES);
     g_ram[0x0aee] = 1; fire(ROUND_HOOK, &cpu); CHECK(countdown == COUNT_FRAMES); /* live frames do not restart it */
     redirect_pc = 0; fire(ACTOR_HOOK, &cpu); CHECK(redirect_pc == ACTOR_RET);
     pad(0, PAD_A, DIR_UP); CHECK(g_ram[HELD] == 0 && g_ram[DIRS] == 0);

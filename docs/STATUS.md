@@ -1,5 +1,9 @@
 # Super Bomberman 5: estado do protótipo
 
+## v3.1.1 — 2026-11-05: Battle extra rules, Hurry Up countdown fix
+
+- Bug: with Instant Start = No, Hurry Up lowers and re-raises `$0AEE`, which re-triggered the round-start countdown (180 frames of frozen gameplay). The countdown is now armed by the Battle stage init (`$C4:2A3C`, once per round) and consumed by the first `$0AEE` store, so Hurry Up cannot start it. `battle_rules_tests` covers it (7 hooks). Linux/LLE route: forcing the timer into Hurry Up showed `$0AEE` 0→1 with the timer running at once (before the fix it stayed frozen ~180 frames); the round-start countdown still froze the timer. Not exercised on Windows/Android.
+
 ## v3.1.0 — 2026-11-05 (update after maintainer test): Battle extra rules mod
 
 - Maintainer feedback applied: rule 1 is now "Instant Start" (PT "Início imediato", default Yes; the longer "Iniciar imediatamente" was squeezed unreadable in 14 tiles), shuffle swaps humans and COM with no seat keeping its own spawn (derangement), countdown numbers also mark COM bombers, menu move sound on page 2 (trampoline `$C5:7520`). Re-verified on Linux/LLE (2 humans + 3 COM, PT-BR on/off screenshots; all five seats on new spawns); the sound was checked only through native tests (redirect + id), not heard.

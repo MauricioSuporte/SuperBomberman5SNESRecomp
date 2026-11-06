@@ -36,7 +36,7 @@
 #include <string.h>
 
 enum {
-    PAD_HOOK = 0xc00af9, ROUND_HOOK = 0xc50007, ROUND_HOOK2 = 0xc20bc1, ROUND_HOOK3 = 0xc50912, ACTOR_HOOK = 0xc4221d, ACTOR_RET = 0xc4224e, SPAWN_HOOK = 0xc216c7,
+    PAD_HOOK = 0xc00af9, ROUND_HOOK = 0xc50007, ROUND_HOOK2 = 0xc20bc1, ROUND_HOOK3 = 0xc50912, INIT_HOOK = 0xc42a3c, ACTOR_HOOK = 0xc4221d, ACTOR_RET = 0xc4224e, SPAWN_HOOK = 0xc216c7,
     RULES_PC = 0xc69345,
     MODE = 0x1031, ROW = 0x1032, FLAGS = 0x1d1a, PAUSE = 0x1d1d, READY = 0x0aee, TIMER = 0x0e1c,
     PAD_A = 0x80, DIR_RIGHT = 0x01, DIR_LEFT = 0x02, DIR_DOWN = 0x04, DIR_UP = 0x08,
@@ -187,11 +187,18 @@ static void pad_hook(CpuState *cpu, uint32_t pc) {
 
 /* ---- Round start, freeze, spawn shuffle ------------------------------- */
 
+/* Battle stage init ($C4:2A3C) runs once per round. Hurry Up also drops and
+ * re-raises READY, so only a round that went through the init may count down. */
+static bool round_armed;
+static void init_hook(CpuState *cpu, uint32_t pc) { (void)cpu; (void)pc; round_armed = true; }
+
 static void round_hook(CpuState *cpu, uint32_t pc) {
     (void)cpu; (void)pc;
     if (g_ram[READY] == 1) return; /* these stores also run every frame the round is live */
     perm_valid = 0;
-    if (!enabled || opt[0] || !in_battle()) return; /* opt[0] = "start immediately" */
+    const bool armed = round_armed;
+    round_armed = false;
+    if (!armed || !enabled || opt[0] || !in_battle()) return; /* opt[0] = "start immediately" */
     countdown = COUNT_FRAMES;
     memcpy(timer_bytes, &g_ram[TIMER], sizeof(timer_bytes));
 }
@@ -272,6 +279,7 @@ void BattleRulesBeforeFrame(void) {
         interp_bridge_add_pre_opcode_hook(ROUND_HOOK, round_hook);
         interp_bridge_add_pre_opcode_hook(ROUND_HOOK2, round_hook);
         interp_bridge_add_pre_opcode_hook(ROUND_HOOK3, round_hook);
+        interp_bridge_add_pre_opcode_hook(INIT_HOOK, init_hook);
         interp_bridge_add_pre_opcode_hook(ACTOR_HOOK, actor_hook);
         interp_bridge_add_pre_opcode_hook(SPAWN_HOOK, spawn_hook);
     }
@@ -436,7 +444,7 @@ static bool ptbr(void) { return PtbrEnabled(); }
 
 void BattleRulesReset(void) {
     remove_sfx();
-    page = cur = suppress = perm_valid = 0; countdown = 0; rules_latch = false;
+    page = cur = suppress = perm_valid = 0; countdown = 0; round_armed = false; rules_latch = false;
     memset(prev_act, 0, sizeof(prev_act)); memset(prev_dir, 0, sizeof(prev_dir));
     /* Session choices: a reset puts them back to their defaults (start immediately yes, shuffle no). */
     opt[0] = 1; opt[1] = 0;

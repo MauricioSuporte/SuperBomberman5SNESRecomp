@@ -1275,6 +1275,11 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '3.1.1': (
+'''- **Fix: Battle extra rules and Hurry Up.** With Instant Start set to No, the dimmed 3-2-1 countdown with frozen gameplay came back when Hurry Up started. It now runs only at the start of a round.
+- Everyone in an online room needs v3.1.1.''',
+'''- **Correção: Battle extra rules e Hurry Up.** Com Início imediato em Não, a contagem 3-2-1 escurecida com o jogo congelado voltava quando o Hurry Up começava. Agora ela roda só no início da rodada.
+- Todos na sala online precisam da v3.1.1.'''),
     '3.1.0': (
 '''- **New mod: Battle extra rules.** A second page on the Battle rule settings (Down on Bowling Bomber, or Up on CPU Level) with **Instant Start** (default Yes; No starts each round with a dimmed 3-2-1 countdown, input blocked and each bomber's player number blinking at its spawn, COM included) and **Shuffle Spawn** (humans and COM bombers swap start positions, nobody keeps their own). Menu sounds play as on the native page; works with the PT-BR mod on or off. Off by default; enable it on the Mods page.
 - **Launcher: Enable all** button on the Mods page, next to Disable all.
