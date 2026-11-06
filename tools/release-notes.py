@@ -1275,6 +1275,13 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '3.1.2': (
+'''- **Bomber Kings: Super Bomberman 4 animations.** On the champion screen, losers now loop the dejected pose; Draw Game plays the Time Up pose; a bomber cornered by bombs plays the dejected loop (no more flash of the electrocuted sprite before death); and a bomber stunned by a landing bomb turns clockwise in its standing sprites instead of showing a jump sprite. The spin speed is an estimate.
+- New optional diagnostic: set `SB5_BK_POSE_LOG=1` to write `bomber_kings_pose.log`.
+- Everyone in an online room needs v3.1.2.''',
+'''- **Bomber Kings: animações do Super Bomberman 4.** Na tela de campeão, os perdedores repetem a pose de derrota; o Draw Game usa a pose de Time Up; um bomber encurralado por bombas repete a pose de derrota (sem o lampejo do sprite de eletrocutado antes da morte); e um bomber atordoado por uma bomba que cai gira no sentido horário com os sprites parados, em vez do sprite de pulo. A velocidade do giro é estimada.
+- Novo diagnóstico opcional: defina `SB5_BK_POSE_LOG=1` para gerar `bomber_kings_pose.log`.
+- Todos na sala online precisam da v3.1.2.'''),
     '3.1.1': (
 '''- **Fix: Battle extra rules and Hurry Up.** With Instant Start set to No, the dimmed 3-2-1 countdown with frozen gameplay came back when Hurry Up started. It now runs only at the start of a round.
 - Everyone in an online room needs v3.1.1.''',

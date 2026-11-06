@@ -44,6 +44,21 @@ sete colunas, sem ele seis (as células deles ficam vazias e o cursor as pula).
   subir e montado; o Louie mantém as cores originais), comemoração, derrota, atordoado, Time Up, Bad
   Bomber (a prancha do Super Bomberman 4 em cada lado da arena, também ao
   arremessar), placar; retrato na seleção e rosto no HUD.
+- **Animações de fim de round (as do Super Bomberman 4):** ao vencer um round o
+  personagem alterna os dois quadros de comemoração do SB4 (16 e 17 quadros nos
+  dois primeiros passos, depois 11 e 13); no **Time Over** todos os jogadores
+  vivos repetem a pose abatida do SB4 (52, 53, 52, 54, 15 quadros cada). Na
+  **tela de campeão** (ao vencer ou perder o número de rounds das regras) o
+  campeão faz a pose do troféu do SB4 (os dois quadros do campeão de cada
+  personagem, mesma cadência da comemoração) e os perdedores repetem a pose
+  abatida do Time Over, sem o quadro parado. Cada sequência começa do primeiro
+  passo quando a pose começa. Um jogador vivo **encurralado** (os quatro lados
+  bloqueados por blocos ou bombas, ao menos uma bomba) também faz a pose abatida, e continua nela quando o jogo troca o
+  jogador encurralado para a animação de choque. Na tela de **empate** (Draw Game, modo `$0A`: rodada
+  sem vencedor, como em "Empatar rodada" do menu de pause) todos repetem a pose abatida do Time Over.
+  Atordoado por uma bomba que cai nele, o personagem gira no sentido horário
+  (cima, direita, baixo, esquerda) com os sprites parados do SB4, a partir da
+  direção em que estava virado (tempo por direção estimado, não medido).
 - **Cores na fase:** cada jogador usa a sua própria paleta, trocada só nas
   linhas da tela onde ele está desenhado; o Louie, os ovos e o rosto no HUD do
   mesmo jogador continuam com as cores normais. Quando outro sprite da mesma
@@ -102,8 +117,9 @@ personagens extras do Super Bomberman 5, que também traz a barreira do Terrorin
 
 Limitações: Jogadores da CPU não usam habilidades. A Honey e o Kotetsu não
 têm som de habilidade; a velocidade do projétil da Honey (4 px por quadro) foi
-escolhida, porque a IA da chefe não disparou nas capturas. A tela de campeão do Battle
-continua com o Bomberman. Os ataques da Honey e do Kotetsu seguem a descrição
+escolhida, porque a IA da chefe não disparou nas capturas. As animações da tela de campeão e do Time Over
+foram medidas no SB4 num emulador e testadas nativamente, mas ainda não foram
+validadas no recomp em execução. Os ataques da Honey e do Kotetsu seguem a descrição
 da luta (a IA dos chefes não foi reproduzida nas capturas). O mod vem desativado
 e exige host v0.12.0 ou superior. Pacote de dados:
 
@@ -147,6 +163,17 @@ the cursor skips them). Honey's and Kotetsu's abilities below need that mod.
   Bomberman 4's mount poses, jumping on and riding; Louie keeps its colors), cheering, defeat, stun,
   Time Up, Bad Bomber (Super Bomberman 4's board on each side of the arena,
   throwing too), score board; picker portrait and HUD face.
+- **End-of-round animations (Super Bomberman 4's own):** winning a round
+  alternates SB4's two cheer frames (16 and 17 frames for the first two steps,
+  then 11 and 13); on **Time Up** every living player repeats SB4's dejected
+  pose (52, 53, 52, 54, 15 frames each). On the **champion screen** (after
+  winning or losing the number of rounds set in the rules) the champion plays
+  SB4's trophy pose (each character's two champion frames, same cadence as the
+  cheer) and the losers repeat the Time Up dejected pose, no still frame. Each
+  sequence starts at its first step when the pose begins. A living player
+  **cornered** (all four sides blocked by blocks or bombs, at least one a bomb)
+  also plays the dejected pose, and keeps it when the game switches the
+  cornered player to the stun animation. On the **draw** screen (Draw Game, mode `$0A`: a round with no winner, such as the pause menu's "Empatar rodada") everyone loops the Time Up dejected pose. Stunned by a landing bomb, the character turns clockwise (up, right, down, left) with SB4's standing sprites, starting from its facing direction (time per direction estimated, not measured).
 - **Colors in stages:** each player's own palette is recolored only on the
   screen lines where the character is drawn, so that player's Louie, eggs and
   HUD face keep their colors. When another sprite of that palette shares those
@@ -210,8 +237,9 @@ attacks in their Normal Game boss fight:
 
 Limits: CPU players do not use abilities. Honey and Kotetsu have no ability
 sound; Honey's bullet speed (4 px per frame) was chosen, as the boss AI did not
-fire in captures. The Battle champion screen still
-shows Bomberman. Honey's and Kotetsu's attacks follow the boss fight as
+fire in captures. The champion screen and Time Up animations
+were measured in SB4 in an emulator and covered by native tests, but not yet
+validated in the running recomp. Honey's and Kotetsu's attacks follow the boss fight as
 described (the bosses' AI was not reproduced in captures). Disabled by default;
 requires host v0.12.0 or newer (first included in the v0.12.0 setup packs).
 
@@ -238,6 +266,15 @@ requires host v0.12.0 or newer (first included in the v0.12.0 setup packs).
   apart (file offsets Bomberman `$E000`, Hammer `$E2A0`, Jet `$E1E0`, Lady
   `$1602BA`, Bazooka `$1601FA`, Great `$E360`). Verified with a headless
   emulator: DMA logs of the cartridge's battle uploads and five-player CGRAM.
+- SB4 end-of-round animations (measured by logging the cartridge's VRAM DMA
+  uploads in a headless emulator, all six characters): round-win cheer = frames
+  45/46 (first two steps 16 and 17 frames, then 11 and 13); Time Up and champion
+  losers = 52, 53, 52, 54 at about 15 frames each; champion winner = bank `$DE`
+  sheets, frames +`$00`/+`$80` alternating like the cheer (`$A000` Bomberman,
+  `$C000` Hammer, `$B800` Jet, `$B000` Lady, `$A800` Bazooka, `$C800` Great;
+  `Sb4ChampionPc`). SB5 side: the round winner and the champion both use anim
+  `$20` (the champion screen is mode `$1031` = 5), champion losers `$21`, Time
+  Up `$1F`. `pose_age()` restarts each sequence when the pose group changes.
 - Super Bomberman 4 ability input: hold B, then press a direction (`$C2:44FC`);
   debuff counter `$E2,X` is 160 on the trigger frame and falls 0.25 per frame;
   speed halves.

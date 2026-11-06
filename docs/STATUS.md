@@ -1,5 +1,14 @@
 # Super Bomberman 5: estado do protótipo
 
+## v3.1.2 — 2026-11-05: Bomber Kings end-of-round, cornered and stun animations
+
+- Bomber Kings (SB4 sprites over SB5's bomber object): round-win cheer, Time Up pose and champion screen (trophy sheet, losers dejected 52,53,52,54) were confirmed by the maintainer in the running recomp.
+- Draw Game screen: measured with `SB5_BK_POSE_LOG=1` on a forced "Empatar rodada": mode `$0A`, all seats anim `$1F` then `$15`. The rule is `mode == $0A`; all Bomber Kings loop the Time Up pose.
+- Cornered by bombs (all four neighbouring cells hard/soft/bomb in `$1052`, at least one bomb): dejected loop (`trapped_by_bomb()`), also while SB5 switches the bomber to stun anim `$21` and for 60 frames after the bomb vanishes (before death anim `$16`), so frame 55 no longer flashes.
+- Stun by a landing bomb (anim `$21` with `$1782` bit 1 set, seen in the maintainer's log): the standing sprites turn clockwise (up, right, down, left) from the last facing direction, 6 frames each (`SPIN_FRAMES`, an estimate: SB4's real timing was not measured). Hammer/Lady stun uses the same spin (distinguishable via `$15BA` bit 5 if needed).
+- Diagnostic: opt-in `SB5_BK_POSE_LOG=1` writes `bomber_kings_pose.log` in the working directory (mode, per-seat anim, SB4 frame, cell, `$1782/$15A2/$15BA`).
+- Evidence: native tests (`extra_characters_tests`, `sb4_rom_tests`) pass; the maintainer reported the cornered, Draw and stun animations looking right on Windows after the log-driven fixes. Not exercised on Linux/Android; spin speed unmeasured.
+
 ## v3.1.1 — 2026-11-05: Battle extra rules, Hurry Up countdown fix
 
 - Bug: with Instant Start = No, Hurry Up lowers and re-raises `$0AEE`, which re-triggered the round-start countdown (180 frames of frozen gameplay). The countdown is now armed by the Battle stage init (`$C4:2A3C`, once per round) and consumed by the first `$0AEE` store, so Hurry Up cannot start it. `battle_rules_tests` covers it (7 hooks). Linux/LLE route: forcing the timer into Hurry Up showed `$0AEE` 0→1 with the timer running at once (before the fix it stayed frozen ~180 frames); the round-start countdown still froze the timer. Not exercised on Windows/Android.
