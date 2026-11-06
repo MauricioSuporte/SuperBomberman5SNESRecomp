@@ -316,7 +316,13 @@ static unsigned champion_frame(unsigned skin) {
 /* Palette keys: skin*8 + color (Honey/Kotetsu have one, Super Bomberman 4
  * characters five). */
 static bool sb4_skin(int skin) { return skin>=2 && skin<SKIN_TERRORIN; }
+/* BLACK_KEY marks a palette key whose colors are all black: the cartridge's
+ * curse (skull) blanks the seat's own OBJ palette (colors 1-7 to 0) for four
+ * frames out of eight, which a skin drawn in a palette of its own would never
+ * show. */
+enum { BLACK_KEY = 0x1000 };
 static unsigned palette_color(unsigned key,unsigned index) {
+    if(key&BLACK_KEY) return 0;
     unsigned skin=key/8;
     if(skin<2) return rw(kPalette[skin]+index*2)&0x7fff;
     if(skin==SKIN_TERRORIN) return rw(TERRORIN_PALETTE+index*2)&0x7fff;
@@ -961,16 +967,17 @@ static bool palette_unused(const Ppu *ppu,unsigned palette) {
  * shared with its mount (Louie) and the eggs it hatches, so a palette no
  * visible sprite uses is taken first; only when none is free is `fallback`
  * recolored. */
-static int key_palette[SKINS*8];
+static int key_palette[SKINS*16];
 static bool palette_given[8];
+static unsigned palette_index(unsigned key) { return (key&BLACK_KEY)?SKINS*8+(key&~(unsigned)BLACK_KEY):key; }
 static int choose_palette(Ppu *ppu,unsigned key,int fallback) {
-    if(key_palette[key]>=0) return key_palette[key];
+    if(key_palette[palette_index(key)]>=0) return key_palette[palette_index(key)];
     int chosen=-1;
     for(int p=7;p>=0 && chosen<0;--p) if(!palette_given[p] && palette_unused(ppu,(unsigned)p)) chosen=p;
     if(chosen<0 && fallback>=0 && fallback<8 && !palette_given[fallback]) chosen=fallback;
     if(chosen<0) return -1;
     load_palette(ppu,(unsigned)chosen,key);palette_given[chosen]=true;
-    return key_palette[key]=chosen;
+    return key_palette[palette_index(key)]=chosen;
 }
 /* Bounding box of a native frame's pieces relative to the object. */
 static void frame_box(uint32_t data,int *left,int *right,int *bottom) {
@@ -1067,6 +1074,14 @@ typedef struct { int line;unsigned palette,key; } LineLoad;
 static LineLoad line_loads[64];
 static unsigned line_load_count;
 static uint16_t frame_obj_colors[128];
+/* True while the cartridge has blanked seat palette `slot` this frame. The
+ * bomber's own colors are 1-7: the curse zeroes those and leaves 8-15 alone
+ * (they belong to whatever else shares the slot). */
+static bool slot_blanked(unsigned slot) {
+    if(slot>=8) return false;
+    for(unsigned c=1;c<8;++c) if(frame_obj_colors[slot*16+c]) return false;
+    return true;
+}
 static void add_line_load(int line,unsigned palette,unsigned key) {
     if(line_load_count<sizeof(line_loads)/sizeof(*line_loads))
         line_loads[line_load_count++]=(LineLoad){line,palette,key};
@@ -1371,7 +1386,8 @@ static void draw_players(Ppu *ppu,bool *taken) {
         int y=g_ram[0x5bf+object]+oy-ORIGIN_Y+lift;
         int top=screen_line(y+canvas_top()),low=top+(canvas_bottom()-canvas_top());
         /* His flying head leaves the body's lines: one palette for the frame. */
-        int palette=head_dx>=0 || !count?choose_palette(ppu,key,(int)slot):figure_palette(ppu,key,slot,mine,count,top,low);
+        unsigned pkey=slot_blanked(slot)?(key|BLACK_KEY):key;
+        int palette=head_dx>=0 || !count?choose_palette(ppu,pkey,(int)slot):figure_palette(ppu,pkey,slot,mine,count,top,low);
         if(palette<0) continue;
         int x=g_ram[0x55f+object]+ox-ORIGIN_X;
         emit(ppu,x,y,(unsigned)palette,priority,mine,count,taken);
@@ -1679,7 +1695,7 @@ void ExtraCharactersObserve(const Ppu *view,unsigned line,void *context) {
     saved_count=0;borrowed_count=0;line_load_count=0;late_count=0;late_line=-1;memcpy(saved_high,ppu->highOam,sizeof(saved_high));
     memcpy(frame_obj_colors,&ppu->cgram[0x80],sizeof(frame_obj_colors));
     bool taken[128]={false};
-    for(unsigned k=0;k<SKINS*8;++k) key_palette[k]=-1;
+    for(unsigned k=0;k<SKINS*16;++k) key_palette[k]=-1;
     memset(palette_given,0,sizeof(palette_given));
     if(extras && picker()) { draw_portraits(ppu);draw_grid(ppu,taken);apply_line_loads(ppu,1); }
     else if(stage()) {

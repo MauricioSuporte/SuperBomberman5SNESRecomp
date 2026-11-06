@@ -71,15 +71,19 @@ int main(void) {
     CHECK(redirect_pc == SFX_CODE && at(SFX_ID)[0] == SFX_MOVE);
     CHECK(page == 1 && cur == 0 && g_ram[REP] == 0 && g_ram[FRESH_DIRS] == 0);
     release();
-    CHECK(opt[0] == 1 && opt[1] == 0); /* defaults: start immediately, no shuffle */
+    CHECK(opt[0] == 1 && opt[1] == 0 && opt[2] == 0 && !BattleRulesAbilitiesOff()); /* defaults: start immediately, no shuffle, abilities on */
     redirect_pc = 0; pad(0, 0, DIR_RIGHT); CHECK(opt[0] == 0 && opt[1] == 0 && redirect_pc == SFX_CODE); release();
     pad(0, 0, DIR_DOWN); CHECK(cur == 1); release();
     pad(0, PAD_A, 0); CHECK(opt[1] == 1 && !(g_ram[HELD] & PAD_A)); release();
-    /* Down on the second rule leaves; entered from row 5 the cartridge gets Down to wrap to row 0. */
+    pad(0, 0, DIR_DOWN); CHECK(cur == 2); release();
+    pad(0, 0, DIR_LEFT); CHECK(opt[2] == 1 && BattleRulesAbilitiesOff()); release();
+    pad(0, PAD_A, 0); CHECK(opt[2] == 0 && !BattleRulesAbilitiesOff()); release();
+    /* Down on the last rule leaves; entered from row 5 the cartridge gets Down to wrap to row 0. */
     pad(0, 0, DIR_DOWN); CHECK(page == 0 && g_ram[REP] == DIR_DOWN && g_ram[FRESH_DIRS] == DIR_DOWN);
     release();
     /* Up on row 0 enters at the last rule; up from the first rule gives the cartridge Up. */
-    rules_screen(0); pad(0, 0, DIR_UP); CHECK(page == 1 && cur == 1); release();
+    rules_screen(0); pad(0, 0, DIR_UP); CHECK(page == 1 && cur == 2); release();
+    pad(0, 0, DIR_UP); CHECK(cur == 1); release();
     pad(0, 0, DIR_UP); CHECK(cur == 0); release();
     pad(0, 0, DIR_UP); CHECK(page == 0 && g_ram[REP] == DIR_UP && g_ram[FRESH_DIRS] == DIR_UP); /* row 0 + Up wraps natively to Bowling */
     release();
@@ -119,15 +123,15 @@ int main(void) {
         CHECK(perm[0] != 0 && perm[1] != 1 && perm[2] != 2); /* nobody keeps its own spawn */
     }
     /* Save state. */
-    opt[0] = 0; opt[1] = 1; page = 1; cur = 1; countdown = 77; rng = 0x12345; frames = 9;
+    opt[0] = 0; opt[1] = 1; opt[2] = 1; page = 1; cur = 2; countdown = 77; rng = 0x12345; frames = 9;
     Stream out = {{transfer}, {0}, 0, 0, false};
     failed = false; BattleRulesSave(&out.base); CHECK(!failed);
     Stream in = out; in.at = 0; in.reading = true;
-    opt[0] = 1; opt[1] = 0; page = cur = 0; countdown = 0; rng = 1; frames = 0;
-    BattleRulesLoad(&in.base, 1); CHECK(!failed && !opt[0] && opt[1] && page == 1 && cur == 1 && countdown == 77 && rng == 0x12345 && frames == 9);
+    opt[0] = 1; opt[1] = 0; opt[2] = 0; page = cur = 0; countdown = 0; rng = 1; frames = 0;
+    BattleRulesLoad(&in.base, 1); CHECK(!failed && !opt[0] && opt[1] && opt[2] && page == 1 && cur == 2 && countdown == 77 && rng == 0x12345 && frames == 9);
     Stream bad = out; bad.at = 0; bad.reading = true; bad.bytes[4] = 5; /* invalid option */
     BattleRulesLoad(&bad.base, 1); CHECK(failed);
-    reset_callback(); CHECK(opt[0] == 1 && opt[1] == 0 && countdown == 0);
+    reset_callback(); CHECK(opt[0] == 1 && opt[1] == 0 && opt[2] == 0 && countdown == 0);
     puts("battle_rules_tests ok");
     return 0;
 }

@@ -1275,6 +1275,15 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '3.1.3': (
+'''- **Fix: skull on the Super Bomberman 4 characters.** Bomber Kings, Honey, Kotetsu and Terrorin now flash black while cursed in Battle, like the native characters.
+- **Fix: launcher at a Windows display scale above 100%** (for example 150%) no longer breaks the layout.
+- **Battle extra rules: Disable Skills** (default No) on the second page. With Yes, the B + direction abilities of Honey, Kotetsu, Terrorin and the Bomber Kings are not used.
+- Everyone in an online room needs v3.1.3.''',
+'''- **Correção: skull nos personagens do Super Bomberman 4.** Bomber Kings, Honey, Kotetsu e Terrorin agora piscam em preto quando amaldiçoados no Battle, como os personagens nativos.
+- **Correção: launcher com escala de tela do Windows acima de 100%** (por exemplo 150%) não quebra mais o layout.
+- **Battle extra rules: Sem habilidades** (padrão Não) na segunda página. Com Sim, as habilidades de B + direção de Honey, Kotetsu, Terrorin e dos Bomber Kings não são usadas.
+- Todos na sala online precisam da v3.1.3.'''),
     '3.1.2': (
 '''- **Bomber Kings: Super Bomberman 4 animations.** On the champion screen, losers now loop the dejected pose; Draw Game plays the Time Up pose; a bomber cornered by bombs plays the dejected loop (no more flash of the electrocuted sprite before death); and a bomber stunned by a landing bomb turns clockwise in its standing sprites instead of showing a jump sprite. The spin speed is an estimate.
 - New optional diagnostic: set `SB5_BK_POSE_LOG=1` to write `bomber_kings_pose.log`.

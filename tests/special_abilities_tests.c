@@ -15,6 +15,8 @@ unsigned ExtraCharacterSeatChoice(unsigned seat) { return seat<5?choices[seat]:0
 unsigned ExtraCharacterSeatColor(unsigned seat) { (void)seat;return 0; }
 bool ExtraCharactersInstalled(void) { return installed; }
 bool Sb5ExtrasEnabled(void) { return true; }
+static bool abilities_off;
+bool BattleRulesAbilitiesOff(void) { return abilities_off; }
 static unsigned stage_sounds;static uint32_t stage_sound;
 void Sb5StageSoundPlay(unsigned set,uint16_t effect) { ++stage_sounds;stage_sound=set<<16|effect; }
 void Sb5StageSoundPrepare(unsigned set,uint16_t effect) { (void)set;(void)effect; }
@@ -87,6 +89,10 @@ int main(void) {
     /* Honey (seat 0), Kotetsu (1), SB4 Bomberman (2, no ability), Bazooka (3), Great (4). */
     choices[0]=11;choices[1]=12;choices[2]=13;choices[3]=17;choices[4]=18;
     arena();
+    /* Battle rules "disable skills": B + direction starts nothing. */
+    abilities_off=true;frame(0,0x08,0x01);
+    CHECK(seat_state(0)[S_KIND]==AB_NONE);
+    abilities_off=false;arena();
     /* B + direction in the same frame: ability, B consumed (no detonation). */
     frame(0,0x08,0x01);
     CHECK(seat_state(0)[S_KIND]==AB_SHOT && seat_state(0)[S_DIR]==0 && !(g_ram[0x36]&0x08));

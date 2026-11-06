@@ -280,6 +280,9 @@ int main(void) {
     Ppu *ppu=calloc(1,sizeof(Ppu));CHECK(ppu);ppu->obsel=3;
     Snapshot *before=malloc(sizeof(Snapshot));CHECK(before);
     for(unsigned i=0;i<0x8000;++i) ppu->vram[i]=(uint16)(i*7);
+    /* Native OBJ palettes carry colors (a slot of zeros is the cartridge's
+     * curse flash, tested below). */
+    for(unsigned p=0;p<8;++p) for(unsigned c=1;c<16;++c) ppu->cgram[0x80+p*16+c]=(uint16)(0x0421*(p+1)+c);
     /* Stage: seat 0 is Honey (object 8, palette slot 1) walking right. Its
      * native frame ($C4:F000) has three pieces matching sprites 10-12. */
     memset(g_ram,0,sizeof(g_ram));g_ram[0x1031]=0x0d;g_ram[0x1f828]=11;
@@ -315,6 +318,18 @@ int main(void) {
     CHECK(visible(ppu,13) && (ppu->oam[13*2+1]&0x1ff)==0x40);
     CHECK(visible(ppu,14) && ppu->oam[14*2]==before->oam[14*2] && ppu->oam[14*2+1]==before->oam[14*2+1]);
     for(unsigned c=1;c<16;++c) CHECK(ppu->cgram[0x80+7*16+c]==palette_color(0,c) && ppu->cgram[0x80+16+c]==before->cgram[0x80+16+c]);
+    ExtraCharactersObserve(ppu,224,NULL);CHECK(!drawn && same(before,ppu));
+    /* Skull: the cartridge blanks the seat's own palette (slot 1) for a few
+     * frames; the skin's palette goes black with it, then returns. */
+    for(unsigned c=1;c<8;++c) ppu->cgram[0x80+16+c]=0; /* colors 8-15 stay, as in the game */
+    snap(before,ppu);
+    ExtraCharactersObserve(ppu,1,NULL);CHECK(drawn);
+    for(unsigned c=1;c<16;++c) CHECK(ppu->cgram[0x80+7*16+c]==0);
+    ExtraCharactersObserve(ppu,224,NULL);CHECK(!drawn && same(before,ppu));
+    for(unsigned c=1;c<16;++c) ppu->cgram[0x80+16+c]=(uint16)(0x0421*2+c);
+    snap(before,ppu);
+    ExtraCharactersObserve(ppu,1,NULL);
+    for(unsigned c=1;c<16;++c) CHECK(ppu->cgram[0x80+7*16+c]==palette_color(0,c));
     ExtraCharactersObserve(ppu,224,NULL);CHECK(!drawn && same(before,ppu));
     /* Every palette in use: slot 1 itself is recolored (fallback). */
     for(unsigned p=0;p<8;++p) if(p!=1) sprite(ppu,20+p,8,8+p*16,0x60,p,false);

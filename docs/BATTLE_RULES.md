@@ -11,11 +11,13 @@ Package `superbomberman5.battle-rules` (feature `battle_rules`, default disabled
   run during the countdown.
 - **Shuffle Spawn** (default No) — all bombers, humans and COM, swap start positions among the arena's spawn points,
   drawn again every round; nobody keeps its own spawn.
+- **Disable Skills** (default No) — with **Yes**, the B + direction abilities of Honey, Kotetsu, Terrorin and the
+  Super Bomberman 4 Bomber Kings are not used during the match (B only drops a bomb). Normal characters are unaffected.
 
 Open the page with **Down on Bowling Bomber** or **Up on CPU Level**; a blinking arrow under the list says there is
-more. Left/Right/A toggles a rule, Up/Down moves, and moving past either rule returns to the original rows. The page
+more. Left/Right/A toggles a rule, Up/Down moves, and moving past either end returns to the original rows. The page
 reuses the same background and the same hand cursor, and its labels use the native font (translated with PT-BR on:
-"Início imediato", "Embaralhar", Sim/Não). Moving and toggling play the native menu move sound.
+"Início imediato", "Embaralhar", "Sem habilidades", Sim/Não). Moving and toggling play the native menu move sound.
 
 How it works (JPN image, `docs/STATUS.md` has the evidence): the pad reader tail `$C0:0AF9` drives the page and clears
 the arrays the menu scripts read (held, new, and the auto-repeat array `D+$40`); leaving the page hands one native
@@ -40,8 +42,10 @@ tela de **regras** do Battle com duas regras, esquecidas num reset (voltam ao pa
   durante a contagem.
 - **Embaralhar** (padrão Não) — todos os bombers, humanos e COM, trocam de posição entre os pontos de início da arena,
   sorteados de novo a cada rodada; ninguém fica no próprio ponto.
+- **Sem habilidades** (padrão Não) — com **Sim**, as habilidades de B + direção de Honey, Kotetsu, Terrorin e dos Bomber
+  Kings do Super Bomberman 4 não são usadas na partida (o B só solta bomba). Personagens normais não mudam.
 
 Abra a página com **Baixo em Boliche** ou **Cima em Nível CPU**; uma seta piscando indica que há mais opções.
-Esquerda/Direita/A alterna a regra, Cima/Baixo move, e passar de qualquer uma das duas volta às linhas originais. A
+Esquerda/Direita/A alterna a regra, Cima/Baixo move, e passar de qualquer extremidade volta às linhas originais. A
 página usa o mesmo fundo e a mesma mãozinha, e os textos usam a fonte nativa (traduzidos com o mod de tradução).
 Detalhes técnicos e limites: veja a seção em inglês e `docs/STATUS.md`.

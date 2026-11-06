@@ -1,5 +1,11 @@
 # Super Bomberman 5: estado do protótipo
 
+## v3.1.3 — 2026-11-06: Bomber Kings skull flash, launcher scale, Disable Skills rule
+
+- Skull (curse) on the SB4 characters (Bomber Kings, Honey, Kotetsu, Terrorin): the cartridge blanks OBJ palette colors 1-7 of the seat's slot four frames out of eight; the skins, drawn in a palette of their own, now follow it (`slot_blanked()`, `BLACK_KEY`). Measured on the recompiled Linux host: drawn black frames match the CGRAM-zero frames exactly for all nine extra characters. Windows confirmed by the maintainer. Native test `extra_characters_tests` covers it (fails without the fix).
+- Launcher at Windows display scale above 100%: the SDL_Renderer backend scales only clip rects by `FramebufferScale`, so the render scale now follows the draw data density (recomp-ui commit "Fix launcher scale on high-DPI SDL_Renderer displays"). Windows confirmed by the maintainer at 150%; Android not exercised.
+- Battle extra rules page 2 gained **Disable Skills** (default No): `BattleRulesAbilitiesOff()` makes `ability_of()` return none, so no B + direction ability starts. Native tests `battle_rules_tests` and `special_abilities_tests` pass; the maintainer saw it work on Windows. Not exercised on Linux/Android/netplay.
+
 ## v3.1.2 — 2026-11-05: Bomber Kings end-of-round, cornered and stun animations
 
 - Bomber Kings (SB4 sprites over SB5's bomber object): round-win cheer, Time Up pose and champion screen (trophy sheet, losers dejected 52,53,52,54) were confirmed by the maintainer in the running recomp.
