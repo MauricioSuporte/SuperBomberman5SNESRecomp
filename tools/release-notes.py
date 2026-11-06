@@ -1275,6 +1275,13 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '3.1.0': (
+'''- **New mod: Battle extra rules.** A second page on the Battle rule settings (Down on Bowling Bomber, or Up on CPU Level) with **Instant Start** (default Yes; No starts each round with a dimmed 3-2-1 countdown, input blocked and each bomber's player number blinking at its spawn, COM included) and **Shuffle Spawn** (humans and COM bombers swap start positions, nobody keeps their own). Menu sounds play as on the native page; works with the PT-BR mod on or off. Off by default; enable it on the Mods page.
+- **Launcher: Enable all** button on the Mods page, next to Disable all.
+- Everyone in an online room needs v3.1.0.''',
+'''- **Novo mod: Battle extra rules.** Uma segunda página nas regras do Battle (Down em Bowling Bomber, ou Up em CPU Level) com **Início imediato** (padrão Sim; Não começa cada rodada com uma contagem 3-2-1 escurecida, controles bloqueados e o número de cada bomber piscando no ponto de partida, COM incluídos) e **Embaralhar** (humanos e COM trocam as posições iniciais, ninguém fica na própria). Os sons de menu tocam como na página nativa; funciona com o mod PT-BR ligado ou desligado. Desligado por padrão; ligue na página Mods.
+- **Launcher: botão Enable all** na página Mods, ao lado de Disable all.
+- Todos na sala online precisam da v3.1.0.'''),
     '3.0.4': (
 '''- **Faster on Android.** The game's interpreter does less work per frame: hooks are looked up through a bitmap, plain cartridge reads take one pass, the game's wait loops run in a tight loop and the idle-wait detector only compares likely matches; the Android build also leaves out debugging hooks it never used. On a Galaxy A32 with every mod on, the title screen goes from about 28 to about 17 ms of work per frame, and Zone 1-1 shows about 47 instead of 41 frames per second. The game behaves the same: memory, video and audio were compared frame by frame on a scripted route.
 - Windows and Linux use the same interpreter changes. Everyone in an online room needs v3.0.4.''',
