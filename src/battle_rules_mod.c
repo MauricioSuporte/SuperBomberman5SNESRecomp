@@ -27,7 +27,6 @@
 #include "common_rtl.h"
 #include "mod_runtime.h"
 #include "menu_font.h"
-#include "name_tags.h"
 #include "ptbr_mod.h"
 #include "snes/interp_bridge.h"
 #include "common_cpu_infra.h"
@@ -47,7 +46,7 @@ enum {
 
 static bool enabled, hooks_installed;
 /* Simulation state (saved with the machine). */
-static uint8_t opt[2], page, cur, suppress, perm[SEATS], perm_valid;
+static uint8_t opt[2] = {1, 0}, page, cur, suppress, perm[SEATS], perm_valid;
 static uint16_t countdown;
 static uint8_t timer_bytes[3];
 static uint32_t rng = 0x9e3779b9u, frames;
@@ -91,9 +90,38 @@ static void clear_pads(unsigned held, unsigned dirs, unsigned fresh, unsigned fr
     }
 }
 
-static void pad_hook(CpuState *cpu, uint32_t pc) {
-    (void)pc;
-    if (!enabled) return;
+/* Menu sounds like the cartridge's rules screen: native group-2 command (move = 1) through $C0:0CED from a
+ * small trampoline in $FF padding at $C5:7520 (the variants mod keeps $C5:7500), entered from the pad
+ * reader's tail; the id byte is written right before the redirect so the sound is part of the emulated
+ * frame (save states and netplay replay it). */
+enum { SFX_CODE = 0xc57520, SFX_ID = SFX_CODE + 7, SFX_MOVE = 1 };
+static const uint8_t kSfxCode[24] = {0x08, 0xc2, 0x30, 0x48, 0xda, 0x5a, 0xa9, 0x00, 0x02, 0xe2, 0x30,
+                                     0x22, 0xed, 0x0c, 0xc0, 0xc2, 0x30, 0x7a, 0xfa, 0x68, 0x28, 0xfa, 0x7a, 0x6b};
+static uint8_t sfx_original[sizeof(kSfxCode)];
+static bool sfx_installed;
+static void install_sfx(void) {
+    if (sfx_installed) return;
+    uint8_t *code = SnesRomPtr(SFX_CODE);
+    const uint8_t *tail = SnesRomPtr(PAD_HOOK);
+    if (!code || !tail || tail[0] != 0xfa || tail[1] != 0x7a || tail[2] != 0x6b) return; /* PLX PLY RTL */
+    for (unsigned i = 0; i < sizeof(kSfxCode); ++i) if (code[i] != 0xff) return;
+    memcpy(sfx_original, code, sizeof(sfx_original));
+    memcpy(code, kSfxCode, sizeof(kSfxCode));
+    sfx_installed = true;
+}
+static void remove_sfx(void) {
+    if (!sfx_installed) return;
+    memcpy(SnesRomPtr(SFX_CODE), sfx_original, sizeof(sfx_original));
+    sfx_installed = false;
+}
+static void play_sfx(uint8_t id) {
+    if (!sfx_installed || !id) return;
+    SnesRomPtr(SFX_ID)[0] = id;
+    interp_bridge_pre_opcode_redirect(SFX_CODE);
+}
+
+static uint8_t pad_logic(CpuState *cpu) {
+    if (!enabled) return 0;
     const unsigned held = cpu->D + 0x2c, dirs = cpu->D + 0x31, fresh = cpu->D + 0x36, fresh_dirs = cpu->D + 0x3b;
     uint8_t new_act[SEATS], new_dir[SEATS];
     bool any_held = false;
@@ -104,12 +132,12 @@ static void pad_hook(CpuState *cpu, uint32_t pc) {
         prev_act[s] = act; prev_dir[s] = dir;
         if (act | dir) any_held = true;
     }
-    if (countdown) { clear_pads(held, dirs, fresh, fresh_dirs); return; }
-    if (!on_rules()) { page = 0; suppress = 0; return; }
+    if (countdown) { clear_pads(held, dirs, fresh, fresh_dirs); return 0; }
+    if (!on_rules()) { page = 0; suppress = 0; return 0; }
     if (suppress) {
-        if (any_held) { clear_pads(held, dirs, fresh, fresh_dirs); return; }
+        if (any_held) { clear_pads(held, dirs, fresh, fresh_dirs); return 0; }
         suppress = 0;
-        return;
+        return 0;
     }
     const unsigned row = g_ram[ROW];
     if (!page) {
@@ -118,27 +146,27 @@ static void pad_hook(CpuState *cpu, uint32_t pc) {
             if (!down && !up) continue;
             page = 1; cur = down ? 0 : 1; suppress = 1;
             clear_pads(held, dirs, fresh, fresh_dirs);
-            return;
+            return SFX_MOVE;
         }
-        return;
+        return 0;
     }
     /* Page 2: directions and A belong to the page, B and Start still reach the cartridge. */
     bool leave = false;
-    uint8_t inject = 0;
+    uint8_t inject = 0, sound = 0;
     unsigned who = 0;
     for (unsigned s = 0; s < SEATS && !leave; ++s) {
         uint8_t d = new_dir[s];
         if (d & DIR_DOWN) {
-            if (cur == 0) cur = 1;
+            if (cur == 0) { cur = 1; sound = SFX_MOVE; }
             else { leave = true; who = s; if (row == LAST_ROW) inject = DIR_DOWN; }
             break;
         }
         if (d & DIR_UP) {
-            if (cur == 1) cur = 0;
+            if (cur == 1) { cur = 0; sound = SFX_MOVE; }
             else { leave = true; who = s; if (row == 0) inject = DIR_UP; }
             break;
         }
-        if ((d & (DIR_LEFT | DIR_RIGHT)) || (new_act[s] & PAD_A)) { opt[cur] ^= 1; break; }
+        if ((d & (DIR_LEFT | DIR_RIGHT)) || (new_act[s] & PAD_A)) { opt[cur] ^= 1; sound = SFX_MOVE; break; }
     }
     for (unsigned s = 0; s < SEATS; ++s) {
         g_ram[(dirs + s) & 0xffff] = 0; g_ram[(fresh_dirs + s) & 0xffff] = 0; g_ram[(fresh_dirs + 5 + s) & 0xffff] = 0;
@@ -146,8 +174,15 @@ static void pad_hook(CpuState *cpu, uint32_t pc) {
     }
     if (leave) {
         page = 0; suppress = 1;
+        sound = inject ? 0 : SFX_MOVE; /* with an injected key the cartridge plays its own */
         if (inject) { g_ram[(dirs + who) & 0xffff] = inject; g_ram[(fresh_dirs + who) & 0xffff] = inject; g_ram[(fresh_dirs + 5 + who) & 0xffff] = inject; }
     }
+    return sound;
+}
+
+static void pad_hook(CpuState *cpu, uint32_t pc) {
+    (void)pc;
+    play_sfx(pad_logic(cpu)); /* last: a redirect ends this PC's hooks for the frame */
 }
 
 /* ---- Round start, freeze, spawn shuffle ------------------------------- */
@@ -156,7 +191,7 @@ static void round_hook(CpuState *cpu, uint32_t pc) {
     (void)cpu; (void)pc;
     if (g_ram[READY] == 1) return; /* these stores also run every frame the round is live */
     perm_valid = 0;
-    if (!enabled || !opt[0] || !in_battle()) return;
+    if (!enabled || opt[0] || !in_battle()) return; /* opt[0] = "start immediately" */
     countdown = COUNT_FRAMES;
     memcpy(timer_bytes, &g_ram[TIMER], sizeof(timer_bytes));
 }
@@ -195,10 +230,21 @@ static void make_permutation(void) {
     for (unsigned s = 0; s < SEATS; ++s) if (spawn_mask >> s & 1) seats[n++] = (uint8_t)s;
     for (unsigned s = 0; s < SEATS; ++s) perm[s] = (uint8_t)s;
     uint8_t shuffled[SEATS];
-    memcpy(shuffled, seats, sizeof(shuffled));
-    for (unsigned i = n; i > 1; --i) {
-        unsigned j = next_random() % i;
-        uint8_t t = shuffled[i - 1]; shuffled[i - 1] = shuffled[j]; shuffled[j] = t;
+    /* Every seat (humans and COM) gets another seat's spawn: reshuffle until nobody keeps its own,
+     * with a rotation as the bounded fallback. */
+    for (unsigned attempt = 0;; ++attempt) {
+        memcpy(shuffled, seats, sizeof(shuffled));
+        if (attempt >= 32 || n < 2) {
+            for (unsigned i = 0; i < n; ++i) shuffled[i] = seats[(i + 1) % n];
+            break;
+        }
+        for (unsigned i = n; i > 1; --i) {
+            unsigned j = next_random() % i;
+            uint8_t t = shuffled[i - 1]; shuffled[i - 1] = shuffled[j]; shuffled[j] = t;
+        }
+        bool fixed = false;
+        for (unsigned i = 0; i < n; ++i) fixed = fixed || shuffled[i] == seats[i];
+        if (!fixed) break;
     }
     for (unsigned i = 0; i < n; ++i) perm[seats[i]] = shuffled[i];
     perm_valid = 1;
@@ -229,6 +275,7 @@ void BattleRulesBeforeFrame(void) {
         interp_bridge_add_pre_opcode_hook(ACTOR_HOOK, actor_hook);
         interp_bridge_add_pre_opcode_hook(SPAWN_HOOK, spawn_hook);
     }
+    install_sfx();
     ++frames;
     latch_rules();
     if (g_ram[MODE] < 0x74) { countdown = 0; if (g_ram[MODE] != 4) perm_valid = 0; }
@@ -267,11 +314,11 @@ void BattleRulesApplyText(struct Ppu *ppu) {
     const bool pt = ptbr();
     /* After the translation pass has read its guard tiles (the banner needs the native row 6). */
     PtbrBlankMap(ppu, BLANK_ROW0, BLANK_COL0, BLANK_ROWS, BLANK_COLS, BLANK);
-    static const char *const names_en[2] = {"Round Timer", "Shuffle Spawn"}, *const names_pt[2] = {"Cron\303\264metro", "Embaralhar"};
+    static const char *const names_en[2] = {"Instant Start", "Shuffle Spawn"}, *const names_pt[2] = {"In\303\255cio imediato", "Embaralhar"};
     for (unsigned i = 0; i < 2; ++i) {
-        const unsigned row = 12 + 3 * i, tile = 584 + i * 34;
-        PtbrDrawBodyText(ppu, row, 8, 11, tile, attr_label, (pt ? names_pt : names_en)[i]);
-        PtbrDrawBodyText(ppu, row, 22, 6, tile + 22, opt[i] ? attr_red : attr_blue,
+        const unsigned row = 12 + 3 * i, tile = 584 + i * 40;
+        PtbrDrawBodyText(ppu, row, 8, 14, tile, attr_label, (pt ? names_pt : names_en)[i]);
+        PtbrDrawBodyText(ppu, row, 22, 6, tile + 28, opt[i] ? attr_red : attr_blue,
                          opt[i] ? (pt ? "Sim" : "Yes") : (pt ? "N\303\243o" : "No"));
     }
 }
@@ -333,6 +380,18 @@ static void draw_rules_page(Canvas *c) {
     }
 }
 
+static int s16(int at) { return (int16_t)(uint16_t)(g_ram[at] | g_ram[at + 1] << 8); }
+/* Head position of a living bomber, humans and COM alike (the layout of name_tags.c without its human test). */
+static bool seat_place(unsigned seat, int *x, int *y) {
+    if (g_ram[0x17fa + seat] & 0x80 || g_ram[0x15a2 + seat] & 0x80) return false;
+    int sx = (g_ram[0x182a + seat] | g_ram[0x1842 + seat] << 8) - s16(0x1d3b);
+    int sy = (g_ram[0x1872 + seat] | g_ram[0x188a + seat] << 8) - s16(0x1d3d) - 17;
+    if (g_ram[0x1782 + seat] & 0x80) sy -= 8;
+    if (sx < 0 || sx > 255 || sy < 8 || sy > 223) return false;
+    *x = sx; *y = sy;
+    return true;
+}
+
 static void draw_countdown(Canvas *c) {
     for (int y = 0; y < c->h; ++y)
         for (int x = 0; x < c->w; ++x) {
@@ -343,7 +402,7 @@ static void draw_countdown(Canvas *c) {
     if ((countdown >> 3 & 1) == 0) {
         for (int seat = 0; seat < SEATS; ++seat) {
             int x, y;
-            if (!NameTagPlace(g_ram, seat, &x, &y)) continue;
+            if (!seat_place((unsigned)seat, &x, &y)) continue;
             /* Above the head; under the feet when the head is next to the HUD. */
             const bool below = y < 40;
             const int top = below ? y + 22 : y - 15;
@@ -376,10 +435,11 @@ static bool ptbr(void) { return PtbrEnabled(); }
 #endif
 
 void BattleRulesReset(void) {
+    remove_sfx();
     page = cur = suppress = perm_valid = 0; countdown = 0; rules_latch = false;
     memset(prev_act, 0, sizeof(prev_act)); memset(prev_dir, 0, sizeof(prev_dir));
-    /* The two rules are a session choice: a reset puts them back to off. */
-    opt[0] = opt[1] = 0;
+    /* Session choices: a reset puts them back to their defaults (start immediately yes, shuffle no). */
+    opt[0] = 1; opt[1] = 0;
 }
 #define BR_MAGIC 0x53524252u /* "RBRS" */
 void BattleRulesSave(struct SaveLoadInfo *sli) {

@@ -19,7 +19,6 @@ bool interp_bridge_add_pre_opcode_hook(uint32_t pc, InterpPreOpcodeHook fn) { ho
 static uint32_t redirect_pc;
 void interp_bridge_pre_opcode_redirect(uint32_t pc) { redirect_pc = pc; }
 static void fire(uint32_t pc, CpuState *cpu) { for (unsigned i = 0; i < hook_count; ++i) if (hook_pcs[i] == pc) hooks[i](cpu, pc); }
-int NameTagPlace(const uint8_t *ram, int seat, int *x, int *y) { (void)ram; (void)seat; (void)x; (void)y; return 0; }
 void PtbrDrawBodyText(struct Ppu *p, unsigned a, unsigned b, unsigned c, unsigned d, unsigned e, const char *t) { (void)p; (void)a; (void)b; (void)c; (void)d; (void)e; (void)t; }
 void PtbrBlankMap(struct Ppu *p, unsigned a, unsigned b, unsigned c, unsigned d, unsigned e) { (void)p; (void)a; (void)b; (void)c; (void)d; (void)e; }
 static uint8 *image;
@@ -61,16 +60,19 @@ static void pad(unsigned seat, uint8_t act, uint8_t dir) {
 static void release(void) { pad(0, 0, 0); pad(0, 0, 0); }
 int main(void) {
     image = calloc(0x400000, 1); g_rom = image; cpu.D = 0;
+    memset(at(0xc57520), 0xff, 0x40); at(0xc00af9)[0] = 0xfa; at(0xc00af9)[1] = 0x7a; at(0xc00af9)[2] = 0x6b;
     CHECK(image && !strcmp(plugin, "superbomberman5.battle.rules"));
     /* Disabled: nothing happens. */
     rules_screen(5); pad(0, 0, DIR_DOWN); CHECK(!BattleRulesPageOpen() && g_ram[REP] == DIR_DOWN);
     activation(); rules_screen(5); BattleRulesBeforeFrame();
     CHECK(hook_count == 6);
     /* Down on the last native row opens page 2 and the cartridge sees no key. */
-    pad(0, 0, DIR_DOWN);
+    redirect_pc = 0; pad(0, 0, DIR_DOWN);
+    CHECK(redirect_pc == SFX_CODE && at(SFX_ID)[0] == SFX_MOVE);
     CHECK(page == 1 && cur == 0 && g_ram[REP] == 0 && g_ram[FRESH_DIRS] == 0);
     release();
-    pad(0, 0, DIR_RIGHT); CHECK(opt[0] == 1 && opt[1] == 0); release();
+    CHECK(opt[0] == 1 && opt[1] == 0); /* defaults: start immediately, no shuffle */
+    redirect_pc = 0; pad(0, 0, DIR_RIGHT); CHECK(opt[0] == 0 && opt[1] == 0 && redirect_pc == SFX_CODE); release();
     pad(0, 0, DIR_DOWN); CHECK(cur == 1); release();
     pad(0, PAD_A, 0); CHECK(opt[1] == 1 && !(g_ram[HELD] & PAD_A)); release();
     /* Down on the second rule leaves; entered from row 5 the cartridge gets Down to wrap to row 0. */
@@ -85,8 +87,8 @@ int main(void) {
     rules_screen(5); pad(0, 0, DIR_DOWN); release(); g_ram[0x1031] = 5; BattleRulesBeforeFrame(); CHECK(page == 0);
     /* Countdown: only with the rule on, in Battle. */
     g_ram[0x1031] = 0x74; g_ram[0x1d1a] = 1; g_ram[0x0aee] = 0; g_ram[0x0e1c] = 7; g_ram[0x0e1d] = 5; g_ram[0x0e1e] = 2;
-    opt[0] = 0; fire(ROUND_HOOK, &cpu); CHECK(countdown == 0);
-    opt[0] = 1; fire(ROUND_HOOK, &cpu); CHECK(countdown == COUNT_FRAMES);
+    opt[0] = 1; fire(ROUND_HOOK, &cpu); CHECK(countdown == 0);
+    opt[0] = 0; fire(ROUND_HOOK, &cpu); CHECK(countdown == COUNT_FRAMES);
     g_ram[0x0aee] = 1; fire(ROUND_HOOK, &cpu); CHECK(countdown == COUNT_FRAMES); /* live frames do not restart it */
     redirect_pc = 0; fire(ACTOR_HOOK, &cpu); CHECK(redirect_pc == ACTOR_RET);
     pad(0, PAD_A, DIR_UP); CHECK(g_ram[HELD] == 0 && g_ram[DIRS] == 0);
@@ -113,17 +115,18 @@ int main(void) {
             if (!seen[k]) { seen[k] = true; ++distinct; }
         }
         CHECK(distinct == 3); /* a permutation: every spawn used once */
+        CHECK(perm[0] != 0 && perm[1] != 1 && perm[2] != 2); /* nobody keeps its own spawn */
     }
     /* Save state. */
-    opt[0] = 1; opt[1] = 1; page = 1; cur = 1; countdown = 77; rng = 0x12345; frames = 9;
+    opt[0] = 0; opt[1] = 1; page = 1; cur = 1; countdown = 77; rng = 0x12345; frames = 9;
     Stream out = {{transfer}, {0}, 0, 0, false};
     failed = false; BattleRulesSave(&out.base); CHECK(!failed);
     Stream in = out; in.at = 0; in.reading = true;
-    opt[0] = opt[1] = 0; page = cur = 0; countdown = 0; rng = 1; frames = 0;
-    BattleRulesLoad(&in.base, 1); CHECK(!failed && opt[0] && opt[1] && page == 1 && cur == 1 && countdown == 77 && rng == 0x12345 && frames == 9);
+    opt[0] = 1; opt[1] = 0; page = cur = 0; countdown = 0; rng = 1; frames = 0;
+    BattleRulesLoad(&in.base, 1); CHECK(!failed && !opt[0] && opt[1] && page == 1 && cur == 1 && countdown == 77 && rng == 0x12345 && frames == 9);
     Stream bad = out; bad.at = 0; bad.reading = true; bad.bytes[4] = 5; /* invalid option */
     BattleRulesLoad(&bad.base, 1); CHECK(failed);
-    reset_callback(); CHECK(opt[0] == 0 && opt[1] == 0 && countdown == 0);
+    reset_callback(); CHECK(opt[0] == 1 && opt[1] == 0 && countdown == 0);
     puts("battle_rules_tests ok");
     return 0;
 }

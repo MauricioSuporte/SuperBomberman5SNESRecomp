@@ -3,17 +3,19 @@
 ## English
 
 Package `superbomberman5.battle-rules` (feature `battle_rules`, default disabled). It adds a second page to the Battle
-**Rule Settings** screen with two rules, both **off** by default and forgotten on a reset:
+**Rule Settings** screen with two rules, forgotten on a reset (back to their defaults):
 
-- **Round Timer** — before every round the field is shown with the screen slightly dimmed, nobody can move or press
-  anything (COM bombers included) while a 3-2-1 countdown runs, and the number of each human player blinks over its
-  spawn point. Then the dimming goes away and the round starts. The Battle timer does not run during the countdown.
-- **Shuffle Spawn** — the players swap start positions among the spawn points of the arena, drawn again every round.
+- **Instant Start** (default **Yes**) — with **No**, every round begins with the field shown, the screen slightly dimmed, nobody
+  able to move or press anything (COM bombers included) during a 3-2-1 countdown, and the number of every bomber, human
+  or COM, blinking over its spawn point. Then the dimming goes away and the round starts. The Battle timer does not
+  run during the countdown.
+- **Shuffle Spawn** (default No) — all bombers, humans and COM, swap start positions among the arena's spawn points,
+  drawn again every round; nobody keeps its own spawn.
 
 Open the page with **Down on Bowling Bomber** or **Up on CPU Level**; a blinking arrow under the list says there is
 more. Left/Right/A toggles a rule, Up/Down moves, and moving past either rule returns to the original rows. The page
 reuses the same background and the same hand cursor, and its labels use the native font (translated with PT-BR on:
-"Cronômetro", "Embaralhar", Sim/Não).
+"Início imediato", "Embaralhar", Sim/Não). Moving and toggling play the native menu move sound.
 
 How it works (JPN image, `docs/STATUS.md` has the evidence): the pad reader tail `$C0:0AF9` drives the page and clears
 the arrays the menu scripts read (held, new, and the auto-repeat array `D+$40`); leaving the page hands one native
@@ -30,12 +32,14 @@ countdown marker and netplay with this mod have not been run.
 ## Português
 
 Pacote `superbomberman5.battle-rules` (recurso `battle_rules`, desativado por padrão). Adiciona uma segunda página à
-tela de **regras** do Battle com duas regras, ambas **desligadas** por padrão e esquecidas num reset:
+tela de **regras** do Battle com duas regras, esquecidas num reset (voltam ao padrão):
 
-- **Cronômetro** — antes de cada rodada o campo aparece com a tela levemente escurecida, ninguém se mexe nem aperta nada
-  (os COM também ficam parados) durante a contagem 3-2-1, e o número de cada jogador humano pisca no seu ponto de
-  início. Depois o escurecimento some e a rodada começa. O tempo da partida não corre durante a contagem.
-- **Embaralhar** — os jogadores trocam de posição entre os pontos de início da arena, sorteados de novo a cada rodada.
+- **Início imediato** (padrão **Sim**) — com **Não**, cada rodada começa com o campo à mostra, a tela levemente escurecida, ninguém
+  se mexe nem aperta nada (os COM também ficam parados) durante a contagem 3-2-1, e o número de cada bomber, humano ou
+  COM, pisca no seu ponto de início. Depois o escurecimento some e a rodada começa. O tempo da partida não corre
+  durante a contagem.
+- **Embaralhar** (padrão Não) — todos os bombers, humanos e COM, trocam de posição entre os pontos de início da arena,
+  sorteados de novo a cada rodada; ninguém fica no próprio ponto.
 
 Abra a página com **Baixo em Boliche** ou **Cima em Nível CPU**; uma seta piscando indica que há mais opções.
 Esquerda/Direita/A alterna a regra, Cima/Baixo move, e passar de qualquer uma das duas volta às linhas originais. A

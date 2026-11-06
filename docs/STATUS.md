@@ -1,5 +1,9 @@
 # Super Bomberman 5: estado do protótipo
 
+## Unreleased — 2026-11-05 (update after maintainer test): Battle extra rules mod
+
+- Maintainer feedback applied: rule 1 is now "Instant Start" (PT "Início imediato", default Yes; the longer "Iniciar imediatamente" was squeezed unreadable in 14 tiles), shuffle swaps humans and COM with no seat keeping its own spawn (derangement), countdown numbers also mark COM bombers, menu move sound on page 2 (trampoline `$C5:7520`). Re-verified on Linux/LLE (2 humans + 3 COM, PT-BR on/off screenshots; all five seats on new spawns); the sound was checked only through native tests (redirect + id), not heard.
+
 ## Unreleased — 2026-11-05: Battle extra rules mod and launcher "Enable all"
 
 - New mod `superbomberman5.battle-rules` (src/battle_rules_mod.c, docs/BATTLE_RULES.md): rules page 2 with Round Timer and
