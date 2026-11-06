@@ -1,0 +1,275 @@
+11-06 15:00:34.192   525  2812 W PackageManager: Cannot suspend package "com.google.android.googlesdksetup": contains the active launcher
+11-06 15:00:34.451   525  2062 V SplashScreenExceptionList: SplashScreen checking exception for package io.github.mauriciosuporte.sb5recomp (target sdk:34) -> false
+11-06 15:00:34.466   837   868 V WindowManagerShell: Transition requested: android.os.BinderProxy@fff84f9 TransitionRequestInfo { type = OPEN, triggerTask = TaskInfo{userId=0 taskId=8 displayId=0 isRunning=true baseIntent=Intent { flg=0x10000000 cmp=io.github.mauriciosuporte.sb5recomp/.SB5Activity } baseActivity=ComponentInfo{io.github.mauriciosuporte.sb5recomp/io.github.mauriciosuporte.sb5recomp.SB5Activity} topActivity=ComponentInfo{io.github.mauriciosuporte.sb5recomp/io.github.mauriciosuporte.sb5recomp.SB5Activity} origActivity=null realActivity=ComponentInfo{io.github.mauriciosuporte.sb5recomp/io.github.mauriciosuporte.sb5recomp.SB5Activity} numActivities=1 lastActiveTime=43496 supportsMultiWindow=true resizeMode=1 isResizeable=true minWidth=-1 minHeight=-1 defaultMinSize=220 token=WCT{android.window.IWindowContainerToken$Stub$Proxy@be5ac3e} topActivityType=1 pictureInPictureParams=null shouldDockBigOverlays=false launchIntoPipHostTaskId=-1 lastParentTaskIdBeforePip=-1 displayCutoutSafeInsets=Rect(0, 128 - 0, 0) topActivityInfo=ActivityInfo{1396a9f io.github.mauriciosuporte.sb5recomp.SB5Activity} launchCookies=[] positionInParent=Point(0, 0) parentTaskId=-1 isFocused=false isVisible=false isVisibleRequested=false isSleeping=false topActivityInSizeCompat=false topActivityEligibleForLetterboxEducation= false topActivityLetterboxed= false isFromDoubleTap= false topActivityLetterboxVerticalPosition= -1 topActivityLetterboxHorizontalPosition= -1 topActivityLetterboxWidth=-1 topActivityLetterboxHeight=-1 locusId=null displayAreaFeatureId=1 cameraCompatControlState=hidden}, remoteTransition = null, displayChange = null }
+11-06 15:00:34.501   525  2062 I ActivityTaskManager: START u0 {flg=0x10000000 cmp=io.github.mauriciosuporte.sb5recomp/.SB5Activity} with LAUNCH_SINGLE_TOP from uid 2000 (BAL_ALLOW_PERMISSION) result code=0
+11-06 15:00:34.589   525   825 D CoreBackPreview: Window{699b223 u0 Splash Screen io.github.mauriciosuporte.sb5recomp}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@9c6c638, mPriority=0, mIsAnimationCallback=false}
+11-06 15:00:34.935   525   553 I ActivityManager: Start proc 3218:io.github.mauriciosuporte.sb5recomp/u0a192 for next-top-activity {io.github.mauriciosuporte.sb5recomp/io.github.mauriciosuporte.sb5recomp.SB5Activity}
+11-06 15:00:34.940  3218  3218 I porte.sb5recomp: Using CollectorTypeCC GC.
+11-06 15:00:34.943  3218  3218 W porte.sb5recomp: Unexpected CPU variant for x86: x86_64.
+11-06 15:00:34.943  3218  3218 W porte.sb5recomp: Known variants: atom, sandybridge, silvermont, goldmont, goldmont-plus, tremont, kabylake, default
+11-06 15:00:35.019  3218  3218 E porte.sb5recomp: Not starting debugger since process cannot load the jdwp agent.
+11-06 15:00:35.082   525   542 V WindowManager: Sent Transition #8 createdAt=11-06 15:00:34.442 via request=TransitionRequestInfo { type = OPEN, triggerTask = TaskInfo{userId=0 taskId=8 displayId=0 isRunning=true baseIntent=Intent { flg=0x10000000 cmp=io.github.mauriciosuporte.sb5recomp/.SB5Activity } baseActivity=ComponentInfo{io.github.mauriciosuporte.sb5recomp/io.github.mauriciosuporte.sb5recomp.SB5Activity} topActivity=ComponentInfo{io.github.mauriciosuporte.sb5recomp/io.github.mauriciosuporte.sb5recomp.SB5Activity} origActivity=null realActivity=ComponentInfo{io.github.mauriciosuporte.sb5recomp/io.github.mauriciosuporte.sb5recomp.SB5Activity} numActivities=1 lastActiveTime=43496 supportsMultiWindow=true resizeMode=1 isResizeable=true minWidth=-1 minHeight=-1 defaultMinSize=220 token=WCT{RemoteToken{14dc5b3 Task{6750c1f #8 type=standard A=10192:io.github.mauriciosuporte.sb5recomp}}} topActivityType=1 pictureInPictureParams=null shouldDockBigOverlays=false launchIntoPipHostTaskId=-1 lastParentTaskIdBeforePip=-1 displayCutoutSafeInsets=Rect(0, 128 - 0, 0) topActivityInfo=ActivityInfo{bcbe770 io.github.mauriciosuporte.sb5recomp.SB5Activity} launchCookies=[] positionInParent=Point(0, 0) parentTaskId=-1 isFocused=false isVisible=false isVisibleRequested=false isSleeping=false topActivityInSizeCompat=false topActivityEligibleForLetterboxEducation= false topActivityLetterboxed= false isFromDoubleTap= false topActivityLetterboxVerticalPosition= -1 topActivityLetterboxHorizontalPosition= -1 topActivityLetterboxWidth=-1 topActivityLetterboxHeight=-1 locusId=null displayAreaFeatureId=1 cameraCompatControlState=hidden}, remoteTransition = null, displayChange = null }
+11-06 15:00:35.087   525   542 V WindowManager:     info={id=8 t=OPEN f=0x0 trk=0 r=[0@Point(0, 0)] c=[{WCT{RemoteToken{14dc5b3 Task{6750c1f #8 type=standard A=10192:io.github.mauriciosuporte.sb5recomp}}} m=OPEN f=NONE leash=Surface(name=Task=8)/@0xf4d4f17 sb=Rect(0, 0 - 1080, 2400) eb=Rect(0, 0 - 1080, 2400) d=0 endFixedRotation=1},{WCT{RemoteToken{6f5dae9 Task{78d81ff #1 type=home}}} m=TO_BACK f=SHOW_WALLPAPER leash=Surface(name=Task=1)/@0xc464033 sb=Rect(0, 0 - 1080, 2400) eb=Rect(0, 0 - 1080, 2400) d=0}]}
+11-06 15:00:35.089   837   868 V WindowManagerShell:  Checking filter Pair{{types=[] flags=0x0] notFlags=0x100 checks=[{atype=home independent=true modes=[OPEN,TO_FRONT] flags=NONE mustBeTask=false order=TOP topActivity=ComponentInfo{com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity}},{atype=standard independent=true modes=[CLOSE,TO_BACK] flags=NONE mustBeTask=false order=ANY topActivity=null}]} RemoteTransition { remoteTransition = android.window.IRemoteTransition$Stub$Proxy@ee53252, appThread = android.app.IApplicationThread$Stub$Proxy@a579923, debugName = QuickstepLaunchHome }}
+11-06 15:00:35.326  1100  1109 W s.nexuslauncher: Cleared Reference was only reachable from finalizer (only reported once)
+11-06 15:00:35.331  1567  1567 I GoogleInputMethodService: GoogleInputMethodService.onStartInput():1877 onStartInput(EditorInfo{inputType=0x0(NULL) imeOptions=0x0 privateImeOptions=null actionName=UNSPECIFIED actionLabel=null actionId=0 initialSelStart=-1 initialSelEnd=-1 initialCapsMode=0x0 hintText=null label=null packageName=com.google.android.apps.nexuslauncher fieldId=0 fieldName=null extras=null}, true)
+11-06 15:00:35.333  1100  1109 I s.nexuslauncher: NativeAlloc concurrent copying GC freed 38974(2009KB) AllocSpace objects, 7(204KB) LOS objects, 49% free, 6831KB/13MB, paused 29us,13us total 730.166ms
+11-06 15:00:35.409   525  2816 D SearchUiPerUserService: Creating SearchSessionInfo for session Id=com.google.android.apps.nexuslauncher:92a70f83-75b6-499f-8e7d-bb2522ee8435,0
+11-06 15:00:35.457   525  2540 D SearchUiPerUserService: Storing callback for session Id=com.google.android.apps.nexuslauncher:92a70f83-75b6-499f-8e7d-bb2522ee8435,0 and callback=android.os.BinderProxy@6518e00
+11-06 15:00:35.549   838  1002 I RoleControllerServiceImpl: Adding package as default/fallback role holder, package: com.google.android.apps.nexuslauncher, role: android.app.role.HOME
+11-06 15:00:35.583  3218  3218 D nativeloader: Configuring clns-6 for other apk /data/app/~~OvtV3FKBAOsFQts-Dx2JiA==/io.github.mauriciosuporte.sb5recomp-5ET6H_mLuGbpyMoQy1JltA==/base.apk. target_sdk_version=34, uses_libraries=, library_path=/data/app/~~OvtV3FKBAOsFQts-Dx2JiA==/io.github.mauriciosuporte.sb5recomp-5ET6H_mLuGbpyMoQy1JltA==/lib/x86_64:/data/app/~~OvtV3FKBAOsFQts-Dx2JiA==/io.github.mauriciosuporte.sb5recomp-5ET6H_mLuGbpyMoQy1JltA==/base.apk!/lib/x86_64, permitted_path=/data:/mnt/expand:/data/user/0/io.github.mauriciosuporte.sb5recomp
+11-06 15:00:35.627  3218  3218 V GraphicsEnvironment: ANGLE GameManagerService for io.github.mauriciosuporte.sb5recomp: false
+11-06 15:00:35.627  3218  3218 V GraphicsEnvironment: io.github.mauriciosuporte.sb5recomp is not listed in per-application setting
+11-06 15:00:35.804  1100  1128 I ImeTracker: com.google.android.apps.nexuslauncher:56df52dd: onRequestHide at ORIGIN_CLIENT_HIDE_SOFT_INPUT reason HIDE_SOFT_INPUT
+11-06 15:00:35.808  3218  3218 V SDL     : Device: emu64xa
+11-06 15:00:35.808  3218  3218 V SDL     : Model: sdk_gphone64_x86_64
+11-06 15:00:35.808  3218  3218 V SDL     : onCreate()
+11-06 15:00:35.813   525   597 I ImeTracker: com.google.android.apps.nexuslauncher:56df52dd: onCancelled at PHASE_SERVER_SHOULD_HIDE
+11-06 15:00:35.813  3218  3218 V SDL     : nativeSetupJNI()
+11-06 15:00:35.813  3218  3218 V SDL     : AUDIO nativeSetupJNI()
+11-06 15:00:35.813  3218  3218 V SDL     : CONTROLLER nativeSetupJNI()
+11-06 15:00:35.877  3218  3218 V SDL     : onStart()
+11-06 15:00:35.878  3218  3218 V SDL     : onResume()
+11-06 15:00:35.907   525  2476 D CoreBackPreview: Window{7d525c8 u0 io.github.mauriciosuporte.sb5recomp/io.github.mauriciosuporte.sb5recomp.SB5Activity}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@fab1f5e, mPriority=0, mIsAnimationCallback=false}
+11-06 15:00:35.987   525   542 V WindowManager:     info={id=9 t=CHANGE f=0x0 trk=0 r=[0@Point(0, 0)] c=[{WCT{RemoteToken{14dc5b3 Task{6750c1f #8 type=standard A=10192:io.github.mauriciosuporte.sb5recomp}}} m=CHANGE f=NONE p=WCT{RemoteToken{e61805b DefaultTaskDisplayArea@88463924}} leash=Surface(name=Task=8)/@0xf4d4f17 sb=Rect(0, 0 - 1080, 2400) eb=Rect(0, 0 - 2400, 1080) d=0 r=0->1:-1},{WCT{RemoteToken{e61805b DefaultTaskDisplayArea@88463924}} m=CHANGE f=NONE p=WCT{RemoteToken{b0412c2 Display{#0 state=ON size=2400x1080 ROTATION_90}}} leash=Surface(name=DefaultTaskDisplayArea)/@0xff8cba2 sb=Rect(0, 0 - 1080, 2400) eb=Rect(0, 0 - 2400, 1080) d=0 r=0->1:-1},{WCT{RemoteToken{b0412c2 Display{#0 state=ON size=2400x1080 ROTATION_90}}} m=CHANGE f=IS_DISPLAY leash=Surface(name=WindowedMagnification:0:31)/@0x69bb54b sb=Rect(0, 0 - 1080, 2400) eb=Rect(0, 0 - 2400, 1080) d=0 r=0->1:3}]}
+11-06 15:00:36.037  3218  3218 V SDL     : surfaceCreated()
+11-06 15:00:36.037  3218  3218 V SDL     : surfaceChanged()
+11-06 15:00:36.037  3218  3218 V SDL     : Window size: 2272x954
+11-06 15:00:36.037  3218  3218 V SDL     : Device size: 2400x1080
+11-06 15:00:36.102   525   525 V NotificationListeners: enabling notification listener for 0: ComponentInfo{com.google.android.apps.nexuslauncher/com.android.launcher3.notification.NotificationListener}
+11-06 15:00:36.139   525   525 V NotificationListeners: Not registering ComponentInfo{com.google.android.apps.nexuslauncher/com.android.launcher3.notification.NotificationListener} is already bound
+11-06 15:00:36.197  3218  3294 V SDL     : Running main function SDL_main from library /data/app/~~OvtV3FKBAOsFQts-Dx2JiA==/io.github.mauriciosuporte.sb5recomp-5ET6H_mLuGbpyMoQy1JltA==/lib/x86_64/libmain.so
+11-06 15:00:36.197  3218  3294 V SDL     : nativeRunMain()
+11-06 15:00:36.706   525   806 I SdkSandboxManager: No SDKs used. Skipping SDK data reconcilation for CallingInfo{mUid=10192, mPackageName='io.github.mauriciosuporte.sb5recomp, mAppProcessToken='null'}
+11-06 15:00:36.862   525  2556 I WindowManager: finishDrawing of relaunch: Window{7d525c8 u0 io.github.mauriciosuporte.sb5recomp/io.github.mauriciosuporte.sb5recomp.SB5Activity} 98ms
+11-06 15:00:36.864  1656  1656 I AiAiEcho: SearchContextManagerImpl::setSearchContext resultTypes=[141151] extras=[Bundle[mParcelledData.dataSize=684]] sessionId=[com.google.android.apps.nexuslauncher:92a70f83-75b6-499f-8e7d-bb2522ee8435,0]
+11-06 15:00:36.888  3218  3218 V SDL     : onPause()
+11-06 15:00:36.951  3218  3218 V SDL     : surfaceDestroyed()
+11-06 15:00:36.952  3218  3218 V SDL     : nativePause()
+11-06 15:00:36.990   525  1408 D CoreBackPreview: Window{699b223 u0 Splash Screen io.github.mauriciosuporte.sb5recomp}: Setting back callback null
+11-06 15:00:36.990   525   915 W InputManager-JNI: Input channel object '699b223 Splash Screen io.github.mauriciosuporte.sb5recomp (client)' was disposed without first being removed with the input manager!
+11-06 15:00:37.058   525   542 I ActivityTaskManager: Displayed io.github.mauriciosuporte.sb5recomp/.SB5Activity for user 0: +2s581ms
+11-06 15:00:37.065  3218  3218 V SDL     : onStop()
+11-06 15:00:37.067  3218  3218 V SDL     : onDestroy()
+11-06 15:00:37.277  3218  3294 I SB5     : joysticks: 0
+11-06 15:00:37.351  1802  2375 W A       : Exception while fetching versionCode for package[com.google.android.apps.tv.launcherx].
+11-06 15:00:37.351  1802  2375 W A       : android.content.pm.PackageManager$NameNotFoundException: com.google.android.apps.tv.launcherx
+11-06 15:00:37.351  1802  2375 W A       : Failed to fetch versionCode for package[com.google.android.apps.tv.launcherx].
+11-06 15:00:38.298   525  2791 D CoreBackPreview: Window{2fc5656 u0 com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@53fb7a8, mPriority=0, mIsAnimationCallback=false}
+11-06 15:00:38.447   525  1408 W InputManager-JNI: Input channel object '1204df2 com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity (client)' was disposed without first being removed with the input manager!
+11-06 15:00:38.633  3218  3294 I SB5     : extracted 32 bundled files to /storage/emulated/0/Android/data/io.github.mauriciosuporte.sb5recomp/files
+11-06 15:00:38.761  3218  3294 I SB5     : extracted 32 bundled files to /data/data/io.github.mauriciosuporte.sb5recomp/files
+11-06 15:00:38.815   838   838 I SafetyLabelChangedBroadcastReceiver: received broadcast packageName: io.github.mauriciosuporte.sb5recomp, current user: UserHandle{0}, packageChangeEvent: NEW_INSTALL, intent user: UserHandle{0}
+11-06 15:00:39.291  3218  3294 V SDL     : setOrientation() requestedOrientation=6 width=2400 height=1080 resizable=true hint=LandscapeLeft LandscapeRight
+11-06 15:00:39.324  3218  3294 V SDL     : Finished main function
+11-06 15:00:39.328   525  1937 W PackageManager: Cannot suspend package "com.google.android.apps.nexuslauncher": contains the active launcher
+11-06 15:00:39.345   837   868 V WindowManagerShell: Transition requested: android.os.BinderProxy@17a3e4c TransitionRequestInfo { type = CLOSE, triggerTask = TaskInfo{userId=0 taskId=8 displayId=0 isRunning=false baseIntent=Intent { flg=0x10000000 cmp=io.github.mauriciosuporte.sb5recomp/.SB5Activity } baseActivity=null topActivity=null origActivity=null realActivity=ComponentInfo{io.github.mauriciosuporte.sb5recomp/io.github.mauriciosuporte.sb5recomp.SB5Activity} numActivities=0 lastActiveTime=44434 supportsMultiWindow=true resizeMode=1 isResizeable=true minWidth=-1 minHeight=-1 defaultMinSize=220 token=WCT{android.window.IWindowContainerToken$Stub$Proxy@acfde95} topActivityType=1 pictureInPictureParams=null shouldDockBigOverlays=false launchIntoPipHostTaskId=-1 lastParentTaskIdBeforePip=-1 displayCutoutSafeInsets=Rect(128, 0 - 0, 0) topActivityInfo=null launchCookies=[] positionInParent=Point(0, 0) parentTaskId=-1 isFocused=false isVisible=true isVisibleRequested=true isSleeping=false topActivityInSizeCompat=false topActivityEligibleForLetterboxEducation= false topActivityLetterboxed= false isFromDoubleTap= false topActivityLetterboxVerticalPosition= -1 topActivityLetterboxHorizontalPosition= -1 topActivityLetterboxWidth=-1 topActivityLetterboxHeight=-1 locusId=null displayAreaFeatureId=1 cameraCompatControlState=hidden}, remoteTransition = null, displayChange = null }
+11-06 15:00:39.350  3218  3218 V SDL     : SDLActivity thread ends
+11-06 15:00:39.453  1100  1132 I Launcher.IconCache: Database bulk icon loading failed, using fallback bulk icon loading for: ComponentInfo{io.github.mauriciosuporte.sb5recomp/io.github.mauriciosuporte.sb5recomp.SB5Activity}
+11-06 15:00:39.471  3218  3491 I SB5     : update check: local=3.1.3 latest=3.1.2 newer=0 apk=https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/download/v3.1.2/superbomberman5-3.1.2-android.apk
+11-06 15:00:39.557   525  1937 W InputManager-JNI: Input channel object '7d525c8 io.github.mauriciosuporte.sb5recomp/io.github.mauriciosuporte.sb5recomp.SB5Activity (client)' was disposed without first being removed with the input manager!
+11-06 15:00:39.611  3218  3218 V SDL     : Device: emu64xa
+11-06 15:00:39.611  3218  3218 V SDL     : Model: sdk_gphone64_x86_64
+11-06 15:00:39.611  3218  3218 V SDL     : onCreate()
+11-06 15:00:39.611  3218  3218 V SDL     : nativeSetupJNI()
+11-06 15:00:39.611  3218  3218 V SDL     : AUDIO nativeSetupJNI()
+11-06 15:00:39.611  3218  3218 V SDL     : CONTROLLER nativeSetupJNI()
+11-06 15:00:39.620  3218  3218 V SDL     : onStart()
+11-06 15:00:39.621  3218  3218 V SDL     : onResume()
+11-06 15:00:39.648   525  1093 I WindowManager: setOnBackInvokedCallback(): No window state for package:io.github.mauriciosuporte.sb5recomp
+11-06 15:00:39.682   525  2258 D CoreBackPreview: Window{3dcc18b u0 io.github.mauriciosuporte.sb5recomp/io.github.mauriciosuporte.sb5recomp.SB5Activity}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@11a1326, mPriority=0, mIsAnimationCallback=false}
+11-06 15:00:39.740  3218  3218 V SDL     : surfaceCreated()
+11-06 15:00:39.740  3218  3218 V SDL     : surfaceChanged()
+11-06 15:00:39.741  3218  3218 V SDL     : Window size: 2272x828
+11-06 15:00:39.741  3218  3218 V SDL     : Device size: 2400x1080
+11-06 15:00:39.845   525   545 W ActivityTaskManager: Activity top resumed state loss timeout for ActivityRecord{f2ce3be u0 io.github.mauriciosuporte.sb5recomp/.SB5Activity t8 f}}
+11-06 15:00:39.848   525   545 W ActivityTaskManager: Activity pause timeout for ActivityRecord{f2ce3be u0 io.github.mauriciosuporte.sb5recomp/.SB5Activity t8 f}}
+11-06 15:00:39.871  3218  3584 V SDL     : Running main function SDL_main from library /data/app/~~OvtV3FKBAOsFQts-Dx2JiA==/io.github.mauriciosuporte.sb5recomp-5ET6H_mLuGbpyMoQy1JltA==/lib/x86_64/libmain.so
+11-06 15:00:39.871  3218  3584 V SDL     : nativeRunMain()
+11-06 15:00:40.018  3218  3584 E hidapi  : hid_init threw an exception: io.github.mauriciosuporte.sb5recomp: One of RECEIVER_EXPORTED or RECEIVER_NOT_EXPORTED should be specified when a receiver isn't being registered exclusively for system broadcasts
+11-06 15:00:40.034   837   868 V WindowManagerShell:  Checking filter Pair{{types=[] flags=0x0] notFlags=0x100 checks=[{atype=home independent=true modes=[OPEN,TO_FRONT] flags=NONE mustBeTask=false order=TOP topActivity=ComponentInfo{com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity}},{atype=standard independent=true modes=[CLOSE,TO_BACK] flags=NONE mustBeTask=false order=ANY topActivity=null}]} RemoteTransition { remoteTransition = android.window.IRemoteTransition$Stub$Proxy@ee53252, appThread = android.app.IApplicationThread$Stub$Proxy@a579923, debugName = QuickstepLaunchHome }}
+11-06 15:00:40.039   837   868 D RemoteTransitionHandler: Found filterPair{{types=[] flags=0x0] notFlags=0x100 checks=[{atype=home independent=true modes=[OPEN,TO_FRONT] flags=NONE mustBeTask=false order=TOP topActivity=ComponentInfo{com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity}},{atype=standard independent=true modes=[CLOSE,TO_BACK] flags=NONE mustBeTask=false order=ANY topActivity=null}]} RemoteTransition { remoteTransition = android.window.IRemoteTransition$Stub$Proxy@ee53252, appThread = android.app.IApplicationThread$Stub$Proxy@a579923, debugName = QuickstepLaunchHome }}
+11-06 15:00:40.056  3218  3218 V SDL     : onPause()
+11-06 15:00:40.070  3218  3584 I SB5     : joysticks: 0
+11-06 15:00:40.103   525   542 V WindowManager: Sent Transition #10 createdAt=11-06 15:00:39.345 via request=TransitionRequestInfo { type = CLOSE, triggerTask = TaskInfo{userId=0 taskId=8 displayId=0 isRunning=false baseIntent=Intent { flg=0x10000000 cmp=io.github.mauriciosuporte.sb5recomp/.SB5Activity } baseActivity=null topActivity=null origActivity=null realActivity=ComponentInfo{io.github.mauriciosuporte.sb5recomp/io.github.mauriciosuporte.sb5recomp.SB5Activity} numActivities=0 lastActiveTime=44434 supportsMultiWindow=true resizeMode=1 isResizeable=true minWidth=-1 minHeight=-1 defaultMinSize=220 token=WCT{RemoteToken{14dc5b3 Task{6750c1f #8 type=standard A=10192:io.github.mauriciosuporte.sb5recomp}}} topActivityType=1 pictureInPictureParams=null shouldDockBigOverlays=false launchIntoPipHostTaskId=-1 lastParentTaskIdBeforePip=-1 displayCutoutSafeInsets=Rect(128, 0 - 0, 0) topActivityInfo=null launchCookies=[] positionInParent=Point(0, 0) parentTaskId=-1 isFocused=false isVisible=true isVisibleRequested=true isSleeping=false topActivityInSizeCompat=false topActivityEligibleForLetterboxEducation= false topActivityLetterboxed= false isFromDoubleTap= false topActivityLetterboxVerticalPosition= -1 topActivityLetterboxHorizontalPosition= -1 topActivityLetterboxWidth=-1 topActivityLetterboxHeight=-1 locusId=null displayAreaFeatureId=1 cameraCompatControlState=hidden}, remoteTransition = null, displayChange = null }
+11-06 15:00:40.103   525  2557 I ImeTracker: com.google.android.apps.nexuslauncher:212756b8: onRequestHide at ORIGIN_SERVER_HIDE_INPUT reason HIDE_SAME_WINDOW_FOCUSED_WITHOUT_EDITOR
+11-06 15:00:40.104   525   542 V WindowManager:     info={id=10 t=CLOSE f=0x0 trk=0 r=[0@Point(0, 0)] c=[{WCT{RemoteToken{6f5dae9 Task{78d81ff #1 type=home}}} m=TO_FRONT f=SHOW_WALLPAPER leash=Surface(name=Task=1)/@0xc464033 sb=Rect(0, 0 - 2400, 1080) eb=Rect(0, 0 - 2400, 1080) d=0 endFixedRotation=0},{WCT{RemoteToken{14dc5b3 Task{6750c1f #8 type=standard A=10192:io.github.mauriciosuporte.sb5recomp}}} m=CLOSE f=NONE leash=Surface(name=Task=8)/@0xf4d4f17 sb=Rect(0, 0 - 2400, 1080) eb=Rect(0, 0 - 2400, 1080) d=0},{null m=TO_FRONT f=IS_WALLPAPER leash=Surface(name=Surface(name=WallpaperWindowToken{6f0e22b token=android.os.Binder@4315a7a})/@0xc2536fb - rotation-leash)/@0x2693f2c sb=Rect(0, 0 - 2400, 1080) eb=Rect(0, 0 - 1080, 2400) d=0 r=1->0:-1}]}
+11-06 15:00:40.104   525  2557 I ImeTracker: com.google.android.apps.nexuslauncher:212756b8: onCancelled at PHASE_SERVER_SHOULD_HIDE
+11-06 15:00:40.112  3218  3218 V SDL     : surfaceChanged()
+11-06 15:00:40.118  3218  3218 V SDL     : Window size: 2272x954
+11-06 15:00:40.118  3218  3218 V SDL     : Device size: 2400x1080
+11-06 15:00:40.126  1567  1567 I GoogleInputMethodService: GoogleInputMethodService.onStartInput():1877 onStartInput(EditorInfo{inputType=0x0(NULL) imeOptions=0x0 privateImeOptions=null actionName=UNSPECIFIED actionLabel=null actionId=0 initialSelStart=-1 initialSelEnd=-1 initialCapsMode=0x0 hintText=null label=null packageName=com.google.android.apps.nexuslauncher fieldId=0 fieldName=null extras=null}, false)
+11-06 15:00:40.279  3218  3218 V SDL     : surfaceDestroyed()
+11-06 15:00:40.280  3218  3218 V SDL     : nativePause()
+11-06 15:00:40.435  1567  1567 I GoogleInputMethodService: GoogleInputMethodService.onStartInput():1877 onStartInput(EditorInfo{inputType=0x0(NULL) imeOptions=0x0 privateImeOptions=null actionName=UNSPECIFIED actionLabel=null actionId=0 initialSelStart=-1 initialSelEnd=-1 initialCapsMode=0x0 hintText=null label=null packageName=com.google.android.apps.nexuslauncher fieldId=0 fieldName=null extras=null}, true)
+11-06 15:00:40.511  1049  1049 D CarrierSvcBindHelper: onPackageAdded: io.github.mauriciosuporte.sb5recomp
+11-06 15:00:40.517  1049  1349 D ImsResolver: maybeAddedImsService, packageName: io.github.mauriciosuporte.sb5recomp
+11-06 15:00:40.627  3218  3218 V SDL     : onStop()
+11-06 15:00:40.717  3218  3593 I SB5     : update check: local=3.1.3 latest=3.1.2 newer=0 apk=https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/download/v3.1.2/superbomberman5-3.1.2-android.apk
+11-06 15:00:40.729  3218  3218 V SDL     : onDestroy()
+11-06 15:00:40.807  1049  1049 D CarrierSvcBindHelper: onPackageModified: io.github.mauriciosuporte.sb5recomp
+11-06 15:00:40.878  1049  1349 D ImsResolver: maybeAddedImsService, packageName: io.github.mauriciosuporte.sb5recomp
+11-06 15:00:40.965  3218  3584 V SDL     : setOrientation() requestedOrientation=6 width=2400 height=1080 resizable=true hint=LandscapeLeft LandscapeRight
+11-06 15:00:41.146  3218  3584 V SDL     : Finished main function
+11-06 15:00:41.146  3218  3218 V SDL     : SDLActivity thread ends
+11-06 15:00:41.156   525  2556 D CoreBackPreview: Window{3dcc18b u0 io.github.mauriciosuporte.sb5recomp/io.github.mauriciosuporte.sb5recomp.SB5Activity}: Setting back callback null
+11-06 15:00:41.211   525   597 W InputManager-JNI: Input channel object '3dcc18b io.github.mauriciosuporte.sb5recomp/io.github.mauriciosuporte.sb5recomp.SB5Activity (client)' was disposed without first being removed with the input manager!
+11-06 15:00:41.256   525   934 W InputManager-JNI: Input channel object 'Letterbox_fullWindow_ActivityRecord{f2ce3be u0 io.github.mauriciosuporte.sb5recomp/.SB5Activity t8} (client)' was disposed without first being removed with the input manager!
+11-06 15:00:41.515  1100  1132 D QuickstepModelDelegate: Successfully registered for launcher snapshot logging!
+11-06 15:00:42.384  1100  1916 D SharedPreferencesImpl: Time required to fsync /data/user/0/com.google.android.apps.nexuslauncher/shared_prefs/com.android.launcher3.device.prefs.xml: [<1: 0, <2: 1, <4: 1, <8: 1, <16: 0, <32: 0, <64: 0, <128: 0, <256: 0, <512: 1, <1024: 0, <2048: 0, <4096: 0, <8192: 0, <16384: 0, >=16384: 0]
+11-06 15:00:42.401   525  2628 W ActivityManager: Receiver with filter android.content.IntentFilter@4399c6b already registered for pid 1100, callerPackage is com.google.android.apps.nexuslauncher
+11-06 15:00:45.589  1219  1219 D CellBroadcastReceiver: disable launcher activity: com.android.cellbroadcastreceiver.CellBroadcastListLauncherActivity
+11-06 15:00:45.615  1479  3786 W libc    : Access denied finding property "ro.hardware.chipname"
+11-06 15:00:46.319  3082  3127 W libc    : Access denied finding property "persist.adb.tls_server.enable"
+11-06 15:00:46.320  3082  3127 W libc    : Access denied finding property "service.adb.tls.port"
+11-06 15:00:46.336  1656  1656 I AiAiEcho: AppFetcherImplV2 updateApps package:[io.github.mauriciosuporte.sb5recomp], userId:[0], reason:[package is added.].
+11-06 15:00:46.372  1656  1656 I AiAiEcho: AppFetcherImpl onPackageChanged io.github.mauriciosuporte.sb5recomp.
+11-06 15:00:46.373  1656  2496 I AiAiEcho: AppIndexer Package:[io.github.mauriciosuporte.sb5recomp] UserProfile:[0] Enabled:[true].
+11-06 15:00:46.374  1656  2496 I AiAiEcho: AppFetcherImplV2 updateApps package:[io.github.mauriciosuporte.sb5recomp], userId:[0], reason:[package is updated.].
+11-06 15:00:48.870  3082  3127 W libc    : Access denied finding property "persist.adb.tls_server.enable"
+11-06 15:00:48.870  3082  3127 W libc    : Access denied finding property "service.adb.tls.port"
+11-06 15:00:49.426  3082  3127 W libc    : Access denied finding property "persist.adb.tls_server.enable"
+11-06 15:00:49.426  3082  3127 W libc    : Access denied finding property "service.adb.tls.port"
+11-06 15:00:49.513  1050  1069 W libc    : Access denied finding property "ro.vendor.aware_available"
+11-06 15:00:49.737  1050  1069 W libc    : Access denied finding property "ro.vendor.aware_available"
+11-06 15:00:49.749  1050  1069 W libc    : Access denied finding property "ro.vendor.aware_available"
+11-06 15:00:49.986  1050  1069 W libc    : Access denied finding property "ro.vendor.aware_available"
+11-06 15:00:50.056  1050  1069 W libc    : Access denied finding property "ro.vendor.aware_available"
+11-06 15:00:50.082  1050  1069 W libc    : Access denied finding property "ro.vendor.aware_available"
+11-06 15:00:50.100  1050  1069 W libc    : Access denied finding property "ro.vendor.aware_available"
+11-06 15:00:50.240  3082  3107 W libc    : Access denied finding property "persist.adb.tls_server.enable"
+11-06 15:00:50.241  3082  3107 W libc    : Access denied finding property "service.adb.tls.port"
+11-06 15:00:50.585   525   614 D ActivityManager: freezing 3218 io.github.mauriciosuporte.sb5recomp
+11-06 15:00:50.943  3082  3107 W libc    : Access denied finding property "persist.adb.tls_server.enable"
+11-06 15:00:50.943  3082  3107 W libc    : Access denied finding property "service.adb.tls.port"
+11-06 15:00:51.420  1479  3785 I BlockstoreStorage: Clearing Blockstore Data for package io.github.mauriciosuporte.sb5recomp [CONTEXT service_id=258 ]
+11-06 15:00:51.494  1424  3894 I FontLog : Package io.github.mauriciosuporte.sb5recomp has no metadata [CONTEXT service_id=132 ]
+11-06 15:00:51.849  4187  4263 W SQLiteLog: (28) double-quoted string literal: "com.google.android.apps.nexuslauncher"
+11-06 15:00:51.883  4187  4263 W IndexDataConverter: Skipping index for null-key item IndexData.Builder {title: null,package: com.google.android.apps.nexuslauncher}
+11-06 15:00:52.793  3082  3817 W libc    : Access denied finding property "persist.adb.tls_server.enable"
+11-06 15:00:52.807  3082  3817 W libc    : Access denied finding property "service.adb.tls.port"
+11-06 15:00:54.748  3082  3817 W libc    : Access denied finding property "persist.adb.tls_server.enable"
+11-06 15:00:54.752  3082  3817 W libc    : Access denied finding property "service.adb.tls.port"
+11-06 15:00:57.340  4660  4660 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+11-06 15:00:57.355  4660  4660 I AndroidRuntime: Using default boot image
+11-06 15:00:57.356  4660  4660 I AndroidRuntime: Leaving lock profiling enabled
+11-06 15:00:57.554  4660  4660 W libc    : Access denied finding property "ro.product.name_for_attestation"
+11-06 15:00:57.554  4660  4660 W libc    : Access denied finding property "ro.product.brand_for_attestation"
+11-06 15:00:57.554  4660  4660 W libc    : Access denied finding property "ro.product.model_for_attestation"
+11-06 15:00:57.554  4660  4660 D AndroidRuntime: Calling main entry com.android.commands.uiautomator.Launcher
+11-06 15:00:58.491  3082  3817 W libc    : Access denied finding property "persist.adb.tls_server.enable"
+11-06 15:00:58.491  3082  3817 W libc    : Access denied finding property "service.adb.tls.port"
+11-06 15:00:58.542  1050  4592 W libc    : Access denied finding property "ro.vendor.aware_available"
+11-06 15:00:58.546  1050  4592 W libc    : Access denied finding property "ro.vendor.aware_available"
+11-06 15:00:58.574  1050  4592 W libc    : Access denied finding property "ro.vendor.aware_available"
+11-06 15:00:58.727  4660  4660 I AccessibilityNodeInfoDumper: Skipping invisible child: android.view.accessibility.AccessibilityNodeInfo@2eeac; boundsInParent: Rect(0, 0 - 0, 49); boundsInScreen: Rect(99, 378 - 99, 427); boundsInWindow: Rect(99, 378 - 99, 427); packageName: com.google.android.apps.nexuslauncher; className: android.widget.TextView; text: null; error: null; maxTextLength: -1; stateDescription: null; contentDescription: null; tooltipText: null; containerTitle: null; viewIdResName: com.google.android.apps.nexuslauncher:id/subtitle_text; uniqueId: null; checkable: false; checked: false; focusable: true; focused: false; selected: false; clickable: true; longClickable: false; contextClickable: false; enabled: true; password: false; scrollable: false; importantForAccessibility: true; visible: false; actions: [AccessibilityAction: ACTION_FOCUS - null, AccessibilityAction: ACTION_SELECT - null, AccessibilityAction: ACTION_CLEAR_SELECTION - null, AccessibilityAction: ACTION_CLICK - null, AccessibilityAction: ACTION_ACCESSIBILITY_FOCUS - null, AccessibilityAction: ACTION_SHOW_ON_SCREEN - null]; isTextSelectable: false
+11-06 15:00:58.763  4660  4660 D AndroidRuntime: Shutting down VM
+11-06 15:00:58.998  1479  3786 W libc    : Access denied finding property "ro.hardware.chipname"
+11-06 15:00:59.157  3082  3817 W libc    : Access denied finding property "persist.adb.tls_server.enable"
+11-06 15:00:59.157  3082  3817 W libc    : Access denied finding property "service.adb.tls.port"
+11-06 15:00:59.659  3082  3119 W libc    : Access denied finding property "persist.adb.tls_server.enable"
+11-06 15:00:59.659  3082  3119 W libc    : Access denied finding property "service.adb.tls.port"
+11-06 15:01:01.156  1802  2394 W A       : Exception while fetching versionCode for package[com.google.android.apps.tv.launcherx].
+11-06 15:01:01.156  1802  2394 W A       : android.content.pm.PackageManager$NameNotFoundException: com.google.android.apps.tv.launcherx
+11-06 15:01:01.156  1802  2394 W A       : Failed to fetch versionCode for package[com.google.android.apps.tv.launcherx].
+11-06 15:01:04.655  1050  4592 W libc    : Access denied finding property "ro.vendor.aware_available"
+11-06 15:01:04.673  1050  1085 W libc    : Access denied finding property "ro.vendor.aware_available"
+11-06 15:01:04.738  1050  4592 W libc    : Access denied finding property "ro.vendor.aware_available"
+11-06 15:01:04.763  1050  4592 W libc    : Access denied finding property "ro.vendor.aware_available"
+11-06 15:01:04.790  1050  4592 W libc    : Access denied finding property "ro.vendor.aware_available"
+11-06 15:01:04.791  1050  4592 W libc    : Access denied finding property "ro.vendor.aware_available"
+11-06 15:01:04.837  1050  4592 W libc    : Access denied finding property "ro.vendor.aware_available"
+11-06 15:01:04.888  1050  1085 W libc    : Access denied finding property "ro.vendor.aware_available"
+11-06 15:01:04.926  1050  1085 W libc    : Access denied finding property "ro.vendor.aware_available"
+11-06 15:01:04.953  1050  1085 W libc    : Access denied finding property "ro.vendor.aware_available"
+11-06 15:01:04.973  1050  1085 W libc    : Access denied finding property "ro.vendor.aware_available"
+11-06 15:01:05.055  1050  1085 W libc    : Access denied finding property "ro.vendor.aware_available"
+11-06 15:01:05.893  1050  1085 W libc    : Access denied finding property "ro.vendor.aware_available"
+11-06 15:01:07.418   525   525 V NotificationListeners: enabling notification listener for 0: ComponentInfo{com.google.android.apps.nexuslauncher/com.android.launcher3.notification.NotificationListener}
+11-06 15:01:07.418   525   525 V NotificationListeners: Not registering ComponentInfo{com.google.android.apps.nexuslauncher/com.android.launcher3.notification.NotificationListener} is already bound
+11-06 15:01:07.925  3082  3120 W libc    : Access denied finding property "persist.adb.tls_server.enable"
+11-06 15:01:07.925  3082  3120 W libc    : Access denied finding property "service.adb.tls.port"
+11-06 15:01:08.793   525   620 I RescueParty: Starting to observe: [com.google.android.apps.nexuslauncher, com.android.settings, com.android.systemui], updated namespace: interaction_jank_monitor
+11-06 15:01:08.806   525   551 D PackageWatchdog: rescue-party-observer added the following packages to monitor [com.google.android.apps.nexuslauncher, com.android.settings, com.android.systemui]
+11-06 15:01:08.828   525   525 I PackageWatchdog: Syncing health check requests for packages: {com.google.android.apps.nexuslauncher, com.android.settings, com.android.systemui}
+11-06 15:01:08.832   525   525 I PackageWatchdog: Syncing health check requests for packages: {com.google.android.apps.nexuslauncher, com.android.settings, com.android.systemui}
+11-06 15:01:08.832   525   825 I PackageWatchdog: Updated health check state for package com.google.android.apps.nexuslauncher: INACTIVE -> PASSED
+11-06 15:01:09.879   525   620 I RescueParty: Starting to observe: [com.google.android.apps.nexuslauncher], updated namespace: launcher
+11-06 15:01:09.882   525   551 D PackageWatchdog: rescue-party-observer added the following packages to monitor [com.google.android.apps.nexuslauncher]
+11-06 15:01:12.637  5174  5174 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+11-06 15:01:12.641   525   620 I RescueParty: Starting to observe: [android, com.google.android.apps.nexuslauncher, com.android.systemui], updated namespace: latency_tracker
+11-06 15:01:12.643   525   551 D PackageWatchdog: rescue-party-observer added the following packages to monitor [android, com.google.android.apps.nexuslauncher, com.android.systemui]
+11-06 15:01:12.644  5174  5174 I AndroidRuntime: Using default boot image
+11-06 15:01:12.644  5174  5174 I AndroidRuntime: Leaving lock profiling enabled
+11-06 15:01:12.663  3082  3119 W libc    : Access denied finding property "persist.adb.tls_server.enable"
+11-06 15:01:12.672  3082  3119 W libc    : Access denied finding property "service.adb.tls.port"
+11-06 15:01:12.934  5174  5174 W libc    : Access denied finding property "ro.product.name_for_attestation"
+11-06 15:01:12.938  5174  5174 W libc    : Access denied finding property "ro.product.brand_for_attestation"
+11-06 15:01:12.938  5174  5174 W libc    : Access denied finding property "ro.product.model_for_attestation"
+11-06 15:01:12.939  5174  5174 D AndroidRuntime: Calling main entry com.android.commands.uiautomator.Launcher
+11-06 15:01:13.838   525   620 I RescueParty: Starting to observe: [android, com.google.android.apps.nexuslauncher, com.android.systemui], updated namespace: latency_tracker
+11-06 15:01:13.839   525   551 D PackageWatchdog: rescue-party-observer added the following packages to monitor [android, com.google.android.apps.nexuslauncher, com.android.systemui]
+11-06 15:01:14.033  5174  5174 I AccessibilityNodeInfoDumper: Skipping invisible child: android.view.accessibility.AccessibilityNodeInfo@2eebb; boundsInParent: Rect(0, 0 - 0, 49); boundsInScreen: Rect(99, 378 - 99, 427); boundsInWindow: Rect(99, 378 - 99, 427); packageName: com.google.android.apps.nexuslauncher; className: android.widget.TextView; text: null; error: null; maxTextLength: -1; stateDescription: null; contentDescription: null; tooltipText: null; containerTitle: null; viewIdResName: com.google.android.apps.nexuslauncher:id/subtitle_text; uniqueId: null; checkable: false; checked: false; focusable: true; focused: false; selected: false; clickable: true; longClickable: false; contextClickable: false; enabled: true; password: false; scrollable: false; importantForAccessibility: true; visible: false; actions: [AccessibilityAction: ACTION_FOCUS - null, AccessibilityAction: ACTION_SELECT - null, AccessibilityAction: ACTION_CLEAR_SELECTION - null, AccessibilityAction: ACTION_CLICK - null, AccessibilityAction: ACTION_ACCESSIBILITY_FOCUS - null, AccessibilityAction: ACTION_SHOW_ON_SCREEN - null]; isTextSelectable: false
+11-06 15:01:14.041  5174  5174 D AndroidRuntime: Shutting down VM
+11-06 15:01:15.041  5393  5393 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+11-06 15:01:15.045  5393  5393 I AndroidRuntime: Using default boot image
+11-06 15:01:15.045  5393  5393 I AndroidRuntime: Leaving lock profiling enabled
+11-06 15:01:15.183  5393  5393 W libc    : Access denied finding property "ro.product.name_for_attestation"
+11-06 15:01:15.183  5393  5393 W libc    : Access denied finding property "ro.product.brand_for_attestation"
+11-06 15:01:15.183  5393  5393 W libc    : Access denied finding property "ro.product.model_for_attestation"
+11-06 15:01:15.194  5393  5393 D AndroidRuntime: Calling main entry com.android.commands.uiautomator.Launcher
+11-06 15:01:16.083  5291  5412 W libc    : Access denied finding property "ro.hardware.chipname"
+11-06 15:01:16.235  5393  5393 I AccessibilityNodeInfoDumper: Skipping invisible child: android.view.accessibility.AccessibilityNodeInfo@2eec1; boundsInParent: Rect(0, 0 - 0, 49); boundsInScreen: Rect(99, 378 - 99, 427); boundsInWindow: Rect(99, 378 - 99, 427); packageName: com.google.android.apps.nexuslauncher; className: android.widget.TextView; text: null; error: null; maxTextLength: -1; stateDescription: null; contentDescription: null; tooltipText: null; containerTitle: null; viewIdResName: com.google.android.apps.nexuslauncher:id/subtitle_text; uniqueId: null; checkable: false; checked: false; focusable: true; focused: false; selected: false; clickable: true; longClickable: false; contextClickable: false; enabled: true; password: false; scrollable: false; importantForAccessibility: true; visible: false; actions: [AccessibilityAction: ACTION_FOCUS - null, AccessibilityAction: ACTION_SELECT - null, AccessibilityAction: ACTION_CLEAR_SELECTION - null, AccessibilityAction: ACTION_CLICK - null, AccessibilityAction: ACTION_ACCESSIBILITY_FOCUS - null, AccessibilityAction: ACTION_SHOW_ON_SCREEN - null]; isTextSelectable: false
+11-06 15:01:16.242  5393  5393 D AndroidRuntime: Shutting down VM
+11-06 15:01:16.868  3082  3119 W libc    : Access denied finding property "persist.adb.tls_server.enable"
+11-06 15:01:16.868  3082  3119 W libc    : Access denied finding property "service.adb.tls.port"
+11-06 15:01:17.191  5625  5625 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+11-06 15:01:17.194  5625  5625 I AndroidRuntime: Using default boot image
+11-06 15:01:17.194  5625  5625 I AndroidRuntime: Leaving lock profiling enabled
+11-06 15:01:17.265  5625  5625 W libc    : Access denied finding property "ro.product.name_for_attestation"
+11-06 15:01:17.268  5625  5625 W libc    : Access denied finding property "ro.product.brand_for_attestation"
+11-06 15:01:17.272  5625  5625 W libc    : Access denied finding property "ro.product.model_for_attestation"
+11-06 15:01:17.274  5625  5625 D AndroidRuntime: Calling main entry com.android.commands.uiautomator.Launcher
+11-06 15:01:19.319  5625  5625 I AccessibilityNodeInfoDumper: Skipping invisible child: android.view.accessibility.AccessibilityNodeInfo@2eecb; boundsInParent: Rect(0, 0 - 0, 49); boundsInScreen: Rect(99, 378 - 99, 427); boundsInWindow: Rect(99, 378 - 99, 427); packageName: com.google.android.apps.nexuslauncher; className: android.widget.TextView; text: null; error: null; maxTextLength: -1; stateDescription: null; contentDescription: null; tooltipText: null; containerTitle: null; viewIdResName: com.google.android.apps.nexuslauncher:id/subtitle_text; uniqueId: null; checkable: false; checked: false; focusable: true; focused: false; selected: false; clickable: true; longClickable: false; contextClickable: false; enabled: true; password: false; scrollable: false; importantForAccessibility: true; visible: false; actions: [AccessibilityAction: ACTION_FOCUS - null, AccessibilityAction: ACTION_SELECT - null, AccessibilityAction: ACTION_CLEAR_SELECTION - null, AccessibilityAction: ACTION_CLICK - null, AccessibilityAction: ACTION_ACCESSIBILITY_FOCUS - null, AccessibilityAction: ACTION_SHOW_ON_SCREEN - null]; isTextSelectable: false
+11-06 15:01:19.322  5625  5625 D AndroidRuntime: Shutting down VM
+11-06 15:01:20.275  5647  5647 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+11-06 15:01:20.278  5647  5647 I AndroidRuntime: Using default boot image
+11-06 15:01:20.278  5647  5647 I AndroidRuntime: Leaving lock profiling enabled
+11-06 15:01:20.351  5647  5647 W libc    : Access denied finding property "ro.product.name_for_attestation"
+11-06 15:01:20.355  5647  5647 W libc    : Access denied finding property "ro.product.brand_for_attestation"
+11-06 15:01:20.355  5647  5647 W libc    : Access denied finding property "ro.product.model_for_attestation"
+11-06 15:01:20.356  5647  5647 D AndroidRuntime: Calling main entry com.android.commands.uiautomator.Launcher
+11-06 15:01:21.156  3082  3817 W libc    : Access denied finding property "persist.adb.tls_server.enable"
+11-06 15:01:21.160  3082  3817 W libc    : Access denied finding property "service.adb.tls.port"
+11-06 15:01:21.391  5647  5647 I AccessibilityNodeInfoDumper: Skipping invisible child: android.view.accessibility.AccessibilityNodeInfo@2eed8; boundsInParent: Rect(0, 0 - 0, 49); boundsInScreen: Rect(99, 378 - 99, 427); boundsInWindow: Rect(99, 378 - 99, 427); packageName: com.google.android.apps.nexuslauncher; className: android.widget.TextView; text: null; error: null; maxTextLength: -1; stateDescription: null; contentDescription: null; tooltipText: null; containerTitle: null; viewIdResName: com.google.android.apps.nexuslauncher:id/subtitle_text; uniqueId: null; checkable: false; checked: false; focusable: true; focused: false; selected: false; clickable: true; longClickable: false; contextClickable: false; enabled: true; password: false; scrollable: false; importantForAccessibility: true; visible: false; actions: [AccessibilityAction: ACTION_FOCUS - null, AccessibilityAction: ACTION_SELECT - null, AccessibilityAction: ACTION_CLEAR_SELECTION - null, AccessibilityAction: ACTION_CLICK - null, AccessibilityAction: ACTION_ACCESSIBILITY_FOCUS - null, AccessibilityAction: ACTION_SHOW_ON_SCREEN - null]; isTextSelectable: false
+11-06 15:01:21.403  5647  5647 D AndroidRuntime: Shutting down VM
+11-06 15:01:21.460  5291  5404 W libc    : Access denied finding property "ro.hardware.chipname"
+11-06 15:01:22.212  3082  3817 W libc    : Access denied finding property "persist.adb.tls_server.enable"
+11-06 15:01:22.212  3082  3817 W libc    : Access denied finding property "service.adb.tls.port"
+11-06 15:01:22.383  5777  5777 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+11-06 15:01:22.390  5777  5777 I AndroidRuntime: Using default boot image
+11-06 15:01:22.390  5777  5777 I AndroidRuntime: Leaving lock profiling enabled
+11-06 15:01:22.465  5777  5777 W libc    : Access denied finding property "ro.product.name_for_attestation"
+11-06 15:01:22.469  5777  5777 W libc    : Access denied finding property "ro.product.brand_for_attestation"
+11-06 15:01:22.469  5777  5777 W libc    : Access denied finding property "ro.product.model_for_attestation"
+11-06 15:01:22.470  5777  5777 D AndroidRuntime: Calling main entry com.android.commands.uiautomator.Launcher
+11-06 15:01:23.497  5777  5777 I AccessibilityNodeInfoDumper: Skipping invisible child: android.view.accessibility.AccessibilityNodeInfo@2eee0; boundsInParent: Rect(0, 0 - 0, 49); boundsInScreen: Rect(99, 378 - 99, 427); boundsInWindow: Rect(99, 378 - 99, 427); packageName: com.google.android.apps.nexuslauncher; className: android.widget.TextView; text: null; error: null; maxTextLength: -1; stateDescription: null; contentDescription: null; tooltipText: null; containerTitle: null; viewIdResName: com.google.android.apps.nexuslauncher:id/subtitle_text; uniqueId: null; checkable: false; checked: false; focusable: true; focused: false; selected: false; clickable: true; longClickable: false; contextClickable: false; enabled: true; password: false; scrollable: false; importantForAccessibility: true; visible: false; actions: [AccessibilityAction: ACTION_FOCUS - null, AccessibilityAction: ACTION_SELECT - null, AccessibilityAction: ACTION_CLEAR_SELECTION - null, AccessibilityAction: ACTION_CLICK - null, AccessibilityAction: ACTION_ACCESSIBILITY_FOCUS - null, AccessibilityAction: ACTION_SHOW_ON_SCREEN - null]; isTextSelectable: false
+11-06 15:01:23.503  5777  5777 D AndroidRuntime: Shutting down VM
+11-06 15:01:24.450  5805  5805 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+11-06 15:01:24.456  5805  5805 I AndroidRuntime: Using default boot image
+11-06 15:01:24.456  5805  5805 I AndroidRuntime: Leaving lock profiling enabled
+11-06 15:01:24.533  5805  5805 W libc    : Access denied finding property "ro.product.name_for_attestation"
+11-06 15:01:24.537  5805  5805 W libc    : Access denied finding property "ro.product.brand_for_attestation"
+11-06 15:01:24.540  5805  5805 W libc    : Access denied finding property "ro.product.model_for_attestation"
+11-06 15:01:24.541  5805  5805 D AndroidRuntime: Calling main entry com.android.commands.uiautomator.Launcher
+11-06 15:01:25.928  5805  5805 I AccessibilityNodeInfoDumper: Skipping invisible child: android.view.accessibility.AccessibilityNodeInfo@2eeef; boundsInParent: Rect(0, 0 - 0, 49); boundsInScreen: Rect(99, 378 - 99, 427); boundsInWindow: Rect(99, 378 - 99, 427); packageName: com.google.android.apps.nexuslauncher; className: android.widget.TextView; text: null; error: null; maxTextLength: -1; stateDescription: null; contentDescription: null; tooltipText: null; containerTitle: null; viewIdResName: com.google.android.apps.nexuslauncher:id/subtitle_text; uniqueId: null; checkable: false; checked: false; focusable: true; focused: false; selected: false; clickable: true; longClickable: false; contextClickable: false; enabled: true; password: false; scrollable: false; importantForAccessibility: true; visible: false; actions: [AccessibilityAction: ACTION_FOCUS - null, AccessibilityAction: ACTION_SELECT - null, AccessibilityAction: ACTION_CLEAR_SELECTION - null, AccessibilityAction: ACTION_CLICK - null, AccessibilityAction: ACTION_ACCESSIBILITY_FOCUS - null, AccessibilityAction: ACTION_SHOW_ON_SCREEN - null]; isTextSelectable: false
+11-06 15:01:25.940  5805  5805 D AndroidRuntime: Shutting down VM
+11-06 15:01:26.880  5834  5834 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+11-06 15:01:26.883  5834  5834 I AndroidRuntime: Using default boot image
+11-06 15:01:26.883  5834  5834 I AndroidRuntime: Leaving lock profiling enabled
+11-06 15:01:26.960  5834  5834 W libc    : Access denied finding property "ro.product.name_for_attestation"
+11-06 15:01:26.960  5834  5834 W libc    : Access denied finding property "ro.product.brand_for_attestation"
+11-06 15:01:26.966  5834  5834 W libc    : Access denied finding property "ro.product.model_for_attestation"
+11-06 15:01:26.967  5834  5834 D AndroidRuntime: Calling main entry com.android.commands.uiautomator.Launcher
+11-06 15:01:27.983  5834  5834 I AccessibilityNodeInfoDumper: Skipping invisible child: android.view.accessibility.AccessibilityNodeInfo@2eef7; boundsInParent: Rect(0, 0 - 0, 49); boundsInScreen: Rect(99, 378 - 99, 427); boundsInWindow: Rect(99, 378 - 99, 427); packageName: com.google.android.apps.nexuslauncher; className: android.widget.TextView; text: null; error: null; maxTextLength: -1; stateDescription: null; contentDescription: null; tooltipText: null; containerTitle: null; viewIdResName: com.google.android.apps.nexuslauncher:id/subtitle_text; uniqueId: null; checkable: false; checked: false; focusable: true; focused: false; selected: false; clickable: true; longClickable: false; contextClickable: false; enabled: true; password: false; scrollable: false; importantForAccessibility: true; visible: false; actions: [AccessibilityAction: ACTION_FOCUS - null, AccessibilityAction: ACTION_SELECT - null, AccessibilityAction: ACTION_CLEAR_SELECTION - null, AccessibilityAction: ACTION_CLICK - null, AccessibilityAction: ACTION_ACCESSIBILITY_FOCUS - null, AccessibilityAction: ACTION_SHOW_ON_SCREEN - null]; isTextSelectable: false
+11-06 15:01:27.989  5834  5834 D AndroidRuntime: Shutting down VM
