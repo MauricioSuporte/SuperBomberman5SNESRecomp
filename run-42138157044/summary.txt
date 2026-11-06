@@ -1,0 +1,23 @@
+device: sdk_gphone64_x86_64 api 34 abi x86_64
+screen: Physical size: 1080x2400 Physical density: 420
+install: Success
+running after start: 3303
+focus after browse:   mCurrentFocus=null
+placeholder in picker: 313 1186
+joystick log: joysticks: 0
+imported: 1
+crash lines: 0
+running at end: 3303
+focus after openurl:   mCurrentFocus=null
+installer confirm button: 1838 686
+app: selftest: 341 bytes of commands
+app: update check: local=3.1.1 latest=3.1.0 newer=0 apk=https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/download/v3.1.0/superbomberman5-3.1.0-android.apk
+app: selftest http GET status=200 bytes=29 body={"ok": true, "method": "GET"}
+app: selftest http PATCH status=200 bytes=31 body={"ok": true, "method": "PATCH"}
+app: selftest http POST status=200 bytes=30 body={"ok": true, "method": "POST"}
+app: selftest http GET status=200 bytes=11284 body={"url":"https://api.github.com/repos/MauricioSuporte/SuperBomberman5SNESRecomp/r
+app: selftest openurl ok=1
+app: selftest install started=1 msg=Downloading the update... / Baixando a atualização...
+server saw: GET /echo/get 0B ct=- ua=True, PATCH /echo/patch 19B ct=application/json ua=True, POST /echo/post 20B ct=application/json ua=True
+apk downloads: 1
+package updated: yes (lastUpdateTime=2026-11-0600:42:13 -> lastUpdateTime=2026-11-0600:44:19)

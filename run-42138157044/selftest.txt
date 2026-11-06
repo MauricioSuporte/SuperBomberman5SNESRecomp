@@ -1,0 +1,6 @@
+http GET http://10.0.2.2:8765/echo/get
+http PATCH http://10.0.2.2:8765/echo/patch {"content":"board"}
+http POST http://10.0.2.2:8765/echo/post {"content":"notice"}
+http GET https://api.github.com/repos/MauricioSuporte/SuperBomberman5SNESRecomp/releases/latest
+openurl https://example.com/sb5-signin-test
+install http://10.0.2.2:8765/app.apk
