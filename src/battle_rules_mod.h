@@ -4,6 +4,7 @@ struct SaveLoadInfo;
 /* Battle rules page 2: round-start countdown and shuffled spawn points. */
 bool BattleRulesEnabled(void);
 bool BattleRulesCountdownActive(void);
+bool BattleRulesAbilitiesOff(void); /* rules page 2: extra characters' B + direction abilities disabled */
 void BattleRulesBeforeFrame(void);
 void BattleRulesAfterFrame(void);
 void BattleRulesPrepareDraw(void); /* before the PPU frame: blank the hidden rows */

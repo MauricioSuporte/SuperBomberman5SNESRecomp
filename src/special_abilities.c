@@ -54,6 +54,7 @@
  * capture), so save states and rewind carry it without an extension. */
 #include "special_abilities.h"
 #include "actor_layout.h"
+#include "battle_rules_mod.h"
 #include "clock_mounts.h"
 #include "extra_characters_mod.h"
 #include "sb4_rom.h"
@@ -115,6 +116,7 @@ static void set16(uint8_t *p,unsigned v) { p[0]=(uint8_t)v;p[1]=(uint8_t)(v>>8);
 
 static bool hooks_installed;
 static const Ability *ability_of(unsigned seat) {
+    if(BattleRulesAbilitiesOff()) return NULL;
     unsigned choice=ExtraCharacterSeatChoice(seat);
     if(choice<HK_CHOICE_HONEY || choice>EXTRA_CHOICE_LAST) return NULL;
     if(choice==TERRORIN_CHOICE && !Sb5ExtrasEnabled()) return NULL;

@@ -28,6 +28,7 @@ bool Sb4Frame(unsigned character,unsigned frame,uint8_t out[32][32]) {
     return true;
 }
 uint32_t Sb4FramePc(unsigned character,unsigned frame) { return character<6 && frame<64?0xd00000|character<<8|frame:0; }
+uint32_t Sb4ChampionPc(unsigned character,unsigned step) { return character<6 && step<2?0xd00000|character<<8|(45u+step):0; }
 bool Sb4FrameAt(uint32_t pc,uint8_t out[32][32]) { return Sb4Frame((pc>>8)&0xff,pc&0xff,out); }
 uint16_t Sb4Color(unsigned character,unsigned palette,unsigned index) { return (uint16_t)(0x4000+character*0x100+palette*0x10+index); }
 /* Portraits: a 32x32 square of color 9; colors 0x2000 + ... */
@@ -279,6 +280,9 @@ int main(void) {
     Ppu *ppu=calloc(1,sizeof(Ppu));CHECK(ppu);ppu->obsel=3;
     Snapshot *before=malloc(sizeof(Snapshot));CHECK(before);
     for(unsigned i=0;i<0x8000;++i) ppu->vram[i]=(uint16)(i*7);
+    /* Native OBJ palettes carry colors (a slot of zeros is the cartridge's
+     * curse flash, tested below). */
+    for(unsigned p=0;p<8;++p) for(unsigned c=1;c<16;++c) ppu->cgram[0x80+p*16+c]=(uint16)(0x0421*(p+1)+c);
     /* Stage: seat 0 is Honey (object 8, palette slot 1) walking right. Its
      * native frame ($C4:F000) has three pieces matching sprites 10-12. */
     memset(g_ram,0,sizeof(g_ram));g_ram[0x1031]=0x0d;g_ram[0x1f828]=11;
@@ -314,6 +318,18 @@ int main(void) {
     CHECK(visible(ppu,13) && (ppu->oam[13*2+1]&0x1ff)==0x40);
     CHECK(visible(ppu,14) && ppu->oam[14*2]==before->oam[14*2] && ppu->oam[14*2+1]==before->oam[14*2+1]);
     for(unsigned c=1;c<16;++c) CHECK(ppu->cgram[0x80+7*16+c]==palette_color(0,c) && ppu->cgram[0x80+16+c]==before->cgram[0x80+16+c]);
+    ExtraCharactersObserve(ppu,224,NULL);CHECK(!drawn && same(before,ppu));
+    /* Skull: the cartridge blanks the seat's own palette (slot 1) for a few
+     * frames; the skin's palette goes black with it, then returns. */
+    for(unsigned c=1;c<8;++c) ppu->cgram[0x80+16+c]=0; /* colors 8-15 stay, as in the game */
+    snap(before,ppu);
+    ExtraCharactersObserve(ppu,1,NULL);CHECK(drawn);
+    for(unsigned c=1;c<16;++c) CHECK(ppu->cgram[0x80+7*16+c]==0);
+    ExtraCharactersObserve(ppu,224,NULL);CHECK(!drawn && same(before,ppu));
+    for(unsigned c=1;c<16;++c) ppu->cgram[0x80+16+c]=(uint16)(0x0421*2+c);
+    snap(before,ppu);
+    ExtraCharactersObserve(ppu,1,NULL);
+    for(unsigned c=1;c<16;++c) CHECK(ppu->cgram[0x80+7*16+c]==palette_color(0,c));
     ExtraCharactersObserve(ppu,224,NULL);CHECK(!drawn && same(before,ppu));
     /* Every palette in use: slot 1 itself is recolored (fallback). */
     for(unsigned p=0;p<8;++p) if(p!=1) sprite(ppu,20+p,8,8+p*16,0x60,p,false);
@@ -462,7 +478,82 @@ int main(void) {
     hide_all(ppu);
     sprite(ppu,10,92,99,0x23,1,false);sprite(ppu,11,100,99,0x25,1,false);sprite(ppu,12,92,83,0x20,1,true);
     snap(before,ppu);
-    CHECK(sb4_pose_frame(8,false,false)==3 && sb4_pose_frame(8,true,false)==17 && sb4_pose_frame(8,true,true)==21);
+    CHECK(sb4_pose_frame(0,8,false,false)==3 && sb4_pose_frame(0,8,true,false)==17 && sb4_pose_frame(0,8,true,true)==21);
+    /* Super Bomberman 4 sequences, from the first step of each pose group
+     * (drawn every frame, as in the game): round-win cheer 45/46 (16, 17, then
+     * 11 and 13 frames), Time Up and the champion screen's losers 52, 53, 52,
+     * 54 (15 frames each), the champion on the bank $DE trophy pose with the
+     * same cheer timing. */
+    {
+        unsigned frames[96];
+        g_ram[0x79f+8]=0x20;
+        for(unsigned age=0;age<96;++age) { snes_frame_counter=1000+(int)age;frames[age]=sb4_pose_frame(0,8,false,false); }
+        CHECK(frames[0]==45 && frames[15]==45 && frames[16]==46 && frames[32]==46 && frames[33]==45);
+        CHECK(frames[43]==45 && frames[44]==46 && frames[56]==46 && frames[57]==45 && frames[67]==45 && frames[68]==46);
+        g_ram[0x79f+8]=0x1f;
+        for(unsigned age=0;age<120;++age) { snes_frame_counter=2000+(int)age;frames[age%96]=sb4_pose_frame(0,8,false,false);
+            static const unsigned dejected[]={52,53,52,54,52,53,52,54};
+            CHECK(frames[age%96]==dejected[age/15]); }
+        g_ram[0x1031]=5;
+        g_ram[0x79f+8]=0x21;
+        for(unsigned age=0;age<60;++age) { snes_frame_counter=3000+(int)age;frames[age]=sb4_pose_frame(0,8,false,false); }
+        CHECK(frames[0]==52 && frames[15]==53 && frames[30]==52 && frames[45]==54);
+        g_ram[0x79f+8]=0x20;
+        uint32_t pcs[48];
+        for(unsigned age=0;age<48;++age) { snes_frame_counter=4000+(int)age;pcs[age]=sb4_pose_pc(0,2,8,false,false); }
+        CHECK(pcs[0]==Sb4ChampionPc(2,0) && pcs[16]==Sb4ChampionPc(2,1) && pcs[33]==Sb4ChampionPc(2,0) && pcs[44]==Sb4ChampionPc(2,1));
+        /* Draw Game screen (mode $0A): the Time Up pose whatever the native
+         * animation (the game cheers with $15); other modes are unaffected. */
+        g_ram[0x1031]=0x0a;g_ram[0x79f+8]=0x15;
+        for(unsigned age=0;age<60;++age) { snes_frame_counter=4500+(int)age;frames[age]=sb4_pose_frame(0,8,false,false); }
+        CHECK(frames[0]==52 && frames[15]==53 && frames[30]==52 && frames[45]==54);
+        snes_frame_counter=4600;CHECK(sb4_pose_pc(0,2,8,false,false)==Sb4FramePc(2,52));
+        g_ram[0x1031]=5;g_ram[0x79f+8]=0x20;snes_frame_counter=4700;
+        CHECK(sb4_pose_pc(0,2,8,false,false)==Sb4ChampionPc(2,0));
+        /* Riding keeps the mount pose; a stage keeps the round-win cheer. */
+        CHECK(sb4_pose_pc(0,2,8,true,false)==Sb4FramePc(2,18));
+        g_ram[0x1031]=0x74;snes_frame_counter=5000;
+        CHECK(sb4_pose_pc(0,2,8,false,false)==Sb4FramePc(2,45));
+        /* Stunned by a landing bomb (airborne anims $17-$1A): the standing
+         * sprites turn clockwise (up, right, down, left) from the facing
+         * direction, 6 frames each; anim $17 faces direction 0 (right). */
+        g_ram[0x79f+8]=0x17;
+        for(unsigned age=0;age<30;++age) { snes_frame_counter=5500+(int)age;frames[age]=sb4_pose_frame(0,8,false,false); }
+        CHECK(frames[0]==3 && frames[5]==3 && frames[6]==6 && frames[12]==9 && frames[18]==0 && frames[24]==3);
+        /* Stun by a landing bomb as logged: anim $21 with $1782 bit 1 set
+         * ("mounting"): the spin from the last facing direction, not the mount
+         * jump (frames 20-23) nor the electrocuted frame. */
+        g_ram[0x79f+8]=0x49;snes_frame_counter=5600;            /* standing, facing up (anim $49) */
+        CHECK(sb4_pose_frame(0,8,false,false)==0);
+        g_ram[0x79f+8]=0x21;
+        for(unsigned age=0;age<30;++age) { snes_frame_counter=5601+(int)age;frames[age]=sb4_pose_frame(0,8,false,true); }
+        CHECK(frames[0]==0 && frames[5]==0 && frames[6]==3 && frames[12]==6 && frames[18]==9 && frames[24]==0);
+        /* Cornered by bombs: neighbours of cell 17 all blocked with one bomb
+         * -> dejected frames from the first step; a free side, or blocks
+         * without any bomb, keep the stand pose. */
+        g_ram[0x79f+8]=0x46;g_ram[0x16aa]=17;
+        g_ram[0x1052+16]=0x80;g_ram[0x1052+1]=0x80;g_ram[0x1052+18]=0x50;g_ram[0x1052+33]=0x30;
+        for(unsigned age=0;age<60;++age) { snes_frame_counter=6000+(int)age;frames[age]=sb4_pose_frame(0,8,false,false); }
+        CHECK(frames[0]==52 && frames[15]==53 && frames[30]==52 && frames[45]==54);
+        /* After a while the game turns a cornered bomber to the stun
+         * animation ($21): the dejected loop continues, not the zap frame. */
+        g_ram[0x79f+8]=0x21;
+        for(unsigned age=0;age<60;++age) { snes_frame_counter=6050+(int)age;frames[age]=sb4_pose_frame(0,8,false,false); }
+        CHECK(frames[0]==52 && frames[15]==53 && frames[30]==52 && frames[45]==54);
+        /* The blast clears the bomb a moment before the death animation, with
+         * the stun animation in between: within a second of being cornered
+         * the dejected pose stays; later the stun spin. */
+        g_ram[0x1052+18]=0x00;
+        snes_frame_counter=6120;{ unsigned f=sb4_pose_frame(0,8,false,false);CHECK(f>=52 && f<=54); }
+        snes_frame_counter=6200;{ unsigned f=sb4_pose_frame(0,8,false,false);CHECK(f%3==0 && f<12); } /* a stun: spin */
+        g_ram[0x1052+18]=0x50;g_ram[0x79f+8]=0x46;
+        g_ram[0x1052+33]=0x10;                       /* an item only: a way out */
+        snes_frame_counter=6100;CHECK(sb4_pose_frame(0,8,false,false)==3);
+        g_ram[0x1052+33]=0x30;g_ram[0x1052+18]=0x30; /* no bomb among the blocks */
+        snes_frame_counter=6200;CHECK(sb4_pose_frame(0,8,false,false)==3);
+        memset(g_ram+0x1052,0,16*13);g_ram[0x16aa]=0;
+        g_ram[0x79f+8]=0x46;snes_frame_counter=0;
+    }
     ExtraCharactersObserve(ppu,1,NULL);CHECK(drawn);
     unsigned shown_blocks=0;int fig_top=256,fig_bottom=-1;
     for(unsigned s=10;s<=12;++s) if(visible(ppu,s)) {

@@ -58,6 +58,10 @@ int main(void) {
     CHECK(Sb4BadBomberPc(2,0,false)==0xc67000 && Sb4BadBomberPc(2,1,true)==0xc67180 &&
           Sb4BadBomberPc(2,2,false)==0xc67800 && Sb4BadBomberPc(2,3,true)==0xc66980 &&
           Sb4BadBomberPc(0,0,false)==0xc58aed && !Sb4BadBomberPc(6,0,false) && !Sb4BadBomberPc(0,4,false));
+    /* Champion screen winner pose: bank $DE, one sheet per character, frames +$00/+$80. */
+    CHECK(Sb4ChampionPc(0,0)==0xdea000 && Sb4ChampionPc(0,1)==0xdea080 && Sb4ChampionPc(1,0)==0xdec000 &&
+          Sb4ChampionPc(2,1)==0xdeb880 && Sb4ChampionPc(3,0)==0xdeb000 && Sb4ChampionPc(4,0)==0xdea800 &&
+          Sb4ChampionPc(5,1)==0xdec880 && !Sb4ChampionPc(6,0) && !Sb4ChampionPc(0,2));
     CHECK(!Sb4Portrait(6,px) && !Sb4PortraitColor(1,5,0));
     Sb4RomForTests(NULL);
     CHECK(!Sb4Frame(2,5,px) && !Sb4Color(3,2,3));

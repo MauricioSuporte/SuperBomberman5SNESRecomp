@@ -1,10 +1,65 @@
 # Super Bomberman 5: estado do protótipo
+- Follow-up: a living Bomber King cornered by bombs (all four neighbouring cells hard/soft/bomb in `$1052`, at least one
+  bomb) plays the dejected frames 52, 53, 52, 54 (`trapped_by_bomb()`); unit-tested only, not validated in the running
+  recomp, and SB4 itself was not measured for this situation.
+- Fix (user report): a cornered bomber turned to the stun animation `$21` after a while and showed SB4 frame 55; now the
+  dejected loop continues while cornered. The draw screen (mode 5 with two or more bombers on anim `$20`) loops the
+  dejected pose for all. Unit-tested only; the draw rule is inferred from the mode/anim values of the champion screen
+  (measured in the emulator) and was not reproduced as a real draw there, so it is not validated in the running recomp.
+- Draw screen still showed the cheer in the user's run: the champion-screen draw rule (mode 5, two or more bombers on
+  `$15/$20`) did not match. Could not reproduce a real draw in the emulator (the native scene script writes the animation
+  through `$C0:11EC` from `$C5:6AB0`; the draw's values were not captured). Added the opt-in diagnostic
+  `SB5_BK_POSE_LOG=1` (appends mode and each seat's animation to `bomber_kings_pose.log` on change) to measure it.
+- Draw Game: the previous rule did not match, so per the user's instruction the draw screen now plays the Time Up pose
+  (52, 53, 52, 54). Detection: the score board (mode 5) after a Battle stage in which no bomber ever played the victory
+  animation (`track_round_result()`). Unit-tested only; not validated in the running recomp (`SB5_BK_POSE_LOG=1` still
+  logs the mode and animations if it misfires).
+- Diagnostic log extended (`SB5_BK_POSE_LOG=1`, `bomber_kings_pose.log`): each change of mode, `winner_seen`/`draw` flags and
+  per-seat native animation plus the SB4 frame drawn (`1000+` = champion trophy sheet), to compare "Empatar rodada" and
+  the Draw Game screen.
+- Draw Game measured with `SB5_BK_POSE_LOG=1` on a forced "Empatar rodada" (user's run): the screen is mode `$0A`, all five
+  seats on anim `$1F` then `$15` (cheer). The latch rule (mode 5 + no winner animation) is replaced by `mode == $0A`: the
+  Bomber Kings loop the Time Up pose (52, 53, 52, 54). Unit-tested; not yet validated in the running recomp.
+- Stun by a landing bomb (native airborne anims `$17-$1A`) no longer shows a jump/crouch sprite: per the user, Super Bomberman 4
+  turns the standing (walking) sprites clockwise from the facing direction. Now up, right, down, left, 6 frames each
+  (`SPIN_FRAMES`, an estimate: the original's timing was not measured). Unit-tested only; not validated in the running recomp.
+- Cornered bomber flashed the electrocuted frame when the blast came: the explosion clears the bomb from `$1052` a moment
+  before the death animation `$16`, with the stun animation `$21` in between. A stun within 60 frames of the last cornered
+  frame now keeps the dejected pose. The pose log also prints `trap` and the collision cell per seat. Unit-tested only.
+- User still saw a jump-like sprite on a bomb stun; the previous log held no `$17-$1A` animation. Log now also prints the
+  source of the drawn frame (`p` pose, `b` Bad Bomber, `a` ability = `2000+index`) and `$1782/$15A2/$15BA` per seat, and
+  clears the frame when a seat is not drawn, to find which path draws the stun.
+- Root cause of the "jump" sprite on a bomb stun (pose log of the user's run): the stun is anim `$21` with `$1782` bit 1 (the
+  "jumping onto the mount" flag) set for ~60 frames, so the mount-jump frames 20-23 were drawn, then frame 55 for a few
+  frames at the end. Now any in-stage stun (`$21`) turns the standing sprites clockwise from the last facing direction
+  (`SPIN_FRAMES`, estimated), ignoring that flag; frame 55 is no longer used in stages. Unit-tested only.
 
-## Unreleased — 2026-11-05 (update after maintainer test): Battle extra rules mod
+## Unreleased — 2026-11-05: Bomber Kings use Super Bomberman 4's round-win, Time Up and champion animations
+
+- Request: the Bomber Kings must play the same animations as in Super Bomberman 4 for winning a round, Time Up and the
+  Battle champion screen (winner and losers), not a still frame.
+- Measured (headless snes9x on the user's SB4 JPN ROM, a build of this session with VRAM-DMA and WRAM-write logging;
+  two humans, Matches 1, one player killed by his own bomb, Time forced to 0:00 with pokes of `$1ED0/$1ED2`; all six
+  characters as winner): round win = frames 45/46, Time Up and champion losers = 52, 53, 52, 54 (about 15 frames
+  each), champion winner = bank `$DE` sheet frames +`$00`/+`$80` (`$A000/$A800/$B000/$B800/$C000/$C800` for
+  Bomberman/Bazooka/Lady/Jet/Hammer/Great). SB5 side (same emulator, SB5 ROM, object table polled): round winner and
+  champion winner anim `$20`, champion loser `$21` (mode `$1031` = 5).
+- Change: `extra_characters_mod.c` (`pose_age`, `sb4_cheer_step`, `sb4_dejected_frame`, `sb4_pose_pc`) and
+  `Sb4ChampionPc` in `sb4_rom.c`; each sequence restarts when its pose begins. Native `extra_characters_tests` and
+  `sb4_rom_tests` pass (Linux gcc, this session); all six characters' frames were rendered from the ROM through the
+  repository decoder and checked by eye.
+- Not done: no Windows/LLE build and no run of the recomp here, so the new poses were not seen in the running mod;
+  the Time Up anim `$1F` mapping was already in place and was not re-measured on the SB5 side.
+
+## v3.1.1 — 2026-11-05: Battle extra rules, Hurry Up countdown fix
+
+- Bug: with Instant Start = No, Hurry Up lowers and re-raises `$0AEE`, which re-triggered the round-start countdown (180 frames of frozen gameplay). The countdown is now armed by the Battle stage init (`$C4:2A3C`, once per round) and consumed by the first `$0AEE` store, so Hurry Up cannot start it. `battle_rules_tests` covers it (7 hooks). Linux/LLE route: forcing the timer into Hurry Up showed `$0AEE` 0→1 with the timer running at once (before the fix it stayed frozen ~180 frames); the round-start countdown still froze the timer. Not exercised on Windows/Android.
+
+## v3.1.0 — 2026-11-05 (update after maintainer test): Battle extra rules mod
 
 - Maintainer feedback applied: rule 1 is now "Instant Start" (PT "Início imediato", default Yes; the longer "Iniciar imediatamente" was squeezed unreadable in 14 tiles), shuffle swaps humans and COM with no seat keeping its own spawn (derangement), countdown numbers also mark COM bombers, menu move sound on page 2 (trampoline `$C5:7520`). Re-verified on Linux/LLE (2 humans + 3 COM, PT-BR on/off screenshots; all five seats on new spawns); the sound was checked only through native tests (redirect + id), not heard.
 
-## Unreleased — 2026-11-05: Battle extra rules mod and launcher "Enable all"
+## v3.1.0 — 2026-11-05: Battle extra rules mod and launcher "Enable all"
 
 - New mod `superbomberman5.battle-rules` (src/battle_rules_mod.c, docs/BATTLE_RULES.md): rules page 2 with Round Timer and
   Shuffle Spawn. Native test `battle_rules_tests` (page navigation, hand-back of Down/Up, countdown freeze/input block/

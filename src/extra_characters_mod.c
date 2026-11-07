@@ -66,6 +66,8 @@
 #include "snes/ppu.h"
 #include "snes/snes.h"
 #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 enum {
     MAX_CELLS = TERRORIN_CHOICE, TABLE_CELLS = 20, STOCK_CELLS = 10, MAX_COLS = 7,
@@ -314,7 +316,13 @@ static unsigned champion_frame(unsigned skin) {
 /* Palette keys: skin*8 + color (Honey/Kotetsu have one, Super Bomberman 4
  * characters five). */
 static bool sb4_skin(int skin) { return skin>=2 && skin<SKIN_TERRORIN; }
+/* BLACK_KEY marks a palette key whose colors are all black: the cartridge's
+ * curse (skull) blanks the seat's own OBJ palette (colors 1-7 to 0) for four
+ * frames out of eight, which a skin drawn in a palette of its own would never
+ * show. */
+enum { BLACK_KEY = 0x1000 };
 static unsigned palette_color(unsigned key,unsigned index) {
+    if(key&BLACK_KEY) return 0;
     unsigned skin=key/8;
     if(skin<2) return rw(kPalette[skin]+index*2)&0x7fff;
     if(skin==SKIN_TERRORIN) return rw(TERRORIN_PALETTE+index*2)&0x7fff;
@@ -791,28 +799,128 @@ static int terrorin_head_dx(unsigned frame) {
 static unsigned sb4_direction(int direction) { return (unsigned)(direction+1)&3; }
 /* Mounts (Super Bomberman 4, from the cartridge's uploads with a rider):
  * 20-23 while jumping onto the mount, 16-19 riding. */
-static unsigned sb4_pose_frame(unsigned object,bool rider,bool mounting) {
+/* Animation clock of a seat's current Super Bomberman 4 pose group: frames
+ * since the group began, so each sequence starts at its first step like in
+ * the original (a different group, or a gap in drawing, restarts it).
+ * Render-only; nothing here is saved. */
+enum { CLOCK_CHEER = 1, CLOCK_DEJECTED, CLOCK_TIME_UP, CLOCK_CHAMPION, CLOCK_TRAPPED, CLOCK_SPIN };
+/* Frames per direction of the stun spin; an estimate, not measured on the
+ * original yet. */
+#define SPIN_FRAMES 6u
+static unsigned pose_age(unsigned seat,unsigned group) {
+    static uint32_t since[5],seen[5];
+    static uint8_t last[5];
+    if(seat>=5) return 0;
+    uint32_t now=(uint32_t)snes_frame_counter;
+    if(last[seat]!=group || now-seen[seat]>2u) since[seat]=now;
+    last[seat]=(uint8_t)group;seen[seat]=now;
+    return now-since[seat];
+}
+/* Super Bomberman 4's two-step cheer (round win and the champion's pose):
+ * the first two steps last 16 and 17 frames, then 11 and 13 repeat. Measured
+ * from the cartridge's own battles (all six characters share it). */
+static unsigned sb4_cheer_step(unsigned age) {
+    if(age<16) return 0;
+    if(age<33) return 1;
+    return (age-33)%24<11?0:1;
+}
+/* Time Up and the champion screen's losers: frames 52, 53, 52, 54, 15
+ * frames each. */
+static unsigned sb4_dejected_frame(unsigned age) {
+    static const uint8_t sequence[4]={52,53,52,54};
+    return sequence[(age/15)&3];
+}
+static bool champion_screen(void) { return g_ram[0x1031]==5; }
+/* A bomber with no way out: all four neighbouring cells hold a hard block, a
+ * soft block or a bomb (static collision map `$1052`: `$80` hard, `$20` soft,
+ * `$40` bomb; the revealed-item bit `$10` alone does not block), at least one
+ * of them a bomb, on the seat's collision cell `$16AA+seat` (y*16+x).
+ * Verified by dumping `$1052` in a Battle arena before and after dropping a
+ * bomb (the cell turns `$50`). */
+static int trapped_seen[5]; /* frame counter + 1 of the last cornered frame per seat */
+static bool trapped_by_bomb(unsigned seat) {
+    unsigned cell=seat<5?g_ram[0x16aa+seat]:0;
+    if(cell<17 || cell>190) return false;
+    const unsigned neighbours[4]={cell-1,cell+1,cell-16,cell+16};
+    bool bomb=false;
+    for(unsigned k=0;k<4;++k) {
+        unsigned bits=g_ram[0x1052+neighbours[k]];
+        if(!(bits&0xe0)) return false;
+        bomb|=(bits&0x40)!=0;
+    }
+    return bomb;
+}
+static int shown_frame[5]={-1,-1,-1,-1,-1};
+static char shown_src[5]={'-','-','-','-','-'}; /* p pose, b Bad Bomber, a ability (diagnostic log) */ /* SB4 frame drawn per seat (diagnostic log) */
+/* Draw Game screen: mode $0A (measured with the pose log on a forced "Empatar
+ * rodada": all five seats first on the Time Up animation $1F, then on the
+ * cheer $15). Super Bomberman 5 cheers, the Bomber Kings repeat the Time Up
+ * pose instead. */
+static bool champion_draw(void) { return g_ram[0x1031]==0x0a; }
+static unsigned sb4_pose_frame(unsigned seat,unsigned object,bool rider,bool mounting) {
     int direction;int pose=bomber_pose(g_ram[0x79f+object],&direction);
     unsigned d=sb4_direction(direction),step=walk_step(object);
     unsigned walk=step==1?1:step==3?2:0;
-    if(mounting) return 20+d;
+    static unsigned facing[5]={2,2,2,2,2}; /* last walking/standing direction per seat */
+    if(seat<5 && (pose==POSE_STAND || pose==POSE_WALK)) facing[seat]=d;
+    /* The stun by a landing bomb (anim $21) also sets $1782 bit 1, the
+     * "jumping onto the mount" flag, for the whole stun (pose log): it is not
+     * a mount jump. */
+    if(mounting && pose!=POSE_STUN) return 20+d;
     if(rider) return 16+d;
+    /* Draw Game screen: the Time Up pose, whatever the native animation. */
+    if(champion_draw()) return sb4_dejected_frame(pose_age(seat,CLOCK_TIME_UP));
+    /* Cornered by bombs: the dejected pose (Time Up, champion losers). After
+     * a while the native game switches a cornered bomber to the stun
+     * animation ($21); it keeps the dejected loop instead of the zap. */
+    if(seat<5 && (pose==POSE_STAND || pose==POSE_WALK || pose==POSE_STUN) && !champion_screen()) {
+        if(trapped_by_bomb(seat)) { trapped_seen[seat]=snes_frame_counter+1;return sb4_dejected_frame(pose_age(seat,CLOCK_TRAPPED)); }
+        /* The blast removes the bomb from the map a moment before the native
+         * game starts the death animation ($16), with the stun animation
+         * ($21) in between: keep the dejected pose instead of flashing the
+         * electrocuted frame. */
+        if(pose==POSE_STUN && trapped_seen[seat] && snes_frame_counter+1-trapped_seen[seat]<=60)
+            return sb4_dejected_frame(pose_age(seat,CLOCK_TRAPPED));
+    }
     switch(pose) {
     case POSE_WALK: return d*3+walk;
     case POSE_CARRY_WALK: return 32+d*3+walk;
     case POSE_CARRY: return 32+d*3;
     case POSE_ACTION: return 60+d;
-    case POSE_AIR: return 48+d;
-    case POSE_VICTORY: return (snes_frame_counter/16)&1?53:54;
+    /* Airborne animations ($17-$1A) are the bomber stunned by a bomb landing
+     * on it. Super Bomberman 4 turns the standing sprites clockwise (up,
+     * right, down, left) from the direction it faced, not a jump pose. */
+    case POSE_AIR: return (((d+pose_age(seat,CLOCK_SPIN)/SPIN_FRAMES)&3)*3);
+    case POSE_VICTORY: return 45+sb4_cheer_step(pose_age(seat,CLOCK_CHEER));
     case POSE_DEATH: { unsigned k=g_ram[0x7ff+object]/2;return 24+(k>3?3:k); }
     /* Losers on the Battle champion screen (mode 5) are zapped with the
-     * stun animation ($21); Super Bomberman 4 shows its losers with the
-     * dejected Time Up pose instead of the electrocuted frame. */
-    case POSE_STUN: return g_ram[0x1031]==5?52:55;
-    case POSE_TIME_UP: return 52;
+     * stun animation ($21); Super Bomberman 4 shows them dejected, like
+     * Time Up, instead of the electrocuted frame. */
+    case POSE_STUN:
+        if(champion_screen()) return sb4_dejected_frame(pose_age(seat,CLOCK_DEJECTED));
+        /* Stunned (a bomb landed on the bomber, measured with the pose log):
+         * Super Bomberman 4 turns the standing sprites clockwise from the
+         * direction the bomber was facing. */
+        return (((seat<5?facing[seat]:d)+pose_age(seat,CLOCK_SPIN)/SPIN_FRAMES)&3)*3;
+    case POSE_TIME_UP: return sb4_dejected_frame(pose_age(seat,CLOCK_TIME_UP));
     case POSE_STAND: return d*3;
     default: return ((snes_frame_counter/6)&3)*3;
     }
+}
+/* Frame address of a seat's pose. The champion on the Battle champion
+ * screen (victory animation in mode 5) plays Super Bomberman 4's own
+ * trophy pose from the bank $DE sheet instead of the round-win cheer. */
+static uint32_t sb4_pose_pc(unsigned seat,unsigned character,unsigned object,bool rider,bool mounting) {
+    int direction;
+    if(!rider && !mounting && champion_screen() && !champion_draw() && bomber_pose(g_ram[0x79f+object],&direction)==POSE_VICTORY)
+    {
+        unsigned step=sb4_cheer_step(pose_age(seat,CLOCK_CHAMPION));
+        if(seat<5) shown_frame[seat]=1000+(int)step; /* 1000+: champion trophy sheet */
+        return Sb4ChampionPc(character,step);
+    }
+    unsigned frame=sb4_pose_frame(seat,object,rider,mounting);
+    if(seat<5) shown_frame[seat]=(int)frame;
+    return Sb4FramePc(character,frame);
 }
 /* Bad Bomber cart animations: $42-$45 riding, $3B-$3E throwing (right,
  * down, left, up = the side of the arena it faces; verified by Battle
@@ -859,16 +967,17 @@ static bool palette_unused(const Ppu *ppu,unsigned palette) {
  * shared with its mount (Louie) and the eggs it hatches, so a palette no
  * visible sprite uses is taken first; only when none is free is `fallback`
  * recolored. */
-static int key_palette[SKINS*8];
+static int key_palette[SKINS*16];
 static bool palette_given[8];
+static unsigned palette_index(unsigned key) { return (key&BLACK_KEY)?SKINS*8+(key&~(unsigned)BLACK_KEY):key; }
 static int choose_palette(Ppu *ppu,unsigned key,int fallback) {
-    if(key_palette[key]>=0) return key_palette[key];
+    if(key_palette[palette_index(key)]>=0) return key_palette[palette_index(key)];
     int chosen=-1;
     for(int p=7;p>=0 && chosen<0;--p) if(!palette_given[p] && palette_unused(ppu,(unsigned)p)) chosen=p;
     if(chosen<0 && fallback>=0 && fallback<8 && !palette_given[fallback]) chosen=fallback;
     if(chosen<0) return -1;
     load_palette(ppu,(unsigned)chosen,key);palette_given[chosen]=true;
-    return key_palette[key]=chosen;
+    return key_palette[palette_index(key)]=chosen;
 }
 /* Bounding box of a native frame's pieces relative to the object. */
 static void frame_box(uint32_t data,int *left,int *right,int *bottom) {
@@ -965,6 +1074,14 @@ typedef struct { int line;unsigned palette,key; } LineLoad;
 static LineLoad line_loads[64];
 static unsigned line_load_count;
 static uint16_t frame_obj_colors[128];
+/* True while the cartridge has blanked seat palette `slot` this frame. The
+ * bomber's own colors are 1-7: the curse zeroes those and leaves 8-15 alone
+ * (they belong to whatever else shares the slot). */
+static bool slot_blanked(unsigned slot) {
+    if(slot>=8) return false;
+    for(unsigned c=1;c<8;++c) if(frame_obj_colors[slot*16+c]) return false;
+    return true;
+}
 static void add_line_load(int line,unsigned palette,unsigned key) {
     if(line_load_count<sizeof(line_loads)/sizeof(*line_loads))
         line_loads[line_load_count++]=(LineLoad){line,palette,key};
@@ -1191,10 +1308,33 @@ static void draw_pageless_objects(Ppu *ppu,bool *taken) {
         if(!drawn_here) for(unsigned k=0;k<count;++k) { taken[mine[k]]=true;hide(ppu,mine[k]); }
     }
 }
+/* Diagnostic, off by default: with the environment variable
+ * SB5_BK_POSE_LOG=1 the mode and every seat's animation are appended to
+ * bomber_kings_pose.log when they change (used to find out which animation
+ * a native screen drives the Bomber Kings with). */
+static void pose_debug_log(void) {
+    static int enabled=-1;static char last[600];
+    if(enabled<0) enabled=getenv("SB5_BK_POSE_LOG")!=NULL;
+    if(!enabled) return;
+    char line[600];int n=snprintf(line,sizeof(line),"mode=%02x draw=%d",g_ram[0x1031],champion_draw());
+    for(unsigned i=0;i<5 && n<(int)sizeof(line)-80;++i) {
+        unsigned object=g_ram[0x17fa+i];
+        n+=snprintf(line+n,sizeof(line)-(unsigned)n," s%u:anim=%02x,sb4=%d%c,trap=%d,cell=%02x,f1782=%02x,f15a2=%02x,f15ba=%02x",i,
+                    object<0x60?g_ram[0x79f+object]:0xff,shown_frame[i],shown_src[i],trapped_by_bomb(i),g_ram[0x16aa+i],
+                    g_ram[0x1782+i],g_ram[0x15a2+i],g_ram[0x15ba+i]);
+    }
+    if(strcmp(line,last)) {
+        FILE *f=fopen("bomber_kings_pose.log","a");
+        if(f) { fprintf(f,"%d %s\n",(int)snes_frame_counter,line);fclose(f); }
+        memcpy(last,line,sizeof(last));
+    }
+}
 static void draw_players(Ppu *ppu,bool *taken) {
+    pose_debug_log();
     for(unsigned i=0;i<5;++i) {
         int skin=skin_of(g_ram[SEAT_CHOICE+i]);
         unsigned object=g_ram[0x17fa+i];
+        shown_frame[i]=-1;shown_src[i]='-';
         if(skin<0 || object>=0x60 || g_ram[0x16c2+i]!=0) continue;
         unsigned slot=g_ram[0x6df+object];
         if(slot>=8) continue;
@@ -1229,7 +1369,8 @@ static void draw_players(Ppu *ppu,bool *taken) {
             /* Bad Bomber ($15A2 bit 7): the Super Bomberman 4 Bad Bomber on
              * its board, its feet where the native cart ends. */
             uint32_t bad=(g_ram[0x15a2+i]&0x80)?bad_bomber_pc((unsigned)skin-2,object):0;
-            uint32_t frame_pc=bad?bad:ability>=0 && sb4_frame?sb4_frame:Sb4FramePc((unsigned)skin-2,sb4_pose_frame(object,rider,(g_ram[0x1782+i]&0x02)!=0));
+            if(bad) shown_src[i]='b'; else if(ability>=0 && sb4_frame) { shown_src[i]='a';shown_frame[i]=2000+ability; } else shown_src[i]='p';
+            uint32_t frame_pc=bad?bad:ability>=0 && sb4_frame?sb4_frame:sb4_pose_pc(i,(unsigned)skin-2,object,rider,(g_ram[0x1782+i]&0x02)!=0);
             bool own=rider || bad;
             if(!compose_sb4_at((unsigned)skin-2,frame_pc,ORIGIN_X+bomber_cx,
                                own?ORIGIN_Y+bottom-1:ORIGIN_Y+bomber_bottom-1,own)) continue;
@@ -1245,7 +1386,8 @@ static void draw_players(Ppu *ppu,bool *taken) {
         int y=g_ram[0x5bf+object]+oy-ORIGIN_Y+lift;
         int top=screen_line(y+canvas_top()),low=top+(canvas_bottom()-canvas_top());
         /* His flying head leaves the body's lines: one palette for the frame. */
-        int palette=head_dx>=0 || !count?choose_palette(ppu,key,(int)slot):figure_palette(ppu,key,slot,mine,count,top,low);
+        unsigned pkey=slot_blanked(slot)?(key|BLACK_KEY):key;
+        int palette=head_dx>=0 || !count?choose_palette(ppu,pkey,(int)slot):figure_palette(ppu,pkey,slot,mine,count,top,low);
         if(palette<0) continue;
         int x=g_ram[0x55f+object]+ox-ORIGIN_X;
         emit(ppu,x,y,(unsigned)palette,priority,mine,count,taken);
@@ -1553,7 +1695,7 @@ void ExtraCharactersObserve(const Ppu *view,unsigned line,void *context) {
     saved_count=0;borrowed_count=0;line_load_count=0;late_count=0;late_line=-1;memcpy(saved_high,ppu->highOam,sizeof(saved_high));
     memcpy(frame_obj_colors,&ppu->cgram[0x80],sizeof(frame_obj_colors));
     bool taken[128]={false};
-    for(unsigned k=0;k<SKINS*8;++k) key_palette[k]=-1;
+    for(unsigned k=0;k<SKINS*16;++k) key_palette[k]=-1;
     memset(palette_given,0,sizeof(palette_given));
     if(extras && picker()) { draw_portraits(ppu);draw_grid(ppu,taken);apply_line_loads(ppu,1); }
     else if(stage()) {

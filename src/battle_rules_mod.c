@@ -1,4 +1,4 @@
-/* Battle rules, page 2: "round countdown" and "shuffle spawns".
+/* Battle rules, page 2: "round countdown", "shuffle spawns" and "disable skills".
  *
  * Rules screen (mode $1031 = 4, task PC $C6:9345, row $1032 = 0-5, wrapping):
  * with the plugin on, Down on the last row (Bowling Bomber) or Up on the first
@@ -36,17 +36,17 @@
 #include <string.h>
 
 enum {
-    PAD_HOOK = 0xc00af9, ROUND_HOOK = 0xc50007, ROUND_HOOK2 = 0xc20bc1, ROUND_HOOK3 = 0xc50912, ACTOR_HOOK = 0xc4221d, ACTOR_RET = 0xc4224e, SPAWN_HOOK = 0xc216c7,
+    PAD_HOOK = 0xc00af9, ROUND_HOOK = 0xc50007, ROUND_HOOK2 = 0xc20bc1, ROUND_HOOK3 = 0xc50912, INIT_HOOK = 0xc42a3c, ACTOR_HOOK = 0xc4221d, ACTOR_RET = 0xc4224e, SPAWN_HOOK = 0xc216c7,
     RULES_PC = 0xc69345,
     MODE = 0x1031, ROW = 0x1032, FLAGS = 0x1d1a, PAUSE = 0x1d1d, READY = 0x0aee, TIMER = 0x0e1c,
     PAD_A = 0x80, DIR_RIGHT = 0x01, DIR_LEFT = 0x02, DIR_DOWN = 0x04, DIR_UP = 0x08,
-    COUNT_FRAMES = 180, SEATS = 5, LAST_ROW = 5,
+    COUNT_FRAMES = 180, SEATS = 5, LAST_ROW = 5, RULES = 3,
     MAP = 0x3000, BLANK = 0x100, BLANK_ROW0 = 5, BLANK_ROWS = 18, BLANK_COL0 = 6, BLANK_COLS = 24,
 };
 
 static bool enabled, hooks_installed;
 /* Simulation state (saved with the machine). */
-static uint8_t opt[2] = {1, 0}, page, cur, suppress, perm[SEATS], perm_valid;
+static uint8_t opt[3] = {1, 0, 0}, page, cur, suppress, perm[SEATS], perm_valid;
 static uint16_t countdown;
 static uint8_t timer_bytes[3];
 static uint32_t rng = 0x9e3779b9u, frames;
@@ -54,6 +54,8 @@ static uint8_t prev_act[SEATS], prev_dir[SEATS];
 
 bool BattleRulesEnabled(void) { return enabled; }
 bool BattleRulesCountdownActive(void) { return enabled && countdown != 0; }
+/* Third rule, "disable abilities": the B + direction moves of the extra characters are not used. */
+bool BattleRulesAbilitiesOff(void) { return enabled && opt[2]; }
 
 static uint8_t rb(uint32_t pc) { return g_rom[((pc >> 16) & 0x3f) << 16 | (pc & 0xffff)]; }
 static uint32_t rw(uint32_t pc) { return rb(pc) | (uint32_t)rb(pc + 1) << 8; }
@@ -144,7 +146,7 @@ static uint8_t pad_logic(CpuState *cpu) {
         for (unsigned s = 0; s < SEATS; ++s) {
             bool down = (new_dir[s] & DIR_DOWN) && row == LAST_ROW, up = (new_dir[s] & DIR_UP) && row == 0;
             if (!down && !up) continue;
-            page = 1; cur = down ? 0 : 1; suppress = 1;
+            page = 1; cur = down ? 0 : RULES - 1; suppress = 1;
             clear_pads(held, dirs, fresh, fresh_dirs);
             return SFX_MOVE;
         }
@@ -157,12 +159,12 @@ static uint8_t pad_logic(CpuState *cpu) {
     for (unsigned s = 0; s < SEATS && !leave; ++s) {
         uint8_t d = new_dir[s];
         if (d & DIR_DOWN) {
-            if (cur == 0) { cur = 1; sound = SFX_MOVE; }
+            if (cur < RULES - 1) { ++cur; sound = SFX_MOVE; }
             else { leave = true; who = s; if (row == LAST_ROW) inject = DIR_DOWN; }
             break;
         }
         if (d & DIR_UP) {
-            if (cur == 1) { cur = 0; sound = SFX_MOVE; }
+            if (cur > 0) { --cur; sound = SFX_MOVE; }
             else { leave = true; who = s; if (row == 0) inject = DIR_UP; }
             break;
         }
@@ -187,11 +189,18 @@ static void pad_hook(CpuState *cpu, uint32_t pc) {
 
 /* ---- Round start, freeze, spawn shuffle ------------------------------- */
 
+/* Battle stage init ($C4:2A3C) runs once per round. Hurry Up also drops and
+ * re-raises READY, so only a round that went through the init may count down. */
+static bool round_armed;
+static void init_hook(CpuState *cpu, uint32_t pc) { (void)cpu; (void)pc; round_armed = true; }
+
 static void round_hook(CpuState *cpu, uint32_t pc) {
     (void)cpu; (void)pc;
     if (g_ram[READY] == 1) return; /* these stores also run every frame the round is live */
     perm_valid = 0;
-    if (!enabled || opt[0] || !in_battle()) return; /* opt[0] = "start immediately" */
+    const bool armed = round_armed;
+    round_armed = false;
+    if (!armed || !enabled || opt[0] || !in_battle()) return; /* opt[0] = "start immediately" */
     countdown = COUNT_FRAMES;
     memcpy(timer_bytes, &g_ram[TIMER], sizeof(timer_bytes));
 }
@@ -272,6 +281,7 @@ void BattleRulesBeforeFrame(void) {
         interp_bridge_add_pre_opcode_hook(ROUND_HOOK, round_hook);
         interp_bridge_add_pre_opcode_hook(ROUND_HOOK2, round_hook);
         interp_bridge_add_pre_opcode_hook(ROUND_HOOK3, round_hook);
+        interp_bridge_add_pre_opcode_hook(INIT_HOOK, init_hook);
         interp_bridge_add_pre_opcode_hook(ACTOR_HOOK, actor_hook);
         interp_bridge_add_pre_opcode_hook(SPAWN_HOOK, spawn_hook);
     }
@@ -314,8 +324,8 @@ void BattleRulesApplyText(struct Ppu *ppu) {
     const bool pt = ptbr();
     /* After the translation pass has read its guard tiles (the banner needs the native row 6). */
     PtbrBlankMap(ppu, BLANK_ROW0, BLANK_COL0, BLANK_ROWS, BLANK_COLS, BLANK);
-    static const char *const names_en[2] = {"Instant Start", "Shuffle Spawn"}, *const names_pt[2] = {"In\303\255cio imediato", "Embaralhar"};
-    for (unsigned i = 0; i < 2; ++i) {
+    static const char *const names_en[3] = {"Instant Start", "Shuffle Spawn", "Disable Skills"}, *const names_pt[3] = {"In\303\255cio imediato", "Embaralhar", "Sem habilidades"};
+    for (unsigned i = 0; i < RULES; ++i) {
         const unsigned row = 12 + 3 * i, tile = 584 + i * 40;
         PtbrDrawBodyText(ppu, row, 8, 14, tile, attr_label, (pt ? names_pt : names_en)[i]);
         PtbrDrawBodyText(ppu, row, 22, 6, tile + 28, opt[i] ? attr_red : attr_blue,
@@ -436,15 +446,15 @@ static bool ptbr(void) { return PtbrEnabled(); }
 
 void BattleRulesReset(void) {
     remove_sfx();
-    page = cur = suppress = perm_valid = 0; countdown = 0; rules_latch = false;
+    page = cur = suppress = perm_valid = 0; countdown = 0; round_armed = false; rules_latch = false;
     memset(prev_act, 0, sizeof(prev_act)); memset(prev_dir, 0, sizeof(prev_dir));
     /* Session choices: a reset puts them back to their defaults (start immediately yes, shuffle no). */
-    opt[0] = 1; opt[1] = 0;
+    opt[0] = 1; opt[1] = 0; opt[2] = 0;
 }
 #define BR_MAGIC 0x53524252u /* "RBRS" */
 void BattleRulesSave(struct SaveLoadInfo *sli) {
     uint32_t magic = BR_MAGIC;
-    uint8_t state[9 + SEATS * 2 + 3] = {opt[0], opt[1], page, cur, suppress, perm_valid, (uint8_t)countdown, (uint8_t)(countdown >> 8), 0};
+    uint8_t state[9 + SEATS * 2 + 3] = {opt[0], opt[1], page, cur, suppress, perm_valid, (uint8_t)countdown, (uint8_t)(countdown >> 8), opt[2]};
     memcpy(state + 9, prev_act, SEATS); memcpy(state + 9 + SEATS, prev_dir, SEATS);
     memcpy(state + 9 + SEATS * 2, timer_bytes, 3);
     uint8_t order[SEATS]; memcpy(order, perm, SEATS);
@@ -460,10 +470,10 @@ void BattleRulesLoad(struct SaveLoadInfo *sli, unsigned version) {
     sli->func(sli, &magic, 4); sli->func(sli, state, sizeof(state));
     sli->func(sli, order, sizeof(order)); sli->func(sli, &r, 4); sli->func(sli, &f, 4);
     uint16_t cd = (uint16_t)(state[6] | state[7] << 8);
-    bool bad = magic != BR_MAGIC || state[0] > 1 || state[1] > 1 || state[2] > 1 || state[3] > 1 || state[4] > 1 || state[5] > 1 || cd > COUNT_FRAMES || !r;
+    bool bad = magic != BR_MAGIC || state[0] > 1 || state[1] > 1 || state[2] > 1 || state[3] >= RULES || state[8] > 1 || state[4] > 1 || state[5] > 1 || cd > COUNT_FRAMES || !r;
     for (unsigned i = 0; i < SEATS; ++i) bad = bad || order[i] >= SEATS;
     if (bad) { RtlStateStreamFail(sli); return; }
-    opt[0] = state[0]; opt[1] = state[1]; page = state[2]; cur = state[3]; suppress = state[4]; perm_valid = state[5]; countdown = cd;
+    opt[0] = state[0]; opt[1] = state[1]; opt[2] = state[8]; page = state[2]; cur = state[3]; suppress = state[4]; perm_valid = state[5]; countdown = cd;
     memcpy(prev_act, state + 9, SEATS); memcpy(prev_dir, state + 9 + SEATS, SEATS);
     memcpy(timer_bytes, state + 9 + SEATS * 2, 3);
     memcpy(perm, order, SEATS); rng = r; frames = f;

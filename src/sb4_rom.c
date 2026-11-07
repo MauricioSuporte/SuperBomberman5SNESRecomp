@@ -245,3 +245,14 @@ uint32_t Sb4BadBomberPc(unsigned character,unsigned direction,bool throwing) {
     if(character>=SB4_CHARACTERS || direction>=4) return 0;
     return kExtraSheet[character]+kOffset[direction]+(throwing?0x80:0);
 }
+
+/* Battle champion screen: the winner's two-frame pose on the trophy, one
+ * 4-frame sheet per character in bank $DE ($A000 Bomberman, $C000 Hammer,
+ * $B800 Jet, $B000 Lady, $A800 Bazooka, $C800 Great); the cartridge uploads
+ * frames +$00 and +$80 alternately. Found from the cartridge's own VRAM
+ * uploads with each character as the champion in a headless emulator. */
+static const uint32_t kChampionSheet[SB4_CHARACTERS]={0xdea000,0xdec000,0xdeb800,0xdeb000,0xdea800,0xdec800};
+uint32_t Sb4ChampionPc(unsigned character,unsigned step) {
+    if(character>=SB4_CHARACTERS || step>=2) return 0;
+    return kChampionSheet[character]+step*0x80;
+}
