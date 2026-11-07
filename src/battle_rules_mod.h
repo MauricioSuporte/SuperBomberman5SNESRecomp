@@ -5,6 +5,7 @@ struct SaveLoadInfo;
 bool BattleRulesEnabled(void);
 bool BattleRulesCountdownActive(void);
 bool BattleRulesAbilitiesOff(void);
+unsigned BattleRulesThrowRange(void); /* rules page 2: Power Glove throw range in tiles, 1-5 (native 3) */
 bool BattleRulesDomino(void); /* rules page 2: a kicked bomb passes its motion to the bomb it hits */ /* rules page 2: extra characters' B + direction abilities disabled */
 void BattleRulesBeforeFrame(void);
 void BattleRulesAfterFrame(void);

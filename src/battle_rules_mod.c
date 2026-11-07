@@ -28,7 +28,16 @@
  * update, X = bomb, A = blocked cell, direction = $0E90 & 7) kicks that bomb
  * with the native ground kick ($C5:2293, A = direction, $8A = origin cell)
  * through a trampoline in $FF padding at $C5:7540, then resumes $C5:2182 so the
- * first bomb stops natively. Same path as the Yellow Louie's chain kick. */
+ * first bomb stops natively. Same path as the Yellow Louie's chain kick.
+ *
+ * Throw range: the Power Glove throw ($C5:2436, carried bomb $0E90 bit $40)
+ * makes the bomb airborne (bit $20) with $0F10 = $2C, an index into the height
+ * arc at $80:8CDA. Each airborne frame ($C5:1FED) moves it 4 px forward
+ * ($80:8C9F) and reads the arc at $C5:20E7 (then INC $0F10); height 0 (index
+ * $37) lands it ($C5:2243). Indices $2C-$37 are 12 frames = 48 px = 3 tiles.
+ * For N tiles the hook at $C5:20E7 walks the same arc in 4N frames instead,
+ * writing $0F10 before the native read; a bounce off a blocked cell ($C5:2160,
+ * $0F10 = $38) is left native. */
 #include "battle_rules_mod.h"
 #include "common_rtl.h"
 #include "mod_runtime.h"
@@ -43,17 +52,18 @@
 #include <string.h>
 
 enum {
-    PAD_HOOK = 0xc00af9, ROUND_HOOK = 0xc50007, ROUND_HOOK2 = 0xc20bc1, ROUND_HOOK3 = 0xc50912, INIT_HOOK = 0xc42a3c, ACTOR_HOOK = 0xc4221d, ACTOR_RET = 0xc4224e, SPAWN_HOOK = 0xc216c7, ROLL_HOOK = 0xc52182,
+    PAD_HOOK = 0xc00af9, ROUND_HOOK = 0xc50007, ROUND_HOOK2 = 0xc20bc1, ROUND_HOOK3 = 0xc50912, INIT_HOOK = 0xc42a3c, ACTOR_HOOK = 0xc4221d, ACTOR_RET = 0xc4224e, SPAWN_HOOK = 0xc216c7, ROLL_HOOK = 0xc52182, THROW_HOOK = 0xc5245b, ARC_HOOK = 0xc520e7,
     RULES_PC = 0xc69345,
     MODE = 0x1031, ROW = 0x1032, FLAGS = 0x1d1a, PAUSE = 0x1d1d, READY = 0x0aee, TIMER = 0x0e1c,
     PAD_A = 0x80, DIR_RIGHT = 0x01, DIR_LEFT = 0x02, DIR_DOWN = 0x04, DIR_UP = 0x08,
-    COUNT_FRAMES = 180, SEATS = 5, LAST_ROW = 5, RULES = 4,
+    COUNT_FRAMES = 180, SEATS = 5, LAST_ROW = 5, RULES = 5, RANGE = 4, RANGE_DEFAULT = 3, RANGE_MAX = 5, BOMBS = 20,
+    ARC_FIRST = 0x2c, ARC_LAST = 0x37, FIRST_ROW = 9,
     MAP = 0x3000, BLANK = 0x100, BLANK_ROW0 = 5, BLANK_ROWS = 18, BLANK_COL0 = 6, BLANK_COLS = 24,
 };
 
 static bool enabled, hooks_installed;
 /* Simulation state (saved with the machine). */
-static uint8_t opt[RULES] = {1, 0, 0, 0}, page, cur, suppress, perm[SEATS], perm_valid;
+static uint8_t opt[RULES] = {1, 0, 0, 0, RANGE_DEFAULT}, throw_step[BOMBS], page, cur, suppress, perm[SEATS], perm_valid;
 static uint16_t countdown;
 static uint8_t timer_bytes[3];
 static uint32_t rng = 0x9e3779b9u, frames;
@@ -65,6 +75,8 @@ bool BattleRulesCountdownActive(void) { return enabled && countdown != 0; }
 bool BattleRulesAbilitiesOff(void) { return enabled && opt[2]; }
 /* Fourth rule, "domino": a kicked bomb that hits a resting bomb stops and passes its motion on. */
 bool BattleRulesDomino(void) { return enabled && opt[3]; }
+/* Fifth rule, Power Glove throw range in tiles (1-5, native 3). */
+unsigned BattleRulesThrowRange(void) { return enabled ? opt[RANGE] : RANGE_DEFAULT; }
 
 static uint8_t rb(uint32_t pc) { return g_rom[((pc >> 16) & 0x3f) << 16 | (pc & 0xffff)]; }
 static uint32_t rw(uint32_t pc) { return rb(pc) | (uint32_t)rb(pc + 1) << 8; }
@@ -177,7 +189,12 @@ static uint8_t pad_logic(CpuState *cpu) {
             else { leave = true; who = s; if (row == 0) inject = DIR_UP; }
             break;
         }
-        if ((d & (DIR_LEFT | DIR_RIGHT)) || (new_act[s] & PAD_A)) { opt[cur] ^= 1; sound = SFX_MOVE; break; }
+        if ((d & (DIR_LEFT | DIR_RIGHT)) || (new_act[s] & PAD_A)) {
+            if (cur == RANGE) /* Right/A: +1, Left: -1, wrapping 1-5 */
+                opt[RANGE] = (d & DIR_LEFT) ? (opt[RANGE] > 1 ? opt[RANGE] - 1 : RANGE_MAX) : (opt[RANGE] < RANGE_MAX ? opt[RANGE] + 1 : 1);
+            else opt[cur] ^= 1;
+            sound = SFX_MOVE; break;
+        }
     }
     for (unsigned s = 0; s < SEATS; ++s) {
         g_ram[(dirs + s) & 0xffff] = 0; g_ram[(fresh_dirs + s) & 0xffff] = 0; g_ram[(fresh_dirs + 5 + s) & 0xffff] = 0;
@@ -327,6 +344,32 @@ static void roll_hook(CpuState *cpu, uint32_t pc) {
     interp_bridge_pre_opcode_redirect(KICK_CODE);
 }
 
+/* ---- Throw range -------------------------------------------------------- */
+
+static void throw_hook(CpuState *cpu, uint32_t pc) {
+    (void)pc;
+    unsigned bomb = cpu->X & 0xff;
+    if (bomb >= BOMBS) return;
+    throw_step[bomb] = 0;
+    if (enabled && in_battle() && opt[RANGE] != RANGE_DEFAULT) throw_step[bomb] = 1; /* step + 1 */
+}
+/* Arc index for step k of a throw lasting 4 * range frames: first $2C, last (height 0) $37. */
+static uint8_t arc_index(unsigned step, unsigned range) {
+    unsigned frames = 4 * range;
+    if (step >= frames - 1) return ARC_LAST;
+    return (uint8_t)(ARC_FIRST + (step * (ARC_LAST - ARC_FIRST)) / (frames - 1));
+}
+static void arc_hook(CpuState *cpu, uint32_t pc) {
+    (void)pc;
+    unsigned bomb = cpu->X & 0xff;
+    if (bomb >= BOMBS || !throw_step[bomb]) return;
+    const uint8_t now = g_ram[0x0f10 + bomb];
+    if (!enabled || !in_battle() || now < ARC_FIRST || now > ARC_LAST || opt[RANGE] == RANGE_DEFAULT) { throw_step[bomb] = 0; return; }
+    const uint8_t idx = arc_index(throw_step[bomb] - 1u, opt[RANGE]);
+    g_ram[0x0f10 + bomb] = idx;
+    throw_step[bomb] = idx == ARC_LAST ? 0 : (uint8_t)(throw_step[bomb] + 1);
+}
+
 void BattleRulesBeforeFrame(void) {
     if (!enabled) return;
     if (!hooks_installed) {
@@ -338,12 +381,14 @@ void BattleRulesBeforeFrame(void) {
         interp_bridge_add_pre_opcode_hook(ACTOR_HOOK, actor_hook);
         interp_bridge_add_pre_opcode_hook(SPAWN_HOOK, spawn_hook);
         interp_bridge_add_pre_opcode_hook(ROLL_HOOK, roll_hook);
+        interp_bridge_add_pre_opcode_hook(THROW_HOOK, throw_hook);
+        interp_bridge_add_pre_opcode_hook(ARC_HOOK, arc_hook);
     }
     install_sfx();
     install_kick();
     ++frames;
     latch_rules();
-    if (g_ram[MODE] < 0x74) { countdown = 0; if (g_ram[MODE] != 4) perm_valid = 0; }
+    if (g_ram[MODE] < 0x74) { countdown = 0; memset(throw_step, 0, sizeof(throw_step)); if (g_ram[MODE] != 4) perm_valid = 0; }
     if (countdown && !g_ram[PAUSE]) --countdown;
     if (!on_rules()) page = 0;
 }
@@ -366,8 +411,8 @@ void BattleRulesPrepareDraw(void) {
     attr_blue = g_ppu->vram[(MAP + 6 * 32 + 22) & 0x7fff] & 0x3c00;
     attr_red = g_ppu->vram[(MAP + 15 * 32 + 22) & 0x7fff] & 0x3c00;
     saved_oam0 = g_ppu->oam[0];
-    /* The native hand, moved to the row of the page's cursor (rows 12 and 15). */
-    g_ppu->oam[0] = (uint16_t)((saved_oam0 & 0xff) | (unsigned)(95 + 24 * cur) << 8);
+    /* The native hand, moved to the row of the page's cursor (rows 9, 12, ... 21). */
+    g_ppu->oam[0] = (uint16_t)((saved_oam0 & 0xff) | (unsigned)(8 * FIRST_ROW - 1 + 24 * cur) << 8);
     ++g_ppu->vramWriteCount; ++g_ppu->oamWriteCount;
     blanked = true;
 }
@@ -379,12 +424,18 @@ void BattleRulesApplyText(struct Ppu *ppu) {
     const bool pt = ptbr();
     /* After the translation pass has read its guard tiles (the banner needs the native row 6). */
     PtbrBlankMap(ppu, BLANK_ROW0, BLANK_COL0, BLANK_ROWS, BLANK_COLS, BLANK);
-    static const char *const names_en[RULES] = {"Instant Start", "Shuffle Spawn", "Disable Skills", "Domino"},
-                      *const names_pt[RULES] = {"In\303\255cio imediato", "Embaralhar", "Sem habilidades", "Domin\303\263"};
+    static const char *const names_en[RULES] = {"Instant Start", "Shuffle Spawn", "Disable Skills", "Domino", "Throw Range"},
+                      *const names_pt[RULES] = {"In\303\255cio imediato", "Embaralhar", "Sem habilidades", "Domin\303\263", "Alcance"};
     for (unsigned i = 0; i < RULES; ++i) {
-        const unsigned row = 12 + 3 * i, tile = 584 + i * 40;
+        /* BG1 tiles 584-763: 36 per row (label 14x2, value 4x2). Tile 768 is the BG1 map ($3000). */
+        const unsigned row = FIRST_ROW + 3 * i, tile = 584 + i * 36;
         PtbrDrawBodyText(ppu, row, 8, 14, tile, attr_label, (pt ? names_pt : names_en)[i]);
-        PtbrDrawBodyText(ppu, row, 22, 6, tile + 28, opt[i] ? attr_red : attr_blue,
+        if (i == RANGE) {
+            char value[2] = {(char)('0' + opt[RANGE]), 0};
+            PtbrDrawBodyText(ppu, row, 22, 4, tile + 28, opt[RANGE] == RANGE_DEFAULT ? attr_blue : attr_red, value);
+            continue;
+        }
+        PtbrDrawBodyText(ppu, row, 22, 4, tile + 28, opt[i] ? attr_red : attr_blue,
                          opt[i] ? (pt ? "Sim" : "Yes") : (pt ? "N\303\243o" : "No"));
     }
 }
@@ -505,7 +556,8 @@ void BattleRulesReset(void) {
     page = cur = suppress = perm_valid = 0; countdown = 0; round_armed = false; rules_latch = false;
     memset(prev_act, 0, sizeof(prev_act)); memset(prev_dir, 0, sizeof(prev_dir));
     /* Session choices: a reset puts them back to their defaults (start immediately yes, shuffle no). */
-    opt[0] = 1; opt[1] = 0; opt[2] = 0; opt[3] = 0;
+    opt[0] = 1; opt[1] = 0; opt[2] = 0; opt[3] = 0; opt[RANGE] = RANGE_DEFAULT;
+    memset(throw_step, 0, sizeof(throw_step));
 }
 #define BR_MAGIC 0x53524252u /* "RBRS" */
 void BattleRulesSave(struct SaveLoadInfo *sli) {
@@ -516,7 +568,8 @@ void BattleRulesSave(struct SaveLoadInfo *sli) {
     uint8_t order[SEATS]; memcpy(order, perm, SEATS);
     sli->func(sli, &magic, 4); sli->func(sli, state, sizeof(state));
     sli->func(sli, order, sizeof(order)); sli->func(sli, &rng, 4); sli->func(sli, &frames, 4);
-    uint8_t extra[1] = {opt[3]}; /* appended later (domino); older states end before it */
+    uint8_t extra[2 + BOMBS] = {opt[3], opt[RANGE]}; /* appended later (domino, throw range); older states end before it */
+    memcpy(extra + 2, throw_step, BOMBS);
     sli->func(sli, extra, sizeof(extra));
 }
 void BattleRulesLoad(struct SaveLoadInfo *sli, unsigned version) {
@@ -536,10 +589,12 @@ void BattleRulesLoad(struct SaveLoadInfo *sli, unsigned version) {
     memcpy(timer_bytes, state + 9 + SEATS * 2, 3);
     memcpy(perm, order, SEATS); rng = r; frames = f;
     if (!RtlStateBytesRemaining(sli)) return;
-    uint8_t extra[1] = {0};
+    uint8_t extra[2 + BOMBS] = {0};
     sli->func(sli, extra, sizeof(extra));
-    if (extra[0] > 1) { RtlStateStreamFail(sli); return; }
-    opt[3] = extra[0];
+    bool bad2 = extra[0] > 1 || extra[1] < 1 || extra[1] > RANGE_MAX;
+    for (unsigned i = 0; i < BOMBS; ++i) bad2 = bad2 || extra[2 + i] > 4 * RANGE_MAX;
+    if (bad2) { RtlStateStreamFail(sli); return; }
+    opt[3] = extra[0]; opt[RANGE] = extra[1]; memcpy(throw_step, extra + 2, BOMBS);
 }
 
 static void reset_plugin(void) { BattleRulesReset(); enabled = false; }
