@@ -1,0 +1,24 @@
+device: sdk_gphone64_x86_64 api 34 abi x86_64
+screen: Physical size: 1080x2400 Physical density: 420
+install: Success
+running after start: 2902
+focus after browse:   mCurrentFocus=Window{a92ba59 u0 com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity}
+placeholder in picker: not found
+joystick log: joysticks: 0
+joystick log: joysticks: 0
+imported: 0
+crash lines: 0
+running at end: 2902
+focus after openurl:   mCurrentFocus=Window{278f65d u0 ImmersiveModeConfirmation}
+installer confirm button: not found
+app: selftest: 341 bytes of commands
+app: update check: local=3.2.0 latest=3.1.3 newer=0 apk=https://github.com/MauricioSuporte/SuperBomberman5SNESRecomp/releases/download/v3.1.3/superbomberman5-3.1.3-android.apk
+app: selftest http GET status=200 bytes=29 body={"ok": true, "method": "GET"}
+app: selftest http PATCH status=200 bytes=31 body={"ok": true, "method": "PATCH"}
+app: selftest http POST status=200 bytes=30 body={"ok": true, "method": "POST"}
+app: selftest http GET status=200 bytes=11022 body={"url":"https://api.github.com/repos/MauricioSuporte/SuperBomberman5SNESRecomp/r
+app: selftest openurl ok=1
+app: selftest install started=1 msg=Downloading the update... / Baixando a atualização...
+server saw: GET /echo/get 0B ct=- ua=True, PATCH /echo/patch 19B ct=application/json ua=True, POST /echo/post 20B ct=application/json ua=True
+apk downloads: 1
+package updated: no (lastUpdateTime=2026-11-0717:36:34 -> lastUpdateTime=2026-11-0717:36:34)
