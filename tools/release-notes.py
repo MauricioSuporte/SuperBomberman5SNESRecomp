@@ -1275,6 +1275,13 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '3.2.0': (
+'''- **Battle extra rules: Domino** (default No, suggested by Kurobon '94). With Yes, a kicked bomb that hits a bomb on the ground stops, and the bomb it hit rolls on in the same direction.
+- **Battle extra rules: Throw Range** (default 3, suggested by Kurobon '94). Sets how many tiles (1 to 5) a bomb thrown with the Power Glove flies; 3 is the original distance.
+- Everyone in an online room needs v3.2.0.''',
+'''- **Battle extra rules: Dominó** (padrão Não, sugestão do Kurobon '94). Com Sim, a bomba chutada que bate numa bomba parada no chão para, e a bomba atingida segue rolando na mesma direção.
+- **Battle extra rules: Alcance** (padrão 3, sugestão do Kurobon '94). Define quantos tiles (1 a 5) voa a bomba arremessada com a Power Glove (luva azul); 3 é a distância original.
+- Todos na sala online precisam da v3.2.0.'''),
     '3.1.3': (
 '''- **Fix: skull on the Super Bomberman 4 characters.** Bomber Kings, Honey, Kotetsu and Terrorin now flash black while cursed in Battle, like the native characters.
 - **Fix: launcher at a Windows display scale above 100%** (for example 150%) no longer breaks the layout.
