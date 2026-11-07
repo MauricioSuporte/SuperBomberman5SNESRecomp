@@ -22,12 +22,19 @@
  * paths meet at $C2:16C7) has put the script's tile in $1D28/$1D2A and the seat
  * in X. The hook replaces that tile by the one of another seat of the same
  * stage script (spawns "22 P x y" of handler 4), through a permutation drawn
- * from a deterministic generator that is part of the save state. */
+ * from a deterministic generator that is part of the save state.
+ *
+ * Domino: a rolling bomb blocked by a resting bomb ($C5:2182 in the bomb
+ * update, X = bomb, A = blocked cell, direction = $0E90 & 7) kicks that bomb
+ * with the native ground kick ($C5:2293, A = direction, $8A = origin cell)
+ * through a trampoline in $FF padding at $C5:7540, then resumes $C5:2182 so the
+ * first bomb stops natively. Same path as the Yellow Louie's chain kick. */
 #include "battle_rules_mod.h"
 #include "common_rtl.h"
 #include "mod_runtime.h"
 #include "menu_font.h"
 #include "ptbr_mod.h"
+#include "louie_mod.h"
 #include "snes/interp_bridge.h"
 #include "common_cpu_infra.h"
 #include "snes/ppu.h"
@@ -36,17 +43,17 @@
 #include <string.h>
 
 enum {
-    PAD_HOOK = 0xc00af9, ROUND_HOOK = 0xc50007, ROUND_HOOK2 = 0xc20bc1, ROUND_HOOK3 = 0xc50912, INIT_HOOK = 0xc42a3c, ACTOR_HOOK = 0xc4221d, ACTOR_RET = 0xc4224e, SPAWN_HOOK = 0xc216c7,
+    PAD_HOOK = 0xc00af9, ROUND_HOOK = 0xc50007, ROUND_HOOK2 = 0xc20bc1, ROUND_HOOK3 = 0xc50912, INIT_HOOK = 0xc42a3c, ACTOR_HOOK = 0xc4221d, ACTOR_RET = 0xc4224e, SPAWN_HOOK = 0xc216c7, ROLL_HOOK = 0xc52182,
     RULES_PC = 0xc69345,
     MODE = 0x1031, ROW = 0x1032, FLAGS = 0x1d1a, PAUSE = 0x1d1d, READY = 0x0aee, TIMER = 0x0e1c,
     PAD_A = 0x80, DIR_RIGHT = 0x01, DIR_LEFT = 0x02, DIR_DOWN = 0x04, DIR_UP = 0x08,
-    COUNT_FRAMES = 180, SEATS = 5, LAST_ROW = 5, RULES = 3,
+    COUNT_FRAMES = 180, SEATS = 5, LAST_ROW = 5, RULES = 4,
     MAP = 0x3000, BLANK = 0x100, BLANK_ROW0 = 5, BLANK_ROWS = 18, BLANK_COL0 = 6, BLANK_COLS = 24,
 };
 
 static bool enabled, hooks_installed;
 /* Simulation state (saved with the machine). */
-static uint8_t opt[3] = {1, 0, 0}, page, cur, suppress, perm[SEATS], perm_valid;
+static uint8_t opt[RULES] = {1, 0, 0, 0}, page, cur, suppress, perm[SEATS], perm_valid;
 static uint16_t countdown;
 static uint8_t timer_bytes[3];
 static uint32_t rng = 0x9e3779b9u, frames;
@@ -56,6 +63,8 @@ bool BattleRulesEnabled(void) { return enabled; }
 bool BattleRulesCountdownActive(void) { return enabled && countdown != 0; }
 /* Third rule, "disable abilities": the B + direction moves of the extra characters are not used. */
 bool BattleRulesAbilitiesOff(void) { return enabled && opt[2]; }
+/* Fourth rule, "domino": a kicked bomb that hits a resting bomb stops and passes its motion on. */
+bool BattleRulesDomino(void) { return enabled && opt[3]; }
 
 static uint8_t rb(uint32_t pc) { return g_rom[((pc >> 16) & 0x3f) << 16 | (pc & 0xffff)]; }
 static uint32_t rw(uint32_t pc) { return rb(pc) | (uint32_t)rb(pc + 1) << 8; }
@@ -274,6 +283,50 @@ static void spawn_hook(CpuState *cpu, uint32_t pc) {
     g_ram[0x1d28] = spawn_x[to]; g_ram[0x1d2a] = spawn_y[to];
 }
 
+/* ---- Domino ------------------------------------------------------------ */
+
+enum { KICK_CODE = 0xc57540, KICK_CELL = KICK_CODE + 7, KICK_DIR = KICK_CODE + 11 };
+/* PHX PHY PHA; LDA $8A; PHA; LDA #cell; STA $8A; LDA #dir; JSL $C5:2293; PLA; STA $8A; PLA PLY PLX; JML $C5:2182 */
+static const uint8_t kKickCode[26] = {0xda, 0x5a, 0x48, 0xa5, 0x8a, 0x48, 0xa9, 0x00, 0x85, 0x8a, 0xa9, 0x00, 0x22,
+                                      0x93, 0x22, 0xc5, 0x68, 0x85, 0x8a, 0x68, 0x7a, 0xfa, 0x5c, 0x82, 0x21, 0xc5};
+static uint8_t kick_original[sizeof(kKickCode)];
+static bool kick_installed, kick_resuming;
+static void install_kick(void) {
+    if (kick_installed) return;
+    uint8_t *code = SnesRomPtr(KICK_CODE);
+    if (!code) return;
+    for (unsigned i = 0; i < sizeof(kKickCode); ++i) if (code[i] != 0xff) return;
+    memcpy(kick_original, code, sizeof(kick_original));
+    memcpy(code, kKickCode, sizeof(kKickCode));
+    kick_installed = true;
+}
+static void remove_kick(void) {
+    if (!kick_installed) return;
+    memcpy(SnesRomPtr(KICK_CODE), kick_original, sizeof(kick_original));
+    kick_installed = false;
+}
+/* A resting bomb on the ground (the test of louie_mod.c's bomb_at). */
+static int resting_bomb(unsigned cell) {
+    for (unsigned i = 0; i < 20; ++i)
+        if (g_ram[0x0e40 + i] && g_ram[0x0e7c + i] == cell && !(g_ram[0x0e90 + i] & 0xf8) && !(g_ram[0x0ecc + i] & 0x20)) return (int)i;
+    return -1;
+}
+static void roll_hook(CpuState *cpu, uint32_t pc) {
+    (void)pc;
+    if (kick_resuming) { kick_resuming = false; return; } /* the trampoline's JML back here */
+    if (!enabled || !opt[3] || !kick_installed || !in_battle() || g_ram[PAUSE]) return;
+    unsigned bomb = cpu->X & 0xff, cell = cpu->A & 0xff, dir = g_ram[0x0e90 + bomb] & 7;
+    static const int dx[5] = {0, 1, 0, -1, 0}, dy[5] = {0, 0, 1, 0, -1};
+    if (bomb >= 20 || dir < 1 || dir > 4) return;
+    if (LouieOwnsBomb(bomb)) return; /* the Yellow Louie's own chain kick handles it */
+    int hit = resting_bomb(cell);
+    if (hit < 0 || hit == (int)bomb || LouieOwnsBomb((unsigned)hit)) return;
+    SnesRomPtr(KICK_CELL)[0] = (uint8_t)(cell - dx[dir] - 16 * dy[dir]);
+    SnesRomPtr(KICK_DIR)[0] = (uint8_t)dir;
+    kick_resuming = true;
+    interp_bridge_pre_opcode_redirect(KICK_CODE);
+}
+
 void BattleRulesBeforeFrame(void) {
     if (!enabled) return;
     if (!hooks_installed) {
@@ -284,8 +337,10 @@ void BattleRulesBeforeFrame(void) {
         interp_bridge_add_pre_opcode_hook(INIT_HOOK, init_hook);
         interp_bridge_add_pre_opcode_hook(ACTOR_HOOK, actor_hook);
         interp_bridge_add_pre_opcode_hook(SPAWN_HOOK, spawn_hook);
+        interp_bridge_add_pre_opcode_hook(ROLL_HOOK, roll_hook);
     }
     install_sfx();
+    install_kick();
     ++frames;
     latch_rules();
     if (g_ram[MODE] < 0x74) { countdown = 0; if (g_ram[MODE] != 4) perm_valid = 0; }
@@ -324,7 +379,8 @@ void BattleRulesApplyText(struct Ppu *ppu) {
     const bool pt = ptbr();
     /* After the translation pass has read its guard tiles (the banner needs the native row 6). */
     PtbrBlankMap(ppu, BLANK_ROW0, BLANK_COL0, BLANK_ROWS, BLANK_COLS, BLANK);
-    static const char *const names_en[3] = {"Instant Start", "Shuffle Spawn", "Disable Skills"}, *const names_pt[3] = {"In\303\255cio imediato", "Embaralhar", "Sem habilidades"};
+    static const char *const names_en[RULES] = {"Instant Start", "Shuffle Spawn", "Disable Skills", "Domino"},
+                      *const names_pt[RULES] = {"In\303\255cio imediato", "Embaralhar", "Sem habilidades", "Domin\303\263"};
     for (unsigned i = 0; i < RULES; ++i) {
         const unsigned row = 12 + 3 * i, tile = 584 + i * 40;
         PtbrDrawBodyText(ppu, row, 8, 14, tile, attr_label, (pt ? names_pt : names_en)[i]);
@@ -445,11 +501,11 @@ static bool ptbr(void) { return PtbrEnabled(); }
 #endif
 
 void BattleRulesReset(void) {
-    remove_sfx();
+    remove_sfx(); remove_kick(); kick_resuming = false;
     page = cur = suppress = perm_valid = 0; countdown = 0; round_armed = false; rules_latch = false;
     memset(prev_act, 0, sizeof(prev_act)); memset(prev_dir, 0, sizeof(prev_dir));
     /* Session choices: a reset puts them back to their defaults (start immediately yes, shuffle no). */
-    opt[0] = 1; opt[1] = 0; opt[2] = 0;
+    opt[0] = 1; opt[1] = 0; opt[2] = 0; opt[3] = 0;
 }
 #define BR_MAGIC 0x53524252u /* "RBRS" */
 void BattleRulesSave(struct SaveLoadInfo *sli) {
@@ -460,6 +516,8 @@ void BattleRulesSave(struct SaveLoadInfo *sli) {
     uint8_t order[SEATS]; memcpy(order, perm, SEATS);
     sli->func(sli, &magic, 4); sli->func(sli, state, sizeof(state));
     sli->func(sli, order, sizeof(order)); sli->func(sli, &rng, 4); sli->func(sli, &frames, 4);
+    uint8_t extra[1] = {opt[3]}; /* appended later (domino); older states end before it */
+    sli->func(sli, extra, sizeof(extra));
 }
 void BattleRulesLoad(struct SaveLoadInfo *sli, unsigned version) {
     (void)version;
@@ -477,6 +535,11 @@ void BattleRulesLoad(struct SaveLoadInfo *sli, unsigned version) {
     memcpy(prev_act, state + 9, SEATS); memcpy(prev_dir, state + 9 + SEATS, SEATS);
     memcpy(timer_bytes, state + 9 + SEATS * 2, 3);
     memcpy(perm, order, SEATS); rng = r; frames = f;
+    if (!RtlStateBytesRemaining(sli)) return;
+    uint8_t extra[1] = {0};
+    sli->func(sli, extra, sizeof(extra));
+    if (extra[0] > 1) { RtlStateStreamFail(sli); return; }
+    opt[3] = extra[0];
 }
 
 static void reset_plugin(void) { BattleRulesReset(); enabled = false; }

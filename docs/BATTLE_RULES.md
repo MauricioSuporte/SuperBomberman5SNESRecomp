@@ -13,11 +13,13 @@ Package `superbomberman5.battle-rules` (feature `battle_rules`, default disabled
   drawn again every round; nobody keeps its own spawn.
 - **Disable Skills** (default No) — with **Yes**, the B + direction abilities of Honey, Kotetsu, Terrorin and the
   Super Bomberman 4 Bomber Kings are not used during the match (B only drops a bomb). Normal characters are unaffected.
+- **Domino** (default No) — with **Yes**, a kicked bomb that runs into a bomb lying on the ground stops there and the
+  bomb it hit starts rolling in the same direction (and so on down a line of bombs). Suggested by Kurobon '94.
 
 Open the page with **Down on Bowling Bomber** or **Up on CPU Level**; a blinking arrow under the list says there is
 more. Left/Right/A toggles a rule, Up/Down moves, and moving past either end returns to the original rows. The page
 reuses the same background and the same hand cursor, and its labels use the native font (translated with PT-BR on:
-"Início imediato", "Embaralhar", "Sem habilidades", Sim/Não). Moving and toggling play the native menu move sound.
+"Início imediato", "Embaralhar", "Sem habilidades", "Dominó", Sim/Não). Moving and toggling play the native menu move sound.
 
 How it works (JPN image, `docs/STATUS.md` has the evidence): the pad reader tail `$C0:0AF9` drives the page and clears
 the arrays the menu scripts read (held, new, and the auto-repeat array `D+$40`); leaving the page hands one native
@@ -26,10 +28,16 @@ read its guard tiles) and the two rows are written with the translation mod's na
 moved. The countdown starts from the stores that make `$0AEE` = 1 (`$C5:0007`, `$C2:0BC1`, `$C5:0912`), redirects the
 actor update loop `$C4:221D` to its `RTL`, and restores the timer bytes `$0E1C-$0E1E`. Shuffle hooks the bomber
 creation op at `$C2:16C7` and swaps `$1D28/$1D2A` with another seat's tile from the stage script's `22 P x y` entries,
-using a generator saved in the state extension. Nothing is written to the ROM image.
+using a generator saved in the state extension. Domino hooks the rolling bomb's blocked-cell check `$C5:2182` (X = bomb,
+A = blocked cell, direction `$0E90 & 7`): when that cell holds a resting bomb, a trampoline in `$FF` padding at
+`$C5:7540-$7559` calls the native ground kick `$C5:2293` on it (A = direction, `$8A` = the stopping bomb's cell) and
+resumes `$C5:2182`, where the first bomb stops natively — the Yellow Louie's chain-kick path. Bombs kicked by a Yellow
+Louie keep the Louie mod's own chain. The trampoline is written to the in-memory cartridge only after checking that the
+range is `$FF`, and restored on reset. Nothing is written to the ROM file.
 
 Limits: validated on Linux/LLE with two humans and three COM bombers (see STATUS). Three or more humans on the
-countdown marker and netplay with this mod have not been run.
+countdown marker and netplay with this mod have not been run. Domino is covered by native tests only; it has not been
+exercised in a running game yet (the routine must stay interpreted for the hook to fire).
 
 ## Português
 
@@ -44,6 +52,8 @@ tela de **regras** do Battle com duas regras, esquecidas num reset (voltam ao pa
   sorteados de novo a cada rodada; ninguém fica no próprio ponto.
 - **Sem habilidades** (padrão Não) — com **Sim**, as habilidades de B + direção de Honey, Kotetsu, Terrorin e dos Bomber
   Kings do Super Bomberman 4 não são usadas na partida (o B só solta bomba). Personagens normais não mudam.
+- **Dominó** (padrão Não) — com **Sim**, uma bomba chutada que bate numa bomba parada no chão para ali, e a bomba
+  atingida passa a rolar na mesma direção (e assim por diante numa fileira de bombas). Sugestão do Kurobon '94.
 
 Abra a página com **Baixo em Boliche** ou **Cima em Nível CPU**; uma seta piscando indica que há mais opções.
 Esquerda/Direita/A alterna a regra, Cima/Baixo move, e passar de qualquer extremidade volta às linhas originais. A

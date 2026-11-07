@@ -1,5 +1,11 @@
 # Super Bomberman 5: estado do protótipo
 
+## Unreleased — 2026-11-07: Battle extra rules, Domino
+
+- Rules page 2 gained **Domino** (default No, suggested by Kurobon '94): pre-opcode hook at `$C5:2182` (rolling bomb blocked; X = bomb, A = cell, direction `$0E90 & 7`) kicks a resting bomb in that cell with the native kick `$C5:2293` through a trampoline at `$C5:7540-$7559` (installed only over `$FF`, restored on reset) and resumes so the first bomb stops natively. Same path as the Yellow Louie chain kick (validated on Windows/LLE in v0.11.0); Louie-owned bombs are left to `louie_mod.c` (`LouieOwnsBomb`). Save-state extension: one byte appended, older states load with Domino off.
+- Evidence: `battle_rules_tests` (navigation over four rules, hook/trampoline install and restore, kick cell/direction for right and up, Battle-only, airborne/absent target, Louie exclusion, state round trip, older state, corrupt byte) and `louie_tests` pass with gcc on Linux. **Not exercised in a running game** (no ROM in the cloud session); the fourth label's BG1 tiles (704-743) and the hand at row 21 were not checked on screen.
+- Throw range (Power Glove, 1–5 tiles) was requested too but not implemented: the throw distance routine has not been located in the ROM yet.
+
 ## v3.1.3 — 2026-11-06: Bomber Kings skull flash, launcher scale, Disable Skills rule
 
 - Skull (curse) on the SB4 characters (Bomber Kings, Honey, Kotetsu, Terrorin): the cartridge blanks OBJ palette colors 1-7 of the seat's slot four frames out of eight; the skins, drawn in a palette of their own, now follow it (`slot_blanked()`, `BLACK_KEY`). Measured on the recompiled Linux host: drawn black frames match the CGRAM-zero frames exactly for all nine extra characters. Windows confirmed by the maintainer. Native test `extra_characters_tests` covers it (fails without the fix).

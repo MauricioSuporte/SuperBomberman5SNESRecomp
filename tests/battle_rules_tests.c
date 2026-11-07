@@ -23,6 +23,8 @@ void PtbrDrawBodyText(struct Ppu *p, unsigned a, unsigned b, unsigned c, unsigne
 void PtbrBlankMap(struct Ppu *p, unsigned a, unsigned b, unsigned c, unsigned d, unsigned e) { (void)p; (void)a; (void)b; (void)c; (void)d; (void)e; }
 static uint8 *image;
 uint8_t *SnesRomPtr(uint32 v) { return image + (((v >> 16) & 0x3f) << 16 | (v & 0xffff)); }
+static bool louie_owns;
+bool LouieOwnsBomb(unsigned b) { (void)b; return louie_owns; }
 #define BATTLE_RULES_TEST 1
 #include "../src/battle_rules_mod.c"
 static bool ptbr(void) { return false; }
@@ -60,12 +62,12 @@ static void pad(unsigned seat, uint8_t act, uint8_t dir) {
 static void release(void) { pad(0, 0, 0); pad(0, 0, 0); }
 int main(void) {
     image = calloc(0x400000, 1); g_rom = image; cpu.D = 0;
-    memset(at(0xc57520), 0xff, 0x40); at(0xc00af9)[0] = 0xfa; at(0xc00af9)[1] = 0x7a; at(0xc00af9)[2] = 0x6b;
+    memset(at(0xc57520), 0xff, 0x40); /* sound + domino trampolines */ at(0xc00af9)[0] = 0xfa; at(0xc00af9)[1] = 0x7a; at(0xc00af9)[2] = 0x6b;
     CHECK(image && !strcmp(plugin, "superbomberman5.battle.rules"));
     /* Disabled: nothing happens. */
     rules_screen(5); pad(0, 0, DIR_DOWN); CHECK(!BattleRulesPageOpen() && g_ram[REP] == DIR_DOWN);
     activation(); rules_screen(5); BattleRulesBeforeFrame();
-    CHECK(hook_count == 7);
+    CHECK(hook_count == 8 && at(KICK_CODE)[0] == 0xda && at(KICK_CODE)[22] == 0x5c);
     /* Down on the last native row opens page 2 and the cartridge sees no key. */
     redirect_pc = 0; pad(0, 0, DIR_DOWN);
     CHECK(redirect_pc == SFX_CODE && at(SFX_ID)[0] == SFX_MOVE);
@@ -78,11 +80,15 @@ int main(void) {
     pad(0, 0, DIR_DOWN); CHECK(cur == 2); release();
     pad(0, 0, DIR_LEFT); CHECK(opt[2] == 1 && BattleRulesAbilitiesOff()); release();
     pad(0, PAD_A, 0); CHECK(opt[2] == 0 && !BattleRulesAbilitiesOff()); release();
+    pad(0, 0, DIR_DOWN); CHECK(cur == 3 && !BattleRulesDomino()); release(); /* domino defaults off */
+    pad(0, 0, DIR_RIGHT); CHECK(opt[3] == 1 && BattleRulesDomino()); release();
+    pad(0, PAD_A, 0); CHECK(opt[3] == 0); release();
     /* Down on the last rule leaves; entered from row 5 the cartridge gets Down to wrap to row 0. */
     pad(0, 0, DIR_DOWN); CHECK(page == 0 && g_ram[REP] == DIR_DOWN && g_ram[FRESH_DIRS] == DIR_DOWN);
     release();
     /* Up on row 0 enters at the last rule; up from the first rule gives the cartridge Up. */
-    rules_screen(0); pad(0, 0, DIR_UP); CHECK(page == 1 && cur == 2); release();
+    rules_screen(0); pad(0, 0, DIR_UP); CHECK(page == 1 && cur == 3); release();
+    pad(0, 0, DIR_UP); CHECK(cur == 2); release();
     pad(0, 0, DIR_UP); CHECK(cur == 1); release();
     pad(0, 0, DIR_UP); CHECK(cur == 0); release();
     pad(0, 0, DIR_UP); CHECK(page == 0 && g_ram[REP] == DIR_UP && g_ram[FRESH_DIRS] == DIR_UP); /* row 0 + Up wraps natively to Bowling */
@@ -122,16 +128,37 @@ int main(void) {
         CHECK(distinct == 3); /* a permutation: every spawn used once */
         CHECK(perm[0] != 0 && perm[1] != 1 && perm[2] != 2); /* nobody keeps its own spawn */
     }
+    /* Domino: bomb 0 rolls right (dir 1) into cell $25, where bomb 1 rests. */
+    g_ram[0x1031] = 0x74; g_ram[0x1d1a] = 1; g_ram[0x1d1d] = 0;
+    g_ram[0x0e40] = 50; g_ram[0x0e7c] = 0x24; g_ram[0x0e90] = 1;
+    g_ram[0x0e41] = 50; g_ram[0x0e7d] = 0x25; g_ram[0x0e91] = 0;
+    cpu.X = 0; cpu.A = 0x25;
+    opt[3] = 0; redirect_pc = 0; fire(ROLL_HOOK, &cpu); CHECK(redirect_pc == 0);
+    opt[3] = 1; fire(ROLL_HOOK, &cpu);
+    CHECK(redirect_pc == KICK_CODE && at(KICK_CELL)[0] == 0x24 && at(KICK_DIR)[0] == 1);
+    louie_owns = true; redirect_pc = 0; kick_resuming = false; fire(ROLL_HOOK, &cpu); CHECK(redirect_pc == 0); louie_owns = false; /* Louie's chain */
+    kick_resuming = true; redirect_pc = 0; fire(ROLL_HOOK, &cpu); CHECK(redirect_pc == 0); /* resumed from the trampoline: native stop */
+    g_ram[0x0e90] = 4; g_ram[0x0e7d] = 0x34; cpu.A = 0x34; fire(ROLL_HOOK, &cpu); /* rolling up into $34 */
+    CHECK(redirect_pc == KICK_CODE && at(KICK_CELL)[0] == 0x44 && at(KICK_DIR)[0] == 4);
+    redirect_pc = 0; fire(ROLL_HOOK, &cpu);
+    g_ram[0x0e91] = 0x10; fire(ROLL_HOOK, &cpu); CHECK(redirect_pc == 0); /* the other bomb is airborne/moving */
+    g_ram[0x0e91] = 0; cpu.A = 0x35; fire(ROLL_HOOK, &cpu); CHECK(redirect_pc == 0); /* no bomb in the blocked cell */
+    g_ram[0x1031] = 0x20; g_ram[0x1d1a] = 0; cpu.A = 0x34; fire(ROLL_HOOK, &cpu); CHECK(redirect_pc == 0); /* Battle only */
+    g_ram[0x1031] = 0x74; g_ram[0x1d1a] = 1;
     /* Save state. */
-    opt[0] = 0; opt[1] = 1; opt[2] = 1; page = 1; cur = 2; countdown = 77; rng = 0x12345; frames = 9;
+    opt[0] = 0; opt[1] = 1; opt[2] = 1; opt[3] = 1; page = 1; cur = 2; countdown = 77; rng = 0x12345; frames = 9;
     Stream out = {{transfer}, {0}, 0, 0, false};
     failed = false; BattleRulesSave(&out.base); CHECK(!failed);
     Stream in = out; in.at = 0; in.reading = true;
     opt[0] = 1; opt[1] = 0; opt[2] = 0; page = cur = 0; countdown = 0; rng = 1; frames = 0;
-    BattleRulesLoad(&in.base, 1); CHECK(!failed && !opt[0] && opt[1] && opt[2] && page == 1 && cur == 2 && countdown == 77 && rng == 0x12345 && frames == 9);
+    BattleRulesLoad(&in.base, 1); CHECK(!failed && !opt[0] && opt[1] && opt[2] && opt[3] && page == 1 && cur == 2 && countdown == 77 && rng == 0x12345 && frames == 9);
     Stream bad = out; bad.at = 0; bad.reading = true; bad.bytes[4] = 5; /* invalid option */
     BattleRulesLoad(&bad.base, 1); CHECK(failed);
-    reset_callback(); CHECK(opt[0] == 1 && opt[1] == 0 && opt[2] == 0 && countdown == 0);
+    Stream old = out; old.at = 0; old.reading = true; old.end -= 1; failed = false; /* state saved before the domino byte */
+    BattleRulesLoad(&old.base, 1); CHECK(!failed && opt[2] && !opt[3]);
+    Stream bad2 = out; bad2.at = 0; bad2.reading = true; bad2.bytes[out.end - 1] = 2; failed = false;
+    BattleRulesLoad(&bad2.base, 1); CHECK(failed);
+    reset_callback(); CHECK(opt[3] == 0 && at(KICK_CODE)[0] == 0xff && opt[0] == 1 && opt[1] == 0 && opt[2] == 0 && countdown == 0);
     puts("battle_rules_tests ok");
     return 0;
 }

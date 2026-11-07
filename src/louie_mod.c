@@ -97,6 +97,7 @@ static int bomb_at(unsigned cell) {
            !(g_ram[0xe90+i]&0xf8) && !(g_ram[0xecc+i]&0x20)) return (int)i;
     return -1;
 }
+bool LouieOwnsBomb(unsigned bomb) { return enabled && installed && bomb<20 && state.bomb_owner[bomb]; }
 static void a8(CpuState *cpu,unsigned value) {
     cpu->A=(uint16_t)((cpu->A&0xff00)|(value&255));
     cpu->_flag_Z=(value&255)==0;cpu->_flag_N=(value>>7)&1;
