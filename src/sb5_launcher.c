@@ -326,7 +326,7 @@ static void apply_check_result(int code, const char *latest) {
                  "(online rooms only match players on the same version).", v, latest);
         snprintf(g_netplay_notice, sizeof(g_netplay_notice),
                  "You have v%s, but v%s is out: online players are on the new version, so their "
-                 "rooms do not appear here and yours would not appear to them. Hosting is disabled "
+                 "rooms do not appear here and yours would not appear to them. Netplay is disabled "
                  "until you update (main page: Update game / Atualizar jogo).", v, latest);
     } else if (code == 0) {
         snprintf(g_action_note, sizeof(g_action_note),

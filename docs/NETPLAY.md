@@ -177,6 +177,8 @@ seats that are not playing or on boss rival bombers. It disappears the moment th
 when it respawns and the stage resumes; a Louie rider's tag rises with it. Tags follow the lobby seat
 (seat 1 = P1, ...); with the host watching from the gallery they can be one seat off (known gap).
 
+**Rooms in a match (next version):** the room list marks a room whose match is running with **[In match / Em partida]**, and someone who enters it reads in the room panel that they play from the next match. The host publishes it while its match runs; rooms hosted by older versions show no mark. The **NETPLAY** button stays disabled while a newer release exists ("Update to play online").
+
 **Joining a running match (v2.1.0):** someone who enters a room whose match already started waits in the
 launcher's room (free seat or spectator gallery), chats with the players (who see it in game) and plays or watches
 from the next match. A spectator closing the game no longer ends the players' match (its BYE used to be read as a

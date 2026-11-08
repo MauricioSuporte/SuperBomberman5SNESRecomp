@@ -1,5 +1,13 @@
 # Super Bomberman 5: estado do protótipo
 
+## 2026-11-08: launcher pads, outdated netplay lock, live rooms, Android sign-in
+
+- Two Xbox 360 Wireless pads: the controller list showed "2 visible items with conflicting ID" (Dear ImGui) and the second pad could not be chosen. Their GUIDs differ but the name is the same; the "(2)" suffix only covered pads sharing a GUID (two DualSense). Entries are now numbered by label and each has its own ImGui ID (recomp-ui `draw_source_selectables`). Any pair of identical-name pads benefits. Compiled on Linux; not tried with real pads here.
+- NETPLAY button is disabled while the update check reports a newer release (`netplay_notice`, src/sb5_launcher.c), with "Update to play online / Atualize para jogar online" above it and the full reason on hover. Compiled only.
+- Rooms mid-match: the lobby server (`RetroPortingToolKit/recomp-net-server`, `ws_lobby.rs`) tracks `started` but never publishes it, and it stays true after the first match. The host now republishes its match caps with `match_live` while its session runs (snesrecomp `snes_netplay_start`/`shutdown` → recomp-net `rnet_lobby_set_match_live`) plus `lobby_kind` bit 8, the only caps key the server copies into `lobby_list` rows. The browser shows "[In match / Em partida]" and the room panel tells a late joiner they play from the next match. Covered by recomp-net `lobby_client_test` (encode/decode, list rows); not exercised against the live server or with real peers. Rooms hosted by older versions show no mark.
+- Android Discord sign-in: after authorizing in the browser the app showed "Lost contact with the lobby server during sign-in". The sign-in poll (`/auth/discord/poll`) failed while the app was in the background (network suspended) and any transport failure ended the sign-in. Transport errors and 5xx now keep polling until the pairing window ends (recomp-net `rnet_auth.c`). Not run on a device.
+- Framework commits are on the forks' `claude/elegant-bohr-0ah0qs` branches (recomp-net `eca56ef`, snesrecomp `2d5c850`, recomp-ui `485019e`), not yet merged into their `superbomberman5` branches. All 26 native tests and recomp-net lobby/auth tests pass (Linux gcc/clang).
+
 ## v3.2.1 — 2026-11-08: Boss Rush, P3-P5 walking in place
 
 - Report: online Boss Rush with three players and every mod on, P3 stayed in the lower-left corner walking down without moving. Reproduced offline (Linux/LLE, local ROM, scripted route title -> BOSS RUSH -> 3 players -> picker -> ZONE1 - A, P3 driven by the test fixture): P3's speed `$15D2+2` was 0 (P1/P2 `$E0`), so every direction only played the walk animation. Not netplay-specific.
