@@ -1275,6 +1275,11 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '3.2.1': (
+'''- **Fix: Boss Rush with three or more players.** P3 (and P4/P5) started with no walking speed and only walked in place in the corner; they now move normally from the first boss. Happened with the 5 Players mod, online or offline.
+- Everyone in an online room needs v3.2.1.''',
+'''- **Correção: Boss Rush com três ou mais jogadores.** O P3 (e P4/P5) começava sem velocidade e só andava parado no canto; agora se move normalmente desde o primeiro chefe. Acontecia com o mod de 5 jogadores, online ou offline.
+- Todos na sala online precisam da v3.2.1.'''),
     '3.2.0': (
 '''- **Battle extra rules: Domino** (default No, suggested by Kurobon '94). With Yes, a kicked bomb that hits a bomb on the ground stops, and the bomb it hit rolls on in the same direction.
 - **Battle extra rules: Throw Range** (default 3, suggested by Kurobon '94). Sets how many tiles (1 to 5) a bomb thrown with the Power Glove flies; 3 is the original distance.
