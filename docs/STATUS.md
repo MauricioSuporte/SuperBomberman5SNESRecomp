@@ -1,6 +1,6 @@
 # Super Bomberman 5: estado do protótipo
 
-## 2026-11-08: launcher pads, outdated netplay lock, live rooms, Android sign-in
+## v3.2.2 — 2026-11-08: launcher pads, outdated netplay lock, live rooms, Android sign-in
 
 - Two Xbox 360 Wireless pads: the controller list showed "2 visible items with conflicting ID" (Dear ImGui) and the second pad could not be chosen. Their GUIDs differ but the name is the same; the "(2)" suffix only covered pads sharing a GUID (two DualSense). Entries are now numbered by label and each has its own ImGui ID (recomp-ui `draw_source_selectables`). Any pair of identical-name pads benefits. Compiled on Linux; not tried with real pads here.
 - NETPLAY button is disabled while the update check reports a newer release (`netplay_notice`, src/sb5_launcher.c), with "Update to play online / Atualize para jogar online" above it and the full reason on hover. Compiled only.

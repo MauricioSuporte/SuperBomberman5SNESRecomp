@@ -1275,6 +1275,17 @@ if version in ('2.0.1', '2.0.2'):
 # From v2.0.3 on, each version lists only what is new in it. The full notes add
 # the install/upgrade paragraph; --whats-new (the Discord announcement) does not.
 WHATS_NEW = {
+    '3.2.2': (
+'''- **Fix: two identical controllers** (for example two Xbox 360 Wireless Controllers) can now both be chosen in the launcher; the list showed a "conflicting ID" error before.
+- **Netplay: rooms in a match** are marked **[In match]** in the room list, and whoever enters one is told they play from the next match (the host needs v3.2.2).
+- **NETPLAY** is disabled while a newer version exists, with a request to update.
+- **Fix: Discord sign-in on Android** no longer fails with "Lost contact with the lobby server" after authorizing in the browser.
+- Everyone in an online room needs v3.2.2.''',
+'''- **Correção: dois controles iguais** (por exemplo dois Xbox 360 Wireless Controller) agora podem ser escolhidos no launcher; antes a lista mostrava um erro de "conflicting ID".
+- **Netplay: salas em partida** aparecem como **[Em partida]** na lista, e quem entra é avisado de que joga a partir da próxima partida (o anfitrião precisa da v3.2.2).
+- O botão **NETPLAY** fica desativado enquanto existir versão mais nova, pedindo para atualizar.
+- **Correção: login do Discord no Android** não falha mais com "Lost contact with the lobby server" depois de autorizar no navegador.
+- Todos na sala online precisam da v3.2.2.'''),
     '3.2.1': (
 '''- **Fix: Boss Rush with three or more players.** P3 (and P4/P5) started with no walking speed and only walked in place in the corner; they now move normally from the first boss. Happened with the 5 Players mod, online or offline.
 - Everyone in an online room needs v3.2.1.''',
