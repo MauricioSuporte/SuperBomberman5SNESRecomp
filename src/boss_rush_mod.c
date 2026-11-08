@@ -80,6 +80,7 @@ static unsigned step;
 static CpuState saved_cpu;
 static uint32_t start_op;
 static uint8_t mask, flag;
+static uint8_t saved_mode;   /* $1031 around the injected player reset */
 /* Seats chosen for the rush (the ranking category). $1D25 only knows P1/P2:
  * the 5 Players menu keeps its own count. */
 static uint8_t roster;
@@ -188,6 +189,12 @@ static void run_step(CpuState *cpu) {
         g_ram[0x6248] = FIRST_BOSS;
         g_ram[0x1d25] = mask; g_ram[0x1d24] = flag;
         g_ram[0x6254] = 0;
+        /* The 5 Players mod extends $C4:286F to seats 3-5 (equipment, speed
+         * $15D2) only in a campaign mode, and the title is still mode 2: P3-P5
+         * started with speed 0 and walked in place. Enter the first boss's
+         * mode for the reset; change_scene() below sets it for good. */
+        saved_mode = g_ram[MODE];
+        if (!(g_ram[SCENE] & 4)) g_ram[MODE] = FIRST_BOSS;
         call(cpu, RESET_PLAYERS, 0);
         return;
     default:
@@ -195,6 +202,7 @@ static void run_step(CpuState *cpu) {
         restore_cpu(cpu);
         /* $C4:286F keeps $1D25/$1D24 unless script flags 5/6 say otherwise. */
         g_ram[0x1d25] = mask; g_ram[0x1d24] = flag;
+        g_ram[MODE] = saved_mode;
         change_scene(FIRST_BOSS);
         skip_start_op();
         pending = 0; picker = PICK_NONE; active = 1; frames = 0; finished = 0;

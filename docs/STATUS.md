@@ -1,5 +1,11 @@
 # Super Bomberman 5: estado do protótipo
 
+## 2026-11-08: Boss Rush, P3-P5 walking in place
+
+- Report: online Boss Rush with three players and every mod on, P3 stayed in the lower-left corner walking down without moving. Reproduced offline (Linux/LLE, local ROM, scripted route title -> BOSS RUSH -> 3 players -> picker -> ZONE1 - A, P3 driven by the test fixture): P3's speed `$15D2+2` was 0 (P1/P2 `$E0`), so every direction only played the walk animation. Not netplay-specific.
+- Cause: the rush calls the equipment reset `$C4:286F` from the title (`$1031` = 2); the 5 Players mod extends that reset to seats 3-5 only in a campaign mode. `boss_rush_mod.c` now sets `$1031` to the first boss (`$67`) for the injected reset and puts the title's mode back before the native scene change.
+- After the fix, same route: P3 speed `$E0`, moved up 54 px and back down; no `interp_cap`/BRK/fatal in the log. `boss_rush_tests` checks the mode during the reset (fails without the fix); all 26 native tests pass. The lower-left spawn itself is the corner-spawns layout (`$1D1A` has no boss bits `$0C` in the rush) and is unchanged. Not exercised: real netplay, Windows, 4-5 players.
+
 ## v3.2.0 — 2026-11-07: Battle extra rules, Domino and Throw Range
 
 - Rules page 2 gained **Domino** (default No) and **Throw Range** (1-5, default 3), both suggested by Kurobon '94. The page now has five rows (rows 9-21, hand y = 71 + 24 * row); labels use BG1 tiles 584-763 (36 per row: value column cut to 4 tiles). A first five-row layout with 40 tiles per row reached tile 768 = BG1 map `$3000` and corrupted the RULE SETTINGS banner; seen on screen and fixed.

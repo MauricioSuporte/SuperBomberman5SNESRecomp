@@ -85,6 +85,9 @@ static int start_through(uint32_t op) {
     if (cpu.A != 0x1234 && (cpu.A & 0xff) != 4) return 0;
     if (!returns(SET_FLAG)) return 0;
     if (!(g_ram[0x6274] & 0x80) || g_ram[0x6248] != 0x67 || g_ram[0x6254]) return 0;
+    /* The player reset runs in the first boss's (campaign) mode, so the 5
+     * Players mod resets seats 3-5 too (P3 kept speed 0 at the title's mode 2). */
+    if (redirect_pc != RESET_PLAYERS || g_ram[0x1031] != 0x67) return 0;
     if (!returns(RESET_PLAYERS)) return 0;
     return cpu.S == 0x1f0 && cpu.A == 0x0a00 && (cpu.X & 0xff) == 11 && cpu.P == 0x31 && redirect_pc == VM_NEXT &&
            spc() == op + 2 && g_ram[0x1031] == 0x67 && g_ram[0x1d1e] == 4;
